@@ -1,0 +1,1136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Universal Font Family Consistency: 100% Inter across all elements without exception */
+  *, *::before, *::after, input, button, select, textarea, optgroup, code, pre, .font-mono, [data-mono="true"] {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-feature-settings: "zero" 0;
+  }
+
+  /* Universal Font Weight Normalization: Standardize all emphasized text & headings to consistent 600 weight so nothing looks overly heavy ("nge-bold") */
+  strong, b, .font-bold, [class*="font-bold"],
+  .font-extrabold, [class*="font-extrabold"],
+  .font-black, [class*="font-black"] {
+    font-weight: 600 !important;
+  }
+
+  /* Prevent micro-labels and badges from appearing bloated and heavy */
+  .text-\[9px\], .text-\[9\.5px\], .text-\[10px\], .text-\[10\.5px\], .text-\[11px\] {
+    letter-spacing: 0.01em;
+  }
+
+  /* Standardize Heading Font Weights & Proportions to clean 600 */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600 !important;
+  }
+
+  /* Accessibility & Baseline UI: Keyboard-first visible focus ring */
+  :focus-visible {
+    outline: 2px solid #008d4c;
+    outline-offset: 2px;
+  }
+
+  /* Baseline UI Typography: Tabular numbers for all numbers, tables, codes & currencies */
+  table, td, th, [data-tabular="true"], .tabular-nums, code, pre, .font-mono {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
+  }
+
+  /* Text balancing for headings and pretty wrapping for paragraphs */
+  h1, h2, h3, h4, h5, h6, .text-balance {
+    text-wrap: balance;
+  }
+
+  p, .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* UI Skills: Restrained micro-shadows & elevation per DESIGN.md */
+@layer utilities {
+  .shadow-2xs {
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  }
+  .shadow-xs {
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  }
+  .shadow-soft {
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  }
+  .ring-line-default {
+    --tw-ring-color: #e2e8f0;
+  }
+}
+
+/* Respect reduced motion per fixing-motion-performance */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Clean White Enterprise Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ======================================================== */
+/* COCKPIT LIGHT THEME (CLINICAL WHITE & CLEAN SLATE)       */
+/* Scoped strictly to #cockpit-root.theme-light             */
+/* ======================================================== */
+#cockpit-root.theme-light {
+  color-scheme: light;
+}
+
+/* Modal Backdrops in Light Mode: maintain dark translucent overlay for focus */
+#cockpit-root.theme-light .fixed.inset-0[class*="bg-[#00081c]"],
+#cockpit-root.theme-light .fixed.inset-0[class*="bg-[#000c24]"],
+#cockpit-root.theme-light .fixed.inset-0[class*="bg-black"] {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Card Surfaces & Containers in Light Mode */
+#cockpit-root.theme-light .cockpit-card,
+#cockpit-root.theme-light [class*="bg-[#00153A]"],
+#cockpit-root.theme-light [class*="bg-[#00134A]"],
+#cockpit-root.theme-light [class*="bg-[#00102E]"],
+#cockpit-root.theme-light [class*="bg-[#001030]"],
+#cockpit-root.theme-light [class*="bg-[#001844]"],
+#cockpit-root.theme-light [class*="bg-[#001D58]"],
+#cockpit-root.theme-light [class*="bg-[#002050]"],
+#cockpit-root.theme-light [class*="bg-[#000c24]"]:not(.fixed),
+#cockpit-root.theme-light [class*="bg-[#00081c]"]:not(.fixed),
+#cockpit-root.theme-light [class*="from-[#00134A]"],
+#cockpit-root.theme-light [class*="from-[#00153A]"],
+#cockpit-root.theme-light [class*="from-[#000c24]"],
+#cockpit-root.theme-light [class*="to-[#00134A]"],
+#cockpit-root.theme-light [class*="to-[#00153A]"],
+#cockpit-root.theme-light [class*="to-[#000c24]"],
+#cockpit-root.theme-light [class*="to-[#001D58]"],
+#cockpit-root.theme-light [class*="to-[#1C3C80]"],
+#cockpit-root.theme-light [class*="via-[#00112e]"],
+#cockpit-root.theme-light [class*="via-[#00153A]"],
+#cockpit-root.theme-light [class*="via-[#001D58]"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Subtle Inset Panels & Sub-surfaces in Light Mode */
+#cockpit-root.theme-light [class*="bg-white/5"],
+#cockpit-root.theme-light [class*="bg-white/10"],
+#cockpit-root.theme-light [class*="bg-black/10"],
+#cockpit-root.theme-light [class*="bg-black/20"],
+#cockpit-root.theme-light [class*="bg-black/30"],
+#cockpit-root.theme-light [class*="bg-black/40"] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+#cockpit-root.theme-light [class*="bg-white/15"],
+#cockpit-root.theme-light [class*="bg-white/20"] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Borders in Light Mode */
+#cockpit-root.theme-light [class*="border-white/"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Typography Hierarchy in Light Mode */
+#cockpit-root.theme-light .text-white:not([class*="bg-"]):not(.keep-white) {
+  color: #0f172a !important;
+}
+
+#cockpit-root.theme-light .text-white\/95:not([class*="bg-"]):not(.keep-white),
+#cockpit-root.theme-light .text-white\/90:not([class*="bg-"]):not(.keep-white),
+#cockpit-root.theme-light .text-white\/85:not([class*="bg-"]):not(.keep-white),
+#cockpit-root.theme-light .text-white\/80:not([class*="bg-"]):not(.keep-white) {
+  color: #0f172a !important;
+}
+
+/* Explicitly preserve crisp white text and icon strokes ONLY on solid dark buttons, badges, and user chat bubbles */
+#cockpit-root.theme-light [class*="bg-emerald-600"] *,
+#cockpit-root.theme-light [class*="bg-emerald-600"] .text-white,
+#cockpit-root.theme-light [class*="bg-emerald-700"] *,
+#cockpit-root.theme-light [class*="bg-emerald-700"] .text-white,
+#cockpit-root.theme-light [class*="bg-emerald-800"] *,
+#cockpit-root.theme-light [class*="bg-rose-600"] *,
+#cockpit-root.theme-light [class*="bg-rose-700"] *,
+#cockpit-root.theme-light [class*="bg-red-500"] *,
+#cockpit-root.theme-light [class*="bg-red-600"] *,
+#cockpit-root.theme-light [class*="bg-blue-600"] *,
+#cockpit-root.theme-light button[class*="bg-emerald-600"] *,
+#cockpit-root.theme-light button[class*="bg-emerald-700"] *,
+#cockpit-root.theme-light .keep-white,
+#cockpit-root.theme-light .keep-white * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Ensure pastel mint/emerald badges & pills have dark emerald text and vivid green icon strokes */
+#cockpit-root.theme-light span.bg-emerald-50 svg,
+#cockpit-root.theme-light span.bg-emerald-100 svg,
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) svg,
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) svg {
+  stroke: #059669 !important;
+  color: #059669 !important;
+}
+
+#cockpit-root.theme-light span.bg-emerald-50 p,
+#cockpit-root.theme-light span.bg-emerald-50 span:not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light span.bg-emerald-100 p,
+#cockpit-root.theme-light span.bg-emerald-100 span:not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) p,
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) span:not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) p,
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) span:not([class*="bg-white"]):not(.keep-white) {
+  color: #064e3b !important;
+}
+
+#cockpit-root.theme-light span.bg-emerald-50 span[class*="bg-white"],
+#cockpit-root.theme-light span.bg-emerald-100 span[class*="bg-white"] {
+  background-color: #ffffff !important;
+  color: #064e3b !important;
+  border-color: #a7f3d0 !important;
+}
+
+#cockpit-root.theme-light .text-white\/75,
+#cockpit-root.theme-light .text-white\/70,
+#cockpit-root.theme-light .text-white\/60 {
+  color: #1e293b !important;
+}
+
+#cockpit-root.theme-light .text-white\/50,
+#cockpit-root.theme-light .text-white\/40 {
+  color: #334155 !important;
+}
+
+#cockpit-root.theme-light .text-white\/30,
+#cockpit-root.theme-light .text-white\/20,
+#cockpit-root.theme-light .text-white\/10 {
+  color: #475569 !important;
+}
+
+#cockpit-root.theme-light .text-slate-400 {
+  color: #475569 !important;
+}
+#cockpit-root.theme-light .text-slate-500 {
+  color: #334155 !important;
+}
+
+/* Amber / Gold Accents adjusted for light mode: crisp slate borders, emerald accents */
+#cockpit-root.theme-light .border-\[\#FFCA40\],
+#cockpit-root.theme-light .border-\[\#FFCA40\]\/30,
+#cockpit-root.theme-light .border-\[\#FFCA40\]\/40,
+#cockpit-root.theme-light .border-\[\#FFCA40\]\/50 {
+  border-color: #cbd5e1 !important;
+}
+
+#cockpit-root.theme-light .border-amber-400,
+#cockpit-root.theme-light .border-amber-500\/30 {
+  border-color: #fde68a !important;
+}
+
+/* Amber / Yellow stat metrics */
+#cockpit-root.theme-light .text-amber-400,
+#cockpit-root.theme-light .text-amber-500,
+#cockpit-root.theme-light .text-yellow-400,
+#cockpit-root.theme-light .text-yellow-500 {
+  color: #b45309 !important;
+}
+
+/* Base text-[#FFCA40] mapped to Hijau Zamrud in Light Mode */
+#cockpit-root.theme-light .text-\[\#FFCA40\],
+#cockpit-root.theme-light [class*="text-[#FFCA40]"],
+#cockpit-root.theme-light .text-\[\#FFD700\],
+#cockpit-root.theme-light .text-\[\#FFE08C\],
+#cockpit-root.theme-light [class*="text-[#FFE08C]"],
+#cockpit-root.theme-light [class*="text-[#FFD700]"],
+#cockpit-root.theme-light .text-\[\#ffd566\],
+#cockpit-root.theme-light .text-amber-300 {
+  color: #047857 !important;
+}
+
+/* Links and Action Text in Light Mode: Hijau Zamrud Medis */
+#cockpit-root.theme-light button.text-\[\#FFCA40\],
+#cockpit-root.theme-light a.text-\[\#FFCA40\],
+#cockpit-root.theme-light button[class*="text-[#FFCA40]"],
+#cockpit-root.theme-light a[class*="text-[#FFCA40]"],
+#cockpit-root.theme-light [class*="text-[#FFCA40]"].cursor-pointer,
+#cockpit-root.theme-light td button,
+#cockpit-root.theme-light tr button,
+#cockpit-root.theme-light button:has(svg.lucide-external-link),
+#cockpit-root.theme-light .hover\:text-\[\#FFE08C\]:hover {
+  color: #047857 !important;
+}
+#cockpit-root.theme-light button[class*="text-[#FFCA40]"]:hover,
+#cockpit-root.theme-light a[class*="text-[#FFCA40]"]:hover,
+#cockpit-root.theme-light td button:hover {
+  color: #065f46 !important;
+}
+
+/* Monospace Case IDs, SEP Identifiers, and Audit Codes: Clean dark slate */
+#cockpit-root.theme-light .font-mono.text-\[\#FFCA40\],
+#cockpit-root.theme-light .font-mono[class*="text-[#FFCA40]"],
+#cockpit-root.theme-light [class*="font-mono"][class*="text-[#FFCA40]"],
+#cockpit-root.theme-light td div.font-mono,
+#cockpit-root.theme-light td span.font-mono,
+#cockpit-root.theme-light span.font-mono[class*="text-[#FFCA40]"],
+#cockpit-root.theme-light div.font-mono[class*="text-[#FFCA40]"],
+#cockpit-root.theme-light span[class*="font-mono"][class*="text-[#FFCA40]"] {
+  color: #0f172a !important;
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/5,
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/10,
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/15,
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/20,
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/25,
+#cockpit-root.theme-light .bg-\[\#FFCA40\]\/30,
+#cockpit-root.theme-light .bg-amber-500\/10,
+#cockpit-root.theme-light .bg-amber-500\/15,
+#cockpit-root.theme-light .bg-amber-500\/20 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+/* Solid #FFCA40 buttons and active chips in Light Mode: mapped to Hijau Zamrud */
+#cockpit-root.theme-light .bg-\[\#FFCA40\],
+#cockpit-root.theme-light [class*="bg-[#FFCA40]"]:not([class*="/"]):not([class*="hover"]) {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+}
+#cockpit-root.theme-light .bg-\[\#FFCA40\] *,
+#cockpit-root.theme-light [class*="bg-[#FFCA40]"]:not([class*="/"]):not([class*="hover"]) * {
+  color: #ffffff !important;
+}
+
+#cockpit-root.theme-light .bg-amber-500 {
+  background-color: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+/* Emerald Accents */
+#cockpit-root.theme-light .text-emerald-300,
+#cockpit-root.theme-light [class*="text-emerald-300"],
+#cockpit-root.theme-light .text-emerald-200,
+#cockpit-root.theme-light [class*="text-emerald-200"],
+#cockpit-root.theme-light .text-emerald-400,
+#cockpit-root.theme-light .text-green-300,
+#cockpit-root.theme-light .text-green-400 {
+  color: #047857 !important;
+}
+
+#cockpit-root.theme-light .bg-emerald-500\/10,
+#cockpit-root.theme-light .bg-emerald-500\/15,
+#cockpit-root.theme-light .bg-emerald-500\/20,
+#cockpit-root.theme-light .bg-emerald-500\/25,
+#cockpit-root.theme-light .bg-emerald-500\/30,
+#cockpit-root.theme-light .bg-emerald-400\/10,
+#cockpit-root.theme-light .bg-emerald-400\/20,
+#cockpit-root.theme-light .bg-green-500\/10,
+#cockpit-root.theme-light .bg-green-500\/20 {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Cyan / Sky Accents in Light Mode: Hijau Zamrud / Teal */
+#cockpit-root.theme-light .text-cyan-300,
+#cockpit-root.theme-light [class*="text-cyan-300"],
+#cockpit-root.theme-light .text-cyan-200,
+#cockpit-root.theme-light [class*="text-cyan-200"],
+#cockpit-root.theme-light .text-cyan-400,
+#cockpit-root.theme-light .text-sky-300,
+#cockpit-root.theme-light .text-sky-400,
+#cockpit-root.theme-light .text-sky-500 {
+  color: #047857 !important;
+}
+
+#cockpit-root.theme-light .bg-cyan-500\/10,
+#cockpit-root.theme-light .bg-cyan-500\/15,
+#cockpit-root.theme-light .bg-cyan-500\/20,
+#cockpit-root.theme-light .bg-cyan-500\/25,
+#cockpit-root.theme-light .bg-sky-500\/10,
+#cockpit-root.theme-light .bg-sky-500\/20 {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Red / Rose Accents */
+#cockpit-root.theme-light .text-rose-300,
+#cockpit-root.theme-light [class*="text-rose-300"],
+#cockpit-root.theme-light .text-rose-200,
+#cockpit-root.theme-light [class*="text-rose-200"],
+#cockpit-root.theme-light .text-rose-400,
+#cockpit-root.theme-light .text-red-300,
+#cockpit-root.theme-light .text-red-400 {
+  color: #dc2626 !important;
+}
+
+#cockpit-root.theme-light .bg-rose-500\/10,
+#cockpit-root.theme-light .bg-rose-500\/15,
+#cockpit-root.theme-light .bg-rose-500\/20,
+#cockpit-root.theme-light .bg-rose-500\/25,
+#cockpit-root.theme-light .bg-rose-400\/10,
+#cockpit-root.theme-light .bg-rose-400\/20,
+#cockpit-root.theme-light .bg-red-500\/10,
+#cockpit-root.theme-light .bg-red-500\/15,
+#cockpit-root.theme-light .bg-red-500\/20 {
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
+  border-color: #fecaca !important;
+}
+
+/* Purple / Indigo Accents */
+#cockpit-root.theme-light .text-purple-300,
+#cockpit-root.theme-light [class*="text-purple-300"],
+#cockpit-root.theme-light .text-purple-200,
+#cockpit-root.theme-light [class*="text-purple-200"],
+#cockpit-root.theme-light .text-purple-400,
+#cockpit-root.theme-light .text-indigo-400 {
+  color: #7e22ce !important;
+}
+
+#cockpit-root.theme-light .bg-purple-500\/10,
+#cockpit-root.theme-light .bg-purple-500\/15,
+#cockpit-root.theme-light .bg-purple-500\/20,
+#cockpit-root.theme-light .bg-indigo-500\/10,
+#cockpit-root.theme-light .bg-indigo-500\/20 {
+  background-color: #faf5ff !important;
+  color: #6b21a8 !important;
+  border-color: #e9d5ff !important;
+}
+
+/* Hover highlights on cards & buttons */
+#cockpit-root.theme-light .hover\:border-\[\#FFCA40\]\/40:hover,
+#cockpit-root.theme-light .hover\:border-\[\#FFCA40\]\/30:hover,
+#cockpit-root.theme-light .hover\:border-white\/20:hover {
+  border-color: #94a3b8 !important;
+}
+
+/* Form Controls & Inputs */
+#cockpit-root.theme-light input,
+#cockpit-root.theme-light select,
+#cockpit-root.theme-light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+#cockpit-root.theme-light input:focus,
+#cockpit-root.theme-light select:focus,
+#cockpit-root.theme-light textarea:focus {
+  border-color: #059669 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2) !important;
+}
+
+/* Explicit exemption for transparent/borderless search bars and chat inputs */
+#cockpit-root.theme-light input.bg-transparent,
+#cockpit-root.theme-light input[class*="bg-transparent"],
+#cockpit-root.theme-light input[class*="border-none"],
+#cockpit-root.theme-light input[class*="border-0"],
+#cockpit-root.theme-light textarea.bg-transparent,
+#cockpit-root.theme-light textarea[class*="bg-transparent"] {
+  background-color: transparent !important;
+  border: none !important;
+  border-width: 0px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#cockpit-root.theme-light input.bg-transparent:focus,
+#cockpit-root.theme-light input[class*="bg-transparent"]:focus,
+#cockpit-root.theme-light input[class*="border-none"]:focus,
+#cockpit-root.theme-light input[class*="border-0"]:focus,
+#cockpit-root.theme-light textarea.bg-transparent:focus {
+  border: none !important;
+  border-width: 0px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#cockpit-root.theme-light input::placeholder,
+#cockpit-root.theme-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+#cockpit-root.theme-light select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Ambient decorative glow orbs from dark mode should be hidden in light mode */
+#cockpit-root.theme-light [class*="blur-3xl"],
+#cockpit-root.theme-light [class*="blur-2xl"],
+#cockpit-root.theme-light [class*="blur-xl"].pointer-events-none {
+  display: none !important;
+}
+
+/* Recharts in Light Mode */
+#cockpit-root.theme-light .recharts-cartesian-axis-tick text,
+#cockpit-root.theme-light .recharts-text,
+#cockpit-root.theme-light .recharts-cartesian-axis-tick-value {
+  fill: #475569 !important;
+}
+#cockpit-root.theme-light .recharts-cartesian-grid line {
+  stroke: #e2e8f0 !important;
+}
+#cockpit-root.theme-light .recharts-cartesian-axis-line,
+#cockpit-root.theme-light .recharts-cartesian-axis-tick-line {
+  stroke: #cbd5e1 !important;
+}
+#cockpit-root.theme-light .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+#cockpit-root.theme-light .recharts-legend-item-text {
+  color: #334155 !important;
+}
+
+/* Recharts in Dark Mode */
+#cockpit-root.theme-dark .recharts-cartesian-axis-tick text,
+#cockpit-root.theme-dark .recharts-text,
+#cockpit-root.theme-dark .recharts-cartesian-axis-tick-value {
+  fill: #94a3b8 !important;
+}
+#cockpit-root.theme-dark .recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.08) !important;
+}
+#cockpit-root.theme-dark .recharts-cartesian-axis-line,
+#cockpit-root.theme-dark .recharts-cartesian-axis-tick-line {
+  stroke: rgba(255, 255, 255, 0.15) !important;
+}
+#cockpit-root.theme-dark .recharts-default-tooltip {
+  background-color: #00153A !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+#cockpit-root.theme-dark .recharts-legend-item-text {
+  color: #cbd5e1 !important;
+}
+
+/* Metric & KPI Cards in Light Mode: Clean White with subtle border and crisp elevation */
+#cockpit-root.theme-light div[class*="rounded-2xl"].border[class*="bg-amber-500\/10"],
+#cockpit-root.theme-light div[class*="rounded-2xl"].border[class*="bg-rose-500\/10"],
+#cockpit-root.theme-light div[class*="rounded-2xl"].border[class*="bg-emerald-500\/10"],
+#cockpit-root.theme-light div[class*="rounded-2xl"].border[class*="bg-white\/5"],
+#cockpit-root.theme-light div[class*="rounded-2xl"].border[class*="bg-[#00153A]"],
+#cockpit-root.theme-light section[class*="rounded-2xl"] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04) !important;
+}
+#cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-rose-500\/30"] {
+  border-color: #fecaca !important;
+}
+#cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-amber-500\/30"] {
+  border-color: #fde68a !important;
+}
+#cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-emerald-500\/30"] {
+  border-color: #a7f3d0 !important;
+}
+#cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-white\/10"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* CRITICAL: Preserve White text and Icons on Solid Dark Buttons ONLY (DO NOT match pastel/tinted elements like bg-emerald-50, bg-rose-500/20) */
+#cockpit-root.theme-light button.bg-blue-600,
+#cockpit-root.theme-light button.bg-blue-700,
+#cockpit-root.theme-light button.bg-emerald-600,
+#cockpit-root.theme-light button.bg-emerald-700,
+#cockpit-root.theme-light button.bg-rose-600,
+#cockpit-root.theme-light button.bg-rose-700,
+#cockpit-root.theme-light button.bg-red-600,
+#cockpit-root.theme-light button.bg-slate-900,
+#cockpit-root.theme-light button.bg-slate-800,
+#cockpit-root.theme-light button[class*="bg-blue-600"],
+#cockpit-root.theme-light button[class*="bg-emerald-600"],
+#cockpit-root.theme-light button[class*="bg-emerald-600"]:hover,
+#cockpit-root.theme-light button[class*="!bg-emerald-600"],
+#cockpit-root.theme-light button[class*="!bg-emerald-600"]:hover,
+#cockpit-root.theme-light button[class*="bg-rose-600"],
+#cockpit-root.theme-light button[class*="bg-red-600"],
+#cockpit-root.theme-light button[class*="from-health-blue"],
+#cockpit-root.theme-light button[class*="from-blue-600"],
+#cockpit-root.theme-light button[class*="from-emerald-600"],
+#cockpit-root.theme-light button[class*="from-rose-600"],
+#cockpit-root.theme-light [class*="from-rose-600"] {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light button.bg-blue-600 *,
+#cockpit-root.theme-light button.bg-blue-700 *,
+#cockpit-root.theme-light button.bg-emerald-600 *,
+#cockpit-root.theme-light button.bg-emerald-600 *:hover,
+#cockpit-root.theme-light button[class*="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light button[class*="!bg-emerald-600"] *,
+#cockpit-root.theme-light button[class*="!bg-emerald-600"]:hover *,
+#cockpit-root.theme-light button.bg-emerald-700 *,
+#cockpit-root.theme-light button.bg-rose-600 *,
+#cockpit-root.theme-light button.bg-rose-700 *,
+#cockpit-root.theme-light button.bg-red-600 *,
+#cockpit-root.theme-light button.bg-slate-900 *,
+#cockpit-root.theme-light button[class*="bg-blue-600"] *,
+#cockpit-root.theme-light button[class*="bg-emerald-600"] *,
+#cockpit-root.theme-light button[class*="bg-rose-600"] *,
+#cockpit-root.theme-light button[class*="bg-red-600"] *,
+#cockpit-root.theme-light button[class*="from-health-blue"] *,
+#cockpit-root.theme-light button[class*="from-blue-600"] *,
+#cockpit-root.theme-light button[class*="from-emerald-600"] *,
+#cockpit-root.theme-light button[class*="from-rose-600"] *,
+#cockpit-root.theme-light [class*="from-rose-600"] * {
+  color: #ffffff !important;
+}
+
+/* Sidebar Navigation Items in Light Mode: Crisp Slate Inactive, Deep Forest Green Active */
+#cockpit-root.theme-light aside nav button,
+#cockpit-root.theme-light aside button {
+  color: #334155 !important;
+}
+#cockpit-root.theme-light aside nav button svg,
+#cockpit-root.theme-light aside button svg {
+  color: #64748b !important;
+}
+#cockpit-root.theme-light aside nav button[class*="bg-emerald"],
+#cockpit-root.theme-light aside button[class*="bg-emerald"],
+#cockpit-root.theme-light aside nav button[class*="text-emerald"],
+#cockpit-root.theme-light aside button[class*="text-emerald"] {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+#cockpit-root.theme-light aside nav button[class*="bg-emerald"] *,
+#cockpit-root.theme-light aside button[class*="bg-emerald"] *,
+#cockpit-root.theme-light aside nav button[class*="text-emerald"] *,
+#cockpit-root.theme-light aside button[class*="text-emerald"] * {
+  color: #065f46 !important;
+}
+#cockpit-root.theme-light aside nav button[class*="bg-emerald"] svg,
+#cockpit-root.theme-light aside button[class*="bg-emerald"] svg {
+  color: #047857 !important;
+}
+#cockpit-root.theme-light aside nav button[class*="bg-emerald"] span[class*="font-mono"],
+#cockpit-root.theme-light aside button[class*="bg-emerald"] span[class*="font-mono"] {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #6ee7b7 !important;
+}
+
+/* Action button "Buat Laporan" and "Buat Berkas Audit" adapted for Light Mode (Zamrud Medis) */
+#cockpit-root.theme-light button[class*="from-health-blue-dark"],
+#cockpit-root.theme-light [class*="from-health-blue-dark"] {
+  background-image: linear-gradient(to right, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.25) !important;
+}
+#cockpit-root.theme-light button[class*="from-health-blue-dark"] *,
+#cockpit-root.theme-light [class*="from-health-blue-dark"] * {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light button[class*="from-health-blue-dark"] svg,
+#cockpit-root.theme-light [class*="from-health-blue-dark"] svg {
+  color: #ffffff !important;
+}
+
+#cockpit-root.theme-light button[class*="bg-sky-600"],
+#cockpit-root.theme-light button[class*="bg-sky-600"] * {
+  color: #ffffff !important;
+}
+
+/* Action button "Intervensi Faskes" adapted for Light Mode */
+#cockpit-root.theme-light button[class*="from-pink-600"],
+#cockpit-root.theme-light [class*="from-pink-600"] {
+  background-image: linear-gradient(to right, #e11d48, #be123c) !important;
+  border-color: #be123c !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(225, 29, 72, 0.3) !important;
+}
+#cockpit-root.theme-light button[class*="from-pink-600"] *,
+#cockpit-root.theme-light [class*="from-pink-600"] * {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light button[class*="from-pink-600"] svg,
+#cockpit-root.theme-light [class*="from-pink-600"] svg {
+  color: #ffffff !important;
+}
+
+/* Primary Action Buttons ("Cari", "Buat Berkas Audit", etc.) in Light Mode (Zamrud Medis) */
+#cockpit-root.theme-light button[type="submit"],
+#cockpit-root.theme-light button[type="submit"][class*="from-health-blue"] {
+  background-image: linear-gradient(135deg, #059669, #047857) !important;
+  background-color: #059669 !important;
+  border: 1px solid #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.35) !important;
+}
+#cockpit-root.theme-light button[type="submit"]:hover,
+#cockpit-root.theme-light button[type="submit"][class*="from-health-blue"]:hover {
+  background-image: linear-gradient(135deg, #047857, #065f46) !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light button[type="submit"] *,
+#cockpit-root.theme-light button[type="submit"] svg {
+  color: #ffffff !important;
+}
+
+/* Secondary Navigation Buttons ("Triase Cepat", etc.) in Light Mode */
+#cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]) {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #047857 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+#cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]):hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #065f46 !important;
+}
+#cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]) * {
+  color: #047857 !important;
+}
+#cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]) svg {
+  color: #047857 !important;
+}
+
+/* Quick Filter Active Chip ("Semua Berkas") in Light Mode (Zamrud Medis) */
+#cockpit-root.theme-light div.flex.items-center.gap-2.flex-wrap button[class*="from-health-blue"] {
+  background-color: #059669 !important;
+  background-image: none !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px -1px rgba(5, 150, 105, 0.3) !important;
+}
+#cockpit-root.theme-light div.flex.items-center.gap-2.flex-wrap button[class*="from-health-blue"] * {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light div.flex.items-center.gap-2.flex-wrap button[class*="from-health-blue"] svg {
+  color: #ffffff !important;
+}
+
+/* Pagination Active Page Pill ("Halaman 1") in Light Mode */
+#cockpit-root.theme-light div.rounded-xl[class*="from-health-blue"] {
+  background-color: #059669 !important;
+  background-image: none !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px 0 rgba(5, 150, 105, 0.25) !important;
+}
+#cockpit-root.theme-light div.rounded-xl[class*="from-health-blue"] * {
+  color: #ffffff !important;
+}
+
+/* Header Icon Badges (Flag, Folder, Shield, Zap) in Light Mode (Zamrud Tint) */
+#cockpit-root.theme-light div[class*="from-[#00134A]"][class*="to-[#001D58]"],
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.text-\[\#FFCA40\]),
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg[class*="text-[#FFCA40]"]),
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-flag),
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg[class*="lucide-flag"]),
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-folder-open),
+#cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg.text-\[\#FFCA40\]),
+#cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg[class*="text-[#FFCA40]"]) {
+  background-color: #ecfdf5 !important;
+  background-image: none !important;
+  border: 1px solid #a7f3d0 !important;
+  color: #047857 !important;
+  box-shadow: 0 1px 2px 0 rgba(5, 150, 105, 0.08) !important;
+}
+#cockpit-root.theme-light div[class*="from-[#00134A]"][class*="to-[#001D58]"] svg,
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.text-\[\#FFCA40\]) svg,
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg[class*="text-[#FFCA40]"]) svg,
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-flag) svg,
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg[class*="lucide-flag"]) svg,
+#cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-folder-open) svg,
+#cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg.text-\[\#FFCA40\]) svg,
+#cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg[class*="text-[#FFCA40]"]) svg {
+  color: #047857 !important;
+}
+
+/* Flagged sessions total count badge ("5 total") in Light Mode */
+#cockpit-root.theme-light span[class*="rounded-full"][class*="bg-[#FFCA40]"],
+#cockpit-root.theme-light span[class*="rounded-full"][class*="bg-[#FFCA40]/20"] {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+/* Light Mode Pastel Badges & Category Tags: Deep High-Contrast Colors on Soft Tinted Backgrounds */
+
+/* Blue / Sky Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis */
+#cockpit-root.theme-light span[class*="bg-blue-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-sky-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-blue-100"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-sky-100"]:not([class*="hover:"]) {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Cyan Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis */
+#cockpit-root.theme-light span[class*="bg-cyan-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-cyan-100"]:not([class*="hover:"]) {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Emerald Pastel Badges & Tints in Light Mode */
+#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) * {
+  color: #065f46 !important;
+}
+
+/* Rose / Red Pastel Badges & Tints in Light Mode */
+#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-rose-100"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-red-100"]:not([class*="hover:"]) {
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
+  border-color: #fecaca !important;
+}
+#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-rose-100"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-red-100"]:not([class*="hover:"]) * {
+  color: #991b1b !important;
+}
+
+/* Amber / Orange Pastel Badges & Tints in Light Mode */
+#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-amber-100"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-orange-100"]:not([class*="hover:"]) {
+  background-color: #fffbeb !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-amber-100"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-orange-100"]:not([class*="hover:"]) * {
+  color: #92400e !important;
+}
+
+/* Purple Pastel Badges & Tints in Light Mode */
+#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-purple-100"]:not([class*="hover:"]) {
+  background-color: #faf5ff !important;
+  color: #6b21a8 !important;
+  border-color: #e9d5ff !important;
+}
+#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-purple-100"]:not([class*="hover:"]) * {
+  color: #6b21a8 !important;
+}
+
+/* Standard Clean Dropdown Menu: Transparent Background at Rest, Subtle Neutral Hover */
+#cockpit-root.theme-light [class*="origin-top-right"] button,
+#cockpit-root.theme-light div[class*="origin-top-right"] button {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #334155 !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button svg,
+#cockpit-root.theme-light div[class*="origin-top-right"] button svg {
+  color: #64748b !important;
+  stroke: #64748b !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button:hover,
+#cockpit-root.theme-light div[class*="origin-top-right"] button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button:hover svg,
+#cockpit-root.theme-light div[class*="origin-top-right"] button:hover svg {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button[class*="text-rose"],
+#cockpit-root.theme-light div[class*="origin-top-right"] button[class*="text-rose"] {
+  color: #dc2626 !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button[class*="text-rose"] svg,
+#cockpit-root.theme-light div[class*="origin-top-right"] button[class*="text-rose"] svg {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button[class*="text-rose"]:hover,
+#cockpit-root.theme-light div[class*="origin-top-right"] button[class*="text-rose"]:hover {
+  background-color: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+#cockpit-root.theme-light [class*="origin-top-right"] button[class*="text-rose"]:hover svg,
+#cockpit-root.theme-light div[class*="origin-top-right"] button[class*="text-rose"]:hover svg {
+  color: #b91c1c !important;
+  stroke: #b91c1c !important;
+}
+
+/* Action & Refresh Buttons with gradient from-[#FFCA40] in Light Mode (Zamrud Medis) */
+#cockpit-root.theme-light button[class*="from-[#FFCA40]"],
+#cockpit-root.theme-light [class*="from-[#FFCA40]"] {
+  background-image: linear-gradient(to right, #059669, #047857) !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.25) !important;
+}
+#cockpit-root.theme-light button[class*="from-[#FFCA40]"] *,
+#cockpit-root.theme-light [class*="from-[#FFCA40]"] * {
+  color: #ffffff !important;
+}
+
+/* Segmented Control Track & Tabs in Light Mode */
+#cockpit-root.theme-light div.flex.rounded-xl.p-1,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button {
+  color: #1e293b !important;
+}
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button:hover,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button:hover,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button:hover {
+  color: #0f172a !important;
+}
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="bg-emerald-600"],
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="bg-emerald-600"]:hover,
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="bg-emerald-600"] *,
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button[class*="bg-emerald-600"],
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button[class*="bg-emerald-600"]:hover,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button[class*="bg-emerald-600"] *,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1 button[class*="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button[class*="bg-emerald-600"],
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button[class*="bg-emerald-600"]:hover,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button[class*="bg-emerald-600"] *,
+#cockpit-root.theme-light div.grid.rounded-xl.p-1\.5 button[class*="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="bg-sky-600"],
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-rose-600"],
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-cyan-600"] {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-health-blue"] {
+  background-color: #059669 !important;
+  background-image: none !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.2) !important;
+}
+#cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-health-blue"] * {
+  color: #ffffff !important;
+}
+
+/* Quick Triage Severity Option Cards in Light Mode */
+#cockpit-root.theme-light .grid button[class*="rounded-xl"][class*="border"]:not([class*="bg-emerald-600"]):not([class*="bg-emerald-700"]):not([class*="bg-primary"]):not([class*="bg-slate-900"]):not([class*="!bg-"]) {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+#cockpit-root.theme-light .grid button[class*="rounded-xl"][class*="border"]:not([class*="bg-emerald-600"]):not([class*="bg-emerald-700"]):not([class*="bg-primary"]):not([class*="bg-slate-900"]):not([class*="!bg-"]):hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+#cockpit-root.theme-light .grid button[class*="rounded-xl"][class*="ring-2"]:not([class*="bg-emerald-600"]):not([class*="bg-emerald-700"]):not([class*="!bg-"]) {
+  background-color: #ffffff !important;
+}
+#cockpit-root.theme-light .grid button[class*="ring-rose-500"] {
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.25) !important;
+}
+#cockpit-root.theme-light .grid button[class*="ring-orange-500"] {
+  border-color: #ea580c !important;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25) !important;
+}
+#cockpit-root.theme-light .grid button[class*="ring-amber-500"] {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
+}
+#cockpit-root.theme-light .grid button[class*="ring-emerald-500"] {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25) !important;
+}
+#cockpit-root.theme-light .grid button .text-\[\#FFCA40\] {
+  color: #047857 !important;
+}
+
+/* CMA Workflow info banner in Light Mode (Zamrud Medis) */
+#cockpit-root.theme-light div[class*="bg-[#FFCA40]"]:has(> svg) {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+#cockpit-root.theme-light div[class*="bg-[#FFCA40]"]:has(> svg) svg {
+  color: #047857 !important;
+}
+#cockpit-root.theme-light span.text-\[\#FFCA40\].font-bold {
+  color: #047857 !important;
+}
+
+/* Tables & Rows in Light Mode: Clean White with left border indicators, NO full-row candy striping */
+#cockpit-root.theme-light table {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+#cockpit-root.theme-light thead,
+#cockpit-root.theme-light thead tr,
+#cockpit-root.theme-light th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+#cockpit-root.theme-light tbody tr,
+#cockpit-root.theme-light tbody td {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+#cockpit-root.theme-light tbody tr:hover,
+#cockpit-root.theme-light tbody tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* Subtle lane hover accents on white rows */
+#cockpit-root.theme-light tbody tr[class*="border-l-rose-500"]:hover td {
+  background-color: #fff1f2 !important;
+}
+#cockpit-root.theme-light tbody tr[class*="border-l-amber-500"]:hover td {
+  background-color: #fffbeb !important;
+}
+#cockpit-root.theme-light tbody tr[class*="border-l-emerald-500"]:hover td {
+  background-color: #f0fdf4 !important;
+}
+
+/* SVG Graph Text contrast in Light Mode */
+#cockpit-root.theme-light svg text[fill="#FDA4AF"] { fill: #9f1239 !important; }
+#cockpit-root.theme-light svg text[fill="#7DD3FC"] { fill: #047857 !important; }
+#cockpit-root.theme-light svg text[fill="#FFE082"] { fill: #92400e !important; }
+#cockpit-root.theme-light svg text[fill="#6EE7B7"] { fill: #065f46 !important; }
+#cockpit-root.theme-light svg text[fill="#FFFFFF"],
+#cockpit-root.theme-light svg text[fill="#ffffff"],
+#cockpit-root.theme-light svg text[fill="white"] { fill: #0f172a !important; }
+#cockpit-root.theme-light svg text[fill="#94A3B8"] { fill: #334155 !important; }
+#cockpit-root.theme-light svg text[fill="#A5B4FC"] { fill: #047857 !important; }
+#cockpit-root.theme-light svg text[fill="#818CF8"] { fill: #047857 !important; }
+
+/* Scrollbar styling in Light Mode */
+#cockpit-root.theme-light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+#cockpit-root.theme-light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+#cockpit-root.theme-light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Mobile JKN phone frame isolation */
+#cockpit-root.theme-light .phone-mockup {
+  background-color: #0f172a !important;
+}
+#cockpit-root.theme-light .phone-mockup .bg-\[\#F5F7FA\] {
+  background-color: #F5F7FA !important;
+}
+
+/* Institutional Legal Modal in Light Mode */
+#institutional-legal-window.theme-light {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+#institutional-legal-window.theme-light .text-white {
+  color: #0f172a !important;
+}
+#institutional-legal-window.theme-light .text-white\/90,
+#institutional-legal-window.theme-light .text-white\/80 {
+  color: #1e293b !important;
+}
+#institutional-legal-window.theme-light .text-white\/70,
+#institutional-legal-window.theme-light .text-white\/60 {
+  color: #475569 !important;
+}
+#institutional-legal-window.theme-light .text-white\/50,
+#institutional-legal-window.theme-light .text-white\/40 {
+  color: #64748b !important;
+}
+#institutional-legal-window.theme-light .bg-\[\#00134A\],
+#institutional-legal-window.theme-light .bg-\[\#00153A\],
+#institutional-legal-window.theme-light .bg-\[\#000c24\] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+#institutional-legal-window.theme-light .border-white\/10,
+#institutional-legal-window.theme-light .border-white\/20 {
+  border-color: #e2e8f0 !important;
+}
+#institutional-legal-window.theme-light input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+#institutional-legal-window.theme-light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+

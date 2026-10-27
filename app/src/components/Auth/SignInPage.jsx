@@ -1,0 +1,434 @@
+import React, { useState } from 'react';
+import { 
+  Lock, User, Eye, EyeOff, ArrowRight, 
+  AlertCircle, ArrowLeft, RefreshCw, ShieldCheck, Check
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import SecurityVerificationModal from './SecurityVerificationModal';
+
+// Generator kode Captcha 5 karakter alfanumerik (mengecualikan karakter ambigu 0/O, 1/I)
+const generateCaptchaCode = () => {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenModal = false, isLight = undefined }) {
+  const effectiveIsLight =
+    isLight !== undefined
+      ? isLight
+      : typeof window !== 'undefined' && localStorage.getItem('claimtrace_theme') === 'light';
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaCode, setCaptchaCode] = useState(() => generateCaptchaCode());
+  const [isCaptchaSpinning, setIsCaptchaSpinning] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // State untuk Modal Verifikasi Keamanan Berlapis (PIN 6 Angka, OTP Email, Sesi Device)
+  const [showVerificationModal, setShowVerificationModal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verify') === '1' || params.get('view') === 'mfa') return true;
+    }
+    return initialOpenModal;
+  });
+  const [pendingUser, setPendingUser] = useState(null);
+
+  const handleRefreshCaptcha = () => {
+    setIsCaptchaSpinning(true);
+    setCaptchaCode(generateCaptchaCode());
+    setCaptchaInput('');
+    setErrorMsg('');
+    setTimeout(() => setIsCaptchaSpinning(false), 300);
+  };
+
+  const refreshCaptchaOnFailed = () => {
+    setIsCaptchaSpinning(true);
+    setCaptchaCode(generateCaptchaCode());
+    setCaptchaInput('');
+    setTimeout(() => setIsCaptchaSpinning(false), 300);
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    // 1. Validasi Kelengkapan Kolom Data Login
+    if (!identifier.trim()) {
+      setErrorMsg('NIP Kedinasan atau Email Resmi wajib diisi.');
+      refreshCaptchaOnFailed();
+      return;
+    }
+
+    if (!password) {
+      setErrorMsg('Kata Sandi akun verifikator wajib diisi.');
+      refreshCaptchaOnFailed();
+      return;
+    }
+
+    // 2. Validasi Captcha Keamanan
+    if (!captchaInput.trim()) {
+      setErrorMsg('Kode Keamanan (CAPTCHA) wajib diisi.');
+      refreshCaptchaOnFailed();
+      return;
+    }
+
+    if (captchaInput.trim().toUpperCase() !== captchaCode.toUpperCase()) {
+      setErrorMsg('Kode Keamanan (CAPTCHA) tidak sesuai. Kode telah diperbarui, silakan coba lagi.');
+      refreshCaptchaOnFailed();
+      return;
+    }
+
+    // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
+    setIsSubmitting(true);
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiBase}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          identifier: identifier.trim(),
+          password: password,
+          captcha_code: captchaCode,
+          captcha_input: captchaInput.trim().toUpperCase()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || 'Kredensial login tidak valid.');
+      }
+
+      // Login Kredensial Tahap 1 Berhasil -> Buka Modal Verifikasi Keamanan Berlapis (PIN 6 Angka, OTP Email, Sesi Device)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('claimtrace_token', data.token);
+        localStorage.setItem('claimtrace_user', JSON.stringify(data.user));
+      }
+      setPendingUser(data.user);
+      setShowVerificationModal(true);
+    } catch (err) {
+      if (err.message && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        setErrorMsg('Tidak dapat terhubung ke Server SSO Otentikasi BPJS Kesehatan. Pastikan jaringan aman atau VPN Kedinasan aktif.');
+      } else {
+        setErrorMsg(err.message || 'Kredensial tidak valid: NIP/Email atau Kata Sandi salah.');
+      }
+      refreshCaptchaOnFailed();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={`flex-1 flex flex-col justify-center items-center px-4 py-1.5 sm:py-2 relative overflow-hidden select-none min-h-[calc(100vh-8rem)] transition-colors duration-200 ${
+      effectiveIsLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
+    }`}>
+      {/* Soft Ambient Radial Light with breathing animation */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.12, 0.96, 1],
+          opacity: effectiveIsLight ? [0.35, 0.55, 0.4, 0.35] : [0.25, 0.45, 0.3, 0.25],
+          x: [0, 15, -15, 0],
+          y: [0, -10, 10, 0]
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[450px] blur-3xl rounded-full pointer-events-none transition-colors duration-300 ${
+          effectiveIsLight
+            ? 'bg-gradient-to-tr from-blue-200/50 via-amber-100/40 to-emerald-100/30'
+            : 'bg-gradient-to-tr from-blue-900/40 via-[#001D58]/30 to-[#FFCA40]/10'
+        }`} 
+      />
+
+      {/* Crisp Architectural Grid Pattern */}
+      <div className={`absolute inset-0 pointer-events-none ${
+        effectiveIsLight
+          ? 'opacity-[0.035] bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)]'
+          : 'opacity-[0.04] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]'
+      } bg-[size:2.5rem_2.5rem]`} />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md space-y-2.5 relative z-10 my-auto"
+      >
+        {/* LOGO & HEADING */}
+        <div className="text-center space-y-1">
+          <motion.div 
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0], transition: { duration: 0.3 } }}
+            className={`inline-flex p-2 rounded-2xl backdrop-blur-md border transition-all duration-300 mb-0.5 cursor-pointer ${
+              effectiveIsLight
+                ? 'bg-white border-slate-200 shadow-md shadow-slate-200/50 hover:border-amber-500'
+                : 'bg-white/5 border-white/10 shadow-xl shadow-[#00081c]/50 hover:border-[#FFCA40]/40'
+            }`}
+          >
+            <img 
+              alt="BPJS Kesehatan" 
+              className="h-8 w-auto object-contain" 
+              src="/assets/images/bpjs_icon.png"
+            />
+          </motion.div>
+          <h1 className={`text-xl font-bold tracking-tight ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
+            Portal Verifikator Klaim JKN
+          </h1>
+          <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
+            Sistem Informasi Pengawasan Klaim Pra-Bayar BPJS Kesehatan
+          </p>
+        </div>
+
+        {/* LOGIN CARD */}
+        <motion.div 
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.3 }}
+          className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border p-5 sm:p-5.5 backdrop-blur-xl space-y-3 transition-colors duration-200 ${
+            effectiveIsLight
+              ? 'border-slate-200 bg-white text-slate-900 shadow-2xl shadow-slate-300/40'
+              : 'border-white/10 bg-[#00153A]/85 text-white shadow-2xl shadow-[#00081c]/80'
+          }`}
+        >
+          {errorMsg && (
+            <motion.div 
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-2.5 rounded-xl border text-xs flex items-center space-x-2 ${
+                effectiveIsLight
+                  ? 'bg-rose-50 border-rose-200 text-rose-700 font-medium'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              }`}
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMsg}</span>
+            </motion.div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="space-y-1">
+              <label className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
+                NIP Kedinasan / Email Resmi
+              </label>
+              <div className="relative group">
+                <User className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
+                  effectiveIsLight
+                    ? 'text-slate-400 group-focus-within:text-amber-600'
+                    : 'text-white/40 group-focus-within:text-[#FFCA40]'
+                }`} />
+                <input aria-label="Bidang input data"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="siti.rahma@bpjs-kesehatan.go.id"
+                  className={`w-full rounded-xl py-2 pl-9 pr-3 text-xs outline-none transition-all duration-200 border ${
+                    effectiveIsLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
+                Kata Sandi
+              </label>
+              <div className="relative group">
+                <Lock className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
+                  effectiveIsLight
+                    ? 'text-slate-400 group-focus-within:text-amber-600'
+                    : 'text-white/40 group-focus-within:text-[#FFCA40]'
+                }`} />
+                <input aria-label="Bidang input data"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••••••"
+                  className={`w-full rounded-xl py-2 pl-9 pr-9 text-xs outline-none transition-all duration-200 border ${
+                    effectiveIsLight
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors cursor-pointer ${
+                    effectiveIsLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* CAPTCHA KEAMANAN */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className={`text-xs font-semibold flex items-center space-x-1.5 ${
+                  effectiveIsLight ? 'text-slate-700' : 'text-white/80'
+                }`}>
+                  <ShieldCheck className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                  <span>Kode Keamanan (CAPTCHA)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleRefreshCaptcha}
+                  className={`text-[11px] font-medium flex items-center space-x-1 transition-colors group cursor-pointer ${
+                    effectiveIsLight ? 'text-amber-600 hover:text-amber-700' : 'text-[#FFCA40] hover:text-[#FFD700]'
+                  }`}
+                  title="Ganti Kode Captcha"
+                >
+                  <RefreshCw className={`w-3 h-3 transition-transform duration-300 ${isCaptchaSpinning ? 'rotate-180' : 'group-hover:rotate-45'}`} />
+                  <span>Ganti Kode</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-12 gap-2.5 items-stretch">
+                {/* Visual Captcha Display Box */}
+                <div 
+                  onClick={handleRefreshCaptcha}
+                  title="Klik untuk acak ulang kode keamanan"
+                  className={`col-span-5 relative rounded-xl p-2 flex items-center justify-center cursor-pointer select-none overflow-hidden border shadow-inner group min-h-[38px] ${
+                    effectiveIsLight ? 'bg-slate-900 border-slate-700' : 'bg-[#000c24] border-white/15'
+                  }`}
+                >
+                  {/* Security Noise Grid / Lines */}
+                  <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="0" y1="20%" x2="100%" y2="80%" stroke="#10b981" strokeWidth="1.5" strokeDasharray="3,3" />
+                    <line x1="0" y1="80%" x2="100%" y2="20%" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="4,2" />
+                    <line x1="20%" y1="0" x2="80%" y2="100%" stroke="#a7f3d0" strokeWidth="1" strokeDasharray="2,4" />
+                    <circle cx="25%" cy="40%" r="12" stroke="#059669" strokeWidth="0.8" fill="none" opacity="0.3" />
+                    <circle cx="75%" cy="60%" r="15" stroke="#38bdf8" strokeWidth="0.8" fill="none" opacity="0.3" />
+                  </svg>
+                  
+                  {/* Distorted Captcha Characters */}
+                  <div className="relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest text-[#FFCA40] font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                    {captchaCode.split('').map((char, index) => {
+                      const rotations = [-6, 8, -4, 6, -8];
+                      const yOffsets = [1, -2, 2, -1, 1];
+                      return (
+                        <span 
+                          key={index}
+                          style={{
+                            transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
+                            display: 'inline-block'
+                          }}
+                          className={index % 2 === 0 ? 'text-[#FFCA40]' : 'text-emerald-300'}
+                        >
+                          {char}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  {/* Hover indicator */}
+                  <div className="absolute inset-0 bg-[#FFCA40]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <RefreshCw className="w-3.5 h-3.5 text-white/80" />
+                  </div>
+                </div>
+
+                {/* Input Captcha Box */}
+                <div className="col-span-7 relative">
+                  <input
+                    type="text"
+                    maxLength={5}
+                    aria-label="Masukkan 5 karakter kode CAPTCHA"
+                    value={captchaInput}
+                    onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                    placeholder="Masukkan kode"
+                    className={`w-full h-full border rounded-xl py-2 pl-3 pr-8 text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 outline-none ${
+                      captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase()
+                        ? effectiveIsLight
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
+                          : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20'
+                        : effectiveIsLight
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                          : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                    }`}
+                  />
+                  {captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase() && (
+                    <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center pointer-events-none border ${
+                      effectiveIsLight
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    }`}>
+                      <Check className="w-3 h-3 stroke-[2.5]" />
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2.5 px-4 rounded-xl bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold text-xs shadow-lg shadow-[#FFCA40]/20 flex items-center justify-center space-x-2 transition-all duration-200 disabled:opacity-50 pt-2.5 group cursor-pointer"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#000c24]/30 border-t-[#000c24] rounded-full animate-spin" />
+                  <span>Memverifikasi Kredensial...</span>
+                </div>
+              ) : (
+                <>
+                  <span>Masuk ke Portal Verifikator</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                </>
+              )}
+            </motion.button>
+          </form>
+        </motion.div>
+
+        {/* SECURITY & REGULATION DISCLAIMER */}
+        <div className="text-center space-y-1">
+          <p className={`text-[10px] max-w-sm mx-auto leading-tight ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>
+            Akses terbatas hanya untuk pegawai dan verifikator berwenang BPJS Kesehatan. 
+            Seluruh aktivitas terekam dalam <em>audit trail</em> kriptografis sesuai standar NIST CSF 2.0 PR.AC, MITRE D3FEND D3-MFA, UU ITE &amp; UU PDP No. 27/2022.
+          </p>
+          <div className={`flex items-center justify-center gap-1.5 text-[9px] font-mono ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>
+            <span>NIST CSF 2.0 PR.AC</span>
+            <span>·</span>
+            <span>MITRE D3FEND D3-MFA</span>
+            <span>·</span>
+            <span>MITRE ATT&CK T1078 Defense</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* MODAL VERIFIKASI KEAMANAN BERLAPIS (PIN 6 ANGKA, OTP EMAIL, SESI DEVICE) */}
+      <SecurityVerificationModal
+        isOpen={showVerificationModal}
+        user={pendingUser}
+        identifier={identifier}
+        isLight={effectiveIsLight}
+        onCompleteVerification={(verifiedUser) => {
+          setShowVerificationModal(false);
+          if (onLoginSuccess) onLoginSuccess(verifiedUser);
+        }}
+        onCancelSignOut={() => {
+          setShowVerificationModal(false);
+          setPendingUser(null);
+          setPassword('');
+          handleRefreshCaptcha();
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('claimtrace_token');
+            localStorage.removeItem('claimtrace_user');
+          }
+        }}
+      />
+    </div>
+  );
+}
