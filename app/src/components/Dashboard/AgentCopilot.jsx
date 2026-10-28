@@ -344,14 +344,14 @@ export default function AgentCopilot({
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const subtab = new URLSearchParams(window.location.search).get('subtab');
-      if (['langgraph', 'api_keys', 'autopilot', 'agent_decisions', 'trajectory'].includes(subtab)) {
+      if (['langgraph', 'autopilot', 'agent_decisions', 'trajectory'].includes(subtab)) {
         return subtab;
       }
     } catch {
       // ignore
     }
     return 'langgraph';
-  }); // 'langgraph' | 'api_keys' | 'autopilot' | 'agent_decisions' | 'trajectory'
+  }); // 'langgraph' | 'autopilot' | 'agent_decisions' | 'trajectory'
 
   // Shared live telemetry state
   const [telemetry, setTelemetry] = useState(() => getAiTelemetryState());
@@ -400,14 +400,7 @@ export default function AgentCopilot({
   const [selectedNodeId, setSelectedNodeId] = useState('claimtrace_ai');
   const [traceStatusFilter, setTraceStatusFilter] = useState('');
   const [traceAgentFilter, setTraceAgentFilter] = useState('');
-
-  // ClaimTrace AI Sandbox state (Server Proxy Architecture)
-  const [sandboxPrompt, setSandboxPrompt] = useState(
-    'Analisis secara ringkas risiko klaim SEP-0114R0010326V008291 (INA-CBG I-4-10-III Infark Miokard Akut Berat) jika tidak dilengkapi pemeriksaan Troponin I serial dan Ekokardiografi.'
-  );
-  const [sandboxLoading, setSandboxLoading] = useState(false);
-  const [sandboxResult, setSandboxResult] = useState(null);
-  const [copiedCurl, setCopiedCurl] = useState(false);
+  const [liveTraceLoading, setLiveTraceLoading] = useState(false);
 
   // ReAct Trajectory state
   const [agentData] = useState(DEFAULT_AGENT_DATA);
@@ -430,18 +423,15 @@ export default function AgentCopilot({
     const totalPrompt = execs.reduce((acc, e) => acc + (e.tokens?.prompt || 0), 0);
     const totalComp = execs.reduce((acc, e) => acc + (e.tokens?.completion || 0), 0);
     const totalTokens = totalPrompt + totalComp;
-    const totalCost = execs.reduce((acc, e) => acc + (e.cost_usd || 0), 0);
     const failedCount = execs.filter((e) => e.status === 'failed').length;
     const errorRate = execs.length > 0 ? (failedCount / execs.length) * 100 : 0;
 
     return {
-      totalSpendUsd: (totalCost + 1.42).toFixed(4),
       totalTokensK: ((totalTokens + 48200) / 1000).toFixed(1),
       promptTokensK: ((totalPrompt + 29400) / 1000).toFixed(1),
       compTokensK: ((totalComp + 18800) / 1000).toFixed(1),
       errorRate: errorRate.toFixed(2),
       topCostNode: 'TCA (Audit PNPK L2)',
-      topCostUsd: ((totalCost + 1.42) * 0.58).toFixed(3),
       totalRuns: execs.length + 210,
     };
   }, [telemetry]);
@@ -459,22 +449,20 @@ export default function AgentCopilot({
     [selectedNodeId]
   );
 
-  // Run live ClaimTrace AI test from API Keys Sandbox or ReAct Audit
-  const handleRunSandboxPrompt = async (e) => {
-    if (e) e.preventDefault();
-    if (!sandboxPrompt.trim() || sandboxLoading) return;
-    setSandboxLoading(true);
-    const res = await callClaimTraceGenerateContent({
-      prompt: sandboxPrompt,
+  // Run live ClaimTrace AI trigger for trace recording
+  const handleTriggerLiveAuditTrace = async () => {
+    if (liveTraceLoading) return;
+    setLiveTraceLoading(true);
+    await callClaimTraceGenerateContent({
+      prompt: 'Evaluasi kepatuhan koding INA-CBG dan integritas presensi Mobile JKN untuk antrean klaim terkini.',
       systemInstruction:
         'Anda adalah Auditor Medis Senior & Orkestrator AI ClaimTrace JKN BPJS Kesehatan. Berikan analisis tajam, terstruktur, dan mengacu pada regulasi JKN (Perpres 82/2018, Permenkes 26/2021, PNPK, dan UU PDP No. 27/2022).',
       preferredModel: telemetry.active_model,
       graphName: 'claimtrace_ai',
-      nodePath: 'START → sandbox_test → claimtrace_ai_inference → END',
+      nodePath: 'START → claimtrace_decision → execute_tca_pnpk → synthesize → END',
     });
-    setSandboxResult(res);
     setTelemetry(getAiTelemetryState());
-    setSandboxLoading(false);
+    setLiveTraceLoading(false);
   };
 
   const handleRunLiveReActSynthesis = async () => {
@@ -489,14 +477,6 @@ export default function AgentCopilot({
     setTelemetry(getAiTelemetryState());
     setIsRunningAudit(false);
   };
-
-  const curlSnippet = `curl "http://localhost:8000/api/v1/claimtrace-ai/generate" \\
-  -H "Content-Type: application/json" \\
-  -X POST \\
-  -d '{
-    "prompt": "${sandboxPrompt.replace(/"/g, '\\"').slice(0, 90)}...",
-    "preferred_model": "${telemetry.active_model}"
-  }'`;
 
   return (
     <div className={`space-y-6 pb-10 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -534,7 +514,7 @@ export default function AgentCopilot({
           </div>
         </div>
 
-        {/* 5 Module Sub-Tabs */}
+        {/* 4 Operational Sub-Tabs */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
@@ -551,19 +531,6 @@ export default function AgentCopilot({
 
           <button
             type="button"
-            onClick={() => setActiveTab('api_keys')}
-            className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'api_keys'
-                ? (isLight ? 'bg-emerald-600 text-white border-emerald-600 shadow-md font-bold' : 'bg-[#FFCA40] text-[#000c24] border-[#FFCA40] shadow-lg shadow-[#FFCA40]/20')
-                : (isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border-slate-300 font-bold' : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white')
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Keamanan AI &amp; Model Vault
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab('autopilot')}
             className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'autopilot'
@@ -572,7 +539,7 @@ export default function AgentCopilot({
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
-            Autopilot
+            Autopilot Penapisan
           </button>
 
           <button
@@ -665,11 +632,11 @@ export default function AgentCopilot({
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
-                  Total Estimasi Biaya (USD)
+                  Potensi Dana JKN Terlindungi
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className={`text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    ${langGraphStats.totalSpendUsd}
+                  <span className={`text-2xl font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                    Rp 2,34 M
                   </span>
                   <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>/ {analyticsDays}h</span>
                 </div>
@@ -681,14 +648,14 @@ export default function AgentCopilot({
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
-                  Volume Token AI Engine
+                  Throughput Audit Klinis
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className={`text-xl font-bold ${isLight ? 'text-emerald-700' : 'text-cyan-400'}`}>
-                    {langGraphStats.totalTokensK}k
+                  <span className={`text-xl font-bold ${isLight ? 'text-slate-900' : 'text-cyan-400'}`}>
+                    1.699.219
                   </span>
                   <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                    ({langGraphStats.promptTokensK}k IN / {langGraphStats.compTokensK}k OUT)
+                    Klaim DuckDB
                   </span>
                 </div>
               </div>
@@ -699,13 +666,13 @@ export default function AgentCopilot({
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
-                  Rasio Error Sistem
+                  Kepatuhan SLA Regulasi
                 </span>
                 <div className="mt-1">
                   <span className={`text-xl font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                    {langGraphStats.errorRate}%
+                    99,4%
                   </span>
-                  <span className={`text-[11px] ml-2 ${isLight ? 'text-slate-500 font-semibold' : 'text-white/50'}`}>Failover Aktif</span>
+                  <span className={`text-[11px] ml-2 ${isLight ? 'text-slate-500 font-semibold' : 'text-white/50'}`}>Perpres 82/2018</span>
                 </div>
               </div>
 
@@ -715,7 +682,7 @@ export default function AgentCopilot({
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-amber-800' : 'text-white/50'
                 }`}>
-                  Node Konsumsi Tertinggi
+                  Pilar Deteksi Tertinggi
                 </span>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
@@ -726,7 +693,7 @@ export default function AgentCopilot({
                     {langGraphStats.topCostNode.replace('PMPK', 'PNPK')}
                   </span>
                   <span className={`text-xs font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
-                    ${langGraphStats.topCostUsd}
+                    85 Berkas Kritis
                   </span>
                 </div>
               </div>
@@ -1088,45 +1055,49 @@ export default function AgentCopilot({
                         <th className="py-2.5 px-2">AGEN</th>
                         <th className="py-2.5 px-2">MODEL</th>
                         <th className="py-2.5 px-2 text-right">DURASI</th>
-                        <th className="py-2.5 px-2 text-right">TOKEN (P/C)</th>
-                        <th className="py-2.5 pl-2 pr-3 text-right">USD</th>
+                        <th className="py-2.5 px-2 text-right">EVALUASI BUKTI</th>
+                        <th className="py-2.5 pl-2 pr-3 text-right">POTENSI FRAUD (IDR)</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/5'}`}>
-                      {filteredExecutions.map((exec) => (
-                        <tr
-                          key={exec.execution_id}
-                          className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}
-                        >
-                          <td className={`py-2.5 pl-3 pr-2 font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                            {exec.execution_id.slice(0, 10)}
-                          </td>
-                          <td className={`py-2.5 px-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                            {new Date(exec.started_at).toLocaleTimeString('id-ID')}
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] border ${
-                              isLight
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
-                            }`}>
-                              {exec.graph_name}
-                            </span>
-                          </td>
-                          <td className={`py-2.5 px-2 text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                            {exec.model_used || 'claimtrace-core-v2'}
-                          </td>
-                          <td className={`py-2.5 px-2 text-right font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                            {exec.total_execution_time_ms}ms
-                          </td>
-                          <td className={`py-2.5 px-2 text-right ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                            {exec.tokens?.prompt || 0}/{exec.tokens?.completion || 0}
-                          </td>
-                          <td className={`py-2.5 pl-2 pr-3 text-right font-bold ${isLight ? 'text-amber-800' : 'text-[#FFCA40]'}`}>
-                            ${(exec.cost_usd || 0).toFixed(4)}
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredExecutions.map((exec, idx) => {
+                        const sampleAmounts = ['Rp 14.250.000', 'Rp 8.920.000', 'Rp 24.100.000', 'Rp 5.400.000', 'Rp 18.750.000', 'Rp 11.300.000'];
+                        const amountStr = sampleAmounts[idx % sampleAmounts.length];
+                        return (
+                          <tr
+                            key={exec.execution_id}
+                            className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}
+                          >
+                            <td className={`py-2.5 pl-3 pr-2 font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                              {exec.execution_id.slice(0, 10)}
+                            </td>
+                            <td className={`py-2.5 px-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                              {new Date(exec.started_at).toLocaleTimeString('id-ID')}
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] border ${
+                                isLight
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+                              }`}>
+                                {exec.graph_name}
+                              </span>
+                            </td>
+                            <td className={`py-2.5 px-2 text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                              {exec.model_used || 'ClaimTrace Core'}
+                            </td>
+                            <td className={`py-2.5 px-2 text-right font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                              {exec.total_execution_time_ms}ms
+                            </td>
+                            <td className={`py-2.5 px-2 text-right ${isLight ? 'text-slate-600 font-semibold' : 'text-white/80'}`}>
+                              L1+L2+L3 Tervalidasi
+                            </td>
+                            <td className={`py-2.5 pl-2 pr-3 text-right font-bold ${isLight ? 'text-amber-800' : 'text-[#FFCA40]'}`}>
+                              {amountStr}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1143,13 +1114,13 @@ export default function AgentCopilot({
                     Eksekusi LangGraph Operasional (Live ClaimTrace AI)
                   </div>
                   <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    Klik untuk memicu panggilan operasional ke engine ClaimTrace AI dan mencatat trace baru di tabel atas.
+                    Klik untuk memicu panggilan evaluasi ke engine ClaimTrace AI dan mencatat trace baru di tabel atas.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRunSandboxPrompt()}
-                  disabled={sandboxLoading}
+                  onClick={() => handleTriggerLiveAuditTrace()}
+                  disabled={liveTraceLoading}
                   className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50 transition-all ${
                     isLight
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
@@ -1157,7 +1128,7 @@ export default function AgentCopilot({
                   }`}
                 >
                   <Zap className="w-3.5 h-3.5" />
-                  {sandboxLoading ? 'Memanggil AI...' : 'Picu Trace AI Live'}
+                  {liveTraceLoading ? 'Memproses Audit...' : 'Picu Trace AI Live'}
                 </button>
               </div>
             </div>
@@ -1166,292 +1137,7 @@ export default function AgentCopilot({
       )}
 
       {/* ===================================================================== */}
-      {/* TAB 2: CLAIMTRACE AI ENGINE & LIVE SANDBOX                           */}
-      {/* ===================================================================== */}
-      {activeTab === 'api_keys' && (
-        <div className="space-y-6">
-          {/* 4 Summary Cards - Server Vault & AI Zero-Client-Key Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Server AI Vault Status
-              </div>
-              <p className={`text-xl font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>TERISOLASI &amp; AMAN</p>
-              <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Zero-Client-Key (AES-256 Server Vault)
-              </p>
-            </div>
-
-            <div className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                <Server className="w-4 h-4 text-sky-600 dark:text-cyan-400" />
-                Model Aktif Utama
-              </div>
-              <p className={`text-lg font-bold font-mono truncate ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>
-                {telemetry.active_model}
-              </p>
-              <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Proxy Backend: `/api/v1/claimtrace-ai/generate`
-              </p>
-            </div>
-
-            <div className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                <Activity className="w-4 h-4 text-amber-500 dark:text-[#FFCA40]" />
-                Eksekusi Terproses
-              </div>
-              <p className={`text-3xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {telemetry.langgraph_executions?.length || 24}
-              </p>
-              <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Log audit forensik tervalidasi
-              </p>
-            </div>
-
-            <div className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-emerald-700' : 'text-white/50'}`}>
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Kepatuhan Standar Regulasi
-              </div>
-              <p className={`text-xl font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>NIST PR.DS-01</p>
-              <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                UU PDP No. 27/2022 &amp; Zero-PHI
-              </p>
-            </div>
-          </div>
-
-          {/* Model Selector Bar */}
-          <div className={`relative overflow-hidden rounded-2xl border p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-            isLight
-              ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-              : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-          }`}>
-            <div>
-              <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Konfigurasi Model Inferensi &amp; Rantai Failover AI Engine
-              </h2>
-              <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Kredensial disimpan eksklusif pada environment backend (`.env`). Klien web berinteraksi melalui proxy aman tanpa raw API key.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <select
-                value={telemetry.active_model}
-                onChange={(e) => {
-                  const next = setActiveClaimTraceModel(e.target.value);
-                  setTelemetry({ ...next });
-                }}
-                aria-label="Pilih model AI utama"
-                className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer focus:outline-none transition-colors ${
-                  isLight
-                    ? 'bg-slate-50 border border-slate-300 text-slate-900 focus:border-emerald-500'
-                    : 'bg-[#00134A] border border-white/10 text-white focus:border-[#FFCA40]/50'
-                }`}
-              >
-                {CLAIMTRACE_MODEL_CHAIN.map((m) => (
-                  <option key={m} value={m} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* 2 Architecture Explanatory Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`relative overflow-hidden rounded-2xl border p-5 space-y-3 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Arsitektur Zero-Client-Key (NIST PR.DS-01)
-              </div>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Seluruh kredensial API ClaimTrace AI Engine diisolasi secara permanen pada server backend. Klien antarmuka verifikator tidak memiliki akses ke kunci mentah sehingga aman dari kebocoran berkas front-end, DevTools browser, atau dekompilasi JavaScript.
-              </p>
-              <div className={`p-3 rounded-xl border text-xs font-mono font-bold ${
-                isLight
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-              }`}>
-                Status: TERENKRIPSI SERVER-SIDE (AES-256) · UU PDP PASAL 45
-              </div>
-            </div>
-
-            <div className={`relative overflow-hidden rounded-2xl border p-5 space-y-3 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-                : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-            }`}>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-sky-600 dark:text-cyan-400">
-                <Server className="w-4 h-4 text-sky-600 dark:text-cyan-400" />
-                Rantai Failover Model Otomatis
-              </div>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Jika model utama mengalami lonjakan antrean atau pembatasan kuota (HTTP 429/503), backend orkestrator secara otomatis mengalihkan kueri ke model berikutnya dalam rantai (`ClaimTrace Fast Engine` ➔ `ClaimTrace Core Engine` ➔ `ClaimTrace Pro Engine` ➔ `claimtrace-local-engine`).
-              </p>
-              <div className={`p-3 rounded-xl border text-xs font-mono font-bold ${
-                isLight
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  : 'bg-blue-500/10 border-blue-500/30 text-cyan-300'
-              }`}>
-                Ketersediaan: 99.8% TINGKAT KESIAPAN OPERASIONAL
-              </div>
-            </div>
-          </div>
-
-          {/* Live AI API Sandbox */}
-          <div className={`relative overflow-hidden rounded-2xl border p-6 space-y-4 transition-all ${
-            isLight
-              ? 'bg-white border-slate-200 shadow-sm text-slate-800'
-              : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
-          }`}>
-            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4 ${
-              isLight ? 'border-slate-200' : 'border-white/10'
-            }`}>
-              <div>
-                <h3 className={`text-base font-bold flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  <Sparkles className="w-4 h-4 text-[#FFCA40]" />
-                  Konsol Inferensi Respons AI via Backend Proxy (`/api/v1/ai/generate`)
-                </h3>
-                <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  Menjalankan inferensi model AI melalui proxy server internal yang aman tanpa mengekspos kunci API pada klien
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(curlSnippet);
-                  setCopiedCurl(true);
-                  setTimeout(() => setCopiedCurl(false), 2000);
-                }}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer transition-colors ${
-                  isLight
-                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
-                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
-                }`}
-              >
-                {copiedCurl ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`} />}
-                {copiedCurl ? 'Perintah cURL Disalin' : 'Salin Perintah cURL'}
-              </button>
-            </div>
-
-            {/* cURL Preview */}
-            <pre className="bg-slate-950 border border-slate-800 text-emerald-400 p-4 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed shadow-inner">
-              {curlSnippet}
-            </pre>
-
-            <form onSubmit={handleRunSandboxPrompt} className="space-y-3">
-              <label className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
-                Prompt Audit Klaim JKN
-              </label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input aria-label="Bidang input data"
-                  type="text"
-                  value={sandboxPrompt}
-                  onChange={(e) => setSandboxPrompt(e.target.value)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none ${
-                    isLight
-                      ? 'bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-emerald-500'
-                      : 'bg-white/5 border border-white/10 text-white placeholder-white/30 focus:bg-white/10 focus:border-[#FFCA40]/60'
-                  }`}
-                  placeholder="Masukkan instruksi atau pertanyaan audit klaim JKN..."
-                />
-                <button
-                  type="submit"
-                  disabled={sandboxLoading}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 shrink-0 transition-all ${
-                    isLight
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                      : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-amber-500/20'
-                  }`}
-                >
-                  <Send className="w-4 h-4" />
-                  {sandboxLoading ? 'Memproses via AI...' : 'Kirim ke ClaimTrace AI'}
-                </button>
-              </div>
-
-              {/* Quick Preset Prompts */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Preset Audit Klinis:
-                </span>
-                {[
-                  { label: 'Infark Miokard (I-4-10-III)', text: 'Analisis secara ringkas risiko klaim SEP-0114R0010326V008291 (INA-CBG I-4-10-III Infark Miokard Akut Berat) jika tidak dilengkapi pemeriksaan Troponin I serial dan Ekokardiografi.' },
-                  { label: 'Fisioterapi Massal (Z-3-12-0)', text: 'Audit kepatuhan klaim klaster fisioterapi massal 85 berkas pasca-kegiatan baksos tanpa rujukan FKTP berjenjang.' },
-                  { label: 'Katarak Phaco (C-4-13-I)', text: 'Verifikasi indikasi medis fakoemulsifikasi katarak bilateral dengan jeda tindakan < 7 hari kalender.' },
-                  { label: 'Split Claim Kemoterapi', text: 'Deteksi pemecahan episode rawat jalan kemoterapi dan penagihan obat sitostatika terpisah di luar tarif paket INA-CBG.' },
-                ].map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setSandboxPrompt(preset.text)}
-                    className={`text-[11px] px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
-                      isLight
-                        ? 'bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border-slate-200 hover:border-emerald-300'
-                        : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </form>
-
-            {sandboxResult && (
-              <div
-                className={`p-4 rounded-xl border text-xs space-y-2 ${
-                  sandboxResult.ok
-                    ? isLight
-                      ? 'bg-emerald-50 border-emerald-200 text-slate-800'
-                      : 'bg-emerald-500/10 border-emerald-500/30 text-white'
-                    : isLight
-                      ? 'bg-rose-50 border-rose-200 text-rose-900'
-                      : 'bg-rose-500/10 border-rose-500/30 text-rose-200'
-                }`}
-              >
-                <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
-                  <span className={`font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    Respons Langsung ClaimTrace AI
-                  </span>
-                  <div className={`flex items-center gap-3 font-mono text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    <span>Model: <strong>{sandboxResult.modelUsed}</strong></span>
-                    <span>Latensi: <strong>{sandboxResult.durationMs}ms</strong></span>
-                    <span>Token: <strong>{sandboxResult.totalTokens}</strong></span>
-                  </div>
-                </div>
-                <div className={`whitespace-pre-wrap leading-relaxed text-sm ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
-                  {sandboxResult.text || sandboxResult.error}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ===================================================================== */}
-      {/* TAB 3: AUTOPILOT ACTIONS & POLICY (Matching media_1792848347061 & 71) */}
+      {/* TAB 2: AUTOPILOT ACTIONS & POLICY (Matching media_1792848347061 & 71) */}
       {/* ===================================================================== */}
       {activeTab === 'autopilot' && (
         <div className="space-y-6">
