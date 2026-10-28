@@ -330,7 +330,7 @@ export default function LandingPage({
               transition={{ duration: 0.55, delay: 0.2 }}
               className="text-sm sm:text-base text-white/70 max-w-3xl mx-auto leading-relaxed"
             >
-              Decision Support System (DSS) pra-bayar untuk Kantor Cabang BPJS Kesehatan. Merekonsiliasi pola penagihan INA-CBG, memvalidasi legalitas Surat Izin Praktik (SIP) dokter spesialis via SATUSEHAT SDMK Kemenkes, serta mengonfirmasi presensi kehadiran peserta melalui aplikasi Mobile JKN dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              Decision Support System (DSS) pra-bayar untuk Kantor Pusat &amp; Kantor Cabang BPJS Kesehatan di Seluruh Indonesia. Merekonsiliasi pola penagihan INA-CBG, memvalidasi legalitas Surat Izin Praktik (SIP) dokter spesialis via SATUSEHAT SDMK Kemenkes, serta mengonfirmasi presensi kehadiran peserta melalui aplikasi Mobile JKN dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
             </motion.p>
 
             <motion.div 
@@ -662,7 +662,7 @@ export default function LandingPage({
               Enam Fitur Unggulan Penapisan Klaim Faskes
             </h2>
             <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
-              Dirancang spesifik untuk Kantor Cabang BPJS Kesehatan guna mendeteksi anomali penagihan secara terukur, objektif, dan berlandaskan hukum pembuktian Republik Indonesia.
+              Dirancang spesifik untuk Kedeputian Bidang Pengawasan dan Pemeriksaan serta Kantor Cabang BPJS Kesehatan se-Indonesia guna mendeteksi anomali penagihan secara terukur, objektif, dan berlandaskan hukum pembuktian Republik Indonesia.
             </p>
           </div>
 
@@ -1502,7 +1502,7 @@ export default function LandingPage({
                 </div>
               </div>
               <p className="text-[11px] text-white/60 leading-relaxed max-w-sm">
-                Sistem pendukung keputusan (*Decision Support System*) pra-bayar Kantor Cabang BPJS Kesehatan untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
+                Sistem pendukung keputusan (*Decision Support System*) pra-bayar resmi BPJS Kesehatan nasional untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
               </p>
               <div className="pt-1 text-[10.5px] text-white/40 font-mono space-y-0.5">
                 <p>Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan</p>
