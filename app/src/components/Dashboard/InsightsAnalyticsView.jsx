@@ -174,7 +174,7 @@ const INITIAL_REPORTS = [
     badge_label: 'AI Engine',
     badge_color: 'purple',
     prevented_loss: 'Rp 412,8 Juta',
-    faskes_scope: '28 FKRTL Rujukan Surakarta & Sekitarnya',
+    faskes_scope: '28 FKRTL Rujukan Nasional & Vertikal',
     key_findings: [
       'Penurunan anomali readmisi rawat inap < 30 hari sebesar 12,4% pasca integrasi filter triase',
       'Kepatuhan restriksi Fornas pada subspesialisasi Jantung & Paru mencapai 94,8%',
@@ -205,7 +205,7 @@ const INITIAL_REPORTS = [
     ],
     recommendations: [
       'Penangguhan klaim pending untuk 29 berkas tanpa bukti check-in digital',
-      'Koordinasi verifikator lapangan KC Surakarta untuk validasi fisik logbook faskes',
+      'Koordinasi verifikator faskes tingkat nasional untuk validasi fisik logbook faskes',
     ],
   },
   {
@@ -220,7 +220,7 @@ const INITIAL_REPORTS = [
     badge_label: 'AI Engine',
     badge_color: 'purple',
     prevented_loss: 'SLA 4,2 Jam (100% On-Time)',
-    faskes_scope: 'Seluruh Faskes KC Surakarta (Kedeputian VI)',
+    faskes_scope: 'Seluruh Faskes Terintegrasi Nasional (Multiregional)',
     key_findings: [
       'Rata-rata siklus verifikasi pra-bayar turun dari 8,6 hari kerja menjadi 4,2 jam berkat triase otomatis',
       'Zero klaim kadaluwarsa (out of SLA) tercapai selama 4 pekan berturut-turut',
@@ -1184,7 +1184,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   )}
                 </div>
                 <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Diterbitkan: {selectedReportModal.generated_at} • Wilayah Kerja: {selectedReportModal.faskes_scope || 'KC Surakarta (Kedeputian VI)'}
+                  Diterbitkan: {selectedReportModal.generated_at} • Wilayah Kerja: {selectedReportModal.faskes_scope || 'Pusat & Multiregional Nasional'}
                 </p>
               </div>
               <button

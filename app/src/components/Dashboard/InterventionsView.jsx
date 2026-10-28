@@ -70,7 +70,7 @@ const INITIAL_INTERVENTION_PLANS = [
       },
       {
         title: 'Rekonsiliasi Bersama Tim Wasrik BPJS Kesehatan',
-        description: 'Sidang klarifikasi bersama Tim Pencegahan Kecurangan (PK-JKN) KC Surakarta.',
+        description: 'Sidang klarifikasi bersama Tim Pencegahan Kecurangan (PK-JKN) BPJS Kesehatan Pusat.',
         completed: false,
       },
     ],
@@ -78,9 +78,9 @@ const INITIAL_INTERVENTION_PLANS = [
   {
     id: 2,
     faskes_code: '0114R001',
-    faskes_name: 'RSUD Dr. Moewardi Surakarta',
+    faskes_name: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
     pic_name: 'dr. Hendra Setiawan, Sp.A',
-    pic_email: 'hendra.setiawan@rsud-dr-moewardi.jatengprov.go.id',
+    pic_email: 'hendra.setiawan@rscm.co.id',
     plan_title: 'Klarifikasi Koding Sepsis Neonatal (P-8-09-III) Non-Kultur',
     claim_id: 'CLM-2026-10-084',
     risk_level: 'SEVERE',
@@ -100,7 +100,7 @@ const INITIAL_INTERVENTION_PLANS = [
       },
       {
         title: 'Penyerahan Hasil Kultur Darah & CRP Serial',
-        description: 'Casemix RSUD menyerahkan bukti lampiran pemeriksaan mikrobiologi bayi prematur.',
+        description: 'Casemix RSUPN menyerahkan bukti lampiran pemeriksaan mikrobiologi bayi prematur.',
         completed: true,
       },
       {
@@ -113,9 +113,9 @@ const INITIAL_INTERVENTION_PLANS = [
   {
     id: 3,
     faskes_code: '0114R002',
-    faskes_name: 'RS Kasih Ibu Surakarta',
+    faskes_name: 'RSUP Fatmawati Jakarta',
     pic_name: 'Ahmad Faisal, S.Farm., Apt',
-    pic_email: 'faisal.apt@rs-kasih-ibu.co.id',
+    pic_email: 'faisal.apt@rs-fatmawati.go.id',
     plan_title: 'Audit Restriksi Fornas Albumin Human 20% Pasca-Bedah',
     claim_id: 'CLM-2026-10-082',
     risk_level: 'MODERATE',
@@ -148,9 +148,9 @@ const INITIAL_INTERVENTION_PLANS = [
   {
     id: 4,
     faskes_code: '0114R004',
-    faskes_name: 'RS PKU Muhammadiyah Surakarta',
+    faskes_name: 'RSUP Dr. Sardjito Yogyakarta',
     pic_name: 'Dewi Lestari, S.Tr.Kes',
-    pic_email: 'dewi.rekammedis@rs-pku-solo.com',
+    pic_email: 'dewi.rekammedis@rs-sardjito.co.id',
     plan_title: 'Penertiban Koding Unbundling Endoskopi Lambung',
     claim_id: 'CLM-2026-10-079',
     risk_level: 'SEVERE',
@@ -361,8 +361,8 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
       return {
         id: 'CLM-2026-10-084',
         sep: '0114R0011026V000084',
-        hospital: 'RSUD Dr. Moewardi Surakarta',
-        hospitalType: 'FKRTL (RSUD Kelas A Rujukan Tertinggi)',
+        hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+        hospitalType: 'FKRTL (RS Pusat Rujukan Nasional Kelas A)',
         code: 'P-8-09-III',
         description: 'Klarifikasi Koding Sepsis Neonatal Berat Non-Kultur',
         tariff: 'Rp 28.450.000',
@@ -387,7 +387,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
       return {
         id: 'CLM-2026-10-082',
         sep: '0114R0021026V000082',
-        hospital: 'RS Kasih Ibu Surakarta',
+        hospital: 'RSUP Fatmawati Jakarta',
         hospitalType: 'FKRTL (RS Swasta Kelas B)',
         code: 'I-4-10-III',
         description: 'Audit Restriksi Fornas Albumin Human 20% Pasca-Bedah',

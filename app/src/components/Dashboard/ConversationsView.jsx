@@ -30,10 +30,10 @@ import {
 const INITIAL_CONVERSATION_GROUPS = [
   {
     userHash: 'usr_verif_0114_khalaf',
-    userName: 'Verifikator Medis KC Surakarta',
+    userName: 'Verifikator Medis Tingkat Pusat',
     userRole: 'VERIFIKATOR',
     userEmail: 'verifikator.khalaf@bpjs-kesehatan.go.id',
-    faskesName: 'Kantor Cabang Surakarta · Wilayah VI',
+    faskesName: 'Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik',
     totalMessages: 18,
     lastActivityIso: '2026-10-24T19:45:00Z',
     openFlagCount: 1,
@@ -87,7 +87,7 @@ const INITIAL_CONVERSATION_GROUPS = [
       },
       {
         session_id: 'SES-JKN-2026-10-84',
-        title: 'Klarifikasi Koding Sepsis Neonatal RSUD Dr. Moewardi',
+        title: 'Klarifikasi Koding Sepsis Neonatal RSUPN Dr. Cipto Mangunkusumo',
         claim_id: 'CLM-2026-10-084',
         first_time: '2026-10-24T18:10:00Z',
         last_time: '2026-10-24T18:22:00Z',
@@ -108,7 +108,7 @@ const INITIAL_CONVERSATION_GROUPS = [
             role: 'assistant',
             sender_name: 'TCA (Audit PNPK)',
             model: 'ClaimTrace Core AI',
-            text: 'Hasil audit Lapis 1 menemukan tidak adanya hasil kultur darah dan nilai CRP serial normal. Pengodean P-8-09-III tidak didukung resume medis PNPK Ikatan Dokter Anak Indonesia (IDAI). Sistem telah menerbitkan draf klarifikasi BAKK ke Casemix RSUD Dr. Moewardi.',
+            text: 'Hasil audit Lapis 1 menemukan tidak adanya hasil kultur darah dan nilai CRP serial normal. Pengodean P-8-09-III tidak didukung resume medis PNPK Ikatan Dokter Anak Indonesia (IDAI). Sistem telah menerbitkan draf klarifikasi BAKK ke Casemix RSUPN Dr. Cipto Mangunkusumo.',
             tokens: 610,
             latency_ms: 440,
             citations: ['PNPK Sepsis Neonatal 2021', 'Berita Acara Kesepakatan Bersama 2020'],
@@ -173,7 +173,7 @@ const INITIAL_CONVERSATION_GROUPS = [
     sessions: [
       {
         session_id: 'SES-JKN-2026-10-79',
-        title: 'Audit Forensik Graph Sindikat Antar Faskes Surakarta',
+        title: 'Audit Forensik Graph Sindikat Rujukan Antar Faskes',
         claim_id: 'CLM-2026-10-079',
         first_time: '2026-10-24T16:50:00Z',
         last_time: '2026-10-24T17:15:00Z',
@@ -187,7 +187,7 @@ const INITIAL_CONVERSATION_GROUPS = [
           {
             role: 'user',
             sender_name: 'Auditor Wasrik',
-            text: 'Tampilkan analisis klaster perpindahan rujukan berulang pada 3 faskes swasta di Solo Utara.',
+            text: 'Tampilkan analisis klaster perpindahan rujukan berulang pada faskes rujukan di wilayah pemantauan.',
             timestamp: '16:50',
           },
           {
@@ -209,7 +209,7 @@ const INITIAL_CONVERSATION_GROUPS = [
     userName: 'Siti Aminah (Peserta JKN Mandiri)',
     userRole: 'PESERTA_MOBILE_JKN',
     userEmail: 'peserta.siti@gmail.com',
-    faskesName: 'Terdaftar di Faskes Primer Surakarta',
+    faskesName: 'Terdaftar di FKTP Klinik Pratama Nasional',
     totalMessages: 10,
     lastActivityIso: '2026-10-24T15:20:00Z',
     openFlagCount: 1,

@@ -43,7 +43,7 @@ export default function PengaduanScreen({ onNavigate }) {
                 Tiket Pengaduan #TIK-2026-10-891
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Laporan Anda telah diteruskan ke Petugas BPJS SATU! (Siap Membantu) Kantor Cabang Surakarta untuk ditindaklanjuti maksimal 1x24 jam.
+                Laporan Anda telah diteruskan ke Petugas BPJS SATU! (Siap Membantu) Kantor Layanan Terpadu BPJS Kesehatan untuk ditindaklanjuti maksimal 1x24 jam.
               </p>
             </div>
             <button type="button"

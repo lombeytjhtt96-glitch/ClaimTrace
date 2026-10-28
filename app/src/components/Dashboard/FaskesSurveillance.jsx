@@ -36,10 +36,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
   const FASKES_DATA = [
     {
       id: 'FSK-0132R001',
-      name: 'RS Khusus Mitra Husada',
+      name: 'RS Khusus Mitra Husada Jakarta',
       type: 'RS Khusus (Kelas C)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
+      city: 'Jakarta Pusat',
+      province: 'DKI Jakarta',
       director: 'dr. Anton Wijanarko, Sp.A',
       friScore: 88.0,
       riskLevel: 'KRITIS (MERAH)',
@@ -53,10 +53,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R002',
-      name: 'RS Hermina Surakarta',
+      name: 'RS Hermina Kemayoran Jakarta',
       type: 'RS Swasta (Kelas B)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
+      city: 'Jakarta Pusat',
+      province: 'DKI Jakarta',
       director: 'dr. Liliana Dewi, M.Kes',
       friScore: 64.0,
       riskLevel: 'SEDANG (KUNING)',
@@ -70,10 +70,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R003',
-      name: 'RSUD Dr. Moewardi Surakarta',
-      type: 'RS Pemerintah (Kelas A)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
+      name: 'RSUPN Dr. Cipto Mangunkusumo',
+      type: 'RS Pemerintah Kelas A (Rujukan Nasional)',
+      city: 'Jakarta Pusat',
+      province: 'DKI Jakarta',
       director: 'dr. Cahyono Hadi, Sp.OG',
       friScore: 11.5,
       riskLevel: 'RENDAH (HIJAU)',
@@ -87,10 +87,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R004',
-      name: 'RS Kasih Ibu Surakarta',
-      type: 'RS Swasta (Kelas B)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
+      name: 'RSUP Fatmawati Jakarta',
+      type: 'RS Pemerintah (Kelas A)',
+      city: 'Jakarta Selatan',
+      province: 'DKI Jakarta',
       director: 'dr. Ndaru Kurniawan, Sp.B',
       friScore: 16.5,
       riskLevel: 'RENDAH (HIJAU)',
@@ -104,10 +104,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R005',
-      name: 'RS PKU Muhammadiyah Surakarta',
-      type: 'RS Swasta (Kelas B)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
+      name: 'RSUP Dr. Sardjito Yogyakarta',
+      type: 'RS Pemerintah Kelas A (Rujukan Wilayah)',
+      city: 'Sleman',
+      province: 'D.I. Yogyakarta',
       director: 'dr. Mardiatmo, Sp.Rad',
       friScore: 14.2,
       riskLevel: 'RENDAH (HIJAU)',
@@ -121,11 +121,11 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R006',
-      name: 'RS Ortopedi Prof. Dr. R. Soeharso',
-      type: 'RS Khusus (Kelas A)',
-      city: 'Surakarta',
-      province: 'Jawa Tengah',
-      director: 'dr. Pamudji Utomo, Sp.OT(K)',
+      name: 'RSUP Dr. Wahidin Sudirohusodo',
+      type: 'RS Pemerintah Kelas A (Rujukan Wilayah Timur)',
+      city: 'Makassar',
+      province: 'Sulawesi Selatan',
+      director: 'Prof. dr. Mansyur Arif, Ph.D, Sp.PK(K)',
       friScore: 12.8,
       riskLevel: 'RENDAH (HIJAU)',
       totalClaimsMonth: 2140,
@@ -134,14 +134,14 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
       spikeRatio: '1.0x',
       primaryFinding: 'Implan ortopedi tervalidasi e-Katalog LKPP dan laporan operasi lengkap.',
       fristaStatus: 'AKTIF (99%)',
-      historyAudit: 'Pusat rujukan nasional bedah ortopedi dengan kepatuhan regulasi tinggi.'
+      historyAudit: 'Pusat rujukan nasional kawasan timur Indonesia dengan kepatuhan regulasi tinggi.'
     },
     {
       id: 'FSK-0132R007',
-      name: 'RS Indriati Solo Baru',
-      type: 'RS Swasta (Kelas B)',
-      city: 'Sukoharjo',
-      province: 'Jawa Tengah',
+      name: 'RSUP Dr. Hasan Sadikin',
+      type: 'RS Pemerintah Kelas A (Rujukan Utama)',
+      city: 'Bandung',
+      province: 'Jawa Barat',
       director: 'dr. Imelda Tandiyo, M.Kes',
       friScore: 48.5,
       riskLevel: 'SEDANG (KUNING)',
@@ -155,9 +155,9 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     },
     {
       id: 'FSK-0132R008',
-      name: 'RS JIH Solo',
-      type: 'RS Swasta (Kelas B)',
-      city: 'Surakarta',
+      name: 'RSUP Dr. Kariadi',
+      type: 'RS Pemerintah Kelas A (Rujukan Utama)',
+      city: 'Semarang',
       province: 'Jawa Tengah',
       director: 'dr. Didit Novianto, Sp.PD',
       friScore: 15.0,
@@ -198,7 +198,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   FASKES SURVEILLANCE &amp; RISK PROFILING
                 </span>
                 <span className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Direktori FKRTL Cabang Surakarta · Wilayah VI
+                  Direktori FKRTL Pemantauan Nasional · Multiregional
                 </span>
               </div>
               <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -223,7 +223,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 {FASKES_DATA.length} FKRTL
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Cabang Surakarta &amp; Sekitarnya
+                Faskes Rujukan Terintegrasi Nasional
               </div>
             </div>
 

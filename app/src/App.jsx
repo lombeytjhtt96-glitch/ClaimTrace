@@ -281,8 +281,8 @@ export default function App() {
       name: 'Administrator Khalaf Dev',
       email: 'verifikator.khalaf@bpjs-kesehatan.go.id',
       nip: '198704202011012001',
-      role: 'Verifikator Utama Klaim FKRTL',
-      unit: 'Kantor Cabang Surakarta · Kedeputian Wilayah VI',
+      role: 'Verifikator Utama Klaim FKRTL Tingkat Nasional',
+      unit: 'Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan',
       avatar: 'AD',
       isMfaVerified: true
     };
@@ -797,7 +797,7 @@ export default function App() {
                       </span>
                     </div>
                     <p className={`text-[10px] hidden lg:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      Pengawasan Pra-Pembayaran Klaim JKN · KC Surakarta
+                      Pengawasan Pra-Pembayaran Klaim JKN · Tingkat Nasional
                     </p>
                   </div>
                 </div>
@@ -905,7 +905,7 @@ export default function App() {
                   className={`hidden lg:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono tabular-nums shadow-2xs select-none ${
                     isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80'
                   }`}
-                  title="Waktu Resmi Server BPJS Kesehatan KC Surakarta (WIB)"
+                  title="Waktu Resmi Server Terpusat BPJS Kesehatan (WIB)"
                 >
                   <Clock className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   <span className="font-semibold tracking-tight">{currentServerTime}</span>
@@ -1707,7 +1707,7 @@ export default function App() {
                           <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2">
                             <p>Nama: KHALAF FAITH PRADYATAMA</p>
                             <p>No. KIS: 0002891728192</p>
-                            <p>Kantor Cabang: KC Surakarta</p>
+                            <p>Kantor Cabang Terdaftar: Kantor Cabang Utama BPJS Kesehatan (Nasional)</p>
                           </div>
                         </div>
                       )}
@@ -2172,8 +2172,8 @@ export default function App() {
                           let caseDetails = {
                             id: cId,
                             sep: `0132R0011026V${cId.slice(-6)}`,
-                            hospital: 'RSUD Dr. Moewardi Surakarta',
-                            hospitalType: 'FKRTL (RS Pemerintah Kelas A)',
+                            hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+                            hospitalType: 'FKRTL (RS Pemerintah Kelas A - Rujukan Nasional)',
                             code: 'B-1-10-I',
                             description: 'Prosedur Laparotomi & Tindakan Bedah Minor (Anomali Geovelocity)',
                             tariff: 'Rp 59.500.000',
@@ -2190,7 +2190,7 @@ export default function App() {
                             totalScore: 91.5,
                             lane: 'red',
                             status: 'AUDIT GEOVELOCITY MERAH',
-                            notes: 'Anomali Geovelocity Impossible Travel: DPJP tercatat operasi di Surakarta dan Semarang dalam selisih 45 menit (kecepatan mustahil 140.5 km/jam).',
+                            notes: 'Anomali Geovelocity Impossible Travel: DPJP tercatat operasi di Jakarta Pusat (RSCM) dan Bandung (RSHS) dalam selisih 45 menit (kecepatan mustahil 185.2 km/jam).',
                             flags: ['GEOVELOCITY ALERT', 'IMPOSSIBLE TRAVEL', 'SIP EXPIRED']
                           };
                           if (cId.includes('0744') || cId.includes('0751')) {
@@ -2212,7 +2212,7 @@ export default function App() {
                           } else if (cId.includes('0612') || cId.includes('0619')) {
                             caseDetails = {
                               ...caseDetails,
-                              hospital: 'RS Hermina Solo',
+                              hospital: 'RS Hermina Kemayoran Jakarta',
                               hospitalType: 'RS Swasta (Kelas B)',
                               code: 'W-4-10-I',
                               description: 'Prosedur Ginekologi - Klaim Diajukan Saat Masa Berlaku SIP Berakhir',
@@ -2228,8 +2228,8 @@ export default function App() {
                           } else if (cId.includes('0921')) {
                             caseDetails = {
                               ...caseDetails,
-                              hospital: 'RSUD Dr. Moewardi Surakarta',
-                              hospitalType: 'RS Pemerintah (Kelas A)',
+                              hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+                              hospitalType: 'RS Pemerintah (Kelas A - Rujukan Nasional)',
                               code: 'U-3-12-0',
                               description: 'Pemeriksaan Radiologi Lanjut - Beban Bacaan 65 Pasien/Hari',
                               tariff: 'Rp 42.000.000',
@@ -2337,7 +2337,7 @@ export default function App() {
           <span className={`hidden md:inline px-1.5 py-0.5 rounded text-[10px] font-mono border ${
             isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/10 text-white/60 border-white/10'
           }`}>
-            KC Surakarta · Kedeputian Wilayah VI
+            Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 text-[11px]">

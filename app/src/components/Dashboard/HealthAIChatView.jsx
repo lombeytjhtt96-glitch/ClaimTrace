@@ -79,8 +79,8 @@ const SUGGESTED_PROMPTS = [
   {
     id: 'geovelocity',
     title: 'Validasi Geovelocity DPJP dr. Hendra',
-    subtitle: 'Kecepatan 140.5 km/jam Surakarta-Semarang (Impossible Travel)',
-    prompt: 'Jelaskan hasil audit geovelocity OSRM terhadap klaim dr. Hendra Prasetya, Sp.B antara RSUD Dr. Moewardi Surakarta dan RSUP Dr. Kariadi Semarang pada tanggal 24 Oktober 2026.',
+    subtitle: 'Kecepatan 198.1 km/jam Jakarta-Bandung (Impossible Travel)',
+    prompt: 'Jelaskan hasil audit geovelocity OSRM terhadap klaim dr. Hendra Prasetya, Sp.B antara RSUPN Dr. Cipto Mangunkusumo Jakarta dan RSUP Dr. Hasan Sadikin Bandung pada tanggal 24 Oktober 2026.',
     icon: Stethoscope,
     badge: 'ATT&CK T1078',
     badgeColorLight: 'bg-emerald-50 text-emerald-800 border-emerald-300',

@@ -1186,10 +1186,10 @@ export default function LandingPage({
 
                     <div className="space-y-1.5">
                       <label className="font-bold text-white/80 block">Nama Fasilitas Kesehatan (Faskes) *</label>
-                      <input aria-label="Contoh: RS Rujukan X Surakarta" 
+                      <input aria-label="Contoh: RS Rujukan Nasional / Vertikal" 
                         type="text" 
                         required
-                        placeholder="Contoh: RS Rujukan X Surakarta" 
+                        placeholder="Contoh: RS Rujukan Nasional / Vertikal" 
                         value={formFaskes}
                         onChange={(e) => setFormFaskes(e.target.value)}
                         className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
@@ -1200,9 +1200,9 @@ export default function LandingPage({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="font-bold text-white/80 block">Wilayah / Kabupaten-Kota</label>
-                      <input aria-label="Contoh: Kota Surakarta / Karanganyar" 
+                      <input aria-label="Contoh: DKI Jakarta / Surabaya / Medan" 
                         type="text" 
-                        placeholder="Contoh: Kota Surakarta / Karanganyar" 
+                        placeholder="Contoh: DKI Jakarta / Surabaya / Medan" 
                         value={formLocation}
                         onChange={(e) => setFormLocation(e.target.value)}
                         className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
@@ -1266,7 +1266,7 @@ export default function LandingPage({
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                        <span>Kirim Laporan Resmi ke Verifikator KC Surakarta</span>
+                        <span>Kirim Laporan Resmi ke Verifikator Pusat BPJS Kesehatan</span>
                       </>
                     )}
                   </motion.button>
@@ -1290,7 +1290,7 @@ export default function LandingPage({
                   </div>
 
                   <p className="text-white/70 leading-relaxed">
-                    Pengaduan Anda telah terdaftar dan disegel dalam rantai audit forensik Kantor Cabang Surakarta. Simpan nomor tiket ini untuk memantau status tindak lanjut audit.
+                    Pengaduan Anda telah terdaftar dan disegel dalam rantai audit forensik Kantor Pusat BPJS Kesehatan. Simpan nomor tiket ini untuk memantau status tindak lanjut audit.
                   </p>
 
                   <div className="bg-[#000c24]/80 p-3.5 rounded-xl border border-white/10 space-y-1.5 text-[11px]">
@@ -1356,7 +1356,7 @@ export default function LandingPage({
                     Saluran Pelayanan Resmi
                   </span>
                   <h3 className="text-base font-bold text-white">
-                    BPJS Kesehatan Kantor Cabang Surakarta
+                    BPJS Kesehatan Kantor Pusat
                   </h3>
                 </div>
 
@@ -1401,9 +1401,9 @@ export default function LandingPage({
                     <div>
                       <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">Alamat Kantor Operasional</span>
                       <span className="text-white/70 block">
-                        Jl. Slamet Riyadi No. 345, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141
+                        Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510
                       </span>
-                      <span className="text-white/40 text-[11px] block mt-0.5">Kedeputian Wilayah VI (Jateng & DIY)</span>
+                      <span className="text-white/40 text-[11px] block mt-0.5">Kedeputian Bidang Pengawasan dan Pemeriksaan</span>
                     </div>
                   </motion.div>
 
@@ -1417,7 +1417,7 @@ export default function LandingPage({
                     </div>
                     <div>
                       <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">Email Verifikator Medis</span>
-                      <span className="text-white/70 font-mono text-[11px]">kc-surakarta@bpjs-kesehatan.go.id</span>
+                      <span className="text-white/70 font-mono text-[11px]">pengawasan.klaim@bpjs-kesehatan.go.id</span>
                     </div>
                   </motion.div>
                 </div>
@@ -1508,7 +1508,7 @@ export default function LandingPage({
                 Sistem pendukung keputusan (*Decision Support System*) pra-bayar Kantor Cabang BPJS Kesehatan untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
               </p>
               <div className="pt-1 text-[10.5px] text-white/40 font-mono space-y-0.5">
-                <p>Kedeputian Wilayah VI (Jawa Tengah &amp; DIY) · Kantor Cabang Surakarta</p>
+                <p>Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan</p>
                 <p>Kepatuhan Hukum: UU PDP No. 27/2022 · Perpres No. 82/2018 · ISO/IEC 27001:2022</p>
               </div>
             </div>

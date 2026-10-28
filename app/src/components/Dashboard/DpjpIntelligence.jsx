@@ -17,11 +17,11 @@ const DOCTORS_DATA = [
     sip: 'SIP.503/4412/DPMPTSP/2023',
     sipStatus: 'EXPIRED_WARN', // SIP kadaluwarsa di salah satu faskes
     specialty: 'Spesialis Bedah Umum',
-    primaryHospital: 'RSUD Dr. Moewardi Surakarta',
+    primaryHospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
     hospitals: [
-      { name: 'RSUD Dr. Moewardi Surakarta', sipValidUntil: '2027-04-12', status: 'ACTIVE' },
-      { name: 'RSUP Dr. Kariadi Semarang', sipValidUntil: '2024-01-15', status: 'EXPIRED' }, // Expired!
-      { name: 'RS Swasta Medika Kasih', sipValidUntil: '2026-11-20', status: 'ACTIVE' }
+      { name: 'RSUPN Dr. Cipto Mangunkusumo Jakarta', sipValidUntil: '2027-04-12', status: 'ACTIVE' },
+      { name: 'RSUP Dr. Hasan Sadikin Bandung', sipValidUntil: '2024-01-15', status: 'EXPIRED' }, // Expired!
+      { name: 'RS Swasta Medika Kasih Jakarta', sipValidUntil: '2026-11-20', status: 'ACTIVE' }
     ],
     dailyWorkload: 85, // Pasien/hari
     workloadLimit: 40, // Batas Permenkes No. 14/2021
@@ -33,21 +33,21 @@ const DOCTORS_DATA = [
       date: '24 Oktober 2026',
       pointA: {
         time: '10:00 WIB',
-        faskes: 'RSUD Dr. Moewardi, Surakarta',
+        faskes: 'RSUPN Dr. Cipto Mangunkusumo, Jakarta',
         action: 'Prosedur Operasi Laparotomi (45 menit)',
-        lat: -7.5583,
-        lng: 110.8561
+        lat: -6.1969,
+        lng: 106.8466
       },
       pointB: {
         time: '10:45 WIB',
-        faskes: 'RSUP Dr. Kariadi, Semarang',
+        faskes: 'RSUP Dr. Hasan Sadikin, Bandung',
         action: 'Visite & Tindakan Bedah Minor Poli',
-        lat: -6.9942,
-        lng: 110.4079
+        lat: -6.8967,
+        lng: 107.5982
       },
-      distanceKm: 105.4,
+      distanceKm: 148.6,
       timeGapMinutes: 45,
-      requiredSpeedKmh: 140.5,
+      requiredSpeedKmh: 198.1,
       verdict: 'IMPOSSIBLE_TRAVEL_HARD_TRIGGER'
     }
   },
@@ -80,10 +80,10 @@ const DOCTORS_DATA = [
     sip: 'SIP.503/9921/DPMPTSP/2024',
     sipStatus: 'VALID',
     specialty: 'Spesialis Penyakit Dalam',
-    primaryHospital: 'RS Swasta Medika Kasih Surakarta',
+    primaryHospital: 'RS Swasta Medika Kasih Jakarta',
     hospitals: [
-      { name: 'RS Swasta Medika Kasih Surakarta', sipValidUntil: '2027-03-11', status: 'ACTIVE' },
-      { name: 'RSUD Bung Karno', sipValidUntil: '2026-08-30', status: 'ACTIVE' }
+      { name: 'RS Swasta Medika Kasih Jakarta', sipValidUntil: '2027-03-11', status: 'ACTIVE' },
+      { name: 'RSUD Tarakan Jakarta', sipValidUntil: '2026-08-30', status: 'ACTIVE' }
     ],
     dailyWorkload: 34,
     workloadLimit: 40,
@@ -101,9 +101,9 @@ const DOCTORS_DATA = [
     sip: 'SIP.503/3321/DPMPTSP/2021',
     sipStatus: 'EXPIRED',
     specialty: 'Spesialis Obstetri & Ginekologi',
-    primaryHospital: 'RS Hermina Solo',
+    primaryHospital: 'RS Hermina Kemayoran Jakarta',
     hospitals: [
-      { name: 'RS Hermina Solo', sipValidUntil: '2024-06-20', status: 'EXPIRED' }
+      { name: 'RS Hermina Kemayoran Jakarta', sipValidUntil: '2024-06-20', status: 'EXPIRED' }
     ],
     dailyWorkload: 28,
     workloadLimit: 40,
@@ -124,7 +124,7 @@ const DOCTORS_DATA = [
     primaryHospital: 'RS Khusus Mitra Husada',
     hospitals: [
       { name: 'RS Khusus Mitra Husada', sipValidUntil: '2027-02-17', status: 'ACTIVE' },
-      { name: 'RSUD Dr. Moewardi Surakarta', sipValidUntil: '2028-12-01', status: 'ACTIVE' }
+      { name: 'RSUPN Dr. Cipto Mangunkusumo Jakarta', sipValidUntil: '2028-12-01', status: 'ACTIVE' }
     ],
     dailyWorkload: 31,
     workloadLimit: 40,
@@ -142,10 +142,10 @@ const DOCTORS_DATA = [
     sip: 'SIP.503/7712/DPMPTSP/2023',
     sipStatus: 'VALID',
     specialty: 'Spesialis Radiologi',
-    primaryHospital: 'RSUD Dr. Moewardi Surakarta',
+    primaryHospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
     hospitals: [
-      { name: 'RSUD Dr. Moewardi Surakarta', sipValidUntil: '2027-08-22', status: 'ACTIVE' },
-      { name: 'RS Indriati Solo Baru', sipValidUntil: '2026-05-14', status: 'ACTIVE' }
+      { name: 'RSUPN Dr. Cipto Mangunkusumo Jakarta', sipValidUntil: '2027-08-22', status: 'ACTIVE' },
+      { name: 'RSUP Fatmawati Jakarta', sipValidUntil: '2026-05-14', status: 'ACTIVE' }
     ],
     dailyWorkload: 65,
     workloadLimit: 40,
@@ -163,10 +163,10 @@ const DOCTORS_DATA = [
     sip: 'SIP.503/8890/DPMPTSP/2022',
     sipStatus: 'EXPIRED_WARN',
     specialty: 'Spesialis Mata',
-    primaryHospital: 'RS Mata Solo',
+    primaryHospital: 'RS Mata JEC Menteng Jakarta',
     hospitals: [
-      { name: 'RS Mata Solo', sipValidUntil: '2027-01-30', status: 'ACTIVE' },
-      { name: 'Klinik Mata Sejahtera Boyolali', sipValidUntil: '2024-03-10', status: 'EXPIRED' }
+      { name: 'RS Mata JEC Menteng Jakarta', sipValidUntil: '2027-01-30', status: 'ACTIVE' },
+      { name: 'Klinik Mata Sejahtera Tangerang', sipValidUntil: '2024-03-10', status: 'EXPIRED' }
     ],
     dailyWorkload: 54,
     workloadLimit: 40,
@@ -178,17 +178,17 @@ const DOCTORS_DATA = [
       date: '21 Oktober 2026',
       pointA: {
         time: '13:00 WIB',
-        faskes: 'RS Mata Solo, Surakarta',
+        faskes: 'RS Mata JEC Menteng, Jakarta',
         action: 'Operasi Phacoemulsifikasi Katarak',
-        lat: -7.5667,
-        lng: 110.8167
+        lat: -6.1955,
+        lng: 106.8378
       },
       pointB: {
         time: '13:30 WIB',
-        faskes: 'Klinik Mata Sejahtera, Boyolali',
+        faskes: 'Klinik Mata Sejahtera, Tangerang',
         action: 'Pemeriksaan Refraksi & Slit Lamp',
-        lat: -7.5333,
-        lng: 110.5958
+        lat: -6.1783,
+        lng: 106.6319
       },
       distanceKm: 28.5,
       timeGapMinutes: 30,
@@ -341,7 +341,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 1.482 Dokter
               </span>
               <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-white/50'}`}>
-                Cabang Surakarta &amp; Sekitarnya
+                Faskes Terintegrasi Nasional
               </span>
             </div>
             <div className={`rounded-xl p-2.5 border relative overflow-hidden transition-all ${

@@ -59,7 +59,7 @@ const INITIAL_QUEUE_CASES = [
   {
     case_id: 'CLM-2026-882740',
     sep_no: '0114R0011026V004210',
-    hospital: 'RS Panti Waluyo Surakarta',
+    hospital: 'RSUP Persahabatan Jakarta',
     severity: 'moderate',
     status: 'in_progress',
     sla_breach_at: new Date(Date.now() + 24 * 3600000).toISOString(),
@@ -69,7 +69,7 @@ const INITIAL_QUEUE_CASES = [
   {
     case_id: 'CLM-2026-882890',
     sep_no: '0114R0011026V004390',
-    hospital: 'RSUD Dr. Moewardi',
+    hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
     severity: 'low',
     status: 'in_progress',
     sla_breach_at: new Date(Date.now() + 48 * 3600000).toISOString(),
@@ -276,7 +276,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
 
   const handleAutofillTemplate = () => {
     setFormData({
-      user_id: 'RSUD Dr. Moewardi Surakarta (0114R001)',
+      user_id: 'RSUPN Dr. Cipto Mangunkusumo Jakarta (0112R001)',
       session_id: '0114R0011026V004928',
       user_hash: 'JKN-9948201-BMS',
       severity: 'high',

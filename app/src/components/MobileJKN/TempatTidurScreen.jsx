@@ -9,9 +9,9 @@ export default function TempatTidurScreen({ onNavigate }) {
   const hospitals = [
     {
       id: 1,
-      name: 'RSUD Dr. Moewardi',
-      type: 'RS Pemerintah Kelas A',
-      address: 'Jl. Kolonel Sutarto No. 132, Surakarta',
+      name: 'RSUPN Dr. Cipto Mangunkusumo',
+      type: 'RS Pemerintah Kelas A (Rujukan Nasional)',
+      address: 'Jl. Diponegoro No. 71, Jakarta Pusat',
       beds: {
         kelas1: { total: 84, available: 12 },
         kelas2: { total: 120, available: 18 },
@@ -23,9 +23,9 @@ export default function TempatTidurScreen({ onNavigate }) {
     },
     {
       id: 2,
-      name: 'RS Kasih Ibu Surakarta',
-      type: 'RS Swasta Kelas B',
-      address: 'Jl. Slamet Riyadi No. 404, Surakarta',
+      name: 'RSUP Fatmawati',
+      type: 'RS Pemerintah Kelas A',
+      address: 'Jl. RS Fatmawati Raya No. 4, Jakarta Selatan',
       beds: {
         kelas1: { total: 45, available: 8 },
         kelas2: { total: 60, available: 11 },
@@ -37,9 +37,9 @@ export default function TempatTidurScreen({ onNavigate }) {
     },
     {
       id: 3,
-      name: 'RS PKU Muhammadiyah Surakarta',
+      name: 'RS Hermina Kemayoran',
       type: 'RS Swasta Kelas B',
-      address: 'Jl. Ronggowarsito No. 130, Surakarta',
+      address: 'Jl. Selangit B-10 Kav. 4, Jakarta Pusat',
       beds: {
         kelas1: { total: 50, available: 7 },
         kelas2: { total: 75, available: 14 },
@@ -51,9 +51,9 @@ export default function TempatTidurScreen({ onNavigate }) {
     },
     {
       id: 4,
-      name: 'RS Khusus Mitra Husada',
-      type: 'RS Khusus Kelas C',
-      address: 'Jl. Veteran No. 88, Surakarta',
+      name: 'RS Khusus Jantung Harapan Kita',
+      type: 'RS Khusus Kelas A',
+      address: 'Jl. Letjen S. Parman Kav. 87, Jakarta Barat',
       beds: {
         kelas1: { total: 20, available: 5 },
         kelas2: { total: 30, available: 8 },
@@ -82,7 +82,7 @@ export default function TempatTidurScreen({ onNavigate }) {
             Ketersediaan Tempat Tidur
           </h2>
           <span className="text-[10px] text-slate-500 font-medium">
-            Wilayah Surakarta & Sekitarnya (Real-time)
+            Faskes Rujukan Terdaftar Nasional (Real-time)
           </span>
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, Hospital, User, Phone, Mail, MapPin, Check, ChevronRight } from 'lucide-react';
 
 export default function UbahDataScreen({ onNavigate }) {
-  const [faskes, setFaskes] = useState('KLINIK PRATAMA SURAKARTA (0132U001)');
+  const [faskes, setFaskes] = useState('KLINIK PRATAMA NASIONAL BPJS (0112U001)');
   const [kelas, setKelas] = useState('Kelas 1');
   const [phone, setPhone] = useState('081234567890');
   const [email, setEmail] = useState('khalaf.pradyatama@gmail.com');
@@ -51,9 +51,9 @@ export default function UbahDataScreen({ onNavigate }) {
               onChange={(e) => setFaskes(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none"
             >
-              <option value="KLINIK PRATAMA SURAKARTA (0132U001)">KLINIK PRATAMA SURAKARTA (0132U001)</option>
-              <option value="PUSKESMAS MANAHAN (0132P004)">PUSKESMAS MANAHAN (0132P004)</option>
-              <option value="KLINIK SEHAT BERSAMA (0132U009)">KLINIK SEHAT BERSAMA (0132U009)</option>
+              <option value="KLINIK PRATAMA NASIONAL BPJS (0112U001)">KLINIK PRATAMA NASIONAL BPJS (0112U001)</option>
+              <option value="PUSKESMAS CEMPAKA PUTIH (0112P004)">PUSKESMAS CEMPAKA PUTIH (0112P004)</option>
+              <option value="KLINIK SEHAT SEJAHTERA (0112U009)">KLINIK SEHAT SEJAHTERA (0112U009)</option>
             </select>
             <p className="text-[9.5px] text-slate-400">
               *Perpindahan faskes mulai berlaku pada tanggal 1 bulan berikutnya sesuai regulasi BPJS Kesehatan.
@@ -119,7 +119,7 @@ export default function UbahDataScreen({ onNavigate }) {
               <label className="text-xs font-bold text-slate-900">Alamat Surat Domisili</label>
             </div>
             <textarea
-              defaultValue="Jl. Brigjend Slamet Riyadi No. 44, Kel. Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57143"
+              defaultValue="Jl. Letjen Suprapto No. 44, Cempaka Putih Barat, Jakarta Pusat 10520"
               rows={2}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
             />

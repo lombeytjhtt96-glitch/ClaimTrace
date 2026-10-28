@@ -391,7 +391,7 @@ Sub-agen yang berada di bawah koordinasi Anda:
 Konteks Data Operasional & Kasus Riil Terverifikasi (Basis Data Warehouse & DuckDB ClaimTrace):
 1. KASUS NYATA 1: PHANTOM BILLING BAKSOS MASSAL (Klaster 85 Pasien)
    - ID Berkas: CLM-2026-8801 / No. SEP: SEP-0114R0010326V008801
-   - Faskes Terindikasi: RS Khusus Mitra Husada (Swasta Kelas B, Surakarta)
+   - Faskes Terindikasi: RS Khusus Mitra Husada (Swasta Kelas B, Terintegrasi Nasional)
    - Peserta Terdampak: Ny. Siti Aminah (ID Peserta: PST-2026-0091823, NIK: 337201******0004, No. Kartu BPJS: 0001928374821, Segmen: PBI APBN)
    - Tanggal Layanan: 14 Oktober 2026
    - Kode INA-CBG: Z-3-12-0 (Prosedur Rehabilitasi / Fisioterapi)

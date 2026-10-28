@@ -42,7 +42,7 @@ export default function AntreanScreen({ onNavigate }) {
                   ANTREAN TERDAFTAR
                 </span>
                 <h3 className="text-base font-bold text-slate-900 mt-1">
-                  KLINIK PRATAMA SURAKARTA
+                  KLINIK PRATAMA NASIONAL BPJS
                 </h3>
                 <p className="text-xs text-slate-500">{poli} · Hari ini</p>
               </div>
@@ -108,11 +108,11 @@ export default function AntreanScreen({ onNavigate }) {
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-900">
-                    {faskesType === 'fktp' ? 'KLINIK PRATAMA SURAKARTA' : 'RSUD Dr. Moewardi (Rujukan)'}
+                    {faskesType === 'fktp' ? 'KLINIK PRATAMA NASIONAL BPJS' : 'RSUPN Dr. Cipto Mangunkusumo (Rujukan)'}
                   </h4>
                   <p className="text-[10.5px] text-slate-500 mt-0.5">
                     {faskesType === 'fktp' 
-                      ? 'Jl. Slamet Riyadi No. 120, Surakarta (Faskes Terdaftar Anda)' 
+                      ? 'Jl. Letjen Suprapto No. 120, Jakarta Pusat (Faskes Terdaftar Anda)' 
                       : 'Memerlukan Surat Rujukan Aktif dari FKTP'}
                   </p>
                 </div>

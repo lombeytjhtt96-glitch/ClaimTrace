@@ -132,7 +132,7 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
             <div>
               <span className="font-bold text-white block">{user?.name || 'dr. Siti Rahma, Sp.PK'}</span>
-              <span className="text-[11px] text-white/50 font-mono">{user?.unit || user?.branch || 'KC Surakarta'} · NIP {user?.nip || '198704202011012001'}</span>
+              <span className="text-[11px] text-white/50 font-mono">{user?.unit || user?.branch || 'Kantor Pusat BPJS Kesehatan'} · NIP {user?.nip || '198704202011012001'}</span>
             </div>
             <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">
               PERANGKAT SAH

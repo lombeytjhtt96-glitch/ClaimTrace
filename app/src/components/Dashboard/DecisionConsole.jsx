@@ -72,7 +72,8 @@ export default function DecisionConsole({
   const [successToast, setSuccessToast] = useState(false);
 
   const handleDownloadDossierPdf = () => {
-    const reportText = `BPJS KESEHATAN KANTOR CABANG UTAMA SURAKARTA
+    const reportText = `BPJS KESEHATAN KANTOR PUSAT
+DIREKTORAT JAMINAN PELAYANAN KESEHATAN
 BERITA ACARA KELENGKAPAN BERKAS (BAKB) & REKOMENDASI AUDIT KLAIM
 Nomor Registrasi: BAKB/BPJS/IX/2026/0881
 Status: TUNDA BAYAR (JALUR MERAH)
@@ -221,12 +222,12 @@ Timestamp: ${new Date().toISOString()}`;
                   <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
                 </div>
                 <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Verifikator Medis Utama (Wasrik) • NIP: <span className={`font-mono font-bold ${isLight ? 'text-slate-800' : 'text-cyan-300'}`}>VERIF-SKR-0412</span>
+                  Verifikator Medis Utama (Wasrik) • NIP: <span className={`font-mono font-bold ${isLight ? 'text-slate-800' : 'text-cyan-300'}`}>VERIF-NAT-0412</span>
                 </span>
                 <div className="flex items-center space-x-1.5 mt-1 font-mono text-[9.5px]">
                   <span className={`px-2 py-0.5 rounded uppercase border font-medium ${
                     isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-white/70 border-white/10'
-                  }`}>KC SURAKARTA JATENG</span>
+                  }`}>DIREKTORAT JAMPELKES PUSAT</span>
                   <span className={`px-2 py-0.5 rounded uppercase border font-medium ${
                     isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-white/70 border-white/10'
                   }`}>SK DIREKSI NO. 0418/2024</span>
@@ -451,51 +452,51 @@ Timestamp: ${new Date().toISOString()}`;
 
             <div className={`rounded-xl p-3 border font-mono text-[10px] space-y-2 ${
               isLight
-                ? 'bg-slate-900 border-slate-800 text-slate-200'
+                ? 'bg-slate-50 border-slate-300 text-slate-800 shadow-2xs'
                 : 'bg-[#000c24]/90 border-white/10 text-white/70'
             }`}>
               <div>
-                <span className="text-slate-400 block text-[9px]">WAKTU SEGEL (ISO 8601):</span>
-                <span className="text-emerald-400 font-bold">2026-10-22T10:45:12.891+07:00</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>WAKTU SEGEL (ISO 8601):</span>
+                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>2026-10-22T10:45:12.891+07:00</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[9px]">ID VERIFIKATOR RESMI:</span>
-                <span className="text-emerald-300 font-bold block keep-white">VERIF-SKR-0412 (dr. Siti Rahma, Sp.PK)</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>ID VERIFIKATOR RESMI:</span>
+                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block`}>VERIF-NAT-0412 (dr. Siti Rahma, Sp.PK)</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[9px]">TINDAKAN TERPILIH:</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>TINDAKAN TERPILIH:</span>
                 <span className={`font-bold ${
-                  verificatorAction === 'clarification' ? 'text-rose-400' : verificatorAction === 'audit' ? 'text-amber-400' : 'text-emerald-400'
+                  verificatorAction === 'clarification' ? 'text-rose-600' : verificatorAction === 'audit' ? 'text-amber-600' : isLight ? 'text-emerald-700' : 'text-emerald-400'
                 }`}>
                   {verificatorAction ? (verificatorAction === 'clarification' ? 'TUNDA BAKB & KLARIFIKASI FASKES' : verificatorAction === 'audit' ? 'AUDIT FAKTUAL LAPANGAN' : 'OVERRIDE LOLOSKAN') : 'MENUNGGU DISPOSISI'}
                 </span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[9px]">HASH KRIPTOGRAFIS SHA-256:</span>
-                <span className="text-emerald-300 font-bold text-[9px] break-all">
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>HASH KRIPTOGRAFIS SHA-256:</span>
+                <span className={`${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[9px] break-all`}>
                   9e8a7c2b512f43a91e0892cfa71290bb34102c98d7831fa281
                 </span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[9px]">STATUS TANDA TANGAN DIGITAL:</span>
-                <span className="text-emerald-300 font-bold flex items-center space-x-1">
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span>TERVERIFIKASI BPJS-KC-SURAKARTA-CA</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>STATUS TANDA TANGAN DIGITAL:</span>
+                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold flex items-center space-x-1`}>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>TERVERIFIKASI BPJS-KESEHATAN-ROOT-CA</span>
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-1 text-[9px]">
-                <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
+              <div className={`pt-2 border-t flex flex-wrap gap-1 text-[9px] ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>
                   MITRE F3: FA0001 · FA0002
                 </span>
-                <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
+                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-sky-50 text-sky-800 border-sky-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'}`}>
                   ATT&amp;CK: T1078 · T1070
                 </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'}`}>
                   D3FEND: D3-DS · D3-MFA
                 </span>
               </div>
@@ -595,13 +596,13 @@ Timestamp: ${new Date().toISOString()}`;
                 }`}>
                   <div>
                     <h1 className={`text-sm font-bold tracking-wider ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                      BPJS KESEHATAN KANTOR CABANG SURAKARTA
+                      BPJS KESEHATAN KANTOR PUSAT
                     </h1>
                     <p className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                      Kedeputian Wilayah Jawa Tengah &amp; DIY · Sistem Pendukung Keputusan ClaimTrace
+                      Direktorat Jaminan Pelayanan Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan FPK
                     </p>
                     <p className={`text-[9px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      Jl. Teuku Umar No. 12, Surakarta · Telp: (0271) 646321
+                      Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510 · Telp: (021) 4212938
                     </p>
                   </div>
                   <div className="text-right">

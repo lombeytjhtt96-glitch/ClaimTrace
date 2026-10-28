@@ -68,7 +68,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
     {
       id: 'CLM-2026-10-086',
       sep: '0132R0021026V000341',
-      hospital: 'RS Hermina Surakarta',
+      hospital: 'RS Hermina Kemayoran Jakarta',
       hospitalType: 'FKRTL (RS Swasta Kelas B)',
       code: 'Z-3-12-0',
       description: 'Prosedur Fisioterapi Rawat Jalan',
@@ -112,8 +112,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
     {
       id: 'CLM-2026-10-092',
       sep: '0114R0011026V004390',
-      hospital: 'RSUD Dr. Moewardi',
-      hospitalType: 'FKRTL (RSUD Rujukan Kelas A)',
+      hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+      hospitalType: 'FKRTL (RS Pusat Rujukan Nasional Kelas A)',
       code: 'I-4-17-I',
       description: 'Pneumonia Bakterial Tanpa Komplikasi (J15.9)',
       tariff: 'Rp 5.800.000',
@@ -134,8 +134,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
     {
       id: 'CLM-2026-10-094',
       sep: '0114R0021026V001920',
-      hospital: 'RS PKU Muhammadiyah Surakarta',
-      hospitalType: 'FKRTL (RS Swasta Kelas B)',
+      hospital: 'RSUP Dr. Sardjito Yogyakarta',
+      hospitalType: 'FKRTL (RS Pemerintah Rujukan Kelas A)',
       code: 'K-4-12-I',
       description: 'Apendisitis Akut Tanpa Perforasi (K35.8)',
       tariff: 'Rp 7.200.000',
@@ -156,8 +156,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
     {
       id: 'CLM-2026-10-095',
       sep: '0114R0031026V002811',
-      hospital: 'RS Kasih Ibu Surakarta',
-      hospitalType: 'FKRTL (RS Swasta Kelas B)',
+      hospital: 'RSUP Fatmawati Jakarta',
+      hospitalType: 'FKRTL (RS Pemerintah Kelas A)',
       code: 'N-4-10-II',
       description: 'Hemodialisis Rutin (Z49.1)',
       tariff: 'Rp 890.000',
@@ -417,13 +417,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
             }`}
           >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Faskes (Surakarta)</option>
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Faskes (Nasional)</option>
             <option value="Mitra Husada" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Khusus Mitra Husada</option>
-            <option value="Hermina" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Hermina Surakarta</option>
+            <option value="Hermina" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Hermina Kemayoran Jakarta</option>
             <option value="Harapan Bunda" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSU Harapan Bunda</option>
-            <option value="Moewardi" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUD Dr. Moewardi</option>
-            <option value="PKU" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS PKU Muhammadiyah</option>
-            <option value="Kasih Ibu" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Kasih Ibu Surakarta</option>
+            <option value="Cipto" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUPN Dr. Cipto Mangunkusumo</option>
+            <option value="Sardjito" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUP Dr. Sardjito</option>
+            <option value="Fatmawati" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUP Fatmawati Jakarta</option>
           </select>
 
           <div className="relative min-w-[220px]">
@@ -483,7 +483,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
             ? (isLight ? 'text-amber-800' : 'text-amber-300')
             : (isLight ? 'text-emerald-800' : 'text-emerald-300')
         }`}>
-          Cluster KC Surakarta · Kepatuhan SLA 10 HK
+          Klaster Faskes Rujukan Nasional · Kepatuhan SLA 10 HK
         </span>
       </div>
 
