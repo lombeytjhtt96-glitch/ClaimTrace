@@ -750,9 +750,9 @@ export default function AgentCopilot({
           </div>
 
           {/* Main Grid: Agentic Architecture Topology (Left) & Execution Trace Grid (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left 6 Cols: Agentic Architecture Topology */}
-            <div className={`lg:col-span-6 relative overflow-hidden rounded-2xl border p-5 transition-all flex flex-col justify-between space-y-4 ${
+            <div className={`lg:col-span-6 relative overflow-hidden rounded-2xl border p-5 transition-all flex flex-col space-y-4 ${
               isLight
                 ? 'bg-white border-slate-200/90 shadow-sm text-slate-900'
                 : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
@@ -778,7 +778,7 @@ export default function AgentCopilot({
               </div>
 
               {/* Visual Interactive Topology Diagram */}
-              <div className={`relative border rounded-xl p-5 font-mono space-y-4 transition-all ${
+              <div className={`relative border rounded-xl p-4 sm:p-5 font-mono space-y-3.5 transition-all ${
                 isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#000c24]/90 border-white/10'
               }`}>
                 {/* Legend */}
@@ -793,7 +793,7 @@ export default function AgentCopilot({
                     <span className={`w-3 h-0.5 inline-block ${isLight ? 'bg-amber-600' : 'bg-[#FFCA40]'}`} /> MODERATE (TCA)
                   </span>
                   <span className={`flex items-center gap-1.5 font-bold ${isLight ? 'text-rose-800' : 'text-rose-400'}`}>
-                    <span className="w-3 h-0.5 bg-rose-500 inline-block" /> CRITICAL (L1∥CMA)
+                    <span className="w-3 h-0.5 bg-rose-500 inline-block" /> CRITICAL (L1 &amp; CMA)
                   </span>
                   <span className={`flex items-center gap-1.5 font-bold ${isLight ? 'text-purple-800' : 'text-purple-400'}`}>
                     <span className="w-3 h-0.5 bg-purple-500 inline-block" /> ANALYTICS (IA)
@@ -1019,7 +1019,7 @@ export default function AgentCopilot({
             </div>
 
             {/* Right 6 Cols: Execution Trace Grid */}
-            <div className={`lg:col-span-6 relative overflow-hidden rounded-2xl border p-5 transition-all flex flex-col justify-between space-y-4 ${
+            <div className={`lg:col-span-6 relative overflow-hidden rounded-2xl border p-5 transition-all flex flex-col space-y-4 ${
               isLight
                 ? 'bg-white border-slate-200/90 shadow-sm text-slate-900'
                 : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
@@ -1075,7 +1075,7 @@ export default function AgentCopilot({
                   </div>
                 </div>
 
-                <div className={`overflow-x-auto rounded-xl border ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
+                <div className={`overflow-x-auto rounded-xl border max-h-[460px] overflow-y-auto ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <table className="w-full text-left text-xs font-mono">
                     <thead className={`border-b uppercase ${
                       isLight
