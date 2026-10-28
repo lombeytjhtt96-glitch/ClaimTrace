@@ -589,9 +589,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-sky-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-[#FFCA40]/40'
             }`}>
-              <ClipboardList className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 ${
-                isLight ? 'text-slate-900 opacity-[0.04] group-hover:opacity-[0.08]' : 'text-white opacity-[0.05] group-hover:opacity-[0.10]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white/10 border-white/15 text-white/90'
@@ -613,9 +610,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-emerald-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-emerald-400/40'
             }`}>
-              <Activity className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-emerald-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
@@ -637,9 +631,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-blue-500/60 hover:shadow-blue-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-blue-400/40'
             }`}>
-              <CheckCircle2 className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-blue-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-blue-500/20 border-blue-500/30 text-blue-400'
@@ -664,9 +655,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-sky-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-[#FFCA40]/40'
             }`}>
-              <BarChart2 className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-amber-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-[#FFCA40]/20 border-[#FFCA40]/30 text-[#FFCA40]'
@@ -688,9 +676,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-purple-500/60 hover:shadow-purple-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-purple-400/40'
             }`}>
-              <Eye className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-purple-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-purple-500/20 border-purple-500/30 text-purple-400'
@@ -712,9 +697,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-rose-500/60 hover:shadow-rose-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-rose-400/40'
             }`}>
-              <Clock className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-rose-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-rose-500/20 border-rose-500/30 text-rose-400'
@@ -739,9 +721,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-teal-500/60 hover:shadow-teal-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-cyan-400/40'
             }`}>
-              <Timer className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-teal-500 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-teal-500/20 border-teal-500/30 text-cyan-400'
@@ -763,9 +742,6 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-slate-400/60 hover:shadow-slate-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-slate-300/40'
             }`}>
-              <TrendingDown className={`absolute -right-3 -bottom-3 w-20 h-20 pointer-events-none transition-all duration-300 text-slate-400 ${
-                isLight ? 'opacity-[0.05] group-hover:opacity-[0.10]' : 'opacity-[0.06] group-hover:opacity-[0.12]'
-              }`} />
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
                   isLight ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white/10 border-white/15 text-white/80'

@@ -296,9 +296,6 @@ export default function LandingPage({
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute -top-24 left-1/2 -translate-x-1/2 w-[950px] h-[360px] bg-gradient-to-b from-blue-900/30 via-[#001D58]/20 to-transparent blur-3xl pointer-events-none" 
         />
-
-        {/* Crisp Architectural Grid Pattern extending under the floating navbar */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:3rem_3rem]" />
         
         <div className="max-w-6xl mx-auto space-y-12 relative z-10">
           

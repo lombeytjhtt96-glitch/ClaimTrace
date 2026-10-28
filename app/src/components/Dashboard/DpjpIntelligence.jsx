@@ -324,7 +324,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
             </div>
           </div>
 
-          {/* METRIC STRIP DENGAN WATERMARK ICON */}
+          {/* METRIC STRIP */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t ${
             isLight ? 'border-slate-200' : 'border-white/10'
           }`}>
@@ -333,7 +333,6 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
                 : 'bg-white/5 border border-white/10 text-white'
             }`}>
-              <Stethoscope className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-700/10 dark:text-white/5 pointer-events-none" />
               <span className={`text-[10px] block font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/50'}`}>
                 Total DPJP Terpantau
               </span>
@@ -349,7 +348,6 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs'
                 : 'bg-white/5 border border-white/10 text-white'
             }`}>
-              <Car className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-700/10 dark:text-white/5 pointer-events-none" />
               <span className={`text-[10px] block font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 Anomali Geovelocity
               </span>
@@ -365,7 +363,6 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs'
                 : 'bg-white/5 border border-white/10 text-white'
             }`}>
-              <Activity className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-700/10 dark:text-white/5 pointer-events-none" />
               <span className={`text-[10px] block font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 Kelebihan Beban Pelayanan
               </span>
@@ -381,7 +378,6 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs'
                 : 'bg-white/5 border border-white/10 text-white'
             }`}>
-              <Award className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-700/10 dark:text-white/5 pointer-events-none" />
               <span className={`text-[10px] block font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 SIP Non-Aktif / Kadaluwarsa
               </span>

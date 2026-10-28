@@ -149,13 +149,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         }`} 
       />
 
-      {/* Crisp Architectural Grid Pattern */}
-      <div className={`absolute inset-0 pointer-events-none ${
-        effectiveIsLight
-          ? 'opacity-[0.035] bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)]'
-          : 'opacity-[0.04] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]'
-      } bg-[size:2.5rem_2.5rem]`} />
-
       <motion.div 
         initial={{ opacity: 0, y: 15, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -432,12 +432,11 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             </div>
           </div>
 
-          {/* 4 KPI METRIC BANNER DENGAN WATERMARK ICON */}
+          {/* 4 KPI METRIC BANNER */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Database className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Kohort Transaksi Klaim</div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 10.000 <span className={`text-[10.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Klaim FKRTL</span>
@@ -447,7 +446,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <AlertOctagon className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[11px] font-medium flex items-center gap-1.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 <AlertOctagon className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Kasus Repeat Terdeteksi
               </div>
@@ -459,7 +457,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <TrendingUp className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Akumulasi Nilai Split</div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 Rp {(totalAkumulasiSplit / 1_000_000).toFixed(2).replace('.', ',')} Juta
@@ -469,7 +466,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <CheckCircle2 className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Validasi Pembuktian</div>
               <div className={`text-sm font-semibold mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 SQL Reproducible
@@ -849,7 +845,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-amber-50/70 border-amber-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Activity className="w-12 h-12 absolute -right-2 -bottom-2 text-amber-900/10 dark:text-[#FFCA40]/10 pointer-events-none" />
               <div className={`text-[10px] font-bold ${isLight ? 'text-amber-800' : 'text-white/50'}`}>Top #1 · Kronis</div>
               <div className={`text-sm font-bold font-mono mt-0.5 ${isLight ? 'text-amber-900' : 'text-[#FFCA40]'}`}>Q-5-44-0</div>
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Penyakit Kronis Kecil</div>
@@ -863,7 +858,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-amber-50/70 border-amber-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Activity className="w-12 h-12 absolute -right-2 -bottom-2 text-amber-900/10 dark:text-[#FFCA40]/10 pointer-events-none" />
               <div className={`text-[10px] font-bold ${isLight ? 'text-amber-800' : 'text-white/50'}`}>Top #2 · Akut</div>
               <div className={`text-sm font-bold font-mono mt-0.5 ${isLight ? 'text-amber-900' : 'text-[#FFCA40]'}`}>Q-5-42-0</div>
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Penyakit Akut Kecil</div>
@@ -877,7 +871,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-amber-50/70 border-amber-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Activity className="w-12 h-12 absolute -right-2 -bottom-2 text-amber-900/10 dark:text-[#FFCA40]/10 pointer-events-none" />
               <div className={`text-[10px] font-bold ${isLight ? 'text-amber-800' : 'text-white/50'}`}>Top #3 · Dialisis</div>
               <div className={`text-sm font-bold font-mono mt-0.5 ${isLight ? 'text-amber-900' : 'text-[#FFCA40]'}`}>N-3-15-0</div>
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Prosedur Dialisis</div>
@@ -891,7 +884,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-amber-50/70 border-amber-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Activity className="w-12 h-12 absolute -right-2 -bottom-2 text-amber-900/10 dark:text-[#FFCA40]/10 pointer-events-none" />
               <div className={`text-[10px] font-bold ${isLight ? 'text-amber-800' : 'text-white/50'}`}>Top #4 · Gigi</div>
               <div className={`text-sm font-bold font-mono mt-0.5 ${isLight ? 'text-amber-900' : 'text-[#FFCA40]'}`}>U-3-16-0</div>
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Prosedur Gigi &amp; Mulut</div>
@@ -905,7 +897,6 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-amber-50/70 border-amber-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Activity className="w-12 h-12 absolute -right-2 -bottom-2 text-amber-900/10 dark:text-[#FFCA40]/10 pointer-events-none" />
               <div className={`text-[10px] font-bold ${isLight ? 'text-amber-800' : 'text-white/50'}`}>Top #5 · Terapi</div>
               <div className={`text-sm font-bold font-mono mt-0.5 ${isLight ? 'text-amber-900' : 'text-[#FFCA40]'}`}>M-3-16-0</div>
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Fisioterapi Kecil</div>

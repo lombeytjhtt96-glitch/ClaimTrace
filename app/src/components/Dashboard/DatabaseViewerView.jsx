@@ -596,7 +596,6 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
           : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50'
       }`}>
-        <Database className="absolute -right-6 -bottom-6 w-44 h-44 pointer-events-none opacity-[0.03] group-hover:opacity-[0.06] text-emerald-500 transition-all duration-300" />
         <div className="relative z-10">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className={`text-2xl font-bold tracking-tight flex items-center gap-2.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
