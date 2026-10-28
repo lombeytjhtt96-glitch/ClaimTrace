@@ -110,11 +110,17 @@ export default function LandingPage({
     ? 'KUNING (Klarifikasi Berkas & SIP)' 
     : 'HIJAU (Fast-Track Wajar < 24 Jam)';
 
-  const laneBadgeColor = calculatedScore >= 70 
-    ? 'text-rose-300 border-rose-500/40 bg-rose-500/20' 
-    : calculatedScore >= 40 
-    ? 'text-amber-300 border-amber-500/40 bg-amber-500/20' 
-    : 'text-emerald-300 border-emerald-500/40 bg-emerald-500/20';
+  const laneBadgeColor = effectiveIsLight
+    ? calculatedScore >= 70
+      ? 'text-rose-700 border-rose-300 bg-rose-50 shadow-sm'
+      : calculatedScore >= 40
+      ? 'text-amber-800 border-amber-300 bg-amber-50 shadow-sm'
+      : 'text-emerald-800 border-emerald-300 bg-emerald-50 shadow-sm'
+    : calculatedScore >= 70 
+      ? 'text-rose-300 border-rose-500/40 bg-rose-500/20' 
+      : calculatedScore >= 40 
+      ? 'text-amber-300 border-amber-500/40 bg-amber-500/20' 
+      : 'text-emerald-300 border-emerald-500/40 bg-emerald-500/20';
 
   const scrollToSection = (sectionId) => {
     setActiveNav(sectionId);
@@ -677,25 +683,25 @@ export default function LandingPage({
               layout
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               whileHover={{ scale: 1.01 }}
-              className={`p-4 sm:p-5 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl ${
+              className={`p-4 sm:p-5 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg ${
                 effectiveIsLight
-                  ? 'bg-slate-900 text-white border-slate-800'
+                  ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-slate-200/60'
                   : 'bg-[#000c24]/90 text-white border-white/15'
               }`}
             >
               <div className="space-y-1 text-center md:text-left">
-                <span className="text-[10.5px] font-bold text-white/50 uppercase tracking-wide">
+                <span className={`text-[10.5px] font-bold uppercase tracking-wide ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>
                   Formula Matematis Fusi Deterministik
                 </span>
-                <div className="text-xs font-mono font-bold text-white/90">
+                <div className={`text-xs font-mono font-bold ${effectiveIsLight ? 'text-slate-800' : 'text-white/90'}`}>
                   Total = 0.5·S1 + 0.3·S2 + 0.2·S3 = ({(0.5 * sliderS1).toFixed(1)} + {(0.3 * sliderS2).toFixed(1)} + {(0.2 * sliderS3).toFixed(1)}) = {calculatedScore} / 100
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
                 <div className="text-right">
-                  <span className="text-[10px] text-white/50 block uppercase font-bold">Skor Akhir</span>
-                  <span className="text-3xl font-bold font-mono text-white leading-none">{calculatedScore}</span>
+                  <span className={`text-[10px] block uppercase font-bold ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Skor Akhir</span>
+                  <span className={`text-3xl font-bold font-mono leading-none ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>{calculatedScore}</span>
                 </div>
                 <motion.div 
                   key={lane}
@@ -1074,23 +1080,27 @@ export default function LandingPage({
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(16, 185, 129, 0.4)", boxShadow: "0 12px 24px -6px rgba(16, 185, 129, 0.2)" }}
                 transition={{ duration: 0.2 }}
-                className="bg-[#000c24]/70 p-5 rounded-2xl border border-white/10 space-y-3 shadow-md group cursor-pointer transition-all duration-300"
+                className={`p-5 rounded-2xl border space-y-3 shadow-md group cursor-pointer transition-all duration-300 ${
+                  effectiveIsLight
+                    ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
+                    : 'bg-[#000c24]/70 border-white/10 text-white'
+                }`}
               >
                 <div className="flex items-center space-x-3">
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: [0, -4, 4, 0] }}
                     transition={{ duration: 0.3 }}
-                    className="w-12 h-12 rounded-xl bg-emerald-600 text-white shadow-emerald-950/40 font-bold text-base flex items-center justify-center shadow-lg shadow-emerald-950/40"
+                    className="w-12 h-12 rounded-xl bg-emerald-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-emerald-950/20"
                   >
                     KF
                   </motion.div>
                   <div>
-                    <h4 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">Khalaf Faith Pradyatama</h4>
-                    <p className="text-xs text-emerald-400 font-semibold">Lead Systems Architect & Fullstack Security Engineer</p>
-                    <p className="text-[11px] text-white/50">Sistem Arsitektur & Keamanan Siber</p>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Khalaf Faith Pradyatama</h4>
+                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>Lead Systems Architect & Fullstack Security Engineer</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Sistem Arsitektur & Keamanan Siber</p>
                   </div>
                 </div>
-                <p className={`text-xs leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'} pt-2 border-t border-white/10`}>
+                <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
                   Bertanggung jawab atas perancangan arsitektur sistem ClaimTrace DSS, integrasi sistem konfirmasi Mobile JKN, protokol kriptografis SHA-256 anti-repudiasi.
                 </p>
               </motion.div>
@@ -1099,23 +1109,27 @@ export default function LandingPage({
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(56, 189, 248, 0.4)", boxShadow: "0 12px 24px -6px rgba(56, 189, 248, 0.15)" }}
                 transition={{ duration: 0.2 }}
-                className="bg-[#000c24]/70 p-5 rounded-2xl border border-white/10 space-y-3 shadow-md group cursor-pointer transition-all duration-300"
+                className={`p-5 rounded-2xl border space-y-3 shadow-md group cursor-pointer transition-all duration-300 ${
+                  effectiveIsLight
+                    ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
+                    : 'bg-[#000c24]/70 border-white/10 text-white'
+                }`}
               >
                 <div className="flex items-center space-x-3">
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: [0, -4, 4, 0] }}
                     transition={{ duration: 0.3 }}
-                    className="w-12 h-12 rounded-xl bg-cyan-500 text-[#000c24] font-bold text-base flex items-center justify-center shadow-lg shadow-cyan-500/20"
+                    className="w-12 h-12 rounded-xl bg-cyan-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-cyan-950/20"
                   >
                     GA
                   </motion.div>
                   <div>
-                    <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 transition-colors">Gaudiansyah Abiyu Mahya</h4>
-                    <p className="text-xs text-cyan-400 font-semibold">Healthcare Domain Analyst & Machine Learning Modeler</p>
-                    <p className="text-[11px] text-white/50">Domain Kesehatan & Analisis Kebijakan</p>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'}`}>Gaudiansyah Abiyu Mahya</h4>
+                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Healthcare Domain Analyst & Machine Learning Modeler</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Domain Kesehatan & Analisis Kebijakan</p>
                   </div>
                 </div>
-                <p className={`text-xs leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'} pt-2 border-t border-white/10`}>
+                <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
                   Bertanggung jawab atas telaah regulasi yuridis Program JKN (Perpres 82/2018, Permenkes 14 & 26/2021), perumusan bobot matematis 3 lapis bukti, kurasi dataset 10.000 klaim empiris, dan validasi beban kerja dokter spesialis di SATUSEHAT.
                 </p>
               </motion.div>
@@ -1238,12 +1252,16 @@ export default function LandingPage({
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
-            whileHover={{ y: -4, boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(16, 185, 129, 0.3)" }}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#00153A]/85 p-6 space-y-3 shadow-xl backdrop-blur-xl transition-all duration-200"
+            whileHover={{ y: -4, boxShadow: effectiveIsLight ? "0 15px 30px -10px rgba(0, 0, 0, 0.08)" : "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(16, 185, 129, 0.3)" }}
+            className={`relative overflow-hidden rounded-2xl border p-6 space-y-3 shadow-xl backdrop-blur-xl transition-all duration-200 ${
+              effectiveIsLight
+                ? 'border-slate-200 bg-white text-slate-900 shadow-slate-200/50'
+                : 'border-white/10 bg-[#00153A]/85 text-white'
+            }`}
           >
-            <div className="flex items-center space-x-2 text-emerald-400">
+            <div className={`flex items-center space-x-2 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
               <Scale className="w-5 h-5" />
-              <h4 className="font-bold text-sm text-white">Doktrin Human-in-the-Loop & Anti-Halusinasi</h4>
+              <h4 className={`font-bold text-sm ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>Doktrin Human-in-the-Loop & Anti-Halusinasi</h4>
             </div>
             <p className={`text-xs leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
               ClaimTrace menolak penggunaan model bahasa besar (LLM) probabilistik untuk menentukan nasib pencairan klaim faskes. Seluruh proses penapisan dioperasikan melalui formula matematis deterministik transparan yang dapat dibuktikan kebenarannya per komponen. Verifikator medis manusia memegang otoritas tunggal dalam menyetujui, menunda, atau menolak pembayaran klaim.
@@ -1694,7 +1712,7 @@ export default function LandingPage({
       {/* ======================================================== */}
       <footer className={`border-t py-12 px-4 lg:px-8 text-xs transition-colors duration-200 ${
         effectiveIsLight
-          ? 'border-slate-200 bg-white text-slate-600'
+          ? 'border-slate-200 bg-slate-100/90 text-slate-600'
           : 'border-white/10 bg-[#00081c] text-white/60'
       }`}>
         <div className="max-w-7xl mx-auto space-y-8">
@@ -1708,13 +1726,13 @@ export default function LandingPage({
                 </div>
                 <div>
                   <span className={`font-bold block text-sm ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>ClaimTrace DSS Platform</span>
-                  <span className="text-emerald-400 font-semibold text-[11px]">Sistem Penapisan Risiko Klaim Faskes JKN</span>
+                  <span className={`font-semibold text-[11px] ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>Sistem Penapisan Risiko Klaim Faskes JKN</span>
                 </div>
               </div>
-              <p className="text-[11px] text-white/60 leading-relaxed max-w-sm">
+              <p className={`text-[11px] leading-relaxed max-w-sm ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
                 Sistem pendukung keputusan (*Decision Support System*) pra-bayar resmi BPJS Kesehatan nasional untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
               </p>
-              <div className="pt-1 text-[10.5px] text-white/40 font-mono space-y-0.5">
+              <div className={`pt-1 text-[10.5px] font-mono space-y-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>
                 <p>Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan</p>
                 <p>Kepatuhan Hukum: UU PDP No. 27/2022 · Perpres No. 82/2018 · ISO/IEC 27001:2022</p>
               </div>
@@ -1725,24 +1743,24 @@ export default function LandingPage({
               <span className={`font-bold uppercase text-[11px] tracking-wider block ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                 Navigasi Beranda
               </span>
-              <ul className="space-y-1.5 text-xs text-white/60">
+              <ul className={`space-y-1.5 text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('landing')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
+                  <button type="button" onClick={() => scrollToSection('landing')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700 text-slate-700' : 'hover:text-emerald-400 text-white/70'}`}>
                     Beranda &amp; Fusi Skor Klaim
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('feature')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
+                  <button type="button" onClick={() => scrollToSection('feature')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700 text-slate-700' : 'hover:text-emerald-400 text-white/70'}`}>
                     Enam Fitur Unggulan Penapisan
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('about')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
+                  <button type="button" onClick={() => scrollToSection('about')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700 text-slate-700' : 'hover:text-emerald-400 text-white/70'}`}>
                     Tentang Tim Rekayasa &amp; 4 Pilar
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('contact')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
+                  <button type="button" onClick={() => scrollToSection('contact')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700 text-slate-700' : 'hover:text-emerald-400 text-white/70'}`}>
                     Pengaduan WBS &amp; Kontak Resmi
                   </button>
                 </li>
@@ -1754,28 +1772,28 @@ export default function LandingPage({
               <span className={`font-bold uppercase text-[11px] tracking-wider block ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                 Regulasi &amp; Kebijakan Institusional
               </span>
-              <ul className="space-y-2 text-xs text-white/60">
+              <ul className={`space-y-2 text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('privacy')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'} flex items-center space-x-1.5 font-medium text-white/70 group text-left`}>
-                    <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+                  <button type="button" onClick={() => handleOpenLegal('privacy')} className={`transition cursor-pointer flex items-center space-x-1.5 font-medium group text-left ${effectiveIsLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'}`}>
+                    <Shield className={`w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                     <span>Kebijakan Privasi &amp; Perlindungan Data Pribadi (UU PDP)</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('terms')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'} flex items-center space-x-1.5 font-medium text-white/70 group text-left`}>
-                    <FileCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
+                  <button type="button" onClick={() => handleOpenLegal('terms')} className={`transition cursor-pointer flex items-center space-x-1.5 font-medium group text-left ${effectiveIsLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'}`}>
+                    <FileCheck className={`w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform ${effectiveIsLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
                     <span>Syarat &amp; Ketentuan Layanan (Pakta Integritas)</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('security')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'} flex items-center space-x-1.5 font-medium text-white/70 group text-left`}>
-                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+                  <button type="button" onClick={() => handleOpenLegal('security')} className={`transition cursor-pointer flex items-center space-x-1.5 font-medium group text-left ${effectiveIsLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'}`}>
+                    <Lock className={`w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                     <span>Standar Keamanan Siber, BSSN &amp; ISO 27001</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('sla')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'} flex items-center space-x-1.5 font-medium text-white/70 group text-left`}>
-                    <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+                  <button type="button" onClick={() => handleOpenLegal('sla')} className={`transition cursor-pointer flex items-center space-x-1.5 font-medium group text-left ${effectiveIsLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'}`}>
+                    <Clock className={`w-3.5 h-3.5 shrink-0 group-hover:scale-110 transition-transform ${effectiveIsLight ? 'text-amber-700' : 'text-amber-400'}`} />
                     <span>SLA Kepatuhan Batas Waktu 10 Hari Kerja (Perpres 82)</span>
                   </button>
                 </li>
@@ -1783,20 +1801,20 @@ export default function LandingPage({
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <p className="text-white/40 text-center sm:text-left">
+          <div className={`pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
+            <p className={`text-center sm:text-left ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>
               © 2026 BPJS Kesehatan · Hak Cipta Dilindungi Undang-Undang Republik Indonesia.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 font-bold text-white/60">
+            <div className={`flex flex-wrap items-center justify-center gap-4 font-bold ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
               <button type="button" onClick={() => handleOpenLegal('privacy')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                 Privacy Policy
               </button>
-              <span className="text-white/20">•</span>
+              <span className={effectiveIsLight ? 'text-slate-300' : 'text-white/20'}>•</span>
               <button type="button" onClick={() => handleOpenLegal('terms')} className={`transition cursor-pointer ${effectiveIsLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                 Terms of Use
               </button>
-              <span className="text-white/20">•</span>
-              <button type="button" onClick={handleLogin} className="text-emerald-400 hover:text-emerald-300 transition cursor-pointer font-bold flex items-center space-x-1">
+              <span className={effectiveIsLight ? 'text-slate-300' : 'text-white/20'}>•</span>
+              <button type="button" onClick={handleLogin} className={`transition cursor-pointer font-bold flex items-center space-x-1 ${effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'}`}>
                 <Lock className="w-3 h-3" />
                 <span>Masuk Portal Verifikator</span>
               </button>
