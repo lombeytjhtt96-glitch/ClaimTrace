@@ -1104,13 +1104,19 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
       {activeTab === 'sql' && (
         <div className="space-y-5">
           {/* Preset Queries Toolbar */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#00153A]/85 p-5 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white space-y-3">
+          <div className={`relative overflow-hidden rounded-2xl border p-5 shadow-xl backdrop-blur-xl space-y-3 ${
+            isLight
+              ? 'border-slate-200 bg-white text-slate-900 shadow-slate-200/50'
+              : 'border-white/10 bg-[#00153A]/85 text-white shadow-[#00081c]/50'
+          }`}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-[#FFCA40]" />
+              <span className={`text-xs font-bold flex items-center gap-1.5 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
+                <Sparkles className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
                 <span>Kueri Preset Analisis Klaim Resmi:</span>
               </span>
-              <span className="text-[11px] text-white/50 font-mono">
+              <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Engine: DuckDB SQL OLAP (Read-Only Safe)
               </span>
             </div>
@@ -1124,7 +1130,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                     setSqlInput(preset.sql);
                     handleExecuteSql(preset.sql);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#FFCA40]/40 text-xs text-white/80 hover:text-[#FFCA40] transition-colors font-medium cursor-pointer"
+                  className={`px-3 py-1.5 rounded-xl border text-xs transition-colors font-medium cursor-pointer ${
+                    isLight
+                      ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700 hover:text-emerald-800'
+                      : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-[#FFCA40]/40 text-white/80 hover:text-[#FFCA40]'
+                  }`}
                 >
                   {preset.name}
                 </button>
