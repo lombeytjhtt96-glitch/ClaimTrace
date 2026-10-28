@@ -351,10 +351,11 @@ export default function LandingPage({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogin}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Masuk Portal</span>
+                <span>Masuk Portal Verifikator</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </motion.button>
             </div>
 
@@ -1243,7 +1244,9 @@ export default function LandingPage({
                   : 'border-white/10 bg-[#00153A]/85 text-white'
               }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform ${
+                  effectiveIsLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
                   BPJS
                 </div>
                 <h4 className={`font-bold text-xs ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'} transition-colors`}>BPJS Kesehatan</h4>
@@ -1264,7 +1267,9 @@ export default function LandingPage({
                   : 'border-white/10 bg-[#00153A]/85 text-white'
               }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform ${
+                  effectiveIsLight ? 'bg-cyan-100 text-cyan-800 border border-cyan-300 shadow-xs' : 'bg-cyan-500/20 text-cyan-300'
+                }`}>
                   KEM
                 </div>
                 <h4 className={`font-bold text-xs ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'} transition-colors`}>Kementerian Kesehatan</h4>
@@ -1285,7 +1290,9 @@ export default function LandingPage({
                   : 'border-white/10 bg-[#00153A]/85 text-white'
               }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform ${
+                  effectiveIsLight ? 'bg-amber-100 text-amber-800 border border-amber-300 shadow-xs' : 'bg-amber-500/20 text-amber-300'
+                }`}>
                   BPK
                 </div>
                 <h4 className={`font-bold text-xs ${effectiveIsLight ? 'text-slate-900 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'} transition-colors`}>Badan Pemeriksa Keuangan</h4>
@@ -1306,7 +1313,9 @@ export default function LandingPage({
                   : 'border-white/10 bg-[#00153A]/85 text-white'
               }`}
               >
-                <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-300 flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform ${
+                  effectiveIsLight ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-xs' : 'bg-rose-500/20 text-rose-300'
+                }`}>
                   KPK
                 </div>
                 <h4 className={`font-bold text-xs ${effectiveIsLight ? 'text-slate-900 group-hover:text-rose-700' : 'text-white group-hover:text-rose-300'} transition-colors`}>Komisi Pemberantasan Korupsi</h4>
