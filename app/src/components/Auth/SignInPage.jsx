@@ -295,7 +295,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   onClick={handleRefreshCaptcha}
                   title="Klik untuk acak ulang kode keamanan"
                   className={`col-span-5 relative rounded-xl p-2 flex items-center justify-center cursor-pointer select-none overflow-hidden border shadow-inner group min-h-[38px] ${
-                    effectiveIsLight ? 'bg-slate-900 border-slate-700' : 'bg-[#000c24] border-white/15'
+                    effectiveIsLight ? 'bg-slate-100 border-slate-300' : 'bg-[#000c24] border-white/15'
                   }`}
                 >
                   {/* Security Noise Grid / Lines */}
@@ -308,7 +308,9 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   </svg>
                   
                   {/* Distorted Captcha Characters */}
-                  <div className="relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest text-emerald-300 font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className={`relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest font-bold text-sm ${
+                    effectiveIsLight ? 'text-slate-900 drop-shadow-xs' : 'text-emerald-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
+                  }`}>
                     {captchaCode.split('').map((char, index) => {
                       const rotations = [-6, 8, -4, 6, -8];
                       const yOffsets = [1, -2, 2, -1, 1];
@@ -319,7 +321,9 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                             transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
                             display: 'inline-block'
                           }}
-                          className={index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200'}
+                          className={effectiveIsLight 
+                            ? (index % 2 === 0 ? 'text-emerald-800' : 'text-teal-900')
+                            : (index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200')}
                         >
                           {char}
                         </span>
@@ -328,8 +332,10 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   </div>
 
                   {/* Hover indicator */}
-                  <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <RefreshCw className="w-3.5 h-3.5 text-white/80" />
+                  <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center ${
+                    effectiveIsLight ? 'bg-slate-900/10' : 'bg-emerald-500/10'
+                  }`}>
+                    <RefreshCw className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`} />
                   </div>
                 </div>
 
@@ -379,7 +385,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                 </div>
               ) : (
                 <>
-                  <span>Masuk ke Portal Verifikator</span>
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <span>Masuk Portal Verifikator</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </>
               )}
