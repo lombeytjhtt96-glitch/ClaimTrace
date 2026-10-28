@@ -242,9 +242,82 @@ export default function LandingPage({
                 </div>
               </div>
 
-              {/* Desktop Nav Links (Only Regulasi & PDP as requested by user) */}
-              <nav className="hidden md:flex items-center gap-7">
-                <button type="button"
+              {/* Desktop Nav Links */}
+              <nav className="hidden md:flex items-center gap-6">
+                <button 
+                  type="button"
+                  onClick={() => scrollToSection('landing')}
+                  className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                    activeNav === 'landing'
+                      ? (effectiveIsLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')
+                      : (effectiveIsLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400')
+                  }`}
+                >
+                  <span>Beranda</span>
+                  {activeNav === 'landing' && (
+                    <motion.span 
+                      layoutId="activeNavIndicator"
+                      className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full ${effectiveIsLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} 
+                    />
+                  )}
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => scrollToSection('feature')}
+                  className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                    activeNav === 'feature'
+                      ? (effectiveIsLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')
+                      : (effectiveIsLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400')
+                  }`}
+                >
+                  <span>Fitur Unggulan</span>
+                  {activeNav === 'feature' && (
+                    <motion.span 
+                      layoutId="activeNavIndicator"
+                      className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full ${effectiveIsLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} 
+                    />
+                  )}
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => scrollToSection('about')}
+                  className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                    activeNav === 'about'
+                      ? (effectiveIsLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')
+                      : (effectiveIsLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400')
+                  }`}
+                >
+                  <span>Tentang Sistem</span>
+                  {activeNav === 'about' && (
+                    <motion.span 
+                      layoutId="activeNavIndicator"
+                      className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full ${effectiveIsLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} 
+                    />
+                  )}
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => scrollToSection('contact')}
+                  className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                    activeNav === 'contact'
+                      ? (effectiveIsLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')
+                      : (effectiveIsLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400')
+                  }`}
+                >
+                  <span>Pengaduan WBS</span>
+                  {activeNav === 'contact' && (
+                    <motion.span 
+                      layoutId="activeNavIndicator"
+                      className={`absolute -bottom-1 left-0 right-0 h-0.5 rounded-full ${effectiveIsLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} 
+                    />
+                  )}
+                </button>
+
+                <button 
+                  type="button"
                   onClick={() => handleOpenLegal('privacy')}
                   className={`text-sm font-semibold transition-colors py-1 relative group flex items-center space-x-1 cursor-pointer ${
                     effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800 font-bold' : 'text-emerald-400 hover:text-emerald-300'
@@ -252,7 +325,6 @@ export default function LandingPage({
                 >
                   <Shield className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   <span>Regulasi &amp; PDP</span>
-                  <span className="absolute -bottom-1 left-0 h-0.5 w-0 group-hover:w-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 </button>
               </nav>
             </div>
