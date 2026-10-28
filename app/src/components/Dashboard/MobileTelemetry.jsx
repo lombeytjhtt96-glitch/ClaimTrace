@@ -82,7 +82,7 @@ export default function MobileTelemetry({
       claimId: 'KLAIM-2026-0879',
       participantName: 'Tn. Agus Salim',
       nikHash: 'b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78',
-      faskes: 'RSUD Dr. Moewardi',
+      faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
       procedure: 'Hemodialisa Rutin',
       dispatchedAt: '24 Okt 2026 13:50 WIB',
       respondedAt: '24 Okt 2026 14:02 WIB',

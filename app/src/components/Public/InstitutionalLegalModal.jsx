@@ -166,7 +166,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                   Tata Kelola, Regulasi & Integritas Data JKN
                 </h2>
                 <p className={`text-xs ${effectiveIsLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  BPJS Kesehatan Kantor Cabang Surakarta · Kedeputian Wilayah VI (Jawa Tengah & DIY)
+                  BPJS Kesehatan Kantor Pusat · Kedeputian Bidang Pengawasan dan Pemeriksaan
                 </p>
               </div>
             </div>

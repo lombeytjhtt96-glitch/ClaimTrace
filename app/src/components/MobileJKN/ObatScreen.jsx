@@ -88,7 +88,7 @@ export default function ObatScreen({ onNavigate }) {
           <span className="font-bold text-slate-900 block">Ketersediaan Obat di Faskes Anda</span>
           <div className="flex justify-between items-center text-[11px] p-2 rounded-xl bg-slate-50 border border-slate-200/80">
             <div>
-              <p className="font-bold text-slate-800">Apotek Klinik Pratama Surakarta</p>
+              <p className="font-bold text-slate-800">Apotek Klinik Pratama Nasional BPJS</p>
               <span className="text-[10px] text-emerald-600 font-semibold">Stok Obat Lengkap (100%)</span>
             </div>
             <span className="text-[10px] text-slate-400">Buka 24 Jam</span>

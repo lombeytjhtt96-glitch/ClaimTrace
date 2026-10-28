@@ -1308,7 +1308,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
           <span>Seluruh perubahan konfigurasi otomatis dicatat dalam audit trail terenkripsi SHA-256 (ISO 27001).</span>
         </div>
         <div className="font-mono text-[11px] text-slate-400">
-          ClaimTrace Ver. 2.4.0 &bull; BPJS KC Surakarta
+          ClaimTrace Ver. 2.4.0 &bull; Kantor Pusat BPJS Kesehatan
         </div>
       </footer>
     </div>

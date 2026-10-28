@@ -7,7 +7,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
     {
       sender: 'doctor',
       time: '09:40',
-      text: 'Halo Bapak Khalaf. Saya dr. Siti Rahma dari FKTP Klinik Pratama Surakarta. Ada keluhan yang bisa saya bantu terkait kesehatan Anda?',
+      text: 'Halo Bapak Khalaf. Saya dr. Siti Rahma dari FKTP Klinik Pratama Nasional BPJS. Ada keluhan yang bisa saya bantu terkait kesehatan Anda?',
     },
   ]);
   const [inputText, setInputText] = useState('');
@@ -18,7 +18,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
       name: 'dr. Siti Rahma',
       spec: 'Dokter Umum (FKTP Anda)',
       sip: 'SIP: 503/446/DU/2022',
-      clinic: 'Klinik Pratama Surakarta',
+      clinic: 'Klinik Pratama Nasional BPJS',
       status: 'Online',
       avatar: '/assets/images/dokter_avatar.png',
     },
@@ -27,7 +27,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
       name: 'drg. Anindya Putri',
       spec: 'Dokter Gigi',
       sip: 'SIP: 503/112/DG/2023',
-      clinic: 'Klinik Pratama Surakarta',
+      clinic: 'Klinik Pratama Nasional BPJS',
       status: 'Online',
       avatar: '/assets/images/female_icon.png',
     },
@@ -36,7 +36,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
       name: 'dr. Budi Santoso, Sp.A',
       spec: 'Spesialis Anak (Konsul Rujukan)',
       sip: 'SIP: 446/782/SpA/2021',
-      clinic: 'RSUD Dr. Moewardi',
+      clinic: 'RSUPN Dr. Cipto Mangunkusumo',
       status: 'Sibuk',
       avatar: '/assets/images/docter_icon.png',
     },
@@ -89,7 +89,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
             {selectedDoctor ? selectedDoctor.name : 'Konsultasi Dokter Online'}
           </h2>
           <span className="text-[10px] text-slate-500 font-medium">
-            {selectedDoctor ? selectedDoctor.spec : 'FKTP Klinik Pratama Surakarta'}
+            {selectedDoctor ? selectedDoctor.spec : 'FKTP Klinik Pratama Nasional BPJS'}
           </span>
         </div>
       </div>

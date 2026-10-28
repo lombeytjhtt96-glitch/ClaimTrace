@@ -113,7 +113,7 @@ export default function RiwayatPelayananScreen({ onNavigate, onOpenClaimTrace, p
             </div>
           </div>
 
-          {/* KASUS 2: KLINIK PRATAMA SURAKARTA (SAH) */}
+          {/* KASUS 2: KLINIK PRATAMA NASIONAL (SAH) */}
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2">
             <div className="flex items-start justify-between">
               <div>
@@ -121,7 +121,7 @@ export default function RiwayatPelayananScreen({ onNavigate, onOpenClaimTrace, p
                   Faskes Tingkat Pertama (FKTP)
                 </span>
                 <h4 className="text-xs font-bold text-slate-900 mt-0.5">
-                  KLINIK PRATAMA SURAKARTA
+                  KLINIK PRATAMA NASIONAL BPJS
                 </h4>
               </div>
               <span className="text-[9.5px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center">
@@ -146,7 +146,7 @@ export default function RiwayatPelayananScreen({ onNavigate, onOpenClaimTrace, p
             </div>
           </div>
 
-          {/* KASUS 3: RSUD DR. MOEWARDI (SAH) */}
+          {/* KASUS 3: RSUPN DR. CIPTO MANGUNKUSUMO (SAH) */}
           <div className="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2">
             <div className="flex items-start justify-between">
               <div>
@@ -154,7 +154,7 @@ export default function RiwayatPelayananScreen({ onNavigate, onOpenClaimTrace, p
                   Faskes Rujukan Lanjutan (FKRTL)
                 </span>
                 <h4 className="text-xs font-bold text-slate-900 mt-0.5">
-                  RSUD Dr. Moewardi Surakarta
+                  RSUPN Dr. Cipto Mangunkusumo Jakarta
                 </h4>
               </div>
               <span className="text-[9.5px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center">

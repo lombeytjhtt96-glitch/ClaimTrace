@@ -35,10 +35,10 @@ const INITIAL_JKN_USERS = [
   {
     id: 1,
     name: 'dr. Hendra Setiawan, Sp.A',
-    email: 'hendra.setiawan@rsud-dr-moewardi.jatengprov.go.id',
+    email: 'hendra.setiawan@rscm.co.id',
     phone: '081229348123',
-    faskes: 'RSUD Dr. Moewardi Surakarta',
-    faskes_code: '0114R001',
+    faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+    faskes_code: '0112R001',
     role: 'DPJP_SPESIALIS',
     role_label: 'DPJP Spesialis Anak',
     is_active: true,
@@ -77,10 +77,10 @@ const INITIAL_JKN_USERS = [
   {
     id: 3,
     name: 'Ahmad Faisal, S.Farm., Apt',
-    email: 'faisal.apt@rs-kasih-ibu.co.id',
+    email: 'faisal.apt@rs-fatmawati.go.id',
     phone: '082138947512',
-    faskes: 'RS Kasih Ibu Surakarta',
-    faskes_code: '0114R002',
+    faskes: 'RSUP Fatmawati Jakarta',
+    faskes_code: '0112R002',
     role: 'PIC_CASEMIX',
     role_label: 'Koordinator Farmasi & Casemix',
     is_active: true,
@@ -98,10 +98,10 @@ const INITIAL_JKN_USERS = [
   {
     id: 4,
     name: 'dr. Bambang Prasetyo, Sp.JP(K)',
-    email: 'bambang.prasetyo@rs-pantiwaluyo.com',
+    email: 'bambang.prasetyo@rs-persahabatan.go.id',
     phone: '08112648931',
-    faskes: 'RS Panti Waluyo Surakarta',
-    faskes_code: '0114R003',
+    faskes: 'RSUP Persahabatan Jakarta',
+    faskes_code: '0112R003',
     role: 'DPJP_SPESIALIS',
     role_label: 'DPJP Jantung & Pembuluh Darah',
     is_active: true,
@@ -121,10 +121,10 @@ const INITIAL_JKN_USERS = [
     name: 'Tri Wahyuni, SKM',
     email: 'tri.wahyuni@bpjs-kesehatan.go.id',
     phone: '085741298456',
-    faskes: 'BPJS Kesehatan KC Surakarta',
-    faskes_code: 'KC-0114',
+    faskes: 'BPJS Kesehatan Kantor Pusat',
+    faskes_code: 'KP-0001',
     role: 'VERIFIKATOR',
-    role_label: 'Verifikator Medis Utama',
+    role_label: 'Verifikator Medis Utama (Pusat)',
     is_active: true,
     screening_risk: 'CLEAN',
     screening_score: 12,
@@ -142,8 +142,8 @@ const INITIAL_JKN_USERS = [
     name: 'Drs. Iwan Kusuma, MM',
     email: 'iwan.kusuma@bpjs-kesehatan.go.id',
     phone: '081290384721',
-    faskes: 'Kedeputian Wilayah VI Jateng-DIY',
-    faskes_code: 'KEDEP-06',
+    faskes: 'Kedeputian Bidang Wasrik Pusat',
+    faskes_code: 'KEDEP-WASRIK',
     role: 'WASRIK',
     role_label: 'Auditor Pengawasan & Pemeriksaan (Wasrik)',
     is_active: true,
@@ -161,10 +161,10 @@ const INITIAL_JKN_USERS = [
   {
     id: 7,
     name: 'Dewi Lestari, S.Tr.Kes',
-    email: 'dewi.rekammedis@rs-pku-solo.com',
+    email: 'dewi.rekammedis@rs-hasansadikin.go.id',
     phone: '082245981245',
-    faskes: 'RS PKU Muhammadiyah Surakarta',
-    faskes_code: '0114R004',
+    faskes: 'RSUP Dr. Hasan Sadikin Bandung',
+    faskes_code: '0115R004',
     role: 'PIC_CASEMIX',
     role_label: 'Staf Koder & Rekam Medis',
     is_active: false,
@@ -182,10 +182,10 @@ const INITIAL_JKN_USERS = [
   {
     id: 8,
     name: 'dr. Agus Santoso, Sp.OT',
-    email: 'agus.santoso@rs-ortopedi-solo.go.id',
+    email: 'agus.santoso@rs-sardjito.co.id',
     phone: '081328904512',
-    faskes: 'RSO Prof. Dr. R. Soeharso Surakarta',
-    faskes_code: '0114R008',
+    faskes: 'RSUP Dr. Sardjito Yogyakarta',
+    faskes_code: '0116R008',
     role: 'DPJP_SPESIALIS',
     role_label: 'DPJP Bedah Ortopedi',
     is_active: true,
@@ -298,7 +298,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
     const clean = phone.replace(/\D/g, '');
     const intl = clean.startsWith('0') ? '62' + clean.slice(1) : clean;
     const msg = encodeURIComponent(
-      `Yth. ${user.name} (${user.faskes}), Tim Verifikator BPJS Kesehatan KC Surakarta menyampaikan konfirmasi berkas klaim & kepatuhan SLA JKN.`
+      `Yth. ${user.name} (${user.faskes}), Tim Verifikator BPJS Kesehatan Pusat menyampaikan konfirmasi berkas klaim & kepatuhan SLA JKN.`
     );
     return `https://wa.me/${intl}?text=${msg}`;
   };
@@ -1246,7 +1246,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                           <span>22/10/2026, 11:15</span>
                         </div>
                         <p className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
-                          Panggilan verifikator KC Surakarta mengonfirmasi kehadiran DPJP di poli rawat jalan.
+                          Panggilan verifikator BPJS Kesehatan Pusat mengonfirmasi kehadiran DPJP di poli rawat jalan.
                         </p>
                       </div>
                     </div>

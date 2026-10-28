@@ -58,7 +58,7 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
               <h3 className="text-sm font-bold text-white">{user?.name || 'dr. Siti Rahma, Sp.PK'}</h3>
             </div>
             <span className="text-[10px] font-bold text-white/80 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
-              {user?.unit || user?.branch || 'KC Surakarta'}
+              {user?.unit || user?.branch || 'Kantor Pusat BPJS Kesehatan'}
             </span>
           </div>
 
