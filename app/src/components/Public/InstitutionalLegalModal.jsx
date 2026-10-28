@@ -351,7 +351,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                         2. Pseudonimisasi & Masking Data
                       </span>
                       <p className={`text-[11px] leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                        Nomor Identitas Kependudukan (NIK) dan Nomor Kartu Peserta disamarkan dalam antarmuka pengawasan (misal: <code className={effectiveIsLight ? 'bg-slate-200 text-slate-900 px-1 py-0.5 rounded font-mono' : ''}>00028917*****</code>) dan disimpan dalam hash bergaram (*salted hash*).
+                        Nomor Identitas Kependudukan (NIK) dan Nomor Kartu Peserta disamarkan dalam antarmuka pengawasan (misal: <code className={effectiveIsLight ? 'bg-slate-200 text-slate-900 px-1 py-0.5 rounded font-mono' : ''}>00028917*****</code>) dan disimpan dalam hash bergaram (<span className="italic">salted hash</span>).
                       </p>
                     </div>
                   </div>
@@ -369,7 +369,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                   <ul className={`list-disc pl-5 space-y-1 ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                     <li><strong>Hak Mendapatkan Informasi:</strong> Mengetahui tujuan penapisan klaim dan alasan keterlibatan data pelayanan.</li>
                     <li><strong>Hak Mengakses & Memperoleh Salinan:</strong> Peserta berhak melihat riwayat klaim yang diajukan atas namanya melalui menu Riwayat Pelayanan di aplikasi Mobile JKN.</li>
-                    <li><strong>Hak Perbaikan & Koreksi Data:</strong> Mengajukan koreksi apabila faskes melakukan penagihan ganda atau pencatatan tindakan fiktif (*Phantom Billing*).</li>
+                    <li><strong>Hak Perbaikan & Koreksi Data:</strong> Mengajukan koreksi apabila faskes melakukan penagihan ganda atau pencatatan tindakan fiktif (<span className="italic">Phantom Billing</span>).</li>
                     <li><strong>Hak Menolak Keputusan Otomatis Penuh:</strong> ClaimTrace menjamin bahwa tidak ada klaim yang ditolak atau disetujui semata-mata oleh kecerdasan buatan probabilistik tanpa telaah verifikator manusia.</li>
                   </ul>
                 </div>
@@ -473,7 +473,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                     <span>Otoritas Penilaian Medis (Human-in-the-Loop)</span>
                   </h3>
                   <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    Sistem ClaimTrace DSS bertindak sebagai instrumen bantu keputusan (*decision support tool*). Algoritma menghitung skor risiko triase berdasarkan formula deterministik objektif. Otoritas penolakan klaim, persetujuan klaim, atau pengalihan sengketa medik sepenuhnya berada di tangan verifikator medis manusia yang memiliki surat keputusan penugasan.
+                    Sistem ClaimTrace DSS bertindak sebagai instrumen bantu keputusan (<span className="italic">decision support tool</span>). Algoritma menghitung skor risiko triase berdasarkan formula deterministik objektif. Otoritas penolakan klaim, persetujuan klaim, atau pengalihan sengketa medik sepenuhnya berada di tangan verifikator medis manusia yang memiliki surat keputusan penugasan.
                   </p>
                 </div>
 
@@ -550,7 +550,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                     <span>Isolasi Analitik Lokal DuckDB (Privacy-Preserving)</span>
                   </h3>
                   <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    Pemrosesan OLAP pada transaksi klaim dioperasikan dalam lingkungan WebAssembly terisolasi di sisi peramban (*client-side sandboxed execution*). Pendekatan ini memastikan data sensitif tidak dipaparkan ke pihak ketiga serta mengeliminasi risiko serangan *Distributed Denial of Service* (DDoS) pada server inti BPJS.
+                    Pemrosesan OLAP pada transaksi klaim dioperasikan dalam lingkungan WebAssembly terisolasi di sisi peramban (<span className="italic">client-side sandboxed execution</span>). Pendekatan ini memastikan data sensitif tidak dipaparkan ke pihak ketiga serta mengeliminasi risiko serangan <span className="italic">Distributed Denial of Service</span> (DDoS) pada server inti BPJS.
                   </p>
                 </div>
 
