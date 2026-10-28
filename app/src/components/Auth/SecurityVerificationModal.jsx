@@ -6,7 +6,7 @@ export default function SecurityVerificationModal({
   isOpen = true,
   user = null,
   identifier = '',
-  email = 'verifikator.khalaf@bpjs-kesehatan.go.id',
+  email = 'verifikator.simulasi@bpjs-kesehatan.go.id',
   initialStep = 'pin',
   onVerified,
   onCompleteVerification,

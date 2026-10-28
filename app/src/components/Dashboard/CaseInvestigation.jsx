@@ -67,7 +67,7 @@ export default function CaseInvestigation({
 
   // Verified participants array
   const verifiedParticipants = [
-    { id: 'PST-77218902', name: 'Khalaf Faith P.', status: patientResponse === 'denied' ? 'denied' : patientResponse === 'confirmed' ? 'confirmed' : 'pending_denied', target: true },
+    { id: 'PST-77218902', name: 'Ahmad Syafiq (Peserta Fiktif)', status: patientResponse === 'denied' ? 'denied' : patientResponse === 'confirmed' ? 'confirmed' : 'pending_denied', target: true },
     { id: 'PST-77218903', name: 'Ahmad S.', status: 'denied', target: false },
     { id: 'PST-77218904', name: 'Siti R.', status: 'denied', target: false },
     { id: 'PST-77218905', name: 'Budi W.', status: 'denied', target: false },
