@@ -387,7 +387,7 @@ export default function App() {
     }).replace(/\./g, ':') + ' WIB';
   });
 
-  // Mode Tema Dasbor (dark / light / system)
+  // Mode Tema Dasbor (light / dark / system) - Default: Light (Clinical White)
   const [theme, setTheme] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
@@ -396,12 +396,12 @@ export default function App() {
         if (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'system') {
           return urlTheme;
         }
-        return localStorage.getItem('claimtrace_theme') || 'dark';
+        return localStorage.getItem('claimtrace_theme') || 'light';
       }
     } catch {
-      return 'dark';
+      return 'light';
     }
-    return 'dark';
+    return 'light';
   });
 
   const [systemPrefersLight, setSystemPrefersLight] = useState(() => {

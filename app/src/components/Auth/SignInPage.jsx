@@ -20,7 +20,9 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
   const effectiveIsLight =
     isLight !== undefined
       ? isLight
-      : typeof window !== 'undefined' && localStorage.getItem('claimtrace_theme') === 'light';
+      : typeof window !== 'undefined'
+      ? localStorage.getItem('claimtrace_theme') !== 'dark'
+      : true;
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
