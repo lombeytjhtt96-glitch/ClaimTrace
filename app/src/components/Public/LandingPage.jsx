@@ -1430,11 +1430,11 @@ export default function LandingPage({
                           : 'bg-[#000c24]/70 border-white/15 text-white'
                       }`}
                       >
-                        <option className="bg-[#00134A] text-white" value="Phantom Billing">Phantom Billing (Pasien / Dokter Fiktif)</option>
-                        <option className="bg-[#00134A] text-white" value="Repeat & Split Billing">Repeat & Split Billing (Episode Ganda)</option>
-                        <option className="bg-[#00134A] text-white" value="Manipulasi SIP DPJP">Pelanggaran Kuota & Overlap SIP DPJP</option>
-                        <option className="bg-[#00134A] text-white" value="Upcoding Tarif">Upcoding Tarif & Falsifikasi Diagnosa</option>
-                        <option className="bg-[#00134A] text-white" value="Lainnya">Lainnya / Pelanggaran Etika Klaim</option>
+                        <option className={effectiveIsLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"} value="Phantom Billing">Phantom Billing (Pasien / Dokter Fiktif)</option>
+                        <option className={effectiveIsLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"} value="Repeat & Split Billing">Repeat & Split Billing (Episode Ganda)</option>
+                        <option className={effectiveIsLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"} value="Manipulasi SIP DPJP">Pelanggaran Kuota & Overlap SIP DPJP</option>
+                        <option className={effectiveIsLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"} value="Upcoding Tarif">Upcoding Tarif & Falsifikasi Diagnosa</option>
+                        <option className={effectiveIsLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"} value="Lainnya">Lainnya / Pelanggaran Etika Klaim</option>
                       </select>
                     </div>
 
@@ -1496,7 +1496,9 @@ export default function LandingPage({
                       type="checkbox" 
                       checked={formIsAnonymous}
                       onChange={(e) => setFormIsAnonymous(e.target.checked)}
-                      className="rounded border-white/20 bg-[#000c24] text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      className={`rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer ${
+                        effectiveIsLight ? 'border-slate-300 bg-white' : 'border-white/20 bg-[#000c24]'
+                      }`}
                     />
                     <span className={`text-xs transition-colors ${effectiveIsLight ? 'text-slate-600 group-hover:text-slate-900' : 'text-white/70 group-hover:text-white'}`}>
                       Kirim laporan sebagai <strong className={effectiveIsLight ? "text-slate-900 font-bold" : "text-white"}>Pelapor Anonim</strong> (Informasi kontak tidak akan disimpan di server).
@@ -1547,38 +1549,52 @@ export default function LandingPage({
                   initial={{ opacity: 1, y: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-4 text-xs shadow-inner"
+                  className={`p-5 rounded-2xl border space-y-4 text-xs shadow-inner ${
+                    effectiveIsLight
+                      ? 'bg-emerald-50/80 border-emerald-300 text-slate-900'
+                      : 'bg-emerald-500/10 border-emerald-500/30 text-white'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-emerald-400 font-bold">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <div className={`flex items-center space-x-2 font-bold ${
+                      effectiveIsLight ? 'text-emerald-800' : 'text-emerald-400'
+                    }`}>
+                      <CheckCircle2 className={`w-5 h-5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                       <span className="text-sm">Laporan Berhasil Diterima</span>
                     </div>
-                    <span className="font-mono text-[11px] bg-[#000c24] text-emerald-400 px-2.5 py-0.5 rounded border border-emerald-500/30 font-bold shadow-xs">
+                    <span className={`font-mono text-[11px] px-2.5 py-0.5 rounded border font-bold shadow-xs ${
+                      effectiveIsLight
+                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                        : 'bg-[#000c24] text-emerald-400 border-emerald-500/30'
+                    }`}>
                       {submissionReceipt.ticketId}
                     </span>
                   </div>
 
-                  <p className="text-white/70 leading-relaxed">
+                  <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                     Pengaduan Anda telah terdaftar dan disegel dalam rantai audit forensik Kantor Pusat BPJS Kesehatan. Simpan nomor tiket ini untuk memantau status tindak lanjut audit.
                   </p>
 
-                  <div className="bg-[#000c24]/80 p-3.5 rounded-xl border border-white/10 space-y-1.5 text-[11px]">
+                  <div className={`p-3.5 rounded-xl border space-y-1.5 text-[11px] ${
+                    effectiveIsLight
+                      ? 'bg-white border-slate-200 text-slate-800 shadow-xs'
+                      : 'bg-[#000c24]/80 border-white/10 text-white'
+                  }`}>
                     <div className="flex justify-between">
-                      <span className="text-white/50">Faskes Terlapor:</span>
-                      <span className="font-bold text-white">{submissionReceipt.faskes}</span>
+                      <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Faskes Terlapor:</span>
+                      <span className={`font-bold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>{submissionReceipt.faskes}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-white/50">Kategori:</span>
-                      <span className="font-bold text-white">{submissionReceipt.category}</span>
+                      <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Kategori:</span>
+                      <span className={`font-bold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>{submissionReceipt.category}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-white/50">Waktu Registrasi:</span>
-                      <span className="text-white/80">{submissionReceipt.timestamp}</span>
+                      <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Waktu Registrasi:</span>
+                      <span className={effectiveIsLight ? 'text-slate-700 font-mono' : 'text-white/80'}>{submissionReceipt.timestamp}</span>
                     </div>
-                    <div className="flex justify-between border-t border-white/10 pt-1.5">
-                      <span className="text-white/50">Integritas Hash:</span>
-                      <span className="font-mono text-[10px] text-emerald-400 font-bold">{submissionReceipt.hash}</span>
+                    <div className={`flex justify-between border-t pt-1.5 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
+                      <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Integritas Hash:</span>
+                      <span className={`font-mono text-[10px] font-bold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{submissionReceipt.hash}</span>
                     </div>
                   </div>
 
@@ -1587,9 +1603,13 @@ export default function LandingPage({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={copyReceiptText}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 hover:bg-white/10 font-bold text-white flex items-center space-x-1.5 transition cursor-pointer shadow-xs"
+                      className={`px-3 py-1.5 rounded-lg border font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-xs ${
+                        effectiveIsLight
+                          ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700'
+                          : 'bg-white/5 border-white/15 hover:bg-white/10 text-white'
+                      }`}
                     >
-                      {copiedReceipt ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedReceipt ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedReceipt ? 'Disalin' : 'Salin Bukti Tiket'}</span>
                     </motion.button>
                     <motion.button
@@ -1600,7 +1620,7 @@ export default function LandingPage({
                         setFormFaskes('');
                         setFormDescription('');
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold transition cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border border-emerald-500 font-bold transition cursor-pointer shadow-xs"
                     >
                       Kirim Laporan Baru
                     </motion.button>

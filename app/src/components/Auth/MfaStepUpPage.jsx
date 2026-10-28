@@ -5,11 +5,24 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel }) {
+export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel, isLight: propIsLight }) {
   const [timeLeft, setTimeLeft] = useState(60);
   const [totpCode, setTotpCode] = useState(['', '', '', '', '', '']);
   const [isSimulatingApprove, setIsSimulatingApprove] = useState(false);
 
+  const internalIsLight = (() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedTheme = localStorage.getItem('claimtrace_theme');
+        if (storedTheme === 'light') return true;
+        if (storedTheme === 'dark') return false;
+        return document.documentElement.classList.contains('light');
+      } catch {}
+    }
+    return true;
+  })();
+
+  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
   const handleSuccess = onSuccess || onMfaSuccess;
 
   useEffect(() => {
@@ -45,13 +58,15 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
   };
 
   return (
-    <div className="flex-1 min-h-[calc(100vh-8rem)] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none bg-[#000c24] text-white">
+    <div className={`flex-1 min-h-[calc(100vh-8rem)] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none transition-colors duration-300 ${
+      isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
+    }`}>
       {/* Dynamic Ambient Background Light */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
         <motion.div 
           animate={{
             scale: [1, 1.15, 0.95, 1],
-            opacity: [0.25, 0.45, 0.3, 0.25],
+            opacity: isLight ? [0.4, 0.6, 0.45, 0.4] : [0.25, 0.45, 0.3, 0.25],
             x: [0, 25, -20, 0],
             y: [0, -20, 15, 0],
           }}
@@ -60,12 +75,16 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-gradient-to-br from-blue-900/40 via-[#001D58]/30 to-emerald-500/10 blur-3xl"
+          className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl ${
+            isLight
+              ? 'bg-gradient-to-br from-emerald-100/70 via-teal-100/50 to-blue-100/60'
+              : 'bg-gradient-to-br from-blue-900/40 via-[#001D58]/30 to-emerald-500/10'
+          }`}
         />
         <motion.div 
           animate={{
             scale: [1, 1.2, 0.92, 1],
-            opacity: [0.2, 0.4, 0.25, 0.2],
+            opacity: isLight ? [0.35, 0.55, 0.4, 0.35] : [0.2, 0.4, 0.25, 0.2],
             x: [0, -25, 18, 0],
             y: [0, 22, -16, 0],
           }}
@@ -74,7 +93,11 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tl from-[#00153A] via-blue-900/20 to-emerald-500/10 blur-3xl"
+          className={`absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full blur-3xl ${
+            isLight
+              ? 'bg-gradient-to-tl from-teal-100/60 via-emerald-100/40 to-cyan-100/50'
+              : 'bg-gradient-to-tl from-[#00153A] via-blue-900/20 to-emerald-500/10'
+          }`}
         />
       </div>
 
@@ -84,7 +107,9 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           whileHover={{ x: -3 }}
           whileTap={{ scale: 0.96 }}
           onClick={onCancel}
-          className="absolute top-6 left-6 text-xs text-white/60 hover:text-white flex items-center space-x-1.5 transition font-medium z-20 cursor-pointer"
+          className={`absolute top-6 left-6 text-xs flex items-center space-x-1.5 transition font-medium z-20 cursor-pointer ${
+            isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
+          }`}
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Ganti Akun / Batal</span>
@@ -107,50 +132,76 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           <motion.div 
             whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0] }}
             transition={{ duration: 0.3 }}
-            className="inline-flex p-3 rounded-2xl bg-white/5 border border-white/10 text-emerald-400 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl mb-1 cursor-pointer"
+            className={`inline-flex p-3 rounded-2xl border shadow-xl backdrop-blur-xl mb-1 cursor-pointer ${
+              isLight
+                ? 'bg-white border-slate-200 text-emerald-700 shadow-slate-200/60'
+                : 'bg-white/5 border-white/10 text-emerald-400 shadow-xl shadow-[#00081c]/50'
+            }`}
           >
-            <Smartphone className="w-8 h-8 text-emerald-400" />
+            <Smartphone className={`w-8 h-8 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
           </motion.div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className={`text-2xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Verifikasi Dua Faktor (MFA)
           </h1>
-          <div className="flex items-center justify-center gap-1.5 text-[9.5px] font-mono text-white/60 bg-white/5 py-1 px-3 rounded-full border border-white/10 w-fit mx-auto">
+          <div className={`flex items-center justify-center gap-1.5 text-[9.5px] font-mono py-1 px-3 rounded-full border w-fit mx-auto ${
+            isLight
+              ? 'text-slate-700 bg-slate-100 border-slate-300'
+              : 'text-white/60 bg-white/5 border-white/10'
+          }`}>
             <span>NIST CSF 2.0 PR.AC</span>
             <span>·</span>
             <span>MITRE D3FEND D3-MFA</span>
           </div>
-          <p className="text-xs text-white/70 max-w-sm mx-auto">
+          <p className={`text-xs max-w-sm mx-auto ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
             Notifikasi izin masuk telah dikirimkan ke aplikasi Mobile JKN pada perangkat kedinasan Anda.
           </p>
         </div>
 
         {/* MFA CHALLENGE CARD */}
         <motion.div 
-          className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#00153A]/85 p-6 sm:p-8 shadow-2xl shadow-[#00081c]/80 backdrop-blur-xl space-y-6 text-left text-white transition-all duration-300"
+          className={`relative overflow-hidden rounded-3xl border p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6 text-left transition-all duration-300 ${
+            isLight
+              ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/70'
+              : 'border-white/10 bg-[#00153A]/85 text-white shadow-[#00081c]/80'
+          }`}
         >
           {/* USER INFO STRIP */}
-          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs">
+          <div className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs ${
+            isLight
+              ? 'bg-slate-50 border-slate-200 text-slate-800'
+              : 'bg-white/5 border-white/10 text-white'
+          }`}>
             <div>
-              <span className="font-bold text-white block">{user?.name || 'dr. Siti Rahma, Sp.PK'}</span>
-              <span className="text-[11px] text-white/50 font-mono">{user?.unit || user?.branch || 'Kantor Pusat BPJS Kesehatan'} · NIP {user?.nip || '198704202011012001'}</span>
+              <span className={`font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                {user?.name || 'dr. Siti Rahma, Sp.PK'}
+              </span>
+              <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                {user?.unit || user?.branch || 'Kantor Pusat BPJS Kesehatan'} · NIP {user?.nip || '198704202011012001'}
+              </span>
             </div>
-            <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30">
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+              isLight
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            }`}>
               PERANGKAT SAH
             </span>
           </div>
 
           {/* TIMER STATUS */}
           <div className="text-center space-y-1">
-            <div className="text-[11px] font-bold text-white/50 uppercase tracking-wide">Batas Waktu Validasi</div>
+            <div className={`text-[11px] font-bold uppercase tracking-wide ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              Batas Waktu Validasi
+            </div>
             <motion.div 
               animate={timeLeft <= 10 && timeLeft > 0 ? { scale: [1, 1.06, 1], color: ['#10b981', '#f43f5e', '#10b981'] } : {}}
               transition={{ repeat: Infinity, duration: 1 }}
-              className="text-3xl font-bold font-mono text-emerald-400 tracking-wider"
+              className={`text-3xl font-bold font-mono tracking-wider ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}
             >
               00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
             </motion.div>
             {timeLeft === 0 && (
-              <span className="text-xs text-rose-400 font-semibold block">
+              <span className="text-xs text-rose-600 font-semibold block">
                 Batas waktu habis. Silakan kirim ulang sinyal verifikasi.
               </span>
             )}
@@ -162,7 +213,7 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
             whileTap={{ scale: 0.98 }}
             onClick={handleSimulateMobileApprove}
             disabled={isSimulatingApprove || timeLeft === 0}
-            className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/30 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
           >
             {isSimulatingApprove ? (
               <>
@@ -178,9 +229,9 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           </motion.button>
 
           {/* FALLBACK: 6-DIGIT TOTP MANUAL */}
-          <div className="space-y-2.5 pt-2 border-t border-white/10">
+          <div className={`space-y-2.5 pt-2 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
             <div className="text-center">
-              <span className="text-[11px] font-semibold text-white/70">
+              <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
                 Atau masukkan 6 digit kode keamanan Mobile JKN:
               </span>
             </div>
@@ -193,7 +244,11 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleTotpChange(idx, e.target.value)}
-                  className="w-10 h-12 text-center text-lg font-mono font-bold bg-white/5 border border-white/10 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-white focus:outline-none transition-all duration-200"
+                  className={`w-10 h-12 text-center text-lg font-mono font-bold rounded-xl focus:outline-none transition-all duration-200 ${
+                    isLight
+                      ? 'bg-slate-50 border border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+                      : 'bg-white/5 border border-white/10 text-white focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
+                  }`}
                 />
               ))}
             </div>
@@ -202,12 +257,14 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           <div className="flex items-center justify-between pt-2 text-xs">
             <button type="button"
               onClick={() => { setTimeLeft(60); setTotpCode(['', '', '', '', '', '']); }}
-              className="text-white/60 hover:text-white flex items-center space-x-1 transition font-medium cursor-pointer"
+              className={`flex items-center space-x-1 transition font-medium cursor-pointer ${
+                isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
+              }`}
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Kirim Ulang Tantangan</span>
             </button>
-            <span className="text-[10.5px] text-white/40 font-mono">ID: CT-MFA-9821</span>
+            <span className={`text-[10.5px] font-mono ${isLight ? 'text-slate-400' : 'text-white/40'}`}>ID: CT-MFA-9821</span>
           </div>
         </motion.div>
       </motion.div>

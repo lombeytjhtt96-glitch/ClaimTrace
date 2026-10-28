@@ -726,7 +726,10 @@ export default function App() {
         >
           <SignOutPage 
             onLoginAgain={() => setAuthView('login')}
+            onGoToLogin={() => setAuthView('login')}
+            onGoToLanding={() => setAuthView('landing')}
             user={currentUser}
+            isLight={isLight}
           />
         </motion.div>
       )}
@@ -2416,6 +2419,7 @@ export default function App() {
     {authView === 'landing' && (
       <CookieConsentBanner 
         onOpenPrivacy={() => openLegalModal('privacy')}
+        isLight={isLight}
       />
     )}
 

@@ -512,7 +512,9 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#00081c]/80 backdrop-blur-md flex items-center justify-center p-4"
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all ${
+              isLight ? 'bg-slate-900/40 backdrop-blur-xs' : 'bg-[#00081c]/80 backdrop-blur-md'
+            }`}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
