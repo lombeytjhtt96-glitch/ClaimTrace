@@ -39,13 +39,13 @@ export default function CookieConsentBanner({ onOpenPrivacy }) {
         className="fixed bottom-6 left-4 right-4 sm:right-auto sm:left-6 sm:max-w-md z-40 bg-[#00153A]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl text-white"
       >
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/10 text-[#FFCA40] border border-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-md">
-            <Lock className="w-4 h-4 text-[#FFCA40]" />
+          <div className="w-9 h-9 rounded-xl bg-white/10 text-emerald-400 border border-white/15 flex items-center justify-center shrink-0 mt-0.5 shadow-md">
+            <Lock className="w-4 h-4 text-emerald-400" />
           </div>
           
           <div className="space-y-2 flex-1">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase text-[#FFCA40] tracking-wider">
+              <span className="text-[11px] font-bold uppercase text-emerald-400 tracking-wider">
                 Pemberitahuan Privasi &amp; Kepatuhan Data (UU PDP)
               </span>
               <button type="button" 
@@ -65,7 +65,7 @@ export default function CookieConsentBanner({ onOpenPrivacy }) {
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <button type="button"
                 onClick={handleAcceptAll}
-                className="px-3.5 py-1.5 rounded-xl bg-[#FFCA40] hover:bg-[#ffd566] text-[#000c24] font-bold text-xs shadow-md shadow-[#FFCA40]/20 transition cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-950/40 transition cursor-pointer"
               >
                 Setujui Telemetri Esensial
               </button>

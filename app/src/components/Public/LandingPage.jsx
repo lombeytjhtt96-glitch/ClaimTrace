@@ -177,7 +177,7 @@ export default function LandingPage({
   ];
 
   return (
-    <div className={`min-h-screen font-inter selection:bg-[#FFCA40] selection:text-[#000c24] transition-colors duration-200 ${
+    <div className={`min-h-screen font-inter selection:bg-emerald-500 selection:text-white transition-colors duration-200 ${
       effectiveIsLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
     }`}>
       {/* ======================================================== */}
@@ -205,7 +205,7 @@ export default function LandingPage({
                 className="flex items-center gap-3 group cursor-pointer"
               >
                 <div className={`relative w-9 h-9 overflow-hidden rounded-full border transition-colors duration-300 shadow-lg backdrop-blur-sm p-1 flex items-center justify-center shrink-0 ${
-                  effectiveIsLight ? 'border-slate-200 bg-slate-100 group-hover:border-amber-500' : 'border-white/20 bg-white/10 group-hover:border-[#FFCA40]'
+                  effectiveIsLight ? 'border-slate-200 bg-slate-100 group-hover:border-amber-500' : 'border-white/20 bg-white/10 group-hover:border-emerald-500'
                 }`}>
                   <img 
                     alt="BPJS Kesehatan" 
@@ -216,12 +216,12 @@ export default function LandingPage({
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className={`text-base font-bold leading-none tracking-tight transition-colors ${
-                      effectiveIsLight ? 'text-slate-900 group-hover:text-amber-600' : 'text-white group-hover:text-[#FFCA40]'
+                      effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'
                     }`}>
                       ClaimTrace
                     </span>
                     <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
-                      effectiveIsLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/30'
+                      effectiveIsLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                     }`}>
                       DSS
                     </span>
@@ -244,7 +244,7 @@ export default function LandingPage({
                 >
                   <Shield className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   <span>Regulasi &amp; PDP</span>
-                  <span className="absolute -bottom-1 left-0 h-0.5 w-0 group-hover:w-full bg-[#FFCA40] opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  <span className="absolute -bottom-1 left-0 h-0.5 w-0 group-hover:w-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 </button>
               </nav>
             </div>
@@ -262,7 +262,7 @@ export default function LandingPage({
                       : 'bg-white/10 border-white/15 text-white/80 hover:bg-white/15 hover:text-white'
                   }`}
                 >
-                  {effectiveIsLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-[#FFCA40]" />}
+                  {effectiveIsLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-emerald-400" />}
                 </button>
               )}
 
@@ -271,7 +271,7 @@ export default function LandingPage({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogin}
-                className="px-5 py-2 bg-[#FFCA40] text-[#000c24] rounded-full text-xs font-bold hover:bg-[#ffd566] transition-all duration-300 shadow-md shadow-[#FFCA40]/20 flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Masuk Portal</span>
@@ -306,9 +306,9 @@ export default function LandingPage({
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.04 }}
               transition={{ duration: 0.4 }}
-              className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-[#FFCA40] shadow-md cursor-default"
+              className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-400 shadow-md cursor-default"
             >
-              <Shield className="w-3.5 h-3.5 text-[#FFCA40] animate-pulse" />
+              <Shield className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
               <span>Sistem Intelijen Pengawasan & Penapisan Risiko Klaim Faskes JKN</span>
             </motion.div>
 
@@ -340,10 +340,10 @@ export default function LandingPage({
               className="flex flex-wrap items-center justify-center gap-3 pt-2"
             >
               <motion.button
-                whileHover={{ scale: 1.03, boxShadow: '0 12px 25px -5px rgba(255, 202, 64, 0.3)' }}
+                whileHover={{ scale: 1.03, boxShadow: '0 12px 25px -5px rgba(16, 185, 129, 0.4)' }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleLogin}
-                className="px-6 py-3 rounded-xl text-sm font-bold text-[#000c24] bg-[#FFCA40] hover:bg-[#ffd566] shadow-lg shadow-[#FFCA40]/20 flex items-center space-x-2 transition group cursor-pointer"
+                className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center space-x-2 transition group cursor-pointer"
               >
                 <Lock className="w-4 h-4 group-hover:rotate-6 transition-transform" />
                 <span>Masuk Portal Verifikator</span>
@@ -364,17 +364,17 @@ export default function LandingPage({
           {/* 4 National Impact Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             {[
-              { label: 'Potensi Efisiensi DJS', value: 'Rp 34,2 M+', note: 'Audit investigatif klaster anomali faskes', color: 'text-rose-400' },
-              { label: 'Kepatuhan Batas Verifikasi', value: '10 Hari', note: 'SLA Pasal 76 ayat 2 Perpres 82/2018', color: 'text-emerald-400' },
-              { label: 'Efisiensi Waktu Sortir', value: '60%', note: 'Reduksi telaah berkas wajar Fast-Track', color: 'text-cyan-400' },
-              { label: 'Pelindungan Data Pribadi', value: '100%', note: 'Patuh Pasal 34 UU PDP No. 27/2022', color: 'text-[#FFCA40]' }
+              { label: 'Potensi Efisiensi DJS', value: 'Rp 34,2 M+', note: 'Audit investigatif klaster anomali faskes', color: 'text-emerald-400' },
+              { label: 'Kepatuhan Batas Verifikasi', value: '10 Hari', note: 'SLA Pasal 76 ayat 2 Perpres 82/2018', color: 'text-teal-300' },
+              { label: 'Efisiensi Waktu Sortir', value: '60%', note: 'Reduksi telaah berkas wajar Fast-Track', color: 'text-emerald-400' },
+              { label: 'Pelindungan Data Pribadi', value: '100%', note: 'Patuh Pasal 34 UU PDP No. 27/2022', color: 'text-teal-300' }
             ].map((m, idx) => (
               <motion.div 
                 key={idx}
                 initial={{ opacity: 1, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.15 + idx * 0.08 }}
-                whileHover={{ y: -5, scale: 1.02, boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(255, 202, 64, 0.3)" }}
+                whileHover={{ y: -5, scale: 1.02, boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(16, 185, 129, 0.3)" }}
                 className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#00153A]/85 p-4 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl transition-all duration-200 group cursor-default"
               >
                 <span className="text-[11px] font-bold text-white/50 uppercase block">{m.label}</span>
@@ -388,7 +388,7 @@ export default function LandingPage({
           <div className="relative overflow-hidden rounded-3xl p-5 sm:p-6 text-white border border-white/15 bg-[#00153A]/90 shadow-2xl shadow-[#00081c]/60 backdrop-blur-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-[#FFCA40] shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-emerald-400 shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -412,12 +412,12 @@ export default function LandingPage({
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 font-mono">
               <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[10px] font-bold text-rose-400 block">MITRE F3 v1.1</span>
+                <span className="text-[10px] font-bold text-emerald-400 block">MITRE F3 v1.1</span>
                 <span className="text-xs font-bold text-white block mt-0.5">Fight Fraud</span>
                 <span className="text-[10px] text-white/40 block mt-0.5">FA0001 &amp; FA0002</span>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[10px] font-bold text-cyan-400 block">ATT&amp;CK v19.1</span>
+                <span className="text-[10px] font-bold text-teal-300 block">ATT&amp;CK v19.1</span>
                 <span className="text-xs font-bold text-white block mt-0.5">T1078 Valid Accts</span>
                 <span className="text-[10px] text-white/40 block mt-0.5">805 Skills Mapped</span>
               </div>
@@ -427,17 +427,17 @@ export default function LandingPage({
                 <span className="text-[10px] text-white/40 block mt-0.5">Continuous Audit</span>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[10px] font-bold text-purple-400 block">MITRE ATLAS</span>
+                <span className="text-[10px] font-bold text-teal-300 block">MITRE ATLAS</span>
                 <span className="text-xs font-bold text-white block mt-0.5">AML.T0047 Defense</span>
                 <span className="text-[10px] text-white/40 block mt-0.5">Anti-Evasion Safe</span>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[10px] font-bold text-teal-400 block">MITRE D3FEND</span>
+                <span className="text-[10px] font-bold text-emerald-400 block">MITRE D3FEND</span>
                 <span className="text-xs font-bold text-white block mt-0.5">D3-DS &amp; D3-MFA</span>
                 <span className="text-[10px] text-white/40 block mt-0.5">Cryptographic Seal</span>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[10px] font-bold text-[#FFCA40] block">NIST AI RMF 1.0</span>
+                <span className="text-[10px] font-bold text-teal-300 block">NIST AI RMF 1.0</span>
                 <span className="text-xs font-bold text-white block mt-0.5">Measure 0.998</span>
                 <span className="text-[10px] text-white/40 block mt-0.5">Zero-PHI Preserved</span>
               </div>
@@ -511,7 +511,7 @@ export default function LandingPage({
           <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#00153A]/90 p-6 sm:p-8 space-y-6 shadow-2xl shadow-[#00081c]/60 backdrop-blur-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
-                <span className="text-xs font-bold text-[#FFCA40] uppercase tracking-wider block">
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">
                   Formula Deterministik Transparan
                 </span>
                 <h3 className="text-xl font-bold text-white">
@@ -631,7 +631,7 @@ export default function LandingPage({
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <span className="text-[10px] text-white/50 block uppercase font-bold">Skor Akhir</span>
-                  <span className="text-3xl font-bold font-mono text-[#FFCA40] leading-none">{calculatedScore}</span>
+                  <span className="text-3xl font-bold font-mono text-white leading-none">{calculatedScore}</span>
                 </div>
                 <motion.div 
                   key={lane}
@@ -655,7 +655,7 @@ export default function LandingPage({
         <div className="max-w-6xl mx-auto space-y-12">
           
           <div className="text-center space-y-3 max-w-3xl mx-auto">
-            <span className="text-xs font-bold text-[#FFCA40] uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
               Arsitektur Forensik Terintegrasi
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
@@ -686,7 +686,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-emerald-400 uppercase">Fitur 01 · Triase</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">Bobot 50:30:20</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Fusi 3 Lapis Bukti Multi-Sinyal</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Fusi 3 Lapis Bukti Multi-Sinyal</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Menyatukan sinyal historis penagihan faskes, jejak legalitas izin praktik dokter di SATUSEHAT, serta konfirmasi kehadiran langsung dari peserta menjadi satu indeks prioritas tunggal.
                 </p>
@@ -713,7 +713,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-cyan-400 uppercase">Fitur 02 · SDMK</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">Geovelocity</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Validasi SIP DPJP & Kapasitas</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Validasi SIP DPJP & Kapasitas</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Pengecekan silang otomatis ke database SATUSEHAT Kemenkes. Menghitung kelayakan waktu tempuh dokter antar-faskes (<em>Impossible Travel</em>) dan ambang batas beban kerja 30-40 pasien/hari.
                 </p>
@@ -740,7 +740,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-rose-400 uppercase">Fitur 03 · Telemetri</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">Zero-PHI</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Jembatan Presensi Mobile JKN</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Jembatan Presensi Mobile JKN</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Pengiriman push notification konfirmasi biner (Ya/Tidak) langsung ke smartphone peserta saat klaim masuk klaster anomali, membuktikan kehadiran tanpa membuka data medis rahasia.
                 </p>
@@ -767,7 +767,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-indigo-400 uppercase">Fitur 04 · Sindikat</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">Bipartite Graph</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Peta Graf Sindikat & Kolusi Rujukan</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Peta Graf Sindikat & Kolusi Rujukan</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Analisis jaringan bipartit interaktif untuk mendeteksi kolusi rujukan sirkular antar-faskes dan dokter mitra, membongkar jaringan terorganisir yang merekayasa volume klaim.
                 </p>
@@ -794,7 +794,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-amber-400 uppercase">Fitur 05 · Analitik</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">&lt; 12ms OLAP</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Forensik Data Empiris DuckDB</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Forensik Data Empiris DuckDB</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Pemrosesan agregasi dan deteksi outlier pada 10.000+ data klaim historis riil dalam hitungan milidetik secara lokal di browser, tanpa membebani server transaksi utama BPJS.
                 </p>
@@ -810,18 +810,18 @@ export default function LandingPage({
               animate={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.4 }}
-              whileHover={{ y: -8, scale: 1.015, boxShadow: "0 20px 30px -10px rgba(255, 202, 64, 0.2)", borderColor: "rgba(255, 202, 64, 0.4)" }}
+              whileHover={{ y: -8, scale: 1.015, boxShadow: "0 20px 30px -10px rgba(16, 185, 129, 0.2)", borderColor: "rgba(16, 185, 129, 0.4)" }}
               className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#00153A]/85 p-6 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl space-y-3 flex flex-col justify-between group transition-all duration-300 cursor-pointer"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-[#FFCA40] font-bold group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-emerald-400 font-bold group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-white uppercase">Fitur 06 · Audit Trail</span>
                   <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded font-mono font-bold border border-white/10">SHA-256 Ledger</span>
                 </div>
-                <h3 className="text-base font-bold text-white group-hover:text-[#FFCA40] transition-colors">Ledger Kriptografis Anti-Repudiasi</h3>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">Ledger Kriptografis Anti-Repudiasi</h3>
                 <p className="text-xs text-white/70 leading-relaxed">
                   Setiap keputusan persetujuan, penundaan, atau disposisi verifikator disegel dalam rantai hash SHA-256 immutable. Memastikan integritas audit trail yang sah di mata hukum dan BPK.
                 </p>
@@ -861,34 +861,34 @@ export default function LandingPage({
                   <tr className="border-b border-white/10 bg-[#00134A] text-white/70 font-bold">
                     <th className="py-3 px-4">Parameter Evaluasi</th>
                     <th className="py-3 px-4">Verifikasi Konvensional</th>
-                    <th className="py-3 px-4 text-[#FFCA40] bg-[#FFCA40]/5 font-bold">ClaimTrace DSS Platform</th>
+                    <th className="py-3 px-4 text-emerald-400 bg-emerald-500/10 font-bold">ClaimTrace DSS Platform</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-white/80">
                   <tr className="hover:bg-white/5 group transition-colors duration-150">
-                    <td className="py-3 px-4 font-semibold text-white group-hover:text-[#FFCA40] transition-colors">Validasi Izin Dokter (SIP)</td>
+                    <td className="py-3 px-4 font-semibold text-white group-hover:text-emerald-400 transition-colors">Validasi Izin Dokter (SIP)</td>
                     <td className="py-3 px-4 text-white/60">Pemeriksaan verifikasi berkas manual dokumen fisik / scan kertas</td>
-                    <td className="py-3 px-4 font-bold text-[#FFCA40] bg-[#FFCA40]/5 group-hover:bg-[#FFCA40]/10 transition-colors">Validasi otomatis via API SATUSEHAT SDMK Kemenkes</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/15 transition-colors">Validasi otomatis via API SATUSEHAT SDMK Kemenkes</td>
                   </tr>
                   <tr className="hover:bg-white/5 group transition-colors duration-150">
-                    <td className="py-3 px-4 font-semibold text-white group-hover:text-[#FFCA40] transition-colors">Konfirmasi Presensi Pasien</td>
+                    <td className="py-3 px-4 font-semibold text-white group-hover:text-emerald-400 transition-colors">Konfirmasi Presensi Pasien</td>
                     <td className="py-3 px-4 text-white/60">Survei acak pasca-bayar (Post-Payment Audit)</td>
-                    <td className="py-3 px-4 font-bold text-[#FFCA40] bg-[#FFCA40]/5 group-hover:bg-[#FFCA40]/10 transition-colors">Telemetri biner pra-bayar via aplikasi Mobile JKN</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/15 transition-colors">Telemetri biner pra-bayar via aplikasi Mobile JKN</td>
                   </tr>
                   <tr className="hover:bg-white/5 group transition-colors duration-150">
-                    <td className="py-3 px-4 font-semibold text-white group-hover:text-[#FFCA40] transition-colors">Waktu Penapisan per Berkas</td>
+                    <td className="py-3 px-4 font-semibold text-white group-hover:text-emerald-400 transition-colors">Waktu Penapisan per Berkas</td>
                     <td className="py-3 px-4 text-white/60">15 - 25 menit per berkas rekam medis manual</td>
-                    <td className="py-3 px-4 font-bold text-[#FFCA40] bg-[#FFCA40]/5 group-hover:bg-[#FFCA40]/10 transition-colors">Kalkulasi instan &lt; 2 detik per berkas klaim</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/15 transition-colors">Kalkulasi instan &lt; 2 detik per berkas klaim</td>
                   </tr>
                   <tr className="hover:bg-white/5 group transition-colors duration-150">
-                    <td className="py-3 px-4 font-semibold text-white group-hover:text-[#FFCA40] transition-colors">Kepatuhan Batas Waktu 10 Hari</td>
+                    <td className="py-3 px-4 font-semibold text-white group-hover:text-emerald-400 transition-colors">Kepatuhan Batas Waktu 10 Hari</td>
                     <td className="py-3 px-4 text-white/60">Sering menumpuk di akhir siklus penagihan faskes</td>
-                    <td className="py-3 px-4 font-bold text-[#FFCA40] bg-[#FFCA40]/5 group-hover:bg-[#FFCA40]/10 transition-colors">Jalur Hijau Fast-Track lolos &lt; 24 jam secara teratur</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/15 transition-colors">Jalur Hijau Fast-Track lolos &lt; 24 jam secara teratur</td>
                   </tr>
                   <tr className="hover:bg-white/5 group transition-colors duration-150">
-                    <td className="py-3 px-4 font-semibold text-white group-hover:text-[#FFCA40] transition-colors">Integritas Riwayat Audit</td>
+                    <td className="py-3 px-4 font-semibold text-white group-hover:text-emerald-400 transition-colors">Integritas Riwayat Audit</td>
                     <td className="py-3 px-4 text-white/60">Catatan log aplikasi biasa yang rentan modifikasi retrospektif</td>
-                    <td className="py-3 px-4 font-bold text-[#FFCA40] bg-[#FFCA40]/5 group-hover:bg-[#FFCA40]/10 transition-colors">Segel rantai blok SHA-256 anti-repudiasi</td>
+                    <td className="py-3 px-4 font-bold text-emerald-400 bg-emerald-500/10 group-hover:bg-emerald-500/15 transition-colors">Segel rantai blok SHA-256 anti-repudiasi</td>
                   </tr>
                 </tbody>
               </table>
@@ -911,7 +911,7 @@ export default function LandingPage({
             transition={{ duration: 0.45 }}
             className="text-center space-y-3 max-w-3xl mx-auto"
           >
-            <span className="text-xs font-bold text-[#FFCA40] uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
               Tentang Sistem & Rekayasa
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
@@ -933,8 +933,8 @@ export default function LandingPage({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <Award className="w-5 h-5 text-[#FFCA40]" />
-                  <span className="text-xs font-bold uppercase text-[#FFCA40] tracking-wider">
+                  <Award className="w-5 h-5 text-emerald-400" />
+                  <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider">
                     Tim Rekayasa & Riset Sistem
                   </span>
                 </div>
@@ -952,7 +952,7 @@ export default function LandingPage({
               
               {/* Member 1: Khalaf Faith Pradyatama */}
               <motion.div 
-                whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(255, 202, 64, 0.4)", boxShadow: "0 12px 24px -6px rgba(255, 202, 64, 0.15)" }}
+                whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(16, 185, 129, 0.4)", boxShadow: "0 12px 24px -6px rgba(16, 185, 129, 0.2)" }}
                 transition={{ duration: 0.2 }}
                 className="bg-[#000c24]/70 p-5 rounded-2xl border border-white/10 space-y-3 shadow-md group cursor-pointer transition-all duration-300"
               >
@@ -960,13 +960,13 @@ export default function LandingPage({
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: [0, -4, 4, 0] }}
                     transition={{ duration: 0.3 }}
-                    className="w-12 h-12 rounded-xl bg-[#FFCA40] text-[#000c24] font-bold text-base flex items-center justify-center shadow-lg shadow-[#FFCA40]/20"
+                    className="w-12 h-12 rounded-xl bg-emerald-600 text-white shadow-emerald-950/40 font-bold text-base flex items-center justify-center shadow-lg shadow-emerald-950/40"
                   >
                     KF
                   </motion.div>
                   <div>
-                    <h4 className="font-bold text-sm text-white group-hover:text-[#FFCA40] transition-colors">Khalaf Faith Pradyatama</h4>
-                    <p className="text-xs text-[#FFCA40] font-semibold">Lead Systems Architect & Fullstack Security Engineer</p>
+                    <h4 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">Khalaf Faith Pradyatama</h4>
+                    <p className="text-xs text-emerald-400 font-semibold">Lead Systems Architect & Fullstack Security Engineer</p>
                     <p className="text-[11px] text-white/50">Sistem Arsitektur & Keamanan Siber</p>
                   </div>
                 </div>
@@ -1007,7 +1007,7 @@ export default function LandingPage({
               whileHover={{ scale: 1.008 }}
               className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-white/80 flex items-start space-x-3 transition-transform"
             >
-              <Info className="w-4 h-4 text-[#FFCA40] shrink-0 mt-0.5" />
+              <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <p className="leading-relaxed">
                 Platform ini dikembangkan dengan metodologi rekayasa perangkat lunak mandiri yang menggabungkan verifikasi deterministik multi-sinyal, kepatuhan regulasi jaminan sosial nasional, serta mitigasi risiko operasional fasilitas kesehatan.
               </p>
@@ -1032,7 +1032,7 @@ export default function LandingPage({
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-xs group-hover:scale-110 group-hover:rotate-6 transition-transform">
                   BPJS
                 </div>
-                <h4 className="font-bold text-xs text-white group-hover:text-[#FFCA40] transition-colors">BPJS Kesehatan</h4>
+                <h4 className="font-bold text-xs text-white group-hover:text-emerald-400 transition-colors">BPJS Kesehatan</h4>
                 <p className="text-[11px] text-white/60 leading-relaxed">
                   Penyelenggara utama jaminan kesehatan nasional dan penjamin efisiensi pencairan klaim fasilitas kesehatan rujukan.
                 </p>
@@ -1098,10 +1098,10 @@ export default function LandingPage({
             animate={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4 }}
-            whileHover={{ y: -4, boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(255, 202, 64, 0.3)" }}
+            whileHover={{ y: -4, boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.5)", borderColor: "rgba(16, 185, 129, 0.3)" }}
             className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#00153A]/85 p-6 space-y-3 shadow-xl backdrop-blur-xl transition-all duration-200"
           >
-            <div className="flex items-center space-x-2 text-[#FFCA40]">
+            <div className="flex items-center space-x-2 text-emerald-400">
               <Scale className="w-5 h-5" />
               <h4 className="font-bold text-sm text-white">Doktrin Human-in-the-Loop & Anti-Halusinasi</h4>
             </div>
@@ -1126,7 +1126,7 @@ export default function LandingPage({
             transition={{ duration: 0.45 }}
             className="text-center space-y-3 max-w-3xl mx-auto"
           >
-            <span className="text-xs font-bold text-[#FFCA40] uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider bg-white/5 px-3 py-1 rounded-md border border-white/10">
               Pusat Layanan & Integritas
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
@@ -1150,8 +1150,8 @@ export default function LandingPage({
             >
               <div className="space-y-1 border-b border-white/10 pb-4">
                 <div className="flex items-center space-x-2">
-                  <ShieldCheck className="w-5 h-5 text-[#FFCA40]" />
-                  <span className="text-xs font-bold uppercase text-[#FFCA40] tracking-wide">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <span className="text-xs font-bold uppercase text-emerald-400 tracking-wide">
                     Whistleblowing System (WBS) Faskes
                   </span>
                 </div>
@@ -1171,7 +1171,7 @@ export default function LandingPage({
                       <select 
                         value={formCategory} 
                         onChange={(e) => setFormCategory(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200"
                       >
                         <option className="bg-[#00134A] text-white" value="Phantom Billing">Phantom Billing (Pasien / Dokter Fiktif)</option>
                         <option className="bg-[#00134A] text-white" value="Repeat & Split Billing">Repeat & Split Billing (Episode Ganda)</option>
@@ -1189,7 +1189,7 @@ export default function LandingPage({
                         placeholder="Contoh: RS Rujukan Nasional / Vertikal" 
                         value={formFaskes}
                         onChange={(e) => setFormFaskes(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -1202,7 +1202,7 @@ export default function LandingPage({
                         placeholder="Contoh: DKI Jakarta / Surabaya / Medan" 
                         value={formLocation}
                         onChange={(e) => setFormLocation(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
 
@@ -1216,7 +1216,7 @@ export default function LandingPage({
                         placeholder={formIsAnonymous ? 'Identitas Pelapor Dirahasiakan (Anonim)' : '0812xxxx atau email@domain.com'} 
                         value={formContact}
                         onChange={(e) => setFormContact(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 disabled:bg-[#000c24]/40 disabled:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 disabled:bg-[#000c24]/40 disabled:text-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -1227,7 +1227,7 @@ export default function LandingPage({
                       type="checkbox" 
                       checked={formIsAnonymous}
                       onChange={(e) => setFormIsAnonymous(e.target.checked)}
-                      className="rounded border-white/20 bg-[#000c24] text-[#FFCA40] focus:ring-[#FFCA40] cursor-pointer"
+                      className="rounded border-white/20 bg-[#000c24] text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                     />
                     <span className="text-white/70 text-xs group-hover:text-white transition-colors">
                       Kirim laporan sebagai <strong className="text-white">Pelapor Anonim</strong> (Informasi kontak tidak akan disimpan di server).
@@ -1244,16 +1244,16 @@ export default function LandingPage({
                       placeholder="Uraikan tanggal pelayanan, nama dokter terkait, atau bukti ketidaksesuaian tindakan yang Anda ketahui secara ringkas dan objektif..."
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFCA40]/30 focus:border-[#FFCA40] transition-all duration-200"
+                      className="w-full px-3 py-2.5 rounded-xl bg-[#000c24]/70 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200"
                     />
                   </div>
 
                   <motion.button
-                    whileHover={{ scale: 1.01, boxShadow: "0 10px 20px -5px rgba(255, 202, 64, 0.3)" }}
+                    whileHover={{ scale: 1.01, boxShadow: "0 10px 20px -5px rgba(16, 185, 129, 0.3)" }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl bg-[#FFCA40] hover:bg-[#ffd566] text-[#000c24] font-bold text-xs shadow-lg shadow-[#FFCA40]/20 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
+                    className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center space-x-2">
@@ -1281,7 +1281,7 @@ export default function LandingPage({
                       <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                       <span className="text-sm">Laporan Berhasil Diterima</span>
                     </div>
-                    <span className="font-mono text-[11px] bg-[#000c24] text-[#FFCA40] px-2.5 py-0.5 rounded border border-[#FFCA40]/30 font-bold shadow-xs">
+                    <span className="font-mono text-[11px] bg-[#000c24] text-emerald-400 px-2.5 py-0.5 rounded border border-emerald-500/30 font-bold shadow-xs">
                       {submissionReceipt.ticketId}
                     </span>
                   </div>
@@ -1327,7 +1327,7 @@ export default function LandingPage({
                         setFormFaskes('');
                         setFormDescription('');
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[#FFCA40] hover:bg-[#ffd566] text-[#000c24] font-bold transition cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold transition cursor-pointer shadow-xs"
                     >
                       Kirim Laporan Baru
                     </motion.button>
@@ -1363,11 +1363,11 @@ export default function LandingPage({
                     transition={{ duration: 0.15 }}
                     className="flex items-start space-x-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#FFCA40] shrink-0 group-hover:scale-110 group-hover:bg-[#FFCA40]/10 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 group-hover:bg-emerald-500/15 transition-all">
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">BPJS Care Center 165</span>
+                      <span className="font-bold text-white block group-hover:text-emerald-400 transition-colors">BPJS Care Center 165</span>
                       <span className="text-white/60">Layanan bebas pulsa 24 jam / 7 hari untuk pengaduan & informasi.</span>
                     </div>
                   </motion.div>
@@ -1377,11 +1377,11 @@ export default function LandingPage({
                     transition={{ duration: 0.15 }}
                     className="flex items-start space-x-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#FFCA40] shrink-0 group-hover:scale-110 group-hover:bg-[#FFCA40]/10 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 group-hover:bg-emerald-500/15 transition-all">
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">PANDAWA WhatsApp Resmi</span>
+                      <span className="font-bold text-white block group-hover:text-emerald-400 transition-colors">PANDAWA WhatsApp Resmi</span>
                       <span className="text-white/60 font-mono">0811-8-165-165</span>
                       <span className="text-white/40 block text-[11px]">Pelayanan Administrasi Melalui WhatsApp (08.00 - 15.00 WIB)</span>
                     </div>
@@ -1392,11 +1392,11 @@ export default function LandingPage({
                     transition={{ duration: 0.15 }}
                     className="flex items-start space-x-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#FFCA40] shrink-0 group-hover:scale-110 group-hover:bg-[#FFCA40]/10 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 group-hover:bg-emerald-500/15 transition-all">
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">Alamat Kantor Operasional</span>
+                      <span className="font-bold text-white block group-hover:text-emerald-400 transition-colors">Alamat Kantor Operasional</span>
                       <span className="text-white/70 block">
                         Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510
                       </span>
@@ -1409,11 +1409,11 @@ export default function LandingPage({
                     transition={{ duration: 0.15 }}
                     className="flex items-start space-x-3 p-2 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#FFCA40] shrink-0 group-hover:scale-110 group-hover:bg-[#FFCA40]/10 transition-all">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 group-hover:bg-emerald-500/15 transition-all">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="font-bold text-white block group-hover:text-[#FFCA40] transition-colors">Email Verifikator Medis</span>
+                      <span className="font-bold text-white block group-hover:text-emerald-400 transition-colors">Email Verifikator Medis</span>
                       <span className="text-white/70 font-mono text-[11px]">pengawasan.klaim@bpjs-kesehatan.go.id</span>
                     </div>
                   </motion.div>
@@ -1430,7 +1430,7 @@ export default function LandingPage({
                 className="relative overflow-hidden rounded-3xl border border-white/15 bg-[#00153A]/85 p-6 shadow-2xl backdrop-blur-xl space-y-4 transition-shadow duration-300"
               >
                 <div className="space-y-1 border-b border-white/10 pb-3">
-                  <span className="text-xs font-bold text-[#FFCA40] uppercase tracking-wide">
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
                     Tanya Jawab Terpadu
                   </span>
                   <h3 className="text-base font-bold text-white">
@@ -1446,7 +1446,7 @@ export default function LandingPage({
                         key={idx}
                         whileHover={{ scale: 1.008 }}
                         transition={{ duration: 0.15 }}
-                        className="rounded-xl border border-white/10 overflow-hidden text-xs transition-colors hover:border-[#FFCA40]/40 bg-[#000c24]/50"
+                        className="rounded-xl border border-white/10 overflow-hidden text-xs transition-colors hover:border-emerald-500/40 bg-[#000c24]/50"
                       >
                         <button type="button"
                           onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
@@ -1454,7 +1454,7 @@ export default function LandingPage({
                         >
                           <span className="pr-2">{item.q}</span>
                           <ChevronDown 
-                            className={`w-4 h-4 text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#FFCA40]' : ''}`} 
+                            className={`w-4 h-4 text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} 
                           />
                         </button>
                         <AnimatePresence>
@@ -1493,7 +1493,7 @@ export default function LandingPage({
             {/* Col 1: Identity & Legal Compliance (5 cols) */}
             <div className="md:col-span-5 space-y-2">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#FFCA40] text-[#000c24] flex items-center justify-center font-bold text-xs shadow-md shadow-[#FFCA40]/20">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white shadow-emerald-950/40 flex items-center justify-center font-bold text-xs shadow-md shadow-emerald-950/30">
                   CT
                 </div>
                 <div>
@@ -1517,22 +1517,22 @@ export default function LandingPage({
               </span>
               <ul className="space-y-1.5 text-xs text-white/60">
                 <li>
-                  <button type="button" onClick={() => scrollToSection('landing')} className="hover:text-[#FFCA40] transition cursor-pointer">
+                  <button type="button" onClick={() => scrollToSection('landing')} className="hover:text-emerald-400 transition cursor-pointer">
                     Beranda &amp; Fusi Skor Klaim
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('feature')} className="hover:text-[#FFCA40] transition cursor-pointer">
+                  <button type="button" onClick={() => scrollToSection('feature')} className="hover:text-emerald-400 transition cursor-pointer">
                     Enam Fitur Unggulan Penapisan
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('about')} className="hover:text-[#FFCA40] transition cursor-pointer">
+                  <button type="button" onClick={() => scrollToSection('about')} className="hover:text-emerald-400 transition cursor-pointer">
                     Tentang Tim Rekayasa &amp; 4 Pilar
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => scrollToSection('contact')} className="hover:text-[#FFCA40] transition cursor-pointer">
+                  <button type="button" onClick={() => scrollToSection('contact')} className="hover:text-emerald-400 transition cursor-pointer">
                     Pengaduan WBS &amp; Kontak Resmi
                   </button>
                 </li>
@@ -1546,25 +1546,25 @@ export default function LandingPage({
               </span>
               <ul className="space-y-2 text-xs text-white/60">
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('privacy')} className="hover:text-[#FFCA40] transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
+                  <button type="button" onClick={() => handleOpenLegal('privacy')} className="hover:text-emerald-400 transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
                     <Shield className="w-3.5 h-3.5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Kebijakan Privasi &amp; Perlindungan Data Pribadi (UU PDP)</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('terms')} className="hover:text-[#FFCA40] transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
+                  <button type="button" onClick={() => handleOpenLegal('terms')} className="hover:text-emerald-400 transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
                     <FileCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Syarat &amp; Ketentuan Layanan (Pakta Integritas)</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('security')} className="hover:text-[#FFCA40] transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
-                    <Lock className="w-3.5 h-3.5 text-[#FFCA40] shrink-0 group-hover:scale-110 transition-transform" />
+                  <button type="button" onClick={() => handleOpenLegal('security')} className="hover:text-emerald-400 transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Standar Keamanan Siber, BSSN &amp; ISO 27001</span>
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => handleOpenLegal('sla')} className="hover:text-[#FFCA40] transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
+                  <button type="button" onClick={() => handleOpenLegal('sla')} className="hover:text-emerald-400 transition cursor-pointer flex items-center space-x-1.5 font-medium text-white/70 group text-left">
                     <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>SLA Kepatuhan Batas Waktu 10 Hari Kerja (Perpres 82)</span>
                   </button>
@@ -1578,15 +1578,15 @@ export default function LandingPage({
               © 2026 BPJS Kesehatan · Hak Cipta Dilindungi Undang-Undang Republik Indonesia.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 font-bold text-white/60">
-              <button type="button" onClick={() => handleOpenLegal('privacy')} className="hover:text-[#FFCA40] transition cursor-pointer">
+              <button type="button" onClick={() => handleOpenLegal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">
                 Privacy Policy
               </button>
               <span className="text-white/20">•</span>
-              <button type="button" onClick={() => handleOpenLegal('terms')} className="hover:text-[#FFCA40] transition cursor-pointer">
+              <button type="button" onClick={() => handleOpenLegal('terms')} className="hover:text-emerald-400 transition cursor-pointer">
                 Terms of Use
               </button>
               <span className="text-white/20">•</span>
-              <button type="button" onClick={handleLogin} className="text-[#FFCA40] hover:text-[#ffd566] transition cursor-pointer font-bold flex items-center space-x-1">
+              <button type="button" onClick={handleLogin} className="text-emerald-400 hover:text-emerald-300 transition cursor-pointer font-bold flex items-center space-x-1">
                 <Lock className="w-3 h-3" />
                 <span>Masuk Portal Verifikator</span>
               </button>

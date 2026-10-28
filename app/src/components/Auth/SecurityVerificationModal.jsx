@@ -271,7 +271,7 @@ export default function SecurityVerificationModal({
                   }}
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                     active
-                      ? 'bg-[#FFCA40] text-[#000c24] font-bold shadow-md shadow-[#FFCA40]/20'
+                      ? 'bg-emerald-600 text-white font-bold shadow-md shadow-emerald-950/40'
                       : effectiveIsLight
                         ? 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
                         : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
@@ -289,10 +289,10 @@ export default function SecurityVerificationModal({
               <div className="text-center mb-6">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border transition-colors ${
                   effectiveIsLight
-                    ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-sm'
-                    : 'bg-[#FFCA40]/10 border-[#FFCA40]/30 text-[#FFCA40]'
+                    ? 'bg-amber-50 border-amber-200 text-emerald-600 shadow-sm'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 }`}>
-                  <Shield className={`w-8 h-8 ${effectiveIsLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
+                  <Shield className={`w-8 h-8 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 </div>
                 <h2 className={`text-2xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                   Otorisasi Verifikator
@@ -327,10 +327,10 @@ export default function SecurityVerificationModal({
                       digit
                         ? effectiveIsLight
                           ? 'border-amber-500 bg-amber-50 text-amber-900 font-bold ring-2 ring-amber-500/20'
-                          : 'border-[#FFCA40] bg-[#FFCA40]/10 text-[#FFCA40]'
+                          : 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
                         : effectiveIsLight
                           ? 'border-slate-300 bg-slate-50 text-slate-900 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20'
-                          : 'border-white/10 bg-white/5 text-white focus:border-[#FFCA40]/60'
+                          : 'border-white/10 bg-white/5 text-white focus:border-emerald-500'
                     }`}
                   />
                 ))}
@@ -364,7 +364,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyPin}
                 disabled={isVerifying || pin.join('').length < 6}
-                className="w-full py-3 bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#FFCA40]/20 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -384,10 +384,10 @@ export default function SecurityVerificationModal({
               <div className="text-center mb-6">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border transition-colors ${
                   effectiveIsLight
-                    ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-sm'
-                    : 'bg-[#FFCA40]/10 border-[#FFCA40]/30 text-[#FFCA40]'
+                    ? 'bg-amber-50 border-amber-200 text-emerald-600 shadow-sm'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 }`}>
-                  <Mail className={`w-8 h-8 ${effectiveIsLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
+                  <Mail className={`w-8 h-8 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 </div>
                 <h2 className={`text-2xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                   OTP Email Dinas
@@ -415,10 +415,10 @@ export default function SecurityVerificationModal({
                       digit
                         ? effectiveIsLight
                           ? 'border-amber-500 bg-amber-50 text-amber-900 font-bold ring-2 ring-amber-500/20'
-                          : 'border-[#FFCA40] bg-[#FFCA40]/10 text-[#FFCA40]'
+                          : 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
                         : effectiveIsLight
                           ? 'border-slate-300 bg-slate-50 text-slate-900 focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20'
-                          : 'border-white/10 bg-white/5 text-white focus:border-[#FFCA40]/60'
+                          : 'border-white/10 bg-white/5 text-white focus:border-emerald-500'
                     }`}
                   />
                 ))}
@@ -431,8 +431,8 @@ export default function SecurityVerificationModal({
                   disabled={otpCountdown > 0}
                   className={`inline-flex items-center gap-1 font-medium cursor-pointer ${
                     effectiveIsLight
-                      ? 'text-amber-600 hover:text-amber-700 disabled:text-slate-400'
-                      : 'text-[#FFCA40] hover:text-[#FFD700] disabled:text-white/40'
+                      ? 'text-emerald-600 hover:text-amber-700 disabled:text-slate-400'
+                      : 'text-emerald-400 hover:text-emerald-300 disabled:text-white/40'
                   } disabled:cursor-not-allowed`}
                 >
                   <RefreshCw className={`w-3 h-3 ${otpCountdown > 0 ? 'animate-spin' : ''}`} />
@@ -458,7 +458,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otp.join('').length < 6}
-                className="w-full py-3 bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#FFCA40]/20 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -478,10 +478,10 @@ export default function SecurityVerificationModal({
               <div className="text-center mb-5">
                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border transition-colors ${
                   effectiveIsLight
-                    ? 'bg-amber-50 border-amber-200 text-amber-600 shadow-sm'
-                    : 'bg-[#FFCA40]/10 border-[#FFCA40]/30 text-[#FFCA40]'
+                    ? 'bg-amber-50 border-amber-200 text-emerald-600 shadow-sm'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 }`}>
-                  <Laptop className={`w-8 h-8 ${effectiveIsLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
+                  <Laptop className={`w-8 h-8 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 </div>
                 <h2 className={`text-2xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                   Sesi Perangkat Kerja
@@ -537,7 +537,7 @@ export default function SecurityVerificationModal({
                         sessionDuration === opt.id
                           ? effectiveIsLight
                             ? 'border-amber-500 bg-amber-100 text-amber-900 font-bold shadow-xs'
-                            : 'border-[#FFCA40] bg-[#FFCA40]/20 text-[#FFCA40] font-bold'
+                            : 'border-emerald-500 bg-emerald-500/20 text-emerald-400 font-bold'
                           : effectiveIsLight
                             ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                             : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
@@ -559,7 +559,7 @@ export default function SecurityVerificationModal({
                     className={`rounded transition-colors ${
                       effectiveIsLight
                         ? 'border-slate-300 bg-white text-amber-500 focus:ring-amber-500/30'
-                        : 'border-white/20 bg-white/5 text-[#FFCA40] focus:ring-[#FFCA40]/40'
+                        : 'border-white/20 bg-white/5 text-emerald-400 focus:ring-emerald-500/30'
                     }`}
                   />
                   <span className={effectiveIsLight ? 'text-slate-700' : 'text-white/70'}>
@@ -575,7 +575,7 @@ export default function SecurityVerificationModal({
                     className={`rounded transition-colors ${
                       effectiveIsLight
                         ? 'border-slate-300 bg-white text-amber-500 focus:ring-amber-500/30'
-                        : 'border-white/20 bg-white/5 text-[#FFCA40] focus:ring-[#FFCA40]/40'
+                        : 'border-white/20 bg-white/5 text-emerald-400 focus:ring-emerald-500/30'
                     }`}
                   />
                   <span className={effectiveIsLight ? 'text-slate-700' : 'text-white/70'}>
@@ -588,7 +588,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleConfirmSession}
                 disabled={isVerifying}
-                className="w-full py-3 bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold rounded-xl mb-3 disabled:opacity-50 shadow-lg shadow-[#FFCA40]/20 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? 'Mengaktifkan Sesi...' : 'Konfirmasi & Masuk Dasbor'}
               </button>

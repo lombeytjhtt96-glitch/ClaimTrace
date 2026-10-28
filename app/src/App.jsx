@@ -603,7 +603,7 @@ export default function App() {
                   onClick={() => setAuthView('landing')}
                   className="flex items-center gap-3 group cursor-pointer"
                 >
-                  <div className={`relative w-9 h-9 overflow-hidden rounded-full border ${isLight ? 'border-slate-200 bg-slate-100 group-hover:border-emerald-500' : 'border-white/20 bg-white/10 group-hover:border-[#FFCA40]'} transition-colors duration-300 shadow-lg backdrop-blur-sm p-1 flex items-center justify-center shrink-0`}>
+                  <div className={`relative w-9 h-9 overflow-hidden rounded-full border ${isLight ? 'border-slate-200 bg-slate-100 group-hover:border-emerald-500' : 'border-white/20 bg-white/10 group-hover:border-emerald-500'} transition-colors duration-300 shadow-lg backdrop-blur-sm p-1 flex items-center justify-center shrink-0`}>
                     <img 
                       alt="BPJS Kesehatan" 
                       className="object-contain w-full h-full" 
@@ -612,14 +612,14 @@ export default function App() {
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-base font-bold leading-none ${isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-[#FFCA40]'} tracking-tight transition-colors`}>
+                      <span className={`text-base font-bold leading-none ${isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'} tracking-tight transition-colors`}>
                         ClaimTrace
                       </span>
-                      <span className={`text-[9px] font-bold ${isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/30'} px-1.5 py-0.5 rounded border`}>
+                      <span className={`text-[9px] font-bold ${isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'} px-1.5 py-0.5 rounded border`}>
                         DSS
                       </span>
                     </div>
-                    <span className={`text-[9px] uppercase tracking-widest ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]/80'} font-bold mt-1`}>
+                    <span className={`text-[9px] uppercase tracking-widest ${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold mt-1`}>
                       Penapisan Risiko Klaim
                     </span>
                   </div>
@@ -650,7 +650,7 @@ export default function App() {
                       : 'bg-white/10 border-white/15 text-white/80 hover:bg-white/15 hover:text-white'
                   }`}
                 >
-                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-[#FFCA40]" />}
+                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
                 </button>
 
                 <button
@@ -658,7 +658,7 @@ export default function App() {
                   className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
                     isLight
                       ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
-                      : 'text-white/80 hover:text-white bg-white/10 hover:bg-white/15 border-white/15 hover:border-[#FFCA40]/40'
+                      : 'text-white/80 hover:text-white bg-white/10 hover:bg-white/15 border-white/15 hover:border-emerald-500/40'
                   }`}
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -695,19 +695,19 @@ export default function App() {
                 Standar: UU PDP No. 27/2022 · Perpres No. 82/2018 · ISO/IEC 27001:2022
               </p>
               <div className={`flex items-center gap-2.5 text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                <button onClick={() => openLegalModal('privacy')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-[#FFCA40]'}`}>
+                <button onClick={() => openLegalModal('privacy')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                   Privacy
                 </button>
                 <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('terms')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-[#FFCA40]'}`}>
+                <button onClick={() => openLegalModal('terms')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                   Terms
                 </button>
                 <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('security')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-[#FFCA40]'}`}>
+                <button onClick={() => openLegalModal('security')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                   Keamanan
                 </button>
                 <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('sla')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-[#FFCA40]'}`}>
+                <button onClick={() => openLegalModal('sla')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
                   SLA 10 Hari
                 </button>
               </div>
@@ -786,12 +786,12 @@ export default function App() {
                   <div className="hidden sm:block">
                     <div className="flex items-center space-x-1.5">
                       <span className={`font-bold tracking-tight text-sm transition-colors ${
-                        isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-[#FFCA40]'
+                        isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'
                       }`}>ClaimTrace</span>
                       <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded border ${
                         isLight 
                           ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                          : 'bg-[#FFCA40]/15 text-[#FFCA40] border-[#FFCA40]/30'
+                          : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                       }`}>
                         DSS JKN
                       </span>
@@ -830,7 +830,7 @@ export default function App() {
                     className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1 text-[10.5px] font-bold border transition-colors cursor-pointer keep-white ${
                       isLight 
                         ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 shadow-xs' 
-                        : 'bg-[#FFCA40]/20 text-[#FFCA40] hover:bg-[#FFCA40]/30 border-[#FFCA40]/30'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/50 shadow-xs'
                     }`}
                   >
                     Cari
@@ -922,12 +922,12 @@ export default function App() {
                   className={`p-2 rounded-xl transition cursor-pointer flex items-center justify-center border ${
                     isLight 
                       ? 'border-slate-200 bg-slate-100 text-amber-600 hover:bg-slate-200' 
-                      : 'border-white/10 bg-white/5 text-[#FFCA40] hover:bg-white/10'
+                      : 'border-white/10 bg-white/5 text-amber-400 hover:bg-white/10'
                   }`}
                   title={effectiveTheme === 'light' ? "Beralih ke Tema Gelap (Cosmic Obsidian)" : "Beralih ke Tema Terang (Clinical White)"}
                   aria-label="Ganti Mode Tema Dasbor"
                 >
-                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-[#FFCA40]" />}
+                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
                 </button>
 
                 {/* 1. Notification Bell + Alerts Popover */}
@@ -1067,7 +1067,7 @@ export default function App() {
                               setAlertsMenuOpen(false);
                             }}
                             className={`text-xs font-bold transition-colors cursor-pointer ${
-                              isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-[#FFCA40] hover:text-[#FFE08C]'
+                              isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
                             }`}
                           >
                             Buka Antrean Klaim
@@ -1093,7 +1093,7 @@ export default function App() {
                     }`}
                   >
                     <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs ${
-                      isLight ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : 'bg-[#FFCA40]/20 text-[#FFCA40] ring-1 ring-[#FFCA40]/50'
+                      isLight ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
                     }`}>
                       <span className="font-bold tracking-tight">
                         {currentUser.avatar && currentUser.avatar !== 'dS' ? currentUser.avatar : getInitials(currentUser.name)}
@@ -1361,7 +1361,7 @@ export default function App() {
                     <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
                       isLight 
                         ? 'bg-amber-100 text-amber-800 border-amber-300' 
-                        : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/30'
+                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                     }`}>
                       Aplikasi Mobile JKN
                     </span>
@@ -1377,7 +1377,7 @@ export default function App() {
                       }`}
                       title="Reset status konfirmasi presensi peserta"
                     >
-                      <RotateCcw className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
+                      <RotateCcw className={`w-3 h-3 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                       <span>Reset</span>
                     </button>
 
@@ -2356,7 +2356,7 @@ export default function App() {
           <button 
             onClick={() => openLegalModal('privacy')} 
             className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-[#FFCA40]'
+              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
             }`}
           >
             UU PDP No. 27/2022
@@ -2365,7 +2365,7 @@ export default function App() {
           <button 
             onClick={() => openLegalModal('sla')} 
             className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-[#FFCA40]'
+              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
             }`}
           >
             Perpres No. 82/2018 (SLA 10 Hari)
@@ -2374,7 +2374,7 @@ export default function App() {
           <button 
             onClick={() => openLegalModal('terms')} 
             className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-[#FFCA40]'
+              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
             }`}
           >
             Permenkes No. 14/2021
@@ -2384,7 +2384,7 @@ export default function App() {
             type="button"
             onClick={() => openLegalModal('security')} 
             className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-[#FFCA40]'
+              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
             }`}
           >
             ISO 27001

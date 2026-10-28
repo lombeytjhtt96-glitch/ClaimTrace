@@ -11,7 +11,7 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
   return (
     <div className="min-h-screen bg-[#000c24] text-white flex flex-col justify-center items-center p-4 relative font-inter overflow-y-auto">
       {/* Background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-blue-900/30 via-[#001D58]/20 to-[#FFCA40]/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-blue-900/30 via-[#001D58]/20 to-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
 
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -80,7 +80,7 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
             </div>
             <div className="flex justify-between items-center text-[11px]">
               <span className="text-white/60">Jalur Kuning (Klarifikasi Faskes):</span>
-              <span className="font-bold text-[#FFCA40] font-mono">3 Klaim (Rp 18,5 Juta)</span>
+              <span className="font-bold text-emerald-400 font-mono">3 Klaim (Rp 18,5 Juta)</span>
             </div>
             <div className="flex justify-between items-center text-[11px]">
               <span className="text-white/60">Jalur Merah (Ditahan / Investigasi):</span>
@@ -100,7 +100,7 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleLogin}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold text-xs shadow-lg shadow-[#FFCA40]/20 flex items-center justify-center space-x-2 transition cursor-pointer"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition cursor-pointer"
           >
             <span>Masuk Kembali ke Portal</span>
             <ArrowRight className="w-4 h-4" />
