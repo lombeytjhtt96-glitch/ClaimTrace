@@ -269,7 +269,7 @@ function TrendChart({
                 <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255,255,255,0.08)'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255,255,255,0.08)'} vertical={false} />
             <XAxis
               dataKey="date"
               tickFormatter={formatDateLabel}
@@ -281,6 +281,7 @@ function TrendChart({
               axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
             />
             <RechartsTooltip
+              cursor={false}
               contentStyle={{
                 backgroundColor: isLight ? '#FFFFFF' : '#00153A',
                 borderColor: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.2)',

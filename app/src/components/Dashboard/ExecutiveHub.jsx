@@ -646,10 +646,10 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lifecycleData}>
-              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" stroke={axisStroke} tick={{ fontSize: 11 }} />
               <YAxis stroke={axisStroke} tick={{ fontSize: 11 }} />
-              <Tooltip content={<NumberTooltip isLight={isLight} />} />
+              <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
               <Line
                 type="monotone"
