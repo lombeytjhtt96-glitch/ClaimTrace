@@ -1579,11 +1579,60 @@ export default function ExecutiveHub({
   const [timeRange, setTimeRange] = useState(7);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const fetchLiveOverviewData = async () => {
+    try {
+      const [resClaims, resRisk] = await Promise.allSettled([
+        fetch('http://localhost:8000/api/v1/claims'),
+        fetch('http://localhost:8000/api/v1/duckdb/tools/financial-risk-summary')
+      ]);
+
+      let activeClaims = [];
+      if (resClaims.status === 'fulfilled' && resClaims.value.ok) {
+        activeClaims = await resClaims.value.json();
+      }
+
+      let riskSummary = null;
+      if (resRisk.status === 'fulfilled' && resRisk.value.ok) {
+        riskSummary = await resRisk.value.json();
+      }
+
+      if (activeClaims.length > 0 || riskSummary?.summary_lanes) {
+        const criticalCount = activeClaims.filter(c => c?.triage?.triage_lane === 'MERAH' || c?.claim?.priority_score >= 80).length;
+
+        setOverview(prev => ({
+          ...prev,
+          kpis: {
+            ...prev.kpis,
+            total_active_cases: activeClaims.length > 0 ? activeClaims.length : prev.kpis.total_active_cases,
+            critical_Waiting_cases: criticalCount > 0 ? criticalCount : prev.kpis.critical_Waiting_cases,
+          },
+          insights: {
+            ...prev.insights,
+            severity_distribution: {
+              Rendah: activeClaims.filter(c => c?.triage?.triage_lane === 'HIJAU').length || prev.insights.severity_distribution.Rendah,
+              Sedang: activeClaims.filter(c => c?.triage?.triage_lane === 'KUNING').length || prev.insights.severity_distribution.Sedang,
+              Tinggi: activeClaims.filter(c => c?.triage?.triage_lane === 'MERAH' && c?.triage?.final_priority_score < 85).length || prev.insights.severity_distribution.Tinggi,
+              Kritis: activeClaims.filter(c => c?.triage?.triage_lane === 'MERAH' && c?.triage?.final_priority_score >= 85).length || prev.insights.severity_distribution.Kritis,
+            }
+          }
+        }));
+      }
+    } catch (e) {
+      console.warn('[ExecutiveHub] Live backend sync fallback to deterministic baseline:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveOverviewData();
+  }, []);
+
   const handleRefreshData = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    fetchLiveOverviewData().finally(() => {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
+    });
   };
 
   const handleGenerateReport = async (e) => {

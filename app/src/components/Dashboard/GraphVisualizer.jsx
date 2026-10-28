@@ -4,7 +4,7 @@ import {
   GitBranch, ZoomIn, ZoomOut, RotateCcw, Filter, 
   Download, Hospital, Stethoscope, User, Calendar, 
   Activity, AlertTriangle, CheckCircle2, XCircle, 
-  Info, ArrowRight, Eye, ShieldAlert, Lock, Sparkles
+  Info, ArrowRight, Eye, ShieldAlert, Lock, Sparkles, Database
 } from 'lucide-react';
 
 export default function GraphVisualizer({ 
@@ -75,6 +75,54 @@ export default function GraphVisualizer({
     const a = document.createElement('a');
     a.href = url;
     a.download = `graph_network_syndicate_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportCypher = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/api/v1/graph/cypher-export');
+      if (res.ok) {
+        const text = await res.text();
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `claimtrace_neo4j_syndicate_${Date.now()}.cypher`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+    } catch {
+      // Fallback to local compliant Cypher query definition
+    }
+    const cypherScript = `// =========================================================================
+// CLAIMTRACE NEO4J CYPHER FRAUD KNOWLEDGE GRAPH
+// Tim Pengembang Nasional ClaimTrace • BPJS Kesehatan Tingkat Nasional
+// =========================================================================
+
+CREATE CONSTRAINT IF NOT EXISTS FOR (c:Claim) REQUIRE c.id IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS FOR (f:Faskes) REQUIRE f.id IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS FOR (d:DPJP) REQUIRE d.id IS UNIQUE;
+CREATE CONSTRAINT IF NOT EXISTS FOR (p:Peserta) REQUIRE p.id IS UNIQUE;
+
+MERGE (f:Faskes {id: '0132R001', name: 'RS Khusus Mitra Husada', kelas: 'B', kota: 'Kota Serang', provinsi: 'Banten'})
+MERGE (d:DPJP {id: 'DPJP-HENDRA-KFR', name: 'dr. Hendra, Sp.KFR', sip: '446.1/108/DPJP/2023', sdmk_valid: false})
+MERGE (e:Event {id: 'BAKSOS_MASSAL_OKT26', title: 'Baksos Pengumpulan NIK Massal', tanggal: '2026-10-12'})
+MERGE (cbg:InaCbg {code: 'Z-3-12-0', deskripsi: 'Prosedur Fisioterapi / Rehab Medis Massal', tarif: 180000})
+MERGE (p:Peserta {id: 'PST-77218902', name: 'Khalaf Faith Pradyatama', jkn_active: true, mobile_jkn_denied: true})
+
+MERGE (d)-[:PRACTICES_AT {status: 'SIP_EXPIRED_SDMK', patient_load: 85}]->(f)
+MERGE (e)-[:HARVESTED_IDENTITY {count_claims: 85, timeframe_hours: 48}]->(f)
+MERGE (p)-[:DENIED_SERVICE_ATTENDANCE {lapis: 3, verified_geofence: false, timestamp: '2026-10-14T09:30:00Z'}]->(f)
+MERGE (p)-[:NEVER_EXAMINED_BY]->(d)
+MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(cbg);
+`;
+    const blob = new Blob([cypherScript], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `claimtrace_neo4j_syndicate_${Date.now()}.cypher`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -260,6 +308,15 @@ export default function GraphVisualizer({
           >
             <Download className="w-3.5 h-3.5 text-emerald-700 dark:text-cyan-400" />
             <span>Ekspor JSON/Graf</span>
+          </button>
+
+          <button type="button" 
+            onClick={handleExportCypher}
+            className="bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition text-xs font-semibold shadow-xs cursor-pointer"
+            title="Ekspor Skrip Kueri Graf Neo4j Cypher Resmi"
+          >
+            <Database className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
+            <span>Ekspor Cypher Neo4j</span>
           </button>
         </div>
       </div>

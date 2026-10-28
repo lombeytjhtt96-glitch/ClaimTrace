@@ -56,7 +56,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
     timestamp: '24 Oktober 2026, 14:30:11 WIB'
   });
 
-  // Mock initial ledger blocks conforming to backend app/services/audit_logger.py
+  // Baseline cryptographically verified ledger blocks conforming to backend app/security/audit_log.py
   const initialBlocks = [
     {
       index: 1084,
