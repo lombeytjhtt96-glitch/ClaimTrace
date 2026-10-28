@@ -1730,7 +1730,7 @@ export default function LandingPage({
                 </div>
               </div>
               <p className={`text-[11px] leading-relaxed max-w-sm ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                Sistem pendukung keputusan (*Decision Support System*) pra-bayar resmi BPJS Kesehatan nasional untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
+                Sistem pendukung keputusan (<span className="italic">Decision Support System</span>) pra-bayar resmi BPJS Kesehatan nasional untuk deteksi anomali penagihan klaim faskes berbasis 3 lapis bukti faktual deterministik.
               </p>
               <div className={`pt-1 text-[10.5px] font-mono space-y-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>
                 <p>Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan</p>
