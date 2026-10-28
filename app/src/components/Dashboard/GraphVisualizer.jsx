@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import ForceGraph2D from 'react-force-graph-2d';
 import { 
   ReactFlow, 
-  MiniMap, 
   Controls, 
   Background, 
   MarkerType,
   Handle,
-  Position
+  Position,
+  useReactFlow,
+  ReactFlowProvider
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { 
@@ -16,153 +16,214 @@ import {
   Download, Hospital, Stethoscope, User, Calendar, 
   Activity, AlertTriangle, CheckCircle2, XCircle, 
   Info, ArrowRight, Eye, ShieldAlert, Lock, Sparkles, Database,
-  Layers, Play, Pause, Compass, ShieldCheck, Cpu
+  Layers, Compass, ShieldCheck, Check
 } from 'lucide-react';
 
 // =========================================================================
-// CUSTOM XYFLOW NODE CARD COMPONENTS
+// CUSTOM XYFLOW HIGH-DEFINITION ENTITY CARD COMPONENTS
 // =========================================================================
+
 const CustomHospitalCard = ({ data, selected }) => (
-  <div className={`w-[260px] rounded-2xl p-3.5 border transition-all duration-200 select-none ${
+  <div className={`w-[270px] rounded-2xl p-4 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-indigo-300 shadow-lg text-slate-900' 
-      : 'bg-[#00153A] border-indigo-500/50 shadow-2xl shadow-indigo-950/60 text-white'
-  } ${selected ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}>
-    <Handle type="target" position={Position.Left} className="w-2.5 h-2.5 bg-indigo-500" />
-    <div className="flex items-center justify-between pb-2 border-b border-indigo-500/20">
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-          <Hospital className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+      ? 'bg-white border-indigo-300 shadow-xl text-slate-900' 
+      : 'bg-[#00153A] border-indigo-500/60 shadow-2xl shadow-indigo-950/70 text-white'
+  } ${selected ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <div className="flex items-center justify-between pb-2.5 border-b border-indigo-500/20">
+      <div className="flex items-center space-x-2.5">
+        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold shadow-inner">
+          <Hospital className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
         </div>
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-300">Pusat Anomali</span>
+          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-300">EPISENTRUM KLAIM</span>
           <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
         </div>
       </div>
-      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">FKRTL</span>
+      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">FKRTL</span>
     </div>
-    <div className="mt-2 space-y-1 text-[10.5px]">
-      <div className="flex justify-between text-slate-500 dark:text-white/60">
-        <span>Beban Klaim:</span>
-        <strong className="text-slate-900 dark:text-white font-bold">{data.claimsCount} Klaim</strong>
+    
+    <div className="mt-2.5 space-y-1.5 text-[11px]">
+      <div className="flex justify-between text-slate-600 dark:text-white/70">
+        <span className="font-medium">Total Pengajuan:</span>
+        <strong className="text-slate-900 dark:text-white font-bold">{data.claimsCount} Klaim Serentak</strong>
       </div>
-      <div className="flex justify-between text-slate-500 dark:text-white/60">
-        <span>Nominal Tagihan:</span>
-        <strong className="text-amber-600 dark:text-amber-300 font-bold">{data.totalTariff}</strong>
+      <div className="flex justify-between text-slate-600 dark:text-white/70">
+        <span className="font-medium">Nominal Tagihan:</span>
+        <strong className="text-amber-600 dark:text-amber-400 font-bold font-mono">{data.totalTariff}</strong>
       </div>
     </div>
-    <div className="mt-2.5 pt-2 border-t border-indigo-500/10 flex items-center justify-between">
-      <span className="text-[9.5px] font-mono text-rose-500 dark:text-rose-400 font-bold flex items-center gap-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+
+    <div className="mt-3 pt-2 border-t border-indigo-500/15 flex items-center justify-between">
+      <span className="text-[10px] font-mono text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
         Audit Pra-Bayar Aktif
       </span>
-      <span className="text-[9px] text-slate-400 dark:text-white/40 font-mono">ID: 0132R001</span>
+      <span className="text-[9.5px] text-slate-400 dark:text-white/40 font-mono">ID: 0132R001</span>
     </div>
-    <Handle type="source" position={Position.Right} className="w-2.5 h-2.5 bg-indigo-500" />
+    <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
   </div>
 );
 
 const CustomDpjpCard = ({ data, selected }) => (
-  <div className={`w-[240px] rounded-2xl p-3 border transition-all duration-200 select-none ${
+  <div className={`w-[250px] rounded-2xl p-3.5 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-rose-300 shadow-lg text-slate-900' 
-      : 'bg-[#180812] border-rose-500/50 shadow-2xl shadow-rose-950/60 text-white'
-  } ${selected ? 'ring-2 ring-rose-500 ring-offset-2' : ''}`}>
-    <Handle type="target" position={Position.Right} className="w-2.5 h-2.5 bg-rose-500" />
-    <div className="flex items-center space-x-2">
-      <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold shrink-0">
-        <Stethoscope className="w-4 h-4 text-rose-500" />
+      ? 'bg-white border-rose-300 shadow-xl text-slate-900' 
+      : 'bg-[#180812] border-rose-500/60 shadow-2xl shadow-rose-950/70 text-white'
+  } ${selected ? 'ring-2 ring-rose-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    <div className="flex items-center space-x-2.5">
+      <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold shrink-0">
+        <Stethoscope className="w-5 h-5 text-rose-500" />
       </div>
       <div className="min-w-0">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">DPJP Tertera</span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">DPJP TERTERA</span>
         <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
       </div>
     </div>
-    <div className="mt-2 bg-rose-500/10 dark:bg-rose-500/15 p-1.5 rounded-lg border border-rose-500/30 text-[10px] space-y-0.5">
-      <div className="text-rose-600 dark:text-rose-300 font-bold flex items-center gap-1">
-        <AlertTriangle className="w-3 h-3 shrink-0" />
+    
+    <div className="mt-2.5 bg-rose-500/10 dark:bg-rose-500/15 p-2 rounded-xl border border-rose-500/30 text-[10.5px] space-y-1">
+      <div className="text-rose-600 dark:text-rose-300 font-bold flex items-center gap-1.5">
+        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
         <span>SIP NON-AKTIF (SDMK)</span>
       </div>
-      <p className="text-[9.5px] text-slate-600 dark:text-white/70">85 Pasien / Hari · Melebihi Batas Kemenkes</p>
+      <p className="text-[10px] text-slate-600 dark:text-white/70 leading-snug">
+        Beban 85 Pasien / Hari · Melebihi Batas Fisik Standar Kemenkes
+      </p>
     </div>
-    <Handle type="source" position={Position.Right} className="w-2.5 h-2.5 bg-rose-500" />
+    <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
   </div>
 );
 
 const CustomEventCard = ({ data, selected }) => (
-  <div className={`w-[240px] rounded-2xl p-3 border transition-all duration-200 select-none ${
+  <div className={`w-[250px] rounded-2xl p-3.5 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-sky-300 shadow-lg text-slate-900' 
-      : 'bg-[#06162a] border-sky-500/50 shadow-2xl shadow-sky-950/60 text-white'
-  } ${selected ? 'ring-2 ring-sky-500 ring-offset-2' : ''}`}>
-    <Handle type="target" position={Position.Right} className="w-2.5 h-2.5 bg-sky-500" />
-    <div className="flex items-center space-x-2">
-      <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold shrink-0">
-        <Calendar className="w-4 h-4 text-sky-500" />
+      ? 'bg-white border-sky-300 shadow-xl text-slate-900' 
+      : 'bg-[#06162a] border-sky-500/60 shadow-2xl shadow-sky-950/70 text-white'
+  } ${selected ? 'ring-2 ring-sky-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    <div className="flex items-center space-x-2.5">
+      <div className="w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold shrink-0">
+        <Calendar className="w-5 h-5 text-sky-500" />
       </div>
       <div className="min-w-0">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-300">Sumber Data</span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-sky-500 dark:text-sky-300">SUMBER IDENTITAS</span>
         <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
       </div>
     </div>
-    <div className="mt-2 bg-sky-500/10 dark:bg-sky-500/15 p-1.5 rounded-lg border border-sky-500/30 text-[10px] space-y-0.5">
-      <div className="text-sky-600 dark:text-sky-300 font-bold">12 OKT 2026 (48 JAM SEBELUMNYA)</div>
-      <p className="text-[9.5px] text-slate-600 dark:text-white/70">Harvesting NIK Massal KIS Peserta</p>
+
+    <div className="mt-2.5 bg-sky-500/10 dark:bg-sky-500/15 p-2 rounded-xl border border-sky-500/30 text-[10.5px] space-y-1">
+      <div className="text-sky-600 dark:text-sky-300 font-bold flex items-center gap-1">
+        <Activity className="w-3.5 h-3.5 shrink-0" />
+        <span>12 OKT 2026 (48 JAM SEBELUMNYA)</span>
+      </div>
+      <p className="text-[10px] text-slate-600 dark:text-white/70 leading-snug">
+        Pemanenan NIK Massal KIS Peserta Tanpa Rujukan FKTP
+      </p>
     </div>
-    <Handle type="source" position={Position.Right} className="w-2.5 h-2.5 bg-sky-500" />
+    <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-sky-500 !border-2 !border-white" />
   </div>
 );
 
 const CustomProcedureCard = ({ data, selected }) => (
-  <div className={`w-[240px] rounded-2xl p-3 border transition-all duration-200 select-none ${
+  <div className={`w-[250px] rounded-2xl p-3.5 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-amber-300 shadow-lg text-slate-900' 
-      : 'bg-[#1e1507] border-amber-500/50 shadow-2xl shadow-amber-950/60 text-white'
-  } ${selected ? 'ring-2 ring-amber-500 ring-offset-2' : ''}`}>
-    <Handle type="target" position={Position.Left} className="w-2.5 h-2.5 bg-amber-500" />
-    <div className="flex items-center space-x-2">
-      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">
-        <Database className="w-4 h-4 text-amber-500" />
+      ? 'bg-white border-amber-300 shadow-xl text-slate-900' 
+      : 'bg-[#1e1507] border-amber-500/60 shadow-2xl shadow-amber-950/70 text-white'
+  } ${selected ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-amber-500 !border-2 !border-white" />
+    <div className="flex items-center space-x-2.5">
+      <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">
+        <Database className="w-5 h-5 text-amber-500" />
       </div>
       <div className="min-w-0">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500 dark:text-amber-300">INA-CBG Prosedur</span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-amber-500 dark:text-amber-300">INA-CBG PROSEDUR</span>
         <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
       </div>
     </div>
-    <div className="mt-2 bg-amber-500/10 dark:bg-amber-500/15 p-1.5 rounded-lg border border-amber-500/30 text-[10px] space-y-0.5">
-      <div className="text-amber-600 dark:text-amber-300 font-bold">Rp 180.000 / Pasien</div>
-      <p className="text-[9.5px] text-slate-600 dark:text-white/70">Fisioterapi Massal Tanpa Rujukan FKTP</p>
+
+    <div className="mt-2.5 bg-amber-500/10 dark:bg-amber-500/15 p-2 rounded-xl border border-amber-500/30 text-[10.5px] space-y-1">
+      <div className="text-amber-600 dark:text-amber-300 font-bold font-mono">
+        Rp 180.000 / Pasien (85 Klaim)
+      </div>
+      <p className="text-[10px] text-slate-600 dark:text-white/70 leading-snug">
+        Fisioterapi Massal · Pelanggaran PNPK &amp; Fornas
+      </p>
     </div>
-    <Handle type="source" position={Position.Left} className="w-2.5 h-2.5 bg-amber-500" />
   </div>
 );
 
 const CustomPatientCard = ({ data, selected }) => (
-  <div className={`w-[240px] rounded-2xl p-3 border transition-all duration-200 select-none ${
+  <div className={`w-[250px] rounded-2xl p-3.5 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-rose-300 shadow-lg text-slate-900' 
-      : 'bg-[#180812] border-rose-500/50 shadow-2xl shadow-rose-950/60 text-white'
-  } ${selected ? 'ring-2 ring-rose-500 ring-offset-2' : ''}`}>
-    <Handle type="target" position={Position.Left} className="w-2.5 h-2.5 bg-rose-500" />
-    <div className="flex items-center space-x-2">
-      <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold shrink-0">
-        <User className="w-4 h-4 text-rose-500" />
+      ? 'bg-white border-rose-300 shadow-xl text-slate-900' 
+      : 'bg-[#180812] border-rose-500/60 shadow-2xl shadow-rose-950/70 text-white'
+  } ${selected ? 'ring-2 ring-rose-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
+    <div className="flex items-center space-x-2.5">
+      <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold shrink-0">
+        <User className="w-5 h-5 text-rose-500" />
       </div>
       <div className="min-w-0">
-        <span className="text-[9px] font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">Peserta Mobile JKN</span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-rose-500 dark:text-rose-300">PESERTA MOBILE JKN</span>
         <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
       </div>
     </div>
-    <div className="mt-2 bg-rose-500/10 dark:bg-rose-500/15 p-1.5 rounded-lg border border-rose-500/30 text-[10px] space-y-0.5">
-      <div className="text-rose-600 dark:text-rose-300 font-bold flex items-center gap-1">
-        <XCircle className="w-3 h-3 shrink-0" />
+
+    <div className="mt-2.5 bg-rose-500/10 dark:bg-rose-500/15 p-2 rounded-xl border border-rose-500/30 text-[10.5px] space-y-1">
+      <div className="text-rose-600 dark:text-rose-300 font-bold flex items-center gap-1.5">
+        <XCircle className="w-3.5 h-3.5 shrink-0" />
         <span>SANGKALAN FAKTUAL</span>
       </div>
-      <p className="text-[9.5px] text-slate-600 dark:text-white/70">Menyangkal Hadir Layanan Medis 14 Okt</p>
+      <p className="text-[10px] text-slate-600 dark:text-white/70 leading-snug">
+        Menyangkal Hadir Layanan Medis · Radius GPS &gt; 15 KM
+      </p>
     </div>
-    <Handle type="source" position={Position.Left} className="w-2.5 h-2.5 bg-rose-500" />
   </div>
 );
+
+// Custom internal flow component that uses useReactFlow hooks
+function FlowCanvasWrapper({ 
+  nodes, 
+  edges, 
+  nodeTypes, 
+  isLightMode, 
+  onNodeClick 
+}) {
+  const { fitView } = useReactFlow();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitView({ padding: 0.25, duration: 400 });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [fitView]);
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodeClick={onNodeClick}
+      fitView
+      fitViewOptions={{ padding: 0.25 }}
+      colorMode={isLightMode ? 'light' : 'dark'}
+      minZoom={0.4}
+      maxZoom={1.8}
+    >
+      <Background 
+        variant="dots" 
+        gap={22} 
+        size={1.5} 
+        color={isLightMode ? '#CBD5E1' : '#38BDF8'} 
+      />
+      <Controls 
+        showInteractive={false}
+        className="!bg-white dark:!bg-[#00153A] !border !border-slate-200 dark:!border-white/10 !rounded-xl !shadow-lg !bottom-4 !left-4" 
+      />
+    </ReactFlow>
+  );
+}
 
 export default function GraphVisualizer({ 
   caseData,
@@ -171,15 +232,8 @@ export default function GraphVisualizer({
   onBackToInvestigation,
   isLight = false
 }) {
-  // Graph engine view mode: 'force' (2D Canvas + Physics + Flowing Particles) | 'flow' (XYFlow / React Flow Cards)
-  const [engineMode, setEngineMode] = useState('force');
   const [selectedNode, setSelectedNode] = useState('mitra-husada');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'dpjp' | 'denials'
-  const [isPhysicsPaused, setIsPhysicsPaused] = useState(false);
-
-  const containerRef = useRef(null);
-  const fgRef = useRef(null);
-  const [canvasDimensions, setCanvasDimensions] = useState({ width: 720, height: 440 });
 
   const [isLightMode, setIsLightMode] = useState(() => {
     if (isLight !== undefined) return isLight;
@@ -203,29 +257,6 @@ export default function GraphVisualizer({
     return () => obs.disconnect();
   }, [isLight]);
 
-  // Measure container dimensions for responsive canvas
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          setCanvasDimensions({
-            width: Math.floor(rect.width),
-            height: Math.floor(rect.height)
-          });
-        }
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    const timeout = setTimeout(updateDimensions, 100);
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-      clearTimeout(timeout);
-    };
-  }, [engineMode]);
-
   // Patient denied status responds directly to live simulator
   const isKhalafDenied = patientResponse === 'denied' || patientResponse === null;
 
@@ -239,7 +270,7 @@ export default function GraphVisualizer({
       category: 'Fasilitas Kesehatan Penagih',
       risk: 'AUDIT PRA-BAYAR (Pusat Anomali)',
       details: 'Fasilitas kesehatan yang menagihkan 85 klaim paket fisioterapi INA-CBG Z-3-12-0 serentak pasca baksos dalam 48 jam.',
-      color: '#818CF8',
+      color: '#6366F1',
       tariff: 'Rp 15.300.000 (85 Klaim)',
       sdmkStatus: 'Pusat Faskes Teridentifikasi',
     },
@@ -263,7 +294,7 @@ export default function GraphVisualizer({
       category: 'Sumber Pengumpulan Data Peserta',
       risk: 'PENGUMPULAN IDENTITAS (Harvesting)',
       details: 'Kegiatan bakti sosial donor darah tempat identitas KIS 85 peserta dikumpulkan tanpa indikasi rujukan rawat jalan spesialis.',
-      color: '#38BDF8',
+      color: '#0284C7',
       tariff: '85 Data Peserta Terpapar',
       sdmkStatus: 'Identitas KIS Dikumpulkan Tanpa Surat Rujukan',
     },
@@ -275,7 +306,7 @@ export default function GraphVisualizer({
       category: 'Tarif Paket Klaim JKN',
       risk: 'ANOMALI FREKUENSI (Repeat Billing)',
       details: 'Tarif Rp 180.000 / klaim. Total tagihan Rp 15.300.000 untuk 85 peserta tanpa riwayat rujukan sah dari FKTP.',
-      color: '#FFCA40',
+      color: '#D97706',
       tariff: 'Rp 180.000 / Episode Klaim',
       sdmkStatus: 'Restriksi Fornas & PNPK Terlanggar',
     },
@@ -289,179 +320,13 @@ export default function GraphVisualizer({
       details: isKhalafDenied 
         ? 'Peserta telah mengonfirmasi melalui Mobile JKN bahwa TIDAK PERNAH menerima layanan fisioterapi pada 14 Oktober 2026 di faskes ini.'
         : 'Peserta menyatakan hadir menerima layanan medis.',
-      color: isKhalafDenied ? '#F43F5E' : '#10B981',
+      color: isKhalafDenied ? '#E11D48' : '#10B981',
       tariff: 'Klaim Fiktif Diblokir (Hold BAKB)',
       sdmkStatus: 'Telemetri GPS: Radius > 15 KM dari Faskes',
     }
   }), [isKhalafDenied]);
 
-  // =========================================================================
-  // D3 FORCE GRAPH DATA (PHYSICS + FLOWING PARTICLES)
-  // =========================================================================
-  const forceGraphData = useMemo(() => {
-    // 5 primary core nodes with initial expansive coordinates
-    const primaryNodes = [
-      {
-        id: 'mitra-husada',
-        title: 'RS Khusus Mitra Husada',
-        role: 'RS KHUSUS (EPISENTRUM)',
-        type: 'hospital',
-        val: 26,
-        color: '#6366F1',
-        glowColor: 'rgba(99, 102, 241, 0.5)',
-        x: 0,
-        y: 0,
-      },
-      {
-        id: 'dr-hendra',
-        title: 'dr. Hendra, Sp.KFR',
-        role: 'SIP NON-AKTIF (SDMK)',
-        type: 'doctor',
-        val: 18,
-        color: '#F43F5E',
-        glowColor: 'rgba(244, 63, 94, 0.55)',
-        x: -240,
-        y: -130,
-      },
-      {
-        id: 'baksos-event',
-        title: 'Baksos Donor Darah',
-        role: 'HARVESTING IDENTITAS',
-        type: 'event',
-        val: 18,
-        color: '#0284C7',
-        glowColor: 'rgba(2, 132, 199, 0.5)',
-        x: -240,
-        y: 130,
-      },
-      {
-        id: 'inacbg-code',
-        title: 'INA-CBG Z-3-12-0',
-        role: 'TARIF FISIOTERAPI',
-        type: 'procedure',
-        val: 18,
-        color: '#D97706',
-        glowColor: 'rgba(217, 119, 6, 0.5)',
-        x: 240,
-        y: -130,
-      },
-      {
-        id: 'khalaf-patient',
-        title: 'Khalaf Faith P.',
-        role: isKhalafDenied ? 'MOBILE JKN: MENYANGKAL' : 'TERKONFIRMASI',
-        type: 'patient',
-        val: 18,
-        color: isKhalafDenied ? '#E11D48' : '#10B981',
-        glowColor: isKhalafDenied ? 'rgba(225, 29, 72, 0.6)' : 'rgba(16, 185, 129, 0.5)',
-        x: 240,
-        y: 130,
-      }
-    ];
-
-    // Satellite patient cluster (20 sample nodes representing the 85 claims)
-    const clusterNodes = Array.from({ length: 20 }).map((_, i) => {
-      const isDenied = i < 8;
-      const angle = (i / 20) * 2 * Math.PI;
-      const r = 170 + (i % 3) * 35;
-      return {
-        id: `pst-${i + 1}`,
-        title: `Peserta ${i + 1}`,
-        role: isDenied ? 'Sangkalan Hadir' : 'Klaim Baksos',
-        type: 'satellite',
-        val: isDenied ? 6 : 4,
-        color: isDenied ? '#F43F5E' : '#64748B',
-        glowColor: isDenied ? 'rgba(244, 63, 94, 0.4)' : 'transparent',
-        x: Math.cos(angle) * r,
-        y: Math.sin(angle) * r,
-        isDenied
-      };
-    });
-
-    const allNodes = [...primaryNodes, ...clusterNodes];
-
-    // Links with particles
-    const links = [
-      {
-        source: 'dr-hendra',
-        target: 'mitra-husada',
-        label: 'SIP Non-Aktif (SDMK)',
-        color: '#F43F5E',
-        width: 3,
-        distance: 240,
-        particles: 5,
-        particleSpeed: 0.007,
-        particleColor: '#FDA4AF',
-        dash: [4, 4]
-      },
-      {
-        source: 'baksos-event',
-        target: 'mitra-husada',
-        label: 'Klaster Baksos 48 Jam',
-        color: '#0284C7',
-        width: 2.5,
-        distance: 240,
-        particles: 4,
-        particleSpeed: 0.006,
-        particleColor: '#7DD3FC',
-        dash: [3, 3]
-      },
-      {
-        source: 'mitra-husada',
-        target: 'inacbg-code',
-        label: 'Tagihan Rp 15,3 Jt',
-        color: '#D97706',
-        width: 2.5,
-        distance: 240,
-        particles: 4,
-        particleSpeed: 0.006,
-        particleColor: '#FDE68A'
-      },
-      {
-        source: 'mitra-husada',
-        target: 'khalaf-patient',
-        label: isKhalafDenied ? 'Mobile JKN: DISANGKAL' : 'Mobile JKN: Hadir',
-        color: isKhalafDenied ? '#E11D48' : '#10B981',
-        width: 3,
-        distance: 240,
-        particles: 5,
-        particleSpeed: 0.008,
-        particleColor: isKhalafDenied ? '#FDA4AF' : '#A7F3D0',
-        dash: isKhalafDenied ? [4, 4] : null
-      },
-      {
-        source: 'baksos-event',
-        target: 'khalaf-patient',
-        label: 'Pengambilan NIK',
-        color: 'rgba(56, 189, 248, 0.4)',
-        width: 1.5,
-        distance: 280,
-        particles: 2,
-        particleSpeed: 0.004,
-        particleColor: '#38BDF8'
-      }
-    ];
-
-    // Link satellite nodes to Hospital and Baksos Event
-    clusterNodes.forEach((node) => {
-      if (filterMode === 'denials' && !node.isDenied) return;
-      links.push({
-        source: 'mitra-husada',
-        target: node.id,
-        color: node.isDenied ? 'rgba(244, 63, 94, 0.45)' : 'rgba(148, 163, 184, 0.25)',
-        width: node.isDenied ? 1.5 : 0.8,
-        distance: 180,
-        particles: node.isDenied ? 2 : 1,
-        particleSpeed: 0.005,
-        particleColor: node.isDenied ? '#FDA4AF' : '#94A3B8'
-      });
-    });
-
-    return { nodes: allNodes, links };
-  }, [isKhalafDenied, filterMode]);
-
-  // =========================================================================
-  // XYFLOW / REACT FLOW GRAPH DATA (CARDS & ANIMATED PATHS)
-  // =========================================================================
+  // Node types registry for ReactFlow
   const nodeTypes = useMemo(() => ({
     hospitalNode: CustomHospitalCard,
     dpjpNode: CustomDpjpCard,
@@ -470,183 +335,121 @@ export default function GraphVisualizer({
     patientNode: CustomPatientCard,
   }), []);
 
+  // Flow Nodes with deliberate layout positioning
   const flowNodes = useMemo(() => [
     {
       id: 'mitra-husada',
       type: 'hospitalNode',
-      position: { x: 380, y: 160 },
+      position: { x: 380, y: 150 },
       data: {
         title: 'RS Khusus Mitra Husada',
         claimsCount: 85,
         totalTariff: 'Rp 15.300.000',
         isLight: isLightMode
-      }
+      },
+      selected: selectedNode === 'mitra-husada'
     },
     {
       id: 'dr-hendra',
       type: 'dpjpNode',
-      position: { x: 40, y: 50 },
+      position: { x: 40, y: 40 },
       data: {
         title: 'dr. Hendra, Sp.KFR',
         isLight: isLightMode
-      }
+      },
+      selected: selectedNode === 'dr-hendra'
     },
     {
       id: 'baksos-event',
       type: 'eventNode',
-      position: { x: 40, y: 280 },
+      position: { x: 40, y: 270 },
       data: {
         title: 'Baksos Donor Darah',
         isLight: isLightMode
-      }
+      },
+      selected: selectedNode === 'baksos-event'
     },
     {
       id: 'inacbg-code',
       type: 'procedureNode',
-      position: { x: 740, y: 50 },
+      position: { x: 730, y: 40 },
       data: {
         title: 'INA-CBG: Z-3-12-0',
         isLight: isLightMode
-      }
+      },
+      selected: selectedNode === 'inacbg-code'
     },
     {
       id: 'khalaf-patient',
       type: 'patientNode',
-      position: { x: 740, y: 280 },
+      position: { x: 730, y: 270 },
       data: {
         title: 'Khalaf Faith Pradyatama',
         isLight: isLightMode
-      }
+      },
+      selected: selectedNode === 'khalaf-patient'
     }
-  ], [isLightMode]);
+  ], [isLightMode, selectedNode]);
 
+  // Flow Edges with animated flows & labels
   const flowEdges = useMemo(() => [
     {
       id: 'e-dpjp-hospital',
       source: 'dr-hendra',
       target: 'mitra-husada',
+      sourceHandle: 'source-right',
+      targetHandle: 'target-top',
       animated: true,
       label: 'SIP Non-Aktif (SDMK)',
+      labelStyle: { fill: '#F43F5E', fontWeight: 700, fontSize: 11 },
+      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#180812', fillOpacity: 0.9, rx: 6, ry: 6 },
+      labelBgPadding: [6, 3],
       style: { stroke: '#F43F5E', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#F43F5E' }
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#F43F5E', width: 18, height: 18 }
     },
     {
       id: 'e-event-hospital',
       source: 'baksos-event',
       target: 'mitra-husada',
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
       animated: true,
       label: 'Klaster Baksos 48 Jam',
+      labelStyle: { fill: '#0284C7', fontWeight: 700, fontSize: 11 },
+      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#06162a', fillOpacity: 0.9, rx: 6, ry: 6 },
+      labelBgPadding: [6, 3],
       style: { stroke: '#0284C7', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#0284C7' }
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#0284C7', width: 18, height: 18 }
     },
     {
       id: 'e-hospital-procedure',
       source: 'mitra-husada',
       target: 'inacbg-code',
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
       animated: true,
       label: 'Tagihan Rp 15,3 Jt',
+      labelStyle: { fill: '#D97706', fontWeight: 700, fontSize: 11 },
+      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#1e1507', fillOpacity: 0.9, rx: 6, ry: 6 },
+      labelBgPadding: [6, 3],
       style: { stroke: '#D97706', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706' }
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706', width: 18, height: 18 }
     },
     {
       id: 'e-hospital-patient',
       source: 'mitra-husada',
       target: 'khalaf-patient',
+      sourceHandle: 'source-bottom',
+      targetHandle: 'target-left',
       animated: true,
       label: isKhalafDenied ? 'SANGKALAN FAKTUAL' : 'Hadir Terverifikasi',
+      labelStyle: { fill: isKhalafDenied ? '#E11D48' : '#10B981', fontWeight: 700, fontSize: 11 },
+      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#180812', fillOpacity: 0.9, rx: 6, ry: 6 },
+      labelBgPadding: [6, 3],
       style: { stroke: isKhalafDenied ? '#E11D48' : '#10B981', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: isKhalafDenied ? '#E11D48' : '#10B981' }
+      markerEnd: { type: MarkerType.ArrowClosed, color: isKhalafDenied ? '#E11D48' : '#10B981', width: 18, height: 18 }
     }
-  ], [isKhalafDenied]);
-
-  // Center / Fit Force Graph & configure forces
-  const handleCenterGraph = useCallback(() => {
-    if (fgRef.current) {
-      fgRef.current.zoomToFit(400, 40);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (fgRef.current && engineMode === 'force') {
-      const fg = fgRef.current;
-      fg.d3Force('charge')?.strength(-500);
-      fg.d3Force('link')?.distance(link => link.distance || 180);
-      const timer = setTimeout(() => {
-        fg.zoomToFit(400, 50);
-      }, 450);
-      return () => clearTimeout(timer);
-    }
-  }, [engineMode, forceGraphData]);
-
-  // Custom 2D Node Canvas Renderer (Radial Halos + Crisp Typography)
-  const drawNodeCanvas = useCallback((node, ctx, globalScale) => {
-    if (!node || typeof node.x !== 'number' || typeof node.y !== 'number' || !Number.isFinite(node.x) || !Number.isFinite(node.y)) {
-      return;
-    }
-    const isSelected = selectedNode === node.id;
-    const r = Math.max(node.val || 8, 2);
-
-    // Glowing Halo
-    if (node.glowColor && node.glowColor !== 'transparent') {
-      try {
-        const gradient = ctx.createRadialGradient(node.x, node.y, r * 0.4, node.x, node.y, r * 1.8);
-        gradient.addColorStop(0, node.glowColor);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, r * 1.8, 0, 2 * Math.PI, false);
-        ctx.fill();
-      } catch {
-        // Safe fallback if gradient coordinates fail
-      }
-    }
-
-    // Outer Selection Ring
-    if (isSelected) {
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = Math.max(2.5 / (globalScale || 1), 1);
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI, false);
-      ctx.stroke();
-    }
-
-    // Main Circle
-    ctx.fillStyle = node.color || '#64748B';
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI, false);
-    ctx.fill();
-
-    ctx.strokeStyle = isLightMode ? '#FFFFFF' : '#0F172A';
-    ctx.lineWidth = Math.max(1.8 / (globalScale || 1), 0.8);
-    ctx.stroke();
-
-    // Node Text Label
-    if (node.type !== 'satellite' || (globalScale && globalScale > 1.4)) {
-      const fontSize = Math.max(10 / (globalScale || 1), 3);
-      ctx.font = `600 ${fontSize}px Inter, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Text background pill for contrast
-      const text = node.title || node.id;
-      const textWidth = ctx.measureText(text).width;
-      const pillY = node.y + r + fontSize + 2;
-
-      ctx.fillStyle = isLightMode ? 'rgba(255, 255, 255, 0.94)' : 'rgba(15, 23, 42, 0.92)';
-      ctx.fillRect(node.x - textWidth / 2 - 4, pillY - fontSize / 2 - 1, textWidth + 8, fontSize + 3);
-
-      ctx.fillStyle = isLightMode ? '#0F172A' : '#FFFFFF';
-      ctx.fillText(text, node.x, pillY);
-
-      // Sub-role text
-      if (node.role && (!globalScale || globalScale > 0.75)) {
-        const subFontSize = Math.max(8 / (globalScale || 1), 2.5);
-        ctx.font = `bold ${subFontSize}px Inter, monospace`;
-        ctx.fillStyle = node.color || '#38BDF8';
-        ctx.fillText(node.role, node.x, pillY + fontSize + 3);
-      }
-    }
-  }, [selectedNode, isLightMode]);
+  ], [isKhalafDenied, isLightMode]);
 
   const handleExportGraph = () => {
     const graphData = {
@@ -654,8 +457,8 @@ export default function GraphVisualizer({
         id: "SYNDICATE-MITRA-HUSADA-OKT26",
         generatedAt: new Date().toISOString(),
         totalNodes: Object.keys(nodes).length,
-        totalEdges: 6,
-        engine: engineMode,
+        totalEdges: 4,
+        engine: "XYFlow Entity Cards",
         fraudClassification: "Phantom Billing & Repeat Billing"
       },
       nodes: Object.values(nodes),
@@ -724,7 +527,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
 
   return (
     <div className="space-y-4 font-inter text-slate-800 dark:text-white pb-20">
-      {/* TOP HEADER STRIP - CONTROLS & ENGINE SELECTOR */}
+      {/* TOP HEADER STRIP - CONTROLS */}
       <div className="w-full bg-white dark:bg-[#00153A]/85 backdrop-blur-xl px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 shadow-sm dark:shadow-2xl dark:shadow-[#00081c]/50">
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-bold shadow-xs">
@@ -735,99 +538,61 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
               <span className="font-bold text-slate-900 dark:text-white text-sm">
                 Topologi Graf Relasi Sindikat Klaim #CLM-2026-085
               </span>
-              <span className="bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shadow-xs inline-flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                SISTEM FORENSIK DUA-MESIN
+              <span className="bg-indigo-50 text-indigo-800 border border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shadow-xs inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                XYFLOW KARTU ENTITAS
               </span>
               <span className="text-[10px] bg-slate-100 text-slate-800 border border-slate-300 dark:bg-white/5 dark:text-[#FFCA40] dark:border-white/10 font-mono font-bold px-2 py-0.5 rounded">
-                MITRE F3: FA0001 Syndicate · ATT&CK: T1078
+                MITRE F3: FA0001 Syndicate · ATT&amp;CK: T1078
               </span>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-white/60 font-medium">
-              Analisis Jaringan Bipartit Terpadu: Faskes ↔ DPJP ↔ Kegiatan Baksos ↔ Peserta · Validasi Forensik 3 Lapis BPJS Kesehatan.
+              Matriks Hubungan Bipartit: Faskes ↔ DPJP ↔ Kegiatan Baksos ↔ Peserta · Validasi Forensik 3 Lapis BPJS Kesehatan.
             </p>
           </div>
         </div>
 
-        {/* GRAPH ENGINE SELECTOR & EXPORT BUTTONS */}
+        {/* QUICK FILTERS & EXPORT BUTTONS */}
         <div className="flex items-center flex-wrap gap-2 text-xs">
           
-          {/* Dual Engine Mode Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10 font-bold">
-            <button
-              type="button"
-              onClick={() => setEngineMode('force')}
-              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
-                engineMode === 'force'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>D3 Force (Fisika & Partikel)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setEngineMode('flow')}
-              className={`px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer ${
-                engineMode === 'flow'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>XYFlow (Kartu Entitas)</span>
-            </button>
-          </div>
-
-          {/* Quick Filter */}
+          {/* Quick Node Filter Pills */}
           <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10 font-semibold">
             <button
               type="button"
               onClick={() => { setFilterMode('all'); setSelectedNode('mitra-husada'); }}
-              className={`px-2.5 py-1 rounded-lg text-xs transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer ${
                 filterMode === 'all'
-                  ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white font-bold'
-                  : 'text-slate-600 dark:text-white/60'
+                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                  : 'text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Semua
+              Semua Simpul
+            </button>
+            <button
+              type="button"
+              onClick={() => { setFilterMode('dpjp'); setSelectedNode('dr-hendra'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center space-x-1.5 ${
+                filterMode === 'dpjp'
+                  ? 'bg-rose-600 text-white font-bold shadow-xs'
+                  : 'text-rose-600 dark:text-rose-400 hover:text-rose-700'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <span>DPJP Bermasalah</span>
             </button>
             <button
               type="button"
               onClick={() => { setFilterMode('denials'); setSelectedNode('khalaf-patient'); }}
-              className={`px-2.5 py-1 rounded-lg text-xs transition cursor-pointer flex items-center space-x-1 ${
+              className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center space-x-1.5 ${
                 filterMode === 'denials'
-                  ? 'bg-rose-600 text-white font-bold'
-                  : 'text-rose-600 dark:text-rose-400'
+                  ? 'bg-rose-600 text-white font-bold shadow-xs'
+                  : 'text-rose-600 dark:text-rose-400 hover:text-rose-700'
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              <span>Sangkalan (8)</span>
+              <span>Sangkalan Mobile JKN (8)</span>
             </button>
           </div>
-
-          {/* Center & Physics Control (Force Mode only) */}
-          {engineMode === 'force' && (
-            <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10">
-              <button
-                type="button"
-                onClick={handleCenterGraph}
-                title="Pusatkan Graf ke Layar"
-                className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-white/70 dark:hover:text-white rounded cursor-pointer transition"
-              >
-                <Compass className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPhysicsPaused(!isPhysicsPaused)}
-                title={isPhysicsPaused ? "Lanjutkan Simulasi Fisika" : "Jeda Simulasi Fisika"}
-                className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-white/70 dark:hover:text-white rounded cursor-pointer transition"
-              >
-                {isPhysicsPaused ? <Play className="w-3.5 h-3.5 text-emerald-500" /> : <Pause className="w-3.5 h-3.5 text-amber-500" />}
-              </button>
-            </div>
-          )}
 
           {/* Export Buttons */}
           <button
@@ -853,11 +618,9 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
       {/* GRAPH CANVAS & FORENSIC DRAWER */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
-        {/* GRAPH VIEWPORT CONTAINER (8 COLS) */}
-        <div 
-          ref={containerRef}
-          className="lg:col-span-8 bg-slate-50 dark:bg-gradient-to-b dark:from-[#000c24] dark:via-[#00112e] dark:to-[#001D58] border border-slate-200 dark:border-white/10 rounded-2xl relative overflow-hidden shadow-sm dark:shadow-2xl min-h-[460px] h-[480px] xl:h-[510px]"
-        >
+        {/* XYFLOW VIEWPORT CONTAINER (8 COLS) */}
+        <div className="lg:col-span-8 bg-slate-50 dark:bg-gradient-to-b dark:from-[#000c24] dark:via-[#00112e] dark:to-[#001D58] border border-slate-200 dark:border-white/10 rounded-2xl relative overflow-hidden shadow-sm dark:shadow-2xl min-h-[460px] h-[480px] xl:h-[510px]">
+          
           {/* Spatial Telemetry HUD (Top-Left) */}
           <div className="absolute top-3 left-3 bg-white/95 dark:bg-[#000c24]/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 text-[11px] font-mono space-y-1 z-20 shadow-md dark:shadow-xl pointer-events-none">
             <div className="flex items-center space-x-2 text-slate-900 dark:text-white font-bold uppercase tracking-wider">
@@ -866,102 +629,24 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
             </div>
             <div className="text-slate-700 dark:text-white/60 space-y-0.5 text-[10px]">
               <div>KLASTER: <strong className="text-slate-900 dark:text-white font-bold">BAKSOS-085 (SERANG)</strong></div>
-              <div>SIMPUL AKTIF: <strong className="text-indigo-600 dark:text-cyan-300 font-bold">25</strong> · PARTIKEL ALIRAN: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">AKTIF (60 FPS)</strong></div>
+              <div>SIMPUL ENTITAS: <strong className="text-indigo-600 dark:text-cyan-300 font-bold">5 UTAMA</strong> · POLA RELASI: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">TERAUTENTIKASI</strong></div>
             </div>
           </div>
 
-          {/* ENGINE 1: PALANTIR D3 FORCE GRAPH (Physics + Draggable + Flowing Particles) */}
-          {engineMode === 'force' && (
-            <div className="w-full h-full">
-              <ForceGraph2D
-                ref={fgRef}
-                width={canvasDimensions.width}
-                height={canvasDimensions.height}
-                graphData={forceGraphData}
-                nodeCanvasObject={drawNodeCanvas}
-                nodePointerAreaPaint={(node, color, ctx) => {
-                  if (!node || typeof node.x !== 'number' || typeof node.y !== 'number' || !Number.isFinite(node.x) || !Number.isFinite(node.y)) {
-                    return;
-                  }
-                  ctx.fillStyle = color;
-                  ctx.beginPath();
-                  ctx.arc(node.x, node.y, (node.val || 8) + 6, 0, 2 * Math.PI, false);
-                  ctx.fill();
-                }}
-                linkDirectionalParticles={(link) => link.particles || 0}
-                linkDirectionalParticleSpeed={(link) => link.particleSpeed || 0.005}
-                linkDirectionalParticleWidth={2.8}
-                linkDirectionalParticleColor={(link) => link.particleColor || '#38BDF8'}
-                linkColor={(link) => link.color || (isLightMode ? '#CBD5E1' : '#334155')}
-                linkWidth={(link) => link.width || 1.5}
-                linkLineDash={(link) => link.dash || null}
-                onNodeClick={(node) => {
-                  if (nodes[node.id]) setSelectedNode(node.id);
-                  else if (node.type === 'satellite') setSelectedNode('khalaf-patient');
-                }}
-                enableNodeDrag={true}
-                enableZoomInteraction={true}
-                enablePanInteraction={true}
-                warmupTicks={50}
-                cooldownTicks={isPhysicsPaused ? 0 : 150}
-                backgroundColor="transparent"
-              />
-            </div>
-          )}
-
-          {/* ENGINE 2: XYFLOW / REACT FLOW (High-Definition Entity Cards) */}
-          {engineMode === 'flow' && (
-            <div className="w-full h-full">
-              <ReactFlow
+          {/* XYFLOW INTERACTIVE GRAPH CANVAS */}
+          <div className="w-full h-full">
+            <ReactFlowProvider>
+              <FlowCanvasWrapper
                 nodes={flowNodes}
                 edges={flowEdges}
                 nodeTypes={nodeTypes}
+                isLightMode={isLightMode}
                 onNodeClick={(_, node) => {
                   if (nodes[node.id]) setSelectedNode(node.id);
                 }}
-                fitView
-                colorMode={isLightMode ? 'light' : 'dark'}
-              >
-                <Background 
-                  variant="dots" 
-                  gap={20} 
-                  size={1.5} 
-                  color={isLightMode ? '#CBD5E1' : '#38BDF8'} 
-                />
-                <Controls className="!bg-white dark:!bg-[#00153A] !border !border-slate-200 dark:!border-white/10 !rounded-xl !shadow-md" />
-                <MiniMap 
-                  nodeStrokeWidth={2}
-                  nodeColor={(n) => {
-                    if (n.id === 'mitra-husada') return '#6366F1';
-                    if (n.id === 'dr-hendra') return '#F43F5E';
-                    if (n.id === 'baksos-event') return '#0284C7';
-                    if (n.id === 'inacbg-code') return '#D97706';
-                    if (n.id === 'khalaf-patient') return '#E11D48';
-                    return '#94A3B8';
-                  }}
-                  maskColor={isLightMode ? 'rgba(240, 243, 246, 0.6)' : 'rgba(0, 12, 36, 0.75)'}
-                  zoomable
-                  pannable
-                  style={{ width: 130, height: 85 }}
-                  className="!bg-white/95 dark:!bg-[#000c24]/95 !border !border-slate-300 dark:!border-white/20 !rounded-xl !shadow-lg"
-                />
-              </ReactFlow>
-            </div>
-          )}
-
-          {/* Subtle Cyber Grid Background in Force Mode */}
-          {engineMode === 'force' && (
-            <div 
-              className="absolute inset-0 pointer-events-none -z-10"
-              style={{
-                backgroundImage: isLightMode 
-                  ? 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)' 
-                  : 'radial-gradient(circle, #38bdf8 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-                opacity: isLightMode ? 0.35 : 0.2
-              }}
-            />
-          )}
+              />
+            </ReactFlowProvider>
+          </div>
         </div>
 
         {/* FORENSIC TELEMETRY DRAWER (4 COLS) */}
@@ -988,8 +673,8 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
                 <span className="font-bold text-rose-600 dark:text-rose-400">Phantom + Repeat Billing</span>
               </div>
               <div className="flex justify-between text-slate-700 dark:text-white/70">
-                <span className="font-semibold">Aliran Partikel:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Simulasi Real-Time</span>
+                <span className="font-semibold">Mesin Visualisasi:</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">XYFlow Entity Cards</span>
               </div>
             </div>
           </div>
