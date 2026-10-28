@@ -145,7 +145,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
               <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 shadow-sm ${
                 effectiveIsLight 
                   ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                  : 'bg-[#FFCA40]/10 text-[#FFCA40] border-[#FFCA40]/30 shadow-[#FFCA40]/10'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-emerald-950/30'
               }`}>
                 <Landmark className="w-5 h-5" />
               </div>
@@ -154,7 +154,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                   <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded border ${
                     effectiveIsLight 
                       ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                      : 'bg-[#FFCA40]/15 text-[#FFCA40] border-[#FFCA40]/30'
+                      : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                   }`}>
                     Dokumen Hukum Resmi
                   </span>
@@ -231,7 +231,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                     isActive 
                       ? (effectiveIsLight 
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' 
-                          : 'bg-[#FFCA40] text-[#000c24] shadow-lg shadow-[#FFCA40]/20') 
+                          : 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/40') 
                       : (effectiveIsLight 
                           ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' 
                           : 'text-white/60 hover:bg-white/5 hover:text-white')
@@ -267,12 +267,12 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                 className={`w-full pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none transition-all ${
                   effectiveIsLight 
                     ? 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500' 
-                    : 'bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-[#FFCA40]/60'
+                    : 'bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-emerald-500'
                 }`}
               />
             </div>
             <div className={`text-[11px] hidden sm:flex items-center space-x-1.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>
-              <Info className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+              <Info className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               <span>Berlaku secara mengikat untuk seluruh entitas faskes & verifikator</span>
             </div>
           </div>
@@ -499,7 +499,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                     : 'bg-white/5 border border-white/10 text-white'
                 }`}>
                   <div className={`flex items-center space-x-2 font-bold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                    <Lock className={`w-4 h-4 ${effectiveIsLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+                    <Lock className={`w-4 h-4 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                     <span className="text-xs uppercase tracking-wide">
                       Arsitektur Keamanan Siber & Kepatuhan Standar BSSN
                     </span>
@@ -512,7 +512,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                 {/* Framework 1 */}
                 <div className={`space-y-2 border-b pb-4 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <h3 className={`font-bold text-sm sm:text-base flex items-center space-x-2 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-[#FFCA40]'}>1.</span>
+                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-emerald-400'}>1.</span>
                     <span>Protokol Enkripsi Berlapis (Defense-in-Depth)</span>
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
@@ -546,7 +546,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                 {/* Framework 2 */}
                 <div className={`space-y-2 border-b pb-4 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <h3 className={`font-bold text-sm sm:text-base flex items-center space-x-2 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-[#FFCA40]'}>2.</span>
+                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-emerald-400'}>2.</span>
                     <span>Isolasi Analitik Lokal DuckDB (Privacy-Preserving)</span>
                   </h3>
                   <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
@@ -557,7 +557,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                 {/* Framework 3 */}
                 <div className="space-y-2">
                   <h3 className={`font-bold text-sm sm:text-base flex items-center space-x-2 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-[#FFCA40]'}>3.</span>
+                    <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-emerald-400'}>3.</span>
                     <span>Tanggap Insiden Siber (BPJS-CSIRT)</span>
                   </h3>
                   <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
@@ -645,7 +645,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-950' 
                     : 'bg-white/5 border border-white/10 text-white'
                 }`}>
-                  <div className={`flex items-center space-x-2 font-bold ${effectiveIsLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
+                  <div className={`flex items-center space-x-2 font-bold ${effectiveIsLight ? 'text-emerald-800' : 'text-emerald-400'}`}>
                     <Shield className="w-4 h-4 text-emerald-600" />
                     <span className="text-xs uppercase tracking-wide">
                       Adopsi 6 Kerangka Kerja Keamanan Siber &amp; Anti-Fraud Finansial Internasional
@@ -762,7 +762,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                       <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                         effectiveIsLight 
                           ? 'bg-amber-100 text-amber-800 border-amber-200' 
-                          : 'text-[#FFCA40] bg-[#FFCA40]/20 border-[#FFCA40]/30'
+                          : 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30'
                       }`}>
                         NIST AI RMF 1.0
                       </span>
@@ -843,7 +843,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
               : 'bg-[#00134A] border-white/10 text-white/70'
           }`}>
             <div className="flex items-center space-x-2">
-              <Scale className={`w-4 h-4 shrink-0 ${effectiveIsLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+              <Scale className={`w-4 h-4 shrink-0 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               <span>
                 Dokumen ini merupakan standar operasional prosedur (SOP) hukum resmi. Terakhir diperbarui: <strong className={effectiveIsLight ? 'text-slate-900' : 'text-white'}>Oktober 2026</strong>.
               </span>
@@ -853,7 +853,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
               className={`px-5 py-2 rounded-xl font-bold transition cursor-pointer shrink-0 shadow-lg ${
                 effectiveIsLight 
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' 
-                  : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-[#FFCA40]/20'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40'
               }`}
             >
               Saya Mengerti &amp; Setuju

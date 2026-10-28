@@ -74,7 +74,7 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tl from-[#00153A] via-blue-900/20 to-[#FFCA40]/10 blur-3xl"
+          className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-gradient-to-tl from-[#00153A] via-blue-900/20 to-emerald-500/10 blur-3xl"
         />
       </div>
 
@@ -143,9 +143,9 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
           <div className="text-center space-y-1">
             <div className="text-[11px] font-bold text-white/50 uppercase tracking-wide">Batas Waktu Validasi</div>
             <motion.div 
-              animate={timeLeft <= 10 && timeLeft > 0 ? { scale: [1, 1.06, 1], color: ['#FFCA40', '#f43f5e', '#FFCA40'] } : {}}
+              animate={timeLeft <= 10 && timeLeft > 0 ? { scale: [1, 1.06, 1], color: ['#10b981', '#f43f5e', '#10b981'] } : {}}
               transition={{ repeat: Infinity, duration: 1 }}
-              className="text-3xl font-bold font-mono text-[#FFCA40] tracking-wider"
+              className="text-3xl font-bold font-mono text-emerald-400 tracking-wider"
             >
               00:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
             </motion.div>
@@ -162,7 +162,7 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
             whileTap={{ scale: 0.98 }}
             onClick={handleSimulateMobileApprove}
             disabled={isSimulatingApprove || timeLeft === 0}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold text-xs shadow-lg shadow-[#FFCA40]/20 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
           >
             {isSimulatingApprove ? (
               <>
@@ -193,7 +193,7 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel 
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleTotpChange(idx, e.target.value)}
-                  className="w-10 h-12 text-center text-lg font-mono font-bold bg-white/5 border border-white/10 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20 rounded-xl text-white focus:outline-none transition-all duration-200"
+                  className="w-10 h-12 text-center text-lg font-mono font-bold bg-white/5 border border-white/10 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-white focus:outline-none transition-all duration-200"
                 />
               ))}
             </div>

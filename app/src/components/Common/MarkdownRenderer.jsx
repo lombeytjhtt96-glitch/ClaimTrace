@@ -41,7 +41,7 @@ export function renderInlineMarkdown(text, isLight = false, isUser = false) {
               ? 'font-bold text-white'
               : isLight
               ? 'font-bold text-emerald-950'
-              : 'font-bold text-white text-[#FFCA40]'
+              : 'font-bold text-white text-emerald-400'
           }
         >
           {t.value}
@@ -272,7 +272,7 @@ export default function MarkdownRenderer({ content, isLight = false, isUser = fa
                     ? 'text-white'
                     : isLight
                     ? 'text-emerald-950 border-b border-emerald-200/80 pb-1'
-                    : 'text-white border-b border-white/10 pb-1 text-[#FFCA40]'
+                    : 'text-white border-b border-white/10 pb-1 text-emerald-400'
                 }`}
               >
                 {renderInlineMarkdown(block.text, isLight, isUser)}

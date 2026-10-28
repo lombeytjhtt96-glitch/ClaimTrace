@@ -145,7 +145,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[450px] blur-3xl rounded-full pointer-events-none transition-colors duration-300 ${
           effectiveIsLight
             ? 'bg-gradient-to-tr from-blue-200/50 via-amber-100/40 to-emerald-100/30'
-            : 'bg-gradient-to-tr from-blue-900/40 via-[#001D58]/30 to-[#FFCA40]/10'
+            : 'bg-gradient-to-tr from-blue-900/40 via-[#001D58]/30 to-emerald-500/10'
         }`} 
       />
 
@@ -163,8 +163,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0], transition: { duration: 0.3 } }}
             className={`inline-flex p-2 rounded-2xl backdrop-blur-md border transition-all duration-300 mb-0.5 cursor-pointer ${
               effectiveIsLight
-                ? 'bg-white border-slate-200 shadow-md shadow-slate-200/50 hover:border-amber-500'
-                : 'bg-white/5 border-white/10 shadow-xl shadow-[#00081c]/50 hover:border-[#FFCA40]/40'
+                ? 'bg-white border-slate-200 shadow-md shadow-slate-200/50 hover:border-emerald-500'
+                : 'bg-white/5 border-white/10 shadow-xl shadow-[#00081c]/50 hover:border-emerald-500/40'
             }`}
           >
             <img 
@@ -214,8 +214,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               <div className="relative group">
                 <User className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
                   effectiveIsLight
-                    ? 'text-slate-400 group-focus-within:text-amber-600'
-                    : 'text-white/40 group-focus-within:text-[#FFCA40]'
+                    ? 'text-slate-400 group-focus-within:text-emerald-600'
+                    : 'text-white/40 group-focus-within:text-emerald-400'
                 }`} />
                 <input aria-label="Bidang input data"
                   type="text"
@@ -224,8 +224,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   placeholder="siti.rahma@bpjs-kesehatan.go.id"
                   className={`w-full rounded-xl py-2 pl-9 pr-3 text-xs outline-none transition-all duration-200 border ${
                     effectiveIsLight
-                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
                   }`}
                 />
               </div>
@@ -238,8 +238,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               <div className="relative group">
                 <Lock className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
                   effectiveIsLight
-                    ? 'text-slate-400 group-focus-within:text-amber-600'
-                    : 'text-white/40 group-focus-within:text-[#FFCA40]'
+                    ? 'text-slate-400 group-focus-within:text-emerald-600'
+                    : 'text-white/40 group-focus-within:text-emerald-400'
                 }`} />
                 <input aria-label="Bidang input data"
                   type={showPassword ? 'text' : 'password'}
@@ -248,8 +248,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   placeholder="••••••••••••••••"
                   className={`w-full rounded-xl py-2 pl-9 pr-9 text-xs outline-none transition-all duration-200 border ${
                     effectiveIsLight
-                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+                      : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
                   }`}
                 />
                 <button
@@ -278,7 +278,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   type="button"
                   onClick={handleRefreshCaptcha}
                   className={`text-[11px] font-medium flex items-center space-x-1 transition-colors group cursor-pointer ${
-                    effectiveIsLight ? 'text-amber-600 hover:text-amber-700' : 'text-[#FFCA40] hover:text-[#FFD700]'
+                    effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
                   }`}
                   title="Ganti Kode Captcha"
                 >
@@ -306,7 +306,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   </svg>
                   
                   {/* Distorted Captcha Characters */}
-                  <div className="relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest text-[#FFCA40] font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className="relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest text-emerald-300 font-bold text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     {captchaCode.split('').map((char, index) => {
                       const rotations = [-6, 8, -4, 6, -8];
                       const yOffsets = [1, -2, 2, -1, 1];
@@ -317,7 +317,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                             transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
                             display: 'inline-block'
                           }}
-                          className={index % 2 === 0 ? 'text-[#FFCA40]' : 'text-emerald-300'}
+                          className={index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200'}
                         >
                           {char}
                         </span>
@@ -326,7 +326,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                   </div>
 
                   {/* Hover indicator */}
-                  <div className="absolute inset-0 bg-[#FFCA40]/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <RefreshCw className="w-3.5 h-3.5 text-white/80" />
                   </div>
                 </div>
@@ -346,8 +346,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                           ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
                           : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20'
                         : effectiveIsLight
-                          ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                          : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#FFCA40]/60 focus:bg-white/10 focus:ring-2 focus:ring-[#FFCA40]/20'
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+                          : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
                     }`}
                   />
                   {captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase() && (
@@ -368,11 +368,11 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] font-bold text-xs shadow-lg shadow-[#FFCA40]/20 flex items-center justify-center space-x-2 transition-all duration-200 disabled:opacity-50 pt-2.5 group cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center justify-center space-x-2 transition-all duration-200 disabled:opacity-50 group cursor-pointer"
             >
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
-                  <div className="w-3.5 h-3.5 border-2 border-[#000c24]/30 border-t-[#000c24] rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   <span>Memverifikasi Kredensial...</span>
                 </div>
               ) : (
