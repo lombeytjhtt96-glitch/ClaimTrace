@@ -210,12 +210,11 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             </div>
           </div>
 
-          {/* 4 KPI METRIC BANNER DENGAN WATERMARK ICON */}
+          {/* 4 KPI METRIC BANNER */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Building2 className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Total Faskes Terpantau
               </div>
@@ -230,7 +229,6 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <AlertOctagon className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[10px] font-medium uppercase tracking-wider flex items-center gap-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 <AlertOctagon className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Risiko Kritis (FRI ≥ 70)
               </div>
@@ -245,7 +243,6 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <AlertTriangle className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Pengawasan Khusus (40-70)
               </div>
@@ -260,7 +257,6 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <CheckCircle2 className="w-16 h-16 absolute -right-2 -bottom-2 text-slate-400/10 dark:text-white/5 pointer-events-none" />
               <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Kepatuhan Terverifikasi
               </div>
@@ -386,13 +382,6 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                         : 'border-white/10 hover:border-white/30 bg-[#00153A]/85 text-white shadow-xl shadow-[#00081c]/50'
                   }`}
                 >
-                  <Building2 className={`w-28 h-28 absolute -right-4 -bottom-4 pointer-events-none transition-opacity ${
-                    isCritical
-                      ? isLight ? 'text-rose-900/5' : 'text-rose-400/5'
-                      : isMedium
-                      ? isLight ? 'text-amber-900/5' : 'text-amber-400/5'
-                      : isLight ? 'text-emerald-900/5' : 'text-emerald-400/5'
-                  }`} />
                   <div className="space-y-2">
                     {/* CARD HEADER WITH PROMINENT HOSPITAL TITLE */}
                     <div className={`flex items-start justify-between gap-2 border-b pb-2.5 ${

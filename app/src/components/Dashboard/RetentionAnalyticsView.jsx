@@ -127,7 +127,7 @@ function formatPercent(value) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-// Komponen KpiCard (Dual Theme dengan Watermark Icon & Progress Bar)
+// Komponen KpiCard (Dual Theme dengan Clean Icon Badge & Progress Bar)
 function KpiCard({ title, value, subtitle, badge, isLight, icon: Icon, progressPercent, trend }) {
   return (
     <div className={`rounded-2xl border p-5 transition-all relative overflow-hidden group ${
@@ -135,15 +135,19 @@ function KpiCard({ title, value, subtitle, badge, isLight, icon: Icon, progressP
         ? 'bg-white border-slate-200 shadow-sm hover:border-emerald-500/50 hover:shadow-md'
         : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl hover:border-[#FFCA40]/40 text-white'
     }`}>
-      {Icon && (
-        <div className="absolute top-2 right-3 p-2 opacity-10 pointer-events-none transition-transform group-hover:scale-110">
-          <Icon className={`w-14 h-14 ${isLight ? 'text-slate-900' : 'text-white'}`} />
-        </div>
-      )}
       <div className="flex items-center justify-between gap-2 relative z-10">
-        <div className={`text-xs font-semibold uppercase tracking-wider ${
-          isLight ? 'text-slate-500' : 'text-white/50'
-        }`}>{title}</div>
+        <div className="flex items-center gap-2">
+          {Icon && (
+            <div className={`p-1.5 rounded-lg border ${
+              isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/10 border-white/15 text-white/80'
+            }`}>
+              <Icon className="w-4 h-4" />
+            </div>
+          )}
+          <div className={`text-xs font-semibold uppercase tracking-wider ${
+            isLight ? 'text-slate-500' : 'text-white/50'
+          }`}>{title}</div>
+        </div>
         {badge && (
           <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
             isLight

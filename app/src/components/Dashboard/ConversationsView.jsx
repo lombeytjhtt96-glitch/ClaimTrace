@@ -444,7 +444,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50'
         }`}>
-          <BarChart2 className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>TOTAL SESI DIALOG</p>
@@ -465,7 +464,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50'
         }`}>
-          <MessageSquare className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>TOTAL PERCAKAPAN</p>
@@ -486,7 +484,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50'
         }`}>
-          <Users className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>RATA-RATA SESI</p>
@@ -507,7 +504,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50'
         }`}>
-          <Clock className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>MINGGU INI</p>

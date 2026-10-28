@@ -662,7 +662,6 @@ export default function AgentCopilot({
               <div className={`relative overflow-hidden p-3.5 rounded-xl border transition-all ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
-                <DollarSign className="absolute right-1 -bottom-1 w-12 h-12 opacity-[0.05] pointer-events-none" />
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
@@ -679,7 +678,6 @@ export default function AgentCopilot({
               <div className={`relative overflow-hidden p-3.5 rounded-xl border transition-all ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
-                <Cpu className="absolute right-1 -bottom-1 w-12 h-12 opacity-[0.05] pointer-events-none" />
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
@@ -698,7 +696,6 @@ export default function AgentCopilot({
               <div className={`relative overflow-hidden p-3.5 rounded-xl border transition-all ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
-                <CheckCircle2 className="absolute right-1 -bottom-1 w-12 h-12 opacity-[0.05] pointer-events-none" />
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
@@ -715,7 +712,6 @@ export default function AgentCopilot({
               <div className={`relative overflow-hidden p-3.5 rounded-xl border transition-all ${
                 isLight ? 'bg-amber-50/60 border-amber-200' : 'bg-white/5 border-white/10'
               }`}>
-                <Zap className="absolute right-1 -bottom-1 w-12 h-12 opacity-[0.05] pointer-events-none" />
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-amber-800' : 'text-white/50'
                 }`}>
@@ -738,7 +734,6 @@ export default function AgentCopilot({
               <div className={`relative overflow-hidden p-3.5 rounded-xl border transition-all ${
                 isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
-                <GitBranch className="absolute right-1 -bottom-1 w-12 h-12 opacity-[0.05] pointer-events-none" />
                 <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                   isLight ? 'text-slate-500' : 'text-white/50'
                 }`}>
@@ -1182,7 +1177,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <ShieldCheck className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Server AI Vault Status
@@ -1198,7 +1192,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <Server className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
               <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 <Server className="w-4 h-4 text-sky-600 dark:text-cyan-400" />
                 Model Aktif Utama
@@ -1216,7 +1209,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <Activity className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
               <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 <Activity className="w-4 h-4 text-amber-500 dark:text-[#FFCA40]" />
                 Eksekusi Terproses
@@ -1234,7 +1226,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <Shield className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
               <div className={`flex items-center gap-2 text-xs font-bold uppercase mb-2 ${isLight ? 'text-emerald-700' : 'text-white/50'}`}>
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Kepatuhan Standar Regulasi
@@ -1291,7 +1282,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <ShieldCheck className="absolute right-3 -bottom-3 w-28 h-28 opacity-[0.03] pointer-events-none" />
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-emerald-600 dark:text-emerald-400">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Arsitektur Zero-Client-Key (NIST PR.DS-01)
@@ -1313,7 +1303,6 @@ export default function AgentCopilot({
                 ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                 : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
             }`}>
-              <Server className="absolute right-3 -bottom-3 w-28 h-28 opacity-[0.03] pointer-events-none" />
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-sky-600 dark:text-cyan-400">
                 <Server className="w-4 h-4 text-sky-600 dark:text-cyan-400" />
                 Rantai Failover Model Otomatis
@@ -1337,7 +1326,6 @@ export default function AgentCopilot({
               ? 'bg-white border-slate-200 shadow-sm text-slate-800'
               : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
           }`}>
-            <Sparkles className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.025] pointer-events-none" />
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4 ${
               isLight ? 'border-slate-200' : 'border-white/10'
             }`}>
@@ -1554,7 +1542,6 @@ export default function AgentCopilot({
                         : 'bg-rose-500/10 border-rose-500/30 text-white'
                   }`}
                 >
-                  <CheckCircle className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
                   <div className={`text-xs font-semibold mb-1 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Status Sistem</div>
                   <div
                     className={`text-xl font-bold flex items-center gap-2 ${
@@ -1583,7 +1570,6 @@ export default function AgentCopilot({
                         : 'bg-[#FFCA40]/10 border-[#FFCA40]/30 text-white'
                   }`}
                 >
-                  <Cpu className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
                   <div className={`text-xs font-semibold mb-1 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Mode Eksekusi</div>
                   <div
                     className={`text-xl font-bold flex items-center gap-2 ${
@@ -1608,7 +1594,6 @@ export default function AgentCopilot({
                     ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                     : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
                 }`}>
-                  <Clock className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
                   <div className={`text-xs font-semibold mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Antrean Telaah</div>
                   <div className={`text-xl font-bold flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     <Clock className={`w-5 h-5 ${isLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
@@ -1625,7 +1610,6 @@ export default function AgentCopilot({
                     ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                     : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
                 }`}>
-                  <TrendingUp className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
                   <div className={`text-xs font-semibold mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Kepatuhan Regulasi</div>
                   <div className={`text-xl font-bold flex items-center gap-2 ${isLight ? 'text-purple-700' : 'text-white'}`}>
                     <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -1646,7 +1630,6 @@ export default function AgentCopilot({
                   ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                   : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
               }`}>
-                <Activity className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.025] pointer-events-none" />
                 <h2 className={`text-sm font-bold mb-6 flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   <Activity className="w-4 h-4 text-amber-500 dark:text-[#FFCA40]" />
                   <span>Alur Kerja Otonom Autopilot JKN</span>
@@ -1925,7 +1908,6 @@ export default function AgentCopilot({
                   ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                   : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
               }`}>
-                <ShieldCheck className="absolute right-3 -bottom-3 w-28 h-28 opacity-[0.03] pointer-events-none" />
                 <h2 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Alur Kebijakan Keputusan Autopilot JKN</h2>
                 <div className={`space-y-2 text-xs leading-relaxed font-sans ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
                   <p>1. Agen AI menganalisis berkas klaim dan menyertakan metadata estimasi risiko klinis.</p>
@@ -1941,7 +1923,6 @@ export default function AgentCopilot({
                   ? 'bg-white border-slate-200 shadow-sm text-slate-800'
                   : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
               }`}>
-                <Cpu className="absolute right-3 -bottom-3 w-28 h-28 opacity-[0.03] pointer-events-none" />
                 <h2 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Konfigurasi Kebijakan Runtime (Policy Settings)</h2>
 
                 {/* Switch 1: Autopilot Enabled */}
@@ -2098,7 +2079,6 @@ export default function AgentCopilot({
               ? 'bg-white border-slate-200 shadow-sm text-slate-800'
               : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
           }`}>
-            <ShieldCheck className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.03] pointer-events-none" />
             <div>
               <h1 className={`text-2xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 Log Keputusan &amp; Atestasi Otonom Multi-Agen
@@ -2130,7 +2110,6 @@ export default function AgentCopilot({
               ? 'bg-white border-slate-200 shadow-sm text-slate-800'
               : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
           }`}>
-            <Activity className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.025] pointer-events-none" />
             <h2 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Daftar Keputusan Otonom Terkini</h2>
 
             <div className={`overflow-x-auto border rounded-xl ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
@@ -2279,7 +2258,6 @@ export default function AgentCopilot({
               ? 'bg-white border-slate-200 shadow-sm text-slate-800'
               : 'border-white/10 bg-[#00153A]/85 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
           }`}>
-            <Terminal className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.025] pointer-events-none" />
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${
               isLight ? 'border-slate-200' : 'border-white/10'
             }`}>

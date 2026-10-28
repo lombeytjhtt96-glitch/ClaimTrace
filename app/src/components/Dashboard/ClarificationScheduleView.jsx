@@ -546,9 +546,6 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             ? 'bg-white border-slate-200 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
-          <Calendar className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-emerald-700 opacity-[0.04]' : 'text-[#FFCA40] opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-2 relative z-10">
             <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Total</span>
             <div className={`p-1.5 rounded-lg border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/20 border-emerald-500/30'}`}>
@@ -564,9 +561,6 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             ? 'bg-white border-slate-200 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
-          <Clock className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-blue-600 opacity-[0.04]' : 'text-blue-400 opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-2 relative z-10">
             <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Mendatang (Upcoming)</span>
             <div className={`p-1.5 rounded-lg border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/20 border-blue-500/30'}`}>
@@ -582,9 +576,6 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             ? 'bg-white border-slate-200 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
-          <AlertCircle className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-cyan-700 opacity-[0.04]' : 'text-cyan-400 opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-2 relative z-10">
             <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Terjadwal (Scheduled)</span>
             <div className={`p-1.5 rounded-lg border ${isLight ? 'bg-cyan-50 border-cyan-200' : 'bg-cyan-500/20 border-cyan-500/30'}`}>
@@ -600,9 +591,6 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             ? 'bg-white border-slate-200 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
-          <CheckCircle2 className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-emerald-600 opacity-[0.04]' : 'text-emerald-400 opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-2 relative z-10">
             <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Selesai (Completed)</span>
             <div className={`p-1.5 rounded-lg border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/20 border-emerald-500/30'}`}>
@@ -618,9 +606,6 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             ? 'bg-white border-slate-200 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
-          <XCircle className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-rose-600 opacity-[0.04]' : 'text-rose-400 opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-2 relative z-10">
             <span className={`text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Dibatalkan (Cancelled)</span>
             <div className={`p-1.5 rounded-lg border ${isLight ? 'bg-rose-50 border-rose-200' : 'bg-rose-500/20 border-rose-500/30'}`}>

@@ -405,10 +405,9 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
             </div>
           </div>
 
-          {/* INTEGRITY STATUS BAR - 4 GLASS CARDS WITH SUBTLE WATERMARKS */}
+          {/* INTEGRITY STATUS BAR - 4 GLASS CARDS */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
             <div className={`border rounded-xl p-3 relative overflow-hidden group ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-              <CheckCircle2 className="absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none opacity-[0.05] group-hover:opacity-[0.09] text-emerald-500 transition-all duration-300" />
               <span className={`text-[10px] block font-medium relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Status Kriptografis</span>
               <span className={`text-xs font-bold flex items-center space-x-1.5 font-mono mt-0.5 relative z-10 ${
                 isLight ? 'text-emerald-700' : 'text-emerald-400'
@@ -420,21 +419,18 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
             </div>
 
             <div className={`border rounded-xl p-3 relative overflow-hidden group ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-              <Lock className="absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none opacity-[0.04] group-hover:opacity-[0.08] text-slate-500 transition-all duration-300" />
               <span className={`text-[10px] block font-medium relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Algoritma Ledger</span>
               <span className={`text-sm font-bold font-mono mt-0.5 block relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>SHA-256</span>
               <span className={`text-[9.5px] relative z-10 ${isLight ? 'text-slate-600' : 'text-white/40'}`}>HMAC-BPJS-Enterprise 256-bit</span>
             </div>
 
             <div className={`border rounded-xl p-3 relative overflow-hidden group ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-              <Layers className="absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none opacity-[0.05] group-hover:opacity-[0.09] text-cyan-500 transition-all duration-300" />
               <span className={`text-[10px] block font-medium relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Blok Terakhir Dicatat</span>
               <span className={`text-sm font-bold font-mono mt-0.5 block relative z-10 ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>#{blocks[0]?.index || 1084}</span>
               <span className={`text-[9.5px] relative z-10 ${isLight ? 'text-slate-600' : 'text-white/40'}`}>Index Rantai Berkelanjutan</span>
             </div>
 
             <div className={`border rounded-xl p-3 relative overflow-hidden group ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-              <ShieldCheck className="absolute -right-2 -bottom-2 w-16 h-16 pointer-events-none opacity-[0.05] group-hover:opacity-[0.09] text-emerald-500 transition-all duration-300" />
               <span className={`text-[10px] block font-medium relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Verifikasi Terakhir</span>
               <span className={`text-xs font-bold font-mono mt-0.5 block relative z-10 ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
                 {verificationResult.timestamp}
@@ -650,9 +646,6 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     : 'bg-[#00153A]/85 border-white/10 text-white shadow-2xl'
                 }`}
               >
-                {/* Monochromatic decorative watermark */}
-                <ShieldCheck className="absolute -right-4 -bottom-4 w-36 h-36 pointer-events-none opacity-[0.03] group-hover:opacity-[0.06] text-emerald-500 transition-all duration-300" />
-
                 <div className={`flex items-start justify-between border-b pb-2.5 relative z-10 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <div>
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${

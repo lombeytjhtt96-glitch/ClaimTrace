@@ -232,9 +232,6 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
           }`}
         >
-          <div className="absolute top-2 right-3 p-2 opacity-10 pointer-events-none transition-transform group-hover:scale-110">
-            <FileText className={`w-12 h-12 ${isLight ? 'text-slate-900' : 'text-white'}`} />
-          </div>
           <div className="flex items-center justify-between relative z-10">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               Total Pengajuan Klaim
@@ -260,9 +257,6 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
           }`}
         >
-          <div className="absolute top-2 right-3 p-2 opacity-10 pointer-events-none transition-transform group-hover:scale-110">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-          </div>
           <div className="flex items-center justify-between relative z-10">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
               isLight ? 'text-emerald-800' : 'text-emerald-300'
@@ -290,9 +284,6 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
           }`}
         >
-          <div className="absolute top-2 right-3 p-2 opacity-10 pointer-events-none transition-transform group-hover:scale-110">
-            <AlertTriangle className="w-12 h-12 text-amber-500" />
-          </div>
           <div className="flex items-center justify-between relative z-10">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
               isLight ? 'text-amber-800' : 'text-amber-300'
@@ -320,9 +311,6 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
           }`}
         >
-          <div className="absolute top-2 right-3 p-2 opacity-10 pointer-events-none transition-transform group-hover:scale-110">
-            <AlertOctagon className="w-12 h-12 text-rose-500" />
-          </div>
           <div className="flex items-center justify-between relative z-10">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
               isLight ? 'text-rose-800' : 'text-rose-300'

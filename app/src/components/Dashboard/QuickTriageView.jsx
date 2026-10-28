@@ -415,9 +415,6 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         <div className={`relative overflow-hidden backdrop-blur-xl border rounded-2xl p-5 transition-all ${
           isLight ? 'bg-white border-slate-200 shadow-sm text-slate-800' : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50'
         }`}>
-          <FolderOpen className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-slate-900 opacity-[0.04]' : 'text-white opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               Menunggu (Pending)
@@ -433,9 +430,6 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         <div className={`relative overflow-hidden backdrop-blur-xl border rounded-2xl p-5 transition-all ${
           isLight ? 'bg-white border-slate-200 shadow-sm text-slate-800' : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50'
         }`}>
-          <Users className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-slate-900 opacity-[0.04]' : 'text-white opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               Aktif (Active)
@@ -451,9 +445,6 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         <div className={`relative overflow-hidden backdrop-blur-xl border rounded-2xl p-5 transition-all ${
           isLight ? 'bg-white border-slate-200 shadow-sm text-slate-800' : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50'
         }`}>
-          <AlertTriangle className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-rose-600 opacity-[0.06]' : 'text-rose-400 opacity-[0.08]'
-          }`} />
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               Risiko SLA (SLA Risk)
@@ -469,9 +460,6 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         <div className={`relative overflow-hidden backdrop-blur-xl border rounded-2xl p-5 transition-all ${
           isLight ? 'bg-white border-slate-200 shadow-sm text-slate-800' : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50'
         }`}>
-          <Clock className={`w-20 h-20 absolute -right-3 -bottom-3 pointer-events-none transition-opacity ${
-            isLight ? 'text-slate-900 opacity-[0.04]' : 'text-white opacity-[0.05]'
-          }`} />
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
               Ditugaskan (Assigned)

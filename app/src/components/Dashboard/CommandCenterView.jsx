@@ -399,7 +399,6 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             ? 'bg-white border-slate-200/90 shadow-sm text-slate-900'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <Users className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wider ${
@@ -427,7 +426,6 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             ? 'bg-rose-50/80 border-rose-200 shadow-sm text-rose-950'
             : 'bg-[#00153A]/85 border-rose-500/20 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <AlertTriangle className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wider ${
@@ -458,7 +456,6 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             ? 'bg-amber-50/80 border-amber-200 shadow-sm text-amber-950'
             : 'bg-[#00153A]/85 border-amber-500/20 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <ShieldAlert className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wider ${
@@ -491,7 +488,6 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             ? 'bg-emerald-50/80 border-emerald-200 shadow-sm text-emerald-950'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <Activity className="absolute right-2 -bottom-2 w-16 h-16 opacity-[0.05] pointer-events-none" />
           <div className="flex items-start justify-between">
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wider ${

@@ -302,7 +302,6 @@ export default function MobileTelemetry({
             <div className={`relative overflow-hidden rounded-xl p-2.5 border transition-all ${
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <Radio className="absolute right-1 -bottom-1 w-10 h-10 opacity-[0.06] pointer-events-none" />
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Notifikasi Terkirim (24j)
               </span>
@@ -320,7 +319,6 @@ export default function MobileTelemetry({
             <div className={`relative overflow-hidden rounded-xl p-2.5 border transition-all ${
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <CheckCircle2 className="absolute right-1 -bottom-1 w-10 h-10 opacity-[0.06] pointer-events-none" />
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Tingkat Respons Peserta
               </span>
@@ -337,7 +335,6 @@ export default function MobileTelemetry({
             <div className={`relative overflow-hidden rounded-xl p-2.5 border transition-all ${
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <XCircle className="absolute right-1 -bottom-1 w-10 h-10 opacity-[0.06] pointer-events-none" />
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Penolakan / Sangkalan Peserta
               </span>
@@ -354,7 +351,6 @@ export default function MobileTelemetry({
             <div className={`relative overflow-hidden rounded-xl p-2.5 border transition-all ${
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <ShieldCheck className="absolute right-1 -bottom-1 w-10 h-10 opacity-[0.06] pointer-events-none" />
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                 Kepatuhan UU PDP No. 27/2022
               </span>
@@ -381,7 +377,6 @@ export default function MobileTelemetry({
             ? 'bg-white border-slate-200/90 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <Send className="absolute right-3 -bottom-3 w-28 h-28 opacity-[0.03] pointer-events-none" />
           <div className={`flex items-center space-x-2 border-b pb-2.5 ${
             isLight ? 'border-slate-100 text-emerald-700' : 'border-white/10 text-white'
           }`}>
@@ -572,7 +567,6 @@ export default function MobileTelemetry({
             ? 'bg-white border-slate-200/90 shadow-sm text-slate-800'
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 backdrop-blur-xl text-white'
         }`}>
-          <ShieldCheck className="absolute right-3 -bottom-3 w-32 h-32 opacity-[0.03] pointer-events-none" />
           <div>
             <div className={`flex items-center space-x-2 border-b pb-2.5 mb-3 ${
               isLight ? 'border-slate-100' : 'border-white/10'
