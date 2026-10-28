@@ -72,7 +72,7 @@ export default function SkriningScreen({ onNavigate }) {
                   Risiko Kesehatan Rendah
                 </h3>
                 <p className="text-xs text-slate-500">
-                  KHALAF FAITH PRADYATAMA (17 Tahun)
+                  AHMAD SYAFIQ (PESERTA SIMULASI - 28 TAHUN)
                 </p>
               </div>
 

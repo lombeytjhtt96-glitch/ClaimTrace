@@ -29,10 +29,10 @@ import {
 // Realistic JKN AI Conversation Sessions
 const INITIAL_CONVERSATION_GROUPS = [
   {
-    userHash: 'usr_verif_0114_khalaf',
+    userHash: 'usr_verif_0114_simulasi',
     userName: 'Verifikator Medis Tingkat Pusat',
     userRole: 'VERIFIKATOR',
-    userEmail: 'verifikator.khalaf@bpjs-kesehatan.go.id',
+    userEmail: 'verifikator.simulasi@bpjs-kesehatan.go.id',
     faskesName: 'Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik',
     totalMessages: 18,
     lastActivityIso: '2026-10-24T19:45:00Z',
@@ -208,7 +208,7 @@ const INITIAL_CONVERSATION_GROUPS = [
     userHash: 'usr_mobile_jkn_citiz_01',
     userName: 'Siti Aminah (Peserta JKN Mandiri)',
     userRole: 'PESERTA_MOBILE_JKN',
-    userEmail: 'peserta.siti@gmail.com',
+    userEmail: 'peserta.siti@mail.fiktif.id',
     faskesName: 'Terdaftar di FKTP Klinik Pratama Nasional',
     totalMessages: 10,
     lastActivityIso: '2026-10-24T15:20:00Z',

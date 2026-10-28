@@ -56,7 +56,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
   const getDerivedNames = (fullName = '') => {
     const clean = fullName.trim();
     const parts = clean.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return { first: 'Administrator', last: 'Khalaf Dev' };
+    if (parts.length === 0) return { first: 'Budi', last: 'Santoso (Fiktif)' };
     if (parts.length === 1) return { first: parts[0], last: '' };
     return { first: parts[0], last: parts.slice(1).join(' ') };
   };
@@ -68,10 +68,10 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
       name: user?.name || 'Budi Santoso, S.Kom, M.TI',
       firstName: user?.firstName || names.first,
       lastName: user?.lastName || names.last,
-      nip: user?.nip || '199208152015031002',
+      nip: user?.nip || '19920815 201503 1 002 (Sintetis)',
       role: user?.role || user?.roleTitle || 'Analis Forensik Digital Anti-Fraud',
       unit: user?.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-      phone: user?.phone || '+62 812-3456-7890',
+      phone: user?.phone || '+62 812-0000-0000 (Fiktif)',
       allowEmailCheckins: true,
     };
   };

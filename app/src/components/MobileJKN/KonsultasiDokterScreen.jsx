@@ -7,7 +7,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
     {
       sender: 'doctor',
       time: '09:40',
-      text: 'Halo Bapak Khalaf. Saya dr. Siti Rahma dari FKTP Klinik Pratama Nasional BPJS. Ada keluhan yang bisa saya bantu terkait kesehatan Anda?',
+      text: 'Halo Bapak Ahmad. Saya dr. Siti Rahma dari FKTP Klinik Pratama Nasional BPJS (Simulasi). Ada keluhan yang bisa saya bantu terkait kesehatan Anda?',
     },
   ]);
   const [inputText, setInputText] = useState('');

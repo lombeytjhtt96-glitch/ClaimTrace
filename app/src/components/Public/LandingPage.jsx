@@ -1149,7 +1149,7 @@ export default function LandingPage({
             {/* Developer Profiles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Member 1: Khalaf Faith Pradyatama */}
+              {/* Member 1: Profil Sintetis */}
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(16, 185, 129, 0.4)", boxShadow: "0 12px 24px -6px rgba(16, 185, 129, 0.2)" }}
                 transition={{ duration: 0.2 }}
@@ -1165,12 +1165,12 @@ export default function LandingPage({
                     transition={{ duration: 0.3 }}
                     className="w-12 h-12 rounded-xl bg-emerald-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-emerald-950/20"
                   >
-                    KF
+                    AP
                   </motion.div>
                   <div>
-                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Khalaf Faith Pradyatama</h4>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Arya Pratama, S.T., M.Kom. (Profil Fiktif)</h4>
                     <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>Lead Systems Architect & Fullstack Security Engineer</p>
-                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Sistem Arsitektur & Keamanan Siber</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Sistem Arsitektur & Keamanan Siber (Data Sintetis)</p>
                   </div>
                 </div>
                 <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
@@ -1178,7 +1178,7 @@ export default function LandingPage({
                 </p>
               </motion.div>
 
-              {/* Member 2: Gaudiansyah Abiyu Mahya */}
+              {/* Member 2: Profil Sintetis */}
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(56, 189, 248, 0.4)", boxShadow: "0 12px 24px -6px rgba(56, 189, 248, 0.15)" }}
                 transition={{ duration: 0.2 }}
@@ -1194,12 +1194,12 @@ export default function LandingPage({
                     transition={{ duration: 0.3 }}
                     className="w-12 h-12 rounded-xl bg-cyan-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-cyan-950/20"
                   >
-                    GA
+                    DD
                   </motion.div>
                   <div>
-                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'}`}>Gaudiansyah Abiyu Mahya</h4>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'}`}>Dimas Daniswara, S.K.M., M.Epid. (Profil Fiktif)</h4>
                     <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Healthcare Domain Analyst & Machine Learning Modeler</p>
-                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Domain Kesehatan & Analisis Kebijakan</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Domain Kesehatan & Analisis Kebijakan (Data Sintetis)</p>
                   </div>
                 </div>
                 <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
@@ -1687,8 +1687,8 @@ export default function LandingPage({
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>PANDAWA WhatsApp Resmi</span>
-                      <span className={`font-mono ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>0811-8-165-165</span>
-                      <span className={`block text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp (08.00 - 15.00 WIB)</span>
+                      <span className={`font-mono ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>0811-0000-0165 (Simulasi PANDAWA)</span>
+                      <span className={`block text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp (08.00 - 15.00 WIB - Simulasi)</span>
                     </div>
                   </motion.div>
 
@@ -1707,7 +1707,7 @@ export default function LandingPage({
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Alamat Kantor Operasional</span>
                       <span className={`block ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
-                        Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510
+                        Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510 (Kantor Pusat Simulasi)
                       </span>
                       <span className={`text-[11px] block mt-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Kedeputian Bidang Pengawasan dan Pemeriksaan</span>
                     </div>
@@ -1727,7 +1727,7 @@ export default function LandingPage({
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Email Verifikator Medis</span>
-                      <span className={`font-mono text-[11px] ${effectiveIsLight ? 'text-slate-700' : 'text-white/70'}`}>pengawasan.klaim@bpjs-kesehatan.go.id</span>
+                      <span className={`font-mono text-[11px] ${effectiveIsLight ? 'text-slate-700' : 'text-white/70'}`}>pengawasan.klaim.simulasi@bpjs-kesehatan.go.id</span>
                     </div>
                   </motion.div>
                 </div>

@@ -258,7 +258,7 @@ export default function GraphVisualizer({
   }, [isLight]);
 
   // Patient denied status responds directly to live simulator
-  const isKhalafDenied = patientResponse === 'denied' || patientResponse === null;
+  const isPatientDenied = patientResponse === 'denied' || patientResponse === null;
 
   // Nodes definition for drawer and metadata
   const nodes = useMemo(() => ({
@@ -310,21 +310,21 @@ export default function GraphVisualizer({
       tariff: 'Rp 180.000 / Episode Klaim',
       sdmkStatus: 'Restriksi Fornas & PNPK Terlanggar',
     },
-    'khalaf-patient': {
-      id: 'khalaf-patient',
+    'patient-denial': {
+      id: 'patient-denial',
       type: 'patient',
-      title: 'Khalaf Faith Pradyatama',
-      subtitle: 'PST-77218902 · Peserta JKN-KIS Aktif',
+      title: 'Ahmad Syafiq (Peserta Fiktif)',
+      subtitle: 'PST-77218902 · Peserta JKN-KIS Aktif (Simulasi)',
       category: 'Konfirmasi Faktual Mobile JKN',
-      risk: isKhalafDenied ? 'INDIKASI FIKTIF (Menyangkal Hadir)' : 'TERKONFIRMASI HADIR',
-      details: isKhalafDenied 
+      risk: isPatientDenied ? 'INDIKASI FIKTIF (Menyangkal Hadir)' : 'TERKONFIRMASI HADIR',
+      details: isPatientDenied 
         ? 'Peserta telah mengonfirmasi melalui Mobile JKN bahwa TIDAK PERNAH menerima layanan fisioterapi pada 14 Oktober 2026 di faskes ini.'
         : 'Peserta menyatakan hadir menerima layanan medis.',
-      color: isKhalafDenied ? '#E11D48' : '#10B981',
+      color: isPatientDenied ? '#E11D48' : '#10B981',
       tariff: 'Klaim Fiktif Diblokir (Hold BAKB)',
       sdmkStatus: 'Telemetri GPS: Radius > 15 KM dari Faskes',
     }
-  }), [isKhalafDenied]);
+  }), [isPatientDenied]);
 
   // Node types registry for ReactFlow
   const nodeTypes = useMemo(() => ({
@@ -380,14 +380,14 @@ export default function GraphVisualizer({
       selected: selectedNode === 'inacbg-code'
     },
     {
-      id: 'khalaf-patient',
+      id: 'patient-denial',
       type: 'patientNode',
       position: { x: 730, y: 270 },
       data: {
-        title: 'Khalaf Faith Pradyatama',
+        title: 'Ahmad Syafiq (Peserta Fiktif)',
         isLight: isLightMode
       },
-      selected: selectedNode === 'khalaf-patient'
+      selected: selectedNode === 'patient-denial'
     }
   ], [isLightMode, selectedNode]);
 
@@ -438,18 +438,18 @@ export default function GraphVisualizer({
     {
       id: 'e-hospital-patient',
       source: 'mitra-husada',
-      target: 'khalaf-patient',
+      target: 'patient-denial',
       sourceHandle: 'source-bottom',
       targetHandle: 'target-left',
       animated: true,
-      label: isKhalafDenied ? 'SANGKALAN FAKTUAL' : 'Hadir Terverifikasi',
-      labelStyle: { fill: isKhalafDenied ? '#E11D48' : '#10B981', fontWeight: 700, fontSize: 11 },
+      label: isPatientDenied ? 'SANGKALAN FAKTUAL' : 'Hadir Terverifikasi',
+      labelStyle: { fill: isPatientDenied ? '#E11D48' : '#10B981', fontWeight: 700, fontSize: 11 },
       labelBgStyle: { fill: isLightMode ? '#ffffff' : '#180812', fillOpacity: 0.9, rx: 6, ry: 6 },
       labelBgPadding: [6, 3],
-      style: { stroke: isKhalafDenied ? '#E11D48' : '#10B981', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: isKhalafDenied ? '#E11D48' : '#10B981', width: 18, height: 18 }
+      style: { stroke: isPatientDenied ? '#E11D48' : '#10B981', strokeWidth: 2.5 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: isPatientDenied ? '#E11D48' : '#10B981', width: 18, height: 18 }
     }
-  ], [isKhalafDenied, isLightMode]);
+  ], [isPatientDenied, isLightMode]);
 
   const handleExportGraph = () => {
     const graphData = {
@@ -465,7 +465,7 @@ export default function GraphVisualizer({
       edges: [
         { source: "dr-hendra", target: "mitra-husada", relation: "SIP KEDALUWARSA (SDMK)" },
         { source: "baksos-event", target: "mitra-husada", relation: "HARVESTING NIK (85 Klaim)" },
-        { source: "khalaf-patient", target: "mitra-husada", relation: "SANGKALAN PRESENSI (Mobile JKN)" },
+        { source: "patient-denial", target: "mitra-husada", relation: "SANGKALAN PRESENSI (Mobile JKN)" },
         { source: "inacbg-code", target: "mitra-husada", relation: "TAGIHAN INA-CBG Z-3-12-0" }
       ]
     };
@@ -507,7 +507,7 @@ MERGE (f:Faskes {id: '0132R001', name: 'RS Khusus Mitra Husada', kelas: 'C', kot
 MERGE (d:DPJP {id: 'DPJP-HENDRA-KFR', name: 'dr. Hendra, Sp.KFR', sip: '446.1/108/DPJP/2023', sdmk_valid: false})
 MERGE (e:Event {id: 'BAKSOS_MASSAL_OKT26', title: 'Baksos Donor Darah', tanggal: '2026-10-12'})
 MERGE (cbg:InaCbg {code: 'Z-3-12-0', deskripsi: 'Prosedur Fisioterapi Massal', tarif: 180000})
-MERGE (p:Peserta {id: 'PST-77218902', name: 'Khalaf Faith Pradyatama', mobile_jkn_denied: true})
+MERGE (p:Peserta {id: 'PST-77218902', name: 'Ahmad Syafiq (Peserta Fiktif)', mobile_jkn_denied: true})
 
 MERGE (d)-[:PRACTICES_AT {status: 'SIP_EXPIRED_SDMK', patient_load: 85}]->(f)
 MERGE (e)-[:HARVESTED_IDENTITY {count_claims: 85, timeframe_hours: 48}]->(f)
@@ -582,7 +582,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
             </button>
             <button
               type="button"
-              onClick={() => { setFilterMode('denials'); setSelectedNode('khalaf-patient'); }}
+              onClick={() => { setFilterMode('denials'); setSelectedNode('patient-denial'); }}
               className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center space-x-1.5 ${
                 filterMode === 'denials'
                   ? 'bg-rose-600 text-white font-bold shadow-xs'

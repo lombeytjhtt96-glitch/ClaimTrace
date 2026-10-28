@@ -5,10 +5,10 @@ export default function PembayaranScreen({ onNavigate }) {
   const [copied, setCopied] = useState(false);
 
   const vaList = [
-    { bank: 'BCA', va: '88888 0002891728192', icon: '/assets/images/bca_icon.png' },
-    { bank: 'Bank Mandiri', va: '89888 0002891728192', icon: '/assets/images/bank_icon.png' },
-    { bank: 'BNI', va: '88888 0002891728192', icon: '/assets/images/bni_icon.png' },
-    { bank: 'BRI', va: '88888 0002891728192', icon: '/assets/images/bri_icon.png' },
+    { bank: 'BCA (Simulasi)', va: '88888 0009999999999', icon: '/assets/images/bca_icon.png' },
+    { bank: 'Bank Mandiri (Simulasi)', va: '89888 0009999999999', icon: '/assets/images/bank_icon.png' },
+    { bank: 'BNI (Simulasi)', va: '88888 0009999999999', icon: '/assets/images/bni_icon.png' },
+    { bank: 'BRI (Simulasi)', va: '88888 0009999999999', icon: '/assets/images/bri_icon.png' },
   ];
 
   const handleCopy = (va) => {

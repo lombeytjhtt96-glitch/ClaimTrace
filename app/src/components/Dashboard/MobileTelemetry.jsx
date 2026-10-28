@@ -147,7 +147,7 @@ export default function MobileTelemetry({
       const newLog = {
         id: `TEL-${Math.floor(Math.random() * 9000) + 1000}`,
         claimId: testClaimId,
-        participantName: 'Peserta Terverifikasi (Khalaf Faith P.)',
+        participantName: 'Peserta Terverifikasi (Ahmad Syafiq - Pasien Fiktif)',
         nikHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
         faskes: 'RS Swasta Medika Kasih',
         procedure: 'Konfirmasi Presensi Lapis 3 (Telemetri Mobile JKN)',

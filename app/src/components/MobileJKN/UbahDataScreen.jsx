@@ -4,8 +4,8 @@ import { ChevronLeft, Hospital, User, Phone, Mail, MapPin, Check, ChevronRight }
 export default function UbahDataScreen({ onNavigate }) {
   const [faskes, setFaskes] = useState('KLINIK PRATAMA NASIONAL BPJS (0112U001)');
   const [kelas, setKelas] = useState('Kelas 1');
-  const [phone, setPhone] = useState('081234567890');
-  const [email, setEmail] = useState('khalaf.pradyatama@gmail.com');
+  const [phone, setPhone] = useState('0812-0000-0000');
+  const [email, setEmail] = useState('peserta.simulasi@mail.fiktif.id');
   const [saved, setSaved] = useState(false);
 
   const handleSave = (e) => {
@@ -26,7 +26,7 @@ export default function UbahDataScreen({ onNavigate }) {
             Perubahan Data Peserta
           </h2>
           <span className="text-[10px] text-slate-500 font-medium">
-            KHALAF FAITH PRADYATAMA
+            AHMAD SYAFIQ (PESERTA SIMULASI)
           </span>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function UbahDataScreen({ onNavigate }) {
               <label className="text-xs font-bold text-slate-900">Alamat Surat Domisili</label>
             </div>
             <textarea
-              defaultValue="Jl. Letjen Suprapto No. 44, Cempaka Putih Barat, Jakarta Pusat 10520"
+              defaultValue="Jl. Merdeka Sejahtera No. 12, Jakarta Pusat (Alamat Simulasi Fiktif)"
               rows={2}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
             />
