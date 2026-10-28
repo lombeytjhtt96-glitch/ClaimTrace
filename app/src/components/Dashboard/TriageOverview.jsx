@@ -536,7 +536,9 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
                 </tr>
               )}
               {filteredClaims.map((c) => (
-                <tr
+                <motion.tr
+                  layout
+                  transition={{ duration: 0.18, ease: "easeOut" }}
                   key={c.id}
                   onClick={() => onSelectCase(c)}
                   className={`group cursor-pointer transition-colors duration-150 ${
@@ -620,7 +622,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
                       <ChevronRight className="w-3.5 h-3.5" />
                     </span>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>
