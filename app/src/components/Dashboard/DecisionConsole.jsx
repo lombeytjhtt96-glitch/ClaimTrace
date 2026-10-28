@@ -585,7 +585,7 @@ Timestamp: ${new Date().toISOString()}`;
                 </button>
               </div>
 
-              {/* Modal Body: Mocked Official Letterhead */}
+              {/* Modal Body: Official BPJS Letterhead */}
               <div className={`p-6 overflow-y-auto space-y-4 text-xs font-sans ${
                 isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'
               }`}>

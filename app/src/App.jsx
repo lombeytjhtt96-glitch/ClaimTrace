@@ -281,7 +281,7 @@ export default function App() {
       name: 'Administrator Khalaf Dev',
       email: 'verifikator.khalaf@bpjs-kesehatan.go.id',
       nip: '198704202011012001',
-      role: 'Verifikator Utama Klaim FKRTL Tingkat Nasional',
+      role: 'Verifikator Utama Klaim FKRTL',
       unit: 'Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan',
       avatar: 'AD',
       isMfaVerified: true
@@ -797,7 +797,7 @@ export default function App() {
                       </span>
                     </div>
                     <p className={`text-[10px] hidden lg:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      Pengawasan Pra-Pembayaran Klaim JKN · Tingkat Nasional
+                      Pengawasan Pra-Pembayaran Klaim JKN
                     </p>
                   </div>
                 </div>

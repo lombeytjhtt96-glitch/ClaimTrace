@@ -205,7 +205,7 @@ const INITIAL_REPORTS = [
     ],
     recommendations: [
       'Penangguhan klaim pending untuk 29 berkas tanpa bukti check-in digital',
-      'Koordinasi verifikator faskes tingkat nasional untuk validasi fisik logbook faskes',
+      'Koordinasi verifikator faskes untuk validasi fisik logbook faskes',
     ],
   },
   {

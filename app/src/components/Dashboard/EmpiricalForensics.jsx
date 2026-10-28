@@ -329,10 +329,10 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
         const json = await response.json();
         setQueryResult(json);
       } else {
-        simulateLocalQuery(targetSql);
+        executeLocalFallbackQuery(targetSql);
       }
     } catch {
-      simulateLocalQuery(targetSql);
+      executeLocalFallbackQuery(targetSql);
     } finally {
       const end = performance.now();
       setQueryDuration(`${(end - start).toFixed(1)} ms`);
@@ -340,7 +340,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
     }
   };
 
-  const simulateLocalQuery = (sql) => {
+  const executeLocalFallbackQuery = (sql) => {
     if (sql.includes('v_bpjs_repeat_claims_same_day')) {
       setQueryResult({
         columns: ['peserta_id', 'tgl_masuk', 'claim_1', 'claim_2', 'cbg_1', 'cbg_2', 'total_biaya'],
