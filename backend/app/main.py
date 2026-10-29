@@ -87,9 +87,18 @@ ALLOWED_ORIGINS = [
     "https://claimtrace.bpjs-kesehatan.go.id"
 ]
 
+# Dukungan dinamis domain Vercel & Render via Environment Variable
+_env_origins = os.environ.get("ALLOWED_ORIGINS", "")
+if _env_origins:
+    for _o in _env_origins.split(","):
+        _clean = _o.strip()
+        if _clean and _clean not in ALLOWED_ORIGINS:
+            ALLOWED_ORIGINS.append(_clean)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
@@ -2111,6 +2120,13 @@ def get_icd10_statistics():
         "standard_version": "ICD-10 WHO (2019) & Kemenkes RI PMK No. 24/2022",
         "language_support": ["Bahasa Indonesia", "English (International)"]
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    uvicorn.run("app.main:app", host=host, port=port, reload=False)
+
 
 
 

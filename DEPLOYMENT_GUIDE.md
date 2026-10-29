@@ -76,35 +76,41 @@ Cocok untuk deployment di server virtual (VPS Linux / Ubuntu / Debian / WSL):
 ## 4. PILIHAN C: CLOUD DEPLOYMENT (VERCEL + RENDER / RAILWAY)
 
 ### Bagian 1: Deploy Backend di Render.com (Gratis)
-1. Buat akun di [Render.com](https://render.com).
-2. Pilih **New +** -> **Web Service**.
-3. Hubungkan repositori GitHub Anda: `https://github.com/lombeytjhtt96-glitch/ClaimTrace.git`.
-4. Konfigurasikan:
-   - **Root Directory**: `backend`
-   - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-5. Tambahkan **Environment Variables**:
-   - `GEMINI_API_KEY` = `YOUR_GEMINI_API_KEY` (Gunakan Google AI Studio API Key Anda)
-   - `HOST` = `0.0.0.0`
-   - `PORT` = `8000`
-6. Klik **Create Web Service**. Setelah build selesai, Anda akan mendapatkan URL publik backend, misalnya:
-   `https://claimtrace-backend.onrender.com`
+1. Buat akun atau login di [Render.com](https://render.com).
+2. Anda memiliki 2 cara mudah:
+   - **Cara Otomatis (Blueprint)**: Klik **New +** -> **Blueprint** -> Pilih repo `ClaimTrace`. Render akan otomatis membaca file `render.yaml` yang sudah kami sediakan!
+   - **Cara Manual (Web Service)**: Klik **New +** -> **Web Service** -> Pilih repo `ClaimTrace`:
+     - **Name**: `claimtrace-backend`
+     - **Root Directory**: `backend`
+     - **Runtime**: `Python 3`
+     - **Region**: `Singapore (Southeast Asia)` *(Paling cepat & rendah latensi untuk Indonesia)*
+     - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
+     - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+     - **Plan Type**: `Free`
+3. Tambahkan **Environment Variables** di tab *Environment*:
+   - `GEMINI_API_KEY` = `YOUR_GEMINI_API_KEY` *(Gunakan Google AI Studio API Key Anda)*
+   - `APP_ENV` = `production`
+   - `DEBUG` = `false`
+4. Klik **Create Web Service** (atau **Apply** pada Blueprint).
+5. Tunggu proses build selesai (~2-3 menit). Setelah status menjadi **Live**, salin URL publik backend Anda (contoh: `https://claimtrace-backend.onrender.com`).
+6. Tes endpoint kesehatan di browser: `https://claimtrace-backend.onrender.com/api/v1/health` (harus menampilkan status `"healthy"`).
 
 ---
 
 ### Bagian 2: Deploy Frontend di Vercel (Gratis)
-1. Buat akun di [Vercel](https://vercel.com).
-2. Klik **Add New Project** -> Impor repositori `ClaimTrace`.
-3. Pada halaman konfigurasi project:
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: `app` (Klik Edit dan pilih folder `app`)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-4. Tambahkan **Environment Variables**:
-   - `VITE_API_BASE_URL` = `https://claimtrace-backend.onrender.com` (Gunakan URL backend yang didapat dari Render di Langkah 1)
-5. Klik **Deploy**.
-6. Website live ClaimTrace JKN dapat diakses dari seluruh dunia melalui domain Vercel Anda (`https://claimtrace-jkn.vercel.app`).
+1. Buat akun atau login di [Vercel](https://vercel.com) menggunakan akun GitHub Anda.
+2. Klik **Add New...** -> **Project**.
+3. Cari dan impor repositori `ClaimTrace`.
+4. Pada form konfigurasi:
+   - **Framework Preset**: `Vite` *(Otomatis terdeteksi)*
+   - **Root Directory**: Klik tombol **Edit** lalu pilih folder `app`
+   - **Build Command**: `npm run build` *(Default)*
+   - **Output Directory**: `dist` *(Default)*
+5. Tambahkan **Environment Variable**:
+   - Key: `VITE_API_BASE_URL`
+   - Value: `https://claimtrace-backend.onrender.com` *(Gunakan URL backend yang Anda dapatkan dari Render di Bagian 1)*
+6. Klik tombol biru **Deploy**.
+7. Dalam waktu ~1 menit, situs web frontend Anda akan online dan dapat diakses dari seluruh dunia (misalnya: `https://claimtrace-jkn.vercel.app`).
 
 ---
 
