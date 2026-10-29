@@ -772,7 +772,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 tick={{ fontSize: 11, fill: isLight ? '#1e293b' : '#f1f5f9', fontWeight: 500 }}
                 width={250}
               />
-              <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={{ fill: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.05)' }} />
+              <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Bar
                 dataKey="count"
                 radius={[0, 8, 8, 0]}
