@@ -18,6 +18,8 @@ import {
   ReferenceLine,
   LabelList,
   CartesianGrid,
+  AreaChart,
+  Area,
 } from 'recharts';
 
 const volumeChartData = [
@@ -76,6 +78,7 @@ export default function CaseInvestigation({
   onOpenAgentCopilot,
   isLight = false
 }) {
+  const [volumeViewType, setVolumeViewType] = useState('bar'); // 'bar' | 'area'
   const defaultCase = {
     id: typeof caseData === 'string' ? caseData : 'CLM-2026-10-085',
     sep: '0132R0011026V000085',
@@ -136,21 +139,31 @@ export default function CaseInvestigation({
   ];
 
   const renderCustomBarLabel = (props) => {
-    const { x, y, width, value, index } = props;
+    const { x, y, width, index } = props;
     const item = volumeChartData[index];
-    const isSpike = item?.isSpike;
+    if (!item?.isSpike) return null;
     return (
-      <text
-        x={x + width / 2}
-        y={y - 5}
-        fill={isSpike ? (isLight ? '#e11d48' : '#fb7185') : (isLight ? '#475569' : '#94a3b8')}
-        textAnchor="middle"
-        fontSize={isSpike ? 11 : 9.5}
-        fontWeight={isSpike ? 800 : 600}
-        fontFamily="monospace"
-      >
-        {value}
-      </text>
+      <g>
+        <rect
+          x={x + width / 2 - 22}
+          y={y - 21}
+          width={44}
+          height={17}
+          rx={5}
+          fill={isLight ? '#e11d48' : '#f43f5e'}
+        />
+        <text
+          x={x + width / 2}
+          y={y - 9}
+          fill="#ffffff"
+          textAnchor="middle"
+          fontSize={10}
+          fontWeight={800}
+          fontFamily="monospace"
+        >
+          85 ⚠️
+        </text>
+      </g>
     );
   };
 
@@ -323,117 +336,252 @@ export default function CaseInvestigation({
               </div>
             </div>
 
-            {/* VOLUME HARIAN VS BASELINE (RECHARTS BAR CHART - EXECUTIVE HUB STYLE) */}
-            <div className={`p-3 rounded-xl border space-y-2 transition-all ${
+            {/* VOLUME HARIAN VS BASELINE (RECHARTS DUAL-MODE: BATANG & TREN - EXECUTIVE STANDARD) */}
+            <div className={`p-3 rounded-xl border space-y-2.5 transition-all ${
               isLight
                 ? 'bg-white border-slate-200 shadow-xs'
                 : 'bg-[#000d28]/70 border-white/10 shadow-inner'
             }`}>
-              <div className="flex items-center justify-between">
+              {/* Header: Title, Subtitle, Toggle & Badge */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <span className={`text-[11px] font-bold block uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
                     Volume Harian vs Baseline
                   </span>
-                  <span className={`text-[9.5px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                    Baseline faskes: 10 berkas/hari
+                  <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono">
+                    <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold">
+                      <span className="w-3 border-t-2 border-dashed border-sky-500 inline-block" />
+                      Baseline: 10 berkas
+                    </span>
+                    <span className="text-slate-300 dark:text-white/20">·</span>
+                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      14 Okt: 85 berkas
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {/* Mode Toggle: Batang vs Tren */}
+                  <div className={`p-0.5 rounded-lg border flex items-center text-[10px] font-semibold ${
+                    isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/10 border-white/10'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setVolumeViewType('bar')}
+                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                        volumeViewType === 'bar'
+                          ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
+                          : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      Batang
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVolumeViewType('area')}
+                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                        volumeViewType === 'area'
+                          ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
+                          : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      Tren Area
+                    </button>
+                  </div>
+
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                    isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span>8.5x Lonjakan</span>
                   </span>
                 </div>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                  isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  <span>Anomaly Spike (8.5x)</span>
-                </span>
               </div>
 
-              <div className="h-40 w-full pt-1">
+              {/* Chart SVG Canvas */}
+              <div className="h-44 w-full pt-1">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={volumeChartData}
-                    margin={{ top: 18, right: 10, left: -24, bottom: 2 }}
-                  >
-                    <defs>
-                      <linearGradient id="anomalySpikeGradientLight" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#e11d48" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#be123c" stopOpacity={0.9} />
-                      </linearGradient>
-                      <linearGradient id="anomalySpikeGradientDark" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#fb7185" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#e11d48" stopOpacity={0.9} />
-                      </linearGradient>
-                      <linearGradient id="normalVolumeGradientLight" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#cbd5e1" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.8} />
-                      </linearGradient>
-                      <linearGradient id="normalVolumeGradientDark" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.35)" stopOpacity={1} />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.15)" stopOpacity={0.7} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
-                      strokeDasharray="3 3"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="date"
-                      stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
-                      tick={renderCustomXTick}
-                      tickLine={false}
-                      axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.15)' }}
-                    />
-                    <YAxis
-                      stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
-                      domain={[0, 95]}
-                      ticks={[0, 25, 50, 75, 100]}
-                      tick={{
-                        fontSize: 9,
-                        fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
-                        fontFamily: 'monospace',
-                      }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      content={<VolumeChartTooltip isLight={isLight} />}
-                      cursor={{ fill: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.05)' }}
-                    />
-                    <ReferenceLine
-                      y={10}
-                      stroke={isLight ? '#0284c7' : '#38bdf8'}
-                      strokeDasharray="3 3"
-                      strokeWidth={1.5}
-                      label={{
-                        value: 'Baseline: 10',
-                        position: 'insideTopLeft',
-                        fill: isLight ? '#0284c7' : '#38bdf8',
-                        fontSize: 9,
-                        fontWeight: 700,
-                      }}
-                    />
-                    <Bar
-                      dataKey="volume"
-                      radius={[6, 6, 0, 0]}
-                      barSize={28}
-                      isAnimationActive={false}
+                  {volumeViewType === 'bar' ? (
+                    <BarChart
+                      data={volumeChartData}
+                      margin={{ top: 22, right: 10, left: -24, bottom: 2 }}
                     >
-                      {volumeChartData.map((entry, index) => (
-                        <Cell
-                          key={`vol-cell-${index}`}
-                          fill={
-                            entry.isSpike
-                              ? (isLight ? 'url(#anomalySpikeGradientLight)' : 'url(#anomalySpikeGradientDark)')
-                              : (isLight ? 'url(#normalVolumeGradientLight)' : 'url(#normalVolumeGradientDark)')
-                          }
-                        />
-                      ))}
-                      <LabelList
-                        dataKey="volume"
-                        content={renderCustomBarLabel}
+                      <defs>
+                        <linearGradient id="anomalySpikeGradientLight" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#e11d48" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#be123c" stopOpacity={0.9} />
+                        </linearGradient>
+                        <linearGradient id="anomalySpikeGradientDark" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#fb7185" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#e11d48" stopOpacity={0.9} />
+                        </linearGradient>
+                        <linearGradient id="normalVolumeGradientLight" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#cbd5e1" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.8} />
+                        </linearGradient>
+                        <linearGradient id="normalVolumeGradientDark" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="rgba(255,255,255,0.35)" stopOpacity={1} />
+                          <stop offset="100%" stopColor="rgba(255,255,255,0.15)" stopOpacity={0.7} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
+                        strokeDasharray="3 3"
+                        vertical={false}
                       />
-                    </Bar>
-                  </BarChart>
+                      <XAxis
+                        dataKey="date"
+                        stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                        tick={renderCustomXTick}
+                        tickLine={false}
+                        axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.15)' }}
+                      />
+                      <YAxis
+                        stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                        domain={[0, 95]}
+                        ticks={[0, 25, 50, 75, 100]}
+                        tick={{
+                          fontSize: 9,
+                          fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
+                          fontFamily: 'monospace',
+                        }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        content={<VolumeChartTooltip isLight={isLight} />}
+                        cursor={{ fill: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.05)' }}
+                      />
+                      <ReferenceLine
+                        y={10}
+                        stroke={isLight ? '#0284c7' : '#38bdf8'}
+                        strokeDasharray="4 4"
+                        strokeWidth={1.5}
+                      />
+                      <Bar
+                        dataKey="volume"
+                        radius={[6, 6, 0, 0]}
+                        barSize={30}
+                        isAnimationActive={false}
+                      >
+                        {volumeChartData.map((entry, index) => (
+                          <Cell
+                            key={`vol-cell-${index}`}
+                            fill={
+                              entry.isSpike
+                                ? (isLight ? 'url(#anomalySpikeGradientLight)' : 'url(#anomalySpikeGradientDark)')
+                                : (isLight ? 'url(#normalVolumeGradientLight)' : 'url(#normalVolumeGradientDark)')
+                            }
+                          />
+                        ))}
+                        <LabelList
+                          dataKey="volume"
+                          content={renderCustomBarLabel}
+                        />
+                      </Bar>
+                    </BarChart>
+                  ) : (
+                    <AreaChart
+                      data={volumeChartData}
+                      margin={{ top: 22, right: 10, left: -24, bottom: 2 }}
+                    >
+                      <defs>
+                        <linearGradient id="volumeAreaGradientLight" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#e11d48" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#e11d48" stopOpacity={0.0} />
+                        </linearGradient>
+                        <linearGradient id="volumeAreaGradientDark" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#fb7185" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#fb7185" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
+                        strokeDasharray="3 3"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="date"
+                        stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                        tick={renderCustomXTick}
+                        tickLine={false}
+                        axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.15)' }}
+                      />
+                      <YAxis
+                        stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                        domain={[0, 95]}
+                        ticks={[0, 25, 50, 75, 100]}
+                        tick={{
+                          fontSize: 9,
+                          fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
+                          fontFamily: 'monospace',
+                        }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        content={<VolumeChartTooltip isLight={isLight} />}
+                        cursor={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.2)', strokeDasharray: '3 3' }}
+                      />
+                      <ReferenceLine
+                        y={10}
+                        stroke={isLight ? '#0284c7' : '#38bdf8'}
+                        strokeDasharray="4 4"
+                        strokeWidth={1.5}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="volume"
+                        stroke={isLight ? '#e11d48' : '#fb7185'}
+                        strokeWidth={2.5}
+                        fill={isLight ? 'url(#volumeAreaGradientLight)' : 'url(#volumeAreaGradientDark)'}
+                        dot={(props) => {
+                          const { cx, cy, index } = props;
+                          const item = volumeChartData[index];
+                          if (item?.isSpike) {
+                            return (
+                              <g key={`spike-dot-${index}`}>
+                                <circle cx={cx} cy={cy} r={6} fill="#e11d48" stroke="#ffffff" strokeWidth={2} />
+                                <rect x={cx - 18} y={cy - 20} width={36} height={15} rx={4} fill={isLight ? '#e11d48' : '#f43f5e'} />
+                                <text x={cx} y={cy - 9} fill="#ffffff" textAnchor="middle" fontSize={9} fontWeight={800} fontFamily="monospace">85 ⚠️</text>
+                              </g>
+                            );
+                          }
+                          return (
+                            <circle key={`dot-${index}`} cx={cx} cy={cy} r={3.5} fill={isLight ? '#0284c7' : '#38bdf8'} stroke="#ffffff" strokeWidth={1.5} />
+                          );
+                        }}
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  )}
                 </ResponsiveContainer>
+              </div>
+
+              {/* Data Summary Grid Pill Row: Pristine, Non-Overlapping Digits */}
+              <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-slate-100 dark:border-white/10 text-center font-mono">
+                {volumeChartData.map((d) => (
+                  <div
+                    key={d.date}
+                    className={`py-1 px-1 rounded-lg border transition ${
+                      d.isSpike
+                        ? isLight
+                          ? 'bg-rose-50 border-rose-300 text-rose-900 shadow-xs'
+                          : 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+                        : isLight
+                        ? 'bg-slate-50 border-slate-200 text-slate-700'
+                        : 'bg-white/5 border-white/10 text-white/70'
+                    }`}
+                  >
+                    <div className={`text-[11.5px] font-bold ${d.isSpike ? (isLight ? 'text-rose-700 font-extrabold' : 'text-rose-400 font-extrabold') : (isLight ? 'text-slate-900' : 'text-white')}`}>
+                      {d.volume}
+                    </div>
+                    <div className={`text-[9px] ${d.isSpike ? (isLight ? 'text-rose-600 font-bold' : 'text-rose-300 font-bold') : (isLight ? 'text-slate-500' : 'text-white/40')}`}>
+                      {d.date}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
