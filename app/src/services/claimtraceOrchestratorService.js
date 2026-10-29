@@ -279,7 +279,7 @@ export function reviewAutopilotDecision(decisionId, newStatus, reviewerNote) {
 export async function callClaimTraceGenerateContent({
   prompt,
   systemInstruction,
-  preferredModel = 'ClaimTrace AI Core (Enterprise)',
+  preferredModel = 'gemini-3.5-flash-lite',
   temperature = 0.25,
   graphName = 'claimtrace_ai',
   nodePath = 'START → claimtrace_decision → synthesize → END',
@@ -290,7 +290,7 @@ export async function callClaimTraceGenerateContent({
       ? 'http://localhost:8000'
       : '';
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     let res;
     try {
       res = await fetch(`${apiBase}/api/v1/claimtrace-ai/generate`, {
