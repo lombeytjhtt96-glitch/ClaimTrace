@@ -491,14 +491,17 @@ Kembalikan HANYA objek JSON valid (tanpa markdown fence luar) dengan struktur be
       const riskScoreMatch = rawText.match(/"riskScore"\s*:\s*([0-9.]+)/);
       const agentMatch = rawText.match(/"resolvedAgent"\s*:\s*"([^"]+)"/);
       const intentMatch = rawText.match(/"intent"\s*:\s*"([^"]+)"/);
+      const isGeneral = /apa itu|claimtrace|definisi|pengertian|konsep|arsitektur|tujuan|fungsi|cara kerja|sistem apa|siapa kamu|bantuan|halo/i.test(userMessage);
 
       parsed = {
         response: extractedContent,
-        riskLevel: riskLevelMatch ? riskLevelMatch[1] : 'critical',
-        riskScore: riskScoreMatch ? parseFloat(riskScoreMatch[1]) : 0.94,
-        resolvedAgent: agentMatch ? agentMatch[1] : 'L1-Klinis',
-        agentsInvoked: ['L1-Klinis', 'L2-Regulasi', 'L3-Presensi', 'CMA'],
-        intent: intentMatch ? intentMatch[1] : 'claim_audit',
+        riskLevel: riskLevelMatch ? riskLevelMatch[1] : (isGeneral ? 'none' : 'low'),
+        riskScore: riskScoreMatch ? parseFloat(riskScoreMatch[1]) : (isGeneral ? 0.05 : 0.20),
+        resolvedAgent: agentMatch ? agentMatch[1] : (isGeneral ? 'ClaimTrace' : 'L1-Klinis'),
+        agentsInvoked: isGeneral
+          ? ['L1-Klinis', 'L2-Regulasi', 'L3-Presensi', 'CMA', 'IA']
+          : ['L1-Klinis', 'L2-Regulasi', 'CMA'],
+        intent: intentMatch ? intentMatch[1] : (isGeneral ? 'general_inquiry' : 'claim_audit'),
       };
     }
 
