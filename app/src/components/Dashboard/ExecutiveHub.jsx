@@ -1803,7 +1803,7 @@ export default function ExecutiveHub({
                       ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                       : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40'
                   }`}>
-                    DuckDB In-Memory OLAP
+                    Database OLAP In-Memory
                   </span>
                 </div>
                 <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>

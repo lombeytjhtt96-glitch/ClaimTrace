@@ -404,15 +404,15 @@ export const INITIAL_SETTINGS_CATEGORIES = [
   },
   {
     id: 'database_warehouse_connectivity',
-    title: 'Konektivitas Database DuckDB Warehouse & Integrasi SATUSEHAT',
+    title: 'Konektivitas Database Warehouse & Integrasi SATUSEHAT',
     icon: 'Database',
     description:
       'Parameter koneksi gudang data analitik 6.2M transaksi klaim, sinkronisasi master dokter DPJP HFIS BPJS, dan API SATUSEHAT Kemenkes.',
     settings: [
       {
         key: 'duckdb_concurrency_mode',
-        label: 'Mode Akses DuckDB Warehouse',
-        help_text: 'Mode eksekusi kueri analitik pada berkas data warehouse DuckDB.',
+        label: 'Mode Akses Database Warehouse',
+        help_text: 'Mode eksekusi kueri analitik pada berkas database warehouse.',
         type: 'select',
         options: [
           { value: 'readonly_concurrent', label: 'Read-Only Concurrent Worker (Direkomendasikan)' },
@@ -451,15 +451,15 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         key: 'duckdb_total_records',
         label: 'Total Rekam Data Transaksi Aktif di Warehouse',
         help_text:
-          'Jumlah total rekam klaim empiris BPJS Kesehatan yang tersimpan dalam data lakehouse DuckDB.',
+          'Jumlah total rekam klaim empiris BPJS Kesehatan yang tersimpan dalam data lakehouse database.',
         type: 'text',
-        value: '6.284.192 Rekam Klaim (DuckDB Parquet Columnar Lakehouse)',
+        value: '6.284.192 Rekam Klaim (Parquet Columnar Lakehouse)',
         editable: false,
       },
       {
         key: 'sql_firewall_strict',
-        label: 'Firewall Kueri SQL DuckDB (Anti-Stacked Queries & Anti-File-Scan)',
-        help_text: 'Memblokir injeksi SQL, perintah destruktif (DROP/ALTER/ATTACH), dan upaya pembacaan berkas host melalui DuckDB.',
+        label: 'Firewall Kueri SQL Database (Anti-Stacked Queries & Anti-File-Scan)',
+        help_text: 'Memblokir injeksi SQL, perintah destruktif (DROP/ALTER/ATTACH), dan upaya pembacaan berkas host melalui database.',
         type: 'toggle',
         value: true,
         editable: true,

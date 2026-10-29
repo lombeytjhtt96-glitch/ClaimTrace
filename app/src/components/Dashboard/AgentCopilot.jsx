@@ -82,8 +82,8 @@ const DEFAULT_AGENT_DATA = {
     {
       step_number: 1,
       thought:
-        'Memulai penapisan pra-bayar berkas klaim pada basis data historis DuckDB OLAP untuk mendeteksi anomali volume pasca-kegiatan massal.',
-      tool_call: { tool_name: 'query_duckdb_claims' },
+        'Memulai penapisan pra-bayar berkas klaim pada database historis untuk mendeteksi anomali volume pasca-kegiatan massal.',
+      tool_call: { tool_name: 'query_claims_database' },
       observation: {
         total_claims_queried: 85,
         cluster_surge_ratio: 8.5,
@@ -655,7 +655,7 @@ export default function AgentCopilot({
                     1.699.219
                   </span>
                   <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                    Klaim DuckDB
+                    Klaim Terindeks Database
                   </span>
                 </div>
               </div>

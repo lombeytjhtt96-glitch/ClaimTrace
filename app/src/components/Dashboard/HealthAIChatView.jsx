@@ -301,9 +301,15 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
     setCurrentThinking('Mengorkestrasikan simpul ReAct: Analisis Klaim, Validasi Regulasi & Presensi...');
     setActiveAgents(['L1-Klinis', 'L2-Regulasi', 'L3-Presensi', 'CMA', 'IA']);
 
+    const isCasual = /^(hai|halo|pagi|siang|sore|malam|hi|hello|apa kabar|namamu siapa|siapa kamu|kamu siapa|kamu bisa apa|bisa ngapain)\b/i.test(query.trim());
+
     logActivity('agent_start', 'ClaimTrace', `Menerima instruksi verifikator: "${query.substring(0, 45)}..."`);
-    logActivity('tool_start', 'L1-Klinis', 'Menjalankan dekomposisi tarif INA-CBG & kaidah koding ICD-10.');
-    logActivity('tool_start', 'L2-Regulasi', 'Menjalankan inspeksi validitas SIP SATUSEHAT & kalkulasi geovelocity.');
+    if (isCasual) {
+      logActivity('tool_start', 'ClaimTrace', 'Menyiapkan respons dialog interaktif verifikator.');
+    } else {
+      logActivity('tool_start', 'L1-Klinis', 'Menjalankan penelusuran parameter klinis pada database klaim.');
+      logActivity('tool_start', 'L2-Regulasi', 'Menjalankan inspeksi validitas izin & regulasi faskes.');
+    }
 
     const startTime = Date.now();
 
@@ -315,12 +321,16 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
       const result = await orchestrateJknChat(query, historyForApi);
       const executionDuration = Date.now() - startTime;
 
-      logActivity('tool_end', 'L1-Klinis', 'Selesai mengevaluasi parameter klinis.', Math.round(executionDuration * 0.4));
-      logActivity('tool_end', 'L2-Regulasi', 'Selesai memverifikasi kepatuhan SDMK Kemenkes.', Math.round(executionDuration * 0.35));
+      if (!isCasual) {
+        logActivity('tool_end', 'L1-Klinis', 'Selesai mengevaluasi parameter klinis.', Math.round(executionDuration * 0.4));
+        logActivity('tool_end', 'L2-Regulasi', 'Selesai memverifikasi kepatuhan regulasi.', Math.round(executionDuration * 0.35));
+      } else {
+        logActivity('tool_end', 'ClaimTrace', 'Selesai merumuskan tanggapan dialog.', Math.round(executionDuration * 0.5));
+      }
       if (result.riskLevel === 'critical' || result.riskLevel === 'high') {
         logActivity('risk_assessment', 'CMA', `Indikasi risiko terdeteksi: ${result.riskLevel.toUpperCase()} (Skor: ${result.riskScore || 85})`);
       }
-      logActivity('agent_complete', 'ClaimTrace', 'Sintesis respons multi-agen selesai.', executionDuration);
+      logActivity('agent_complete', 'ClaimTrace', 'Sintesis respons cerdas selesai.', executionDuration);
 
       setMessages((prev) => [
         ...prev,

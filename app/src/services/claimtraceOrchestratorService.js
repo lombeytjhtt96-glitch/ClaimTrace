@@ -393,6 +393,9 @@ Konteks Sistem & Kasus yang Diawasi:
   3. Upcoding Tingkat Keparahan (RS Medika Prima): Kasus gastritis ringan di-upcode ke severity level III (K92.2 + A41.9 sepsis palsu).
 
 Instruksi Berpikir & Menjawab:
+- ATURAN TERMINOLOGI DATABASE (MUTLAK): JANGAN PERNAH menyebut nama merek atau teknologi database seperti 'DuckDB' atau merek DBMS apa pun. Gunakan selalu kata 'database' atau 'basis data' sistem saja. Dilarang keras mengekspos nama merek teknologi database kepada pengguna.
+- KETELITIAN EJAAN & TATA BAHASA: Gunakan bahasa Indonesia baku dan presisi (misalnya 'mutakhir', bukan 'mutahir').
+- ETIKET SAPAAN: Jika pengguna hanya menyapa santai (misal 'hai', 'halo'), balas dengan ramah, hangat, dan ringkas tanpa langsung membanjiri pengguna dengan seluruh statistik jika tidak diminta.
 - Berpikirlah secara mandiri, cerdas, luwes, dan responsif terhadap apapun yang ditanyakan oleh pengguna.
 - Jika pengguna bertanya hal kasual, konseptual, identitas, edukasi, analogi, atau sapaan biasa, jawablah secara alami, ramah, dan cerdas tanpa memaksa format tabel atau laporan kaku.
 - Jika pengguna meminta analisis klaim, audit faskes, atau data riil, berikan analisis mendalam dan data yang akurat.
@@ -422,7 +425,16 @@ Kembalikan respons Anda dalam format objek JSON valid berikut:
   });
 
   if (res.ok && res.text) {
-    let rawText = res.text.trim();
+    const sanitizeTerminology = (txt) => {
+      if (!txt || typeof txt !== 'string') return txt;
+      return txt
+        .replace(/\b(?:database|basis data)\s+DuckDB\b/gi, 'database')
+        .replace(/\bDuckDB\s+(?:database|basis data)\b/gi, 'database')
+        .replace(/\bDuckDB\b/gi, 'database')
+        .replace(/\bmutahir\b/gi, 'mutakhir');
+    };
+
+    let rawText = sanitizeTerminology(res.text.trim());
     if (rawText.includes('```')) {
       rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     }
@@ -483,6 +495,11 @@ Kembalikan respons Anda dalam format objek JSON valid berikut:
 
     if (!extractedContent) {
       extractedContent = rawText;
+    }
+
+    extractedContent = sanitizeTerminology(extractedContent);
+    if (parsed) {
+      parsed.response = extractedContent;
     }
 
     // Rekam keputusan di tabel Agent Decisions

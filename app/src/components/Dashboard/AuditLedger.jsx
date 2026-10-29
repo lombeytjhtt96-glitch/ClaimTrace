@@ -112,7 +112,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
       details: {
         reason: 'Repeat Billing Terdeteksi (Tension Headache & Cephalgia dalam 1x24 jam)',
         parquetDataset: 'fkrtl_warehouse_2024.parquet',
-        duckDbQueryRow: 412
+        databaseQueryRow: 412
       }
     },
     {

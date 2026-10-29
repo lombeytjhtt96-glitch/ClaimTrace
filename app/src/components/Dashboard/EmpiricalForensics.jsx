@@ -406,7 +406,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                     ? 'bg-slate-100 text-slate-800 border-slate-200'
                     : 'bg-white/5 text-white/70 border-white/10'
                 }`}>
-                  DUCKDB OLAP v1.5.6
+                  DATABASE OLAP v1.5.6
                 </span>
               </div>
               <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -507,7 +507,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             }`}
           >
             <Terminal className="w-3.5 h-3.5" />
-            <span>Konsol SQL DuckDB Terpublikasi</span>
+            <span>Konsol SQL Database Terpublikasi</span>
           </button>
         </div>
       </div>
@@ -1053,10 +1053,10 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             <div className="space-y-0.5">
               <h3 className={`text-sm font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 <Terminal className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-                <span>Konsol SQL DuckDB Read-Only</span>
+                <span>Konsol SQL Database Read-Only</span>
               </h3>
               <p className={`text-xs ${isLight ? 'text-slate-700 font-medium' : 'text-white/50'}`}>
-                Jalankan kueri SQL analitik terverifikasi terhadap view kolumnar DuckDB berkecepatan tinggi.
+                Jalankan kueri SQL analitik terverifikasi terhadap view kolumnar database berkecepatan tinggi.
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -1097,7 +1097,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
             />
             <div className="flex items-center justify-between">
               <span className={`text-[11px] font-mono font-medium ${isLight ? 'text-slate-700' : 'text-white/40'}`}>
-                Mesin: DuckDB In-Memory OLAP · Format: JSON Table · Read-Only Sandbox
+                Mesin: In-Memory Database OLAP · Format: JSON Table · Read-Only Sandbox
               </span>
               <button type="button"
                 onClick={() => runQuery()}
