@@ -91,7 +91,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
     setIsSubmitting(true);
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000');
       const response = await fetch(`${apiBase}/api/v1/auth/login`, {
         method: 'POST',
         headers: {

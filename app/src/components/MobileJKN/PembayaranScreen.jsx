@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CreditCard, CheckCircle2, Copy, History, ArrowDownLeft, Shield } from 'lucide-react';
+import { ChevronLeft, CreditCard, CheckCircle2, Check, Copy, History, ArrowDownLeft, Shield } from 'lucide-react';
 
 export default function PembayaranScreen({ onNavigate }) {
   const [copied, setCopied] = useState(false);
@@ -82,8 +82,9 @@ export default function PembayaranScreen({ onNavigate }) {
             ))}
           </div>
           {copied && (
-            <p className="text-[10px] text-emerald-600 font-bold text-center">
-              ✓ Nomor Virtual Account berhasil disalin ke clipboard!
+            <p className="text-[10px] text-emerald-600 font-bold text-center flex items-center justify-center gap-1">
+              <Check className="w-3 h-3 text-emerald-600" />
+              <span>Nomor Virtual Account berhasil disalin ke clipboard!</span>
             </p>
           )}
         </div>

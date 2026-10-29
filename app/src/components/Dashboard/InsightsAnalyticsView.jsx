@@ -367,7 +367,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
             <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val} berkas`, 'Volume']} />
+        <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${val} berkas`, 'Volume']} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
       </PieChart>
     );
@@ -755,8 +755,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 {selectedQueryInfo && (
                   <p className={`mt-2 text-xs ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{selectedQueryInfo.description}</p>
                 )}
-                <p className={`mt-2 text-xs font-semibold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                  ✓ Seluruh kueri menerapkan k-anonymity (k≥5) dan enkripsi Zero-PHI (UU PDP)
+                <p className={`mt-2 text-xs font-semibold flex items-center gap-1.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span>Seluruh kueri menerapkan k-anonymity (k≥5) dan enkripsi Zero-PHI (UU PDP)</span>
                 </p>
               </div>
 
