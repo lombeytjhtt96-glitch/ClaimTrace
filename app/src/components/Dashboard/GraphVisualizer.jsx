@@ -29,7 +29,10 @@ const CustomHospitalCard = ({ data, selected }) => (
       ? 'bg-white border-indigo-300 shadow-xl text-slate-900' 
       : 'bg-[#00153A] border-indigo-500/60 shadow-2xl shadow-indigo-950/70 text-white'
   } ${selected ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+    {/* Left Target Handles (Upper for DPJP, Lower for Baksos) */}
     <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="target" position={Position.Left} id="target-left-top" style={{ top: '32%' }} className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
+    <Handle type="target" position={Position.Left} id="target-left-bottom" style={{ top: '70%' }} className="!w-3 !h-3 !bg-sky-500 !border-2 !border-white" />
     <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
     <div className="flex items-center justify-between pb-2.5 border-b border-indigo-500/20">
       <div className="flex items-center space-x-2.5">
@@ -62,7 +65,10 @@ const CustomHospitalCard = ({ data, selected }) => (
       </span>
       <span className="text-[9.5px] text-slate-400 dark:text-white/40 font-mono">ID: 0132R001</span>
     </div>
+    {/* Right Source Handles (Upper for INA-CBG, Lower for Peserta) */}
     <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="source" position={Position.Right} id="source-right-top" style={{ top: '32%' }} className="!w-3 !h-3 !bg-amber-500 !border-2 !border-white" />
+    <Handle type="source" position={Position.Right} id="source-right-bottom" style={{ top: '70%' }} className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
     <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
   </div>
 );
@@ -194,7 +200,7 @@ function FlowCanvasWrapper({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fitView({ padding: 0.25, duration: 400 });
+      fitView({ padding: 0.16, duration: 400 });
     }, 150);
     return () => clearTimeout(timer);
   }, [fitView]);
@@ -206,10 +212,11 @@ function FlowCanvasWrapper({
       nodeTypes={nodeTypes}
       onNodeClick={onNodeClick}
       fitView
-      fitViewOptions={{ padding: 0.25 }}
+      fitViewOptions={{ padding: 0.16 }}
       colorMode={isLightMode ? 'light' : 'dark'}
       minZoom={0.4}
       maxZoom={1.8}
+      proOptions={{ hideAttribution: true }}
     >
       <Background 
         variant="dots" 
@@ -340,56 +347,61 @@ export default function GraphVisualizer({
     {
       id: 'mitra-husada',
       type: 'hospitalNode',
-      position: { x: 380, y: 150 },
+      position: { x: 480, y: 155 },
       data: {
         title: 'RS Khusus Mitra Husada',
         claimsCount: 85,
         totalTariff: 'Rp 15.300.000',
         isLight: isLightMode
       },
-      selected: selectedNode === 'mitra-husada'
+      selected: selectedNode === 'mitra-husada',
+      style: { opacity: 1 }
     },
     {
       id: 'dr-hendra',
       type: 'dpjpNode',
-      position: { x: 40, y: 40 },
+      position: { x: 40, y: 30 },
       data: {
         title: 'dr. Hendra, Sp.KFR',
         isLight: isLightMode
       },
-      selected: selectedNode === 'dr-hendra'
+      selected: selectedNode === 'dr-hendra',
+      style: { opacity: filterMode === 'denials' ? 0.3 : 1 }
     },
     {
       id: 'baksos-event',
       type: 'eventNode',
-      position: { x: 40, y: 270 },
+      position: { x: 40, y: 290 },
       data: {
         title: 'Baksos Donor Darah',
         isLight: isLightMode
       },
-      selected: selectedNode === 'baksos-event'
+      selected: selectedNode === 'baksos-event',
+      style: { opacity: (filterMode === 'dpjp' || filterMode === 'denials') ? 0.3 : 1 }
     },
     {
       id: 'inacbg-code',
       type: 'procedureNode',
-      position: { x: 730, y: 40 },
+      position: { x: 940, y: 30 },
       data: {
         title: 'INA-CBG: Z-3-12-0',
         isLight: isLightMode
       },
-      selected: selectedNode === 'inacbg-code'
+      selected: selectedNode === 'inacbg-code',
+      style: { opacity: (filterMode === 'dpjp' || filterMode === 'denials') ? 0.3 : 1 }
     },
     {
       id: 'patient-denial',
       type: 'patientNode',
-      position: { x: 730, y: 270 },
+      position: { x: 940, y: 290 },
       data: {
         title: 'Ahmad Syafiq (Peserta Fiktif)',
         isLight: isLightMode
       },
-      selected: selectedNode === 'patient-denial'
+      selected: selectedNode === 'patient-denial',
+      style: { opacity: filterMode === 'dpjp' ? 0.3 : 1 }
     }
-  ], [isLightMode, selectedNode]);
+  ], [isLightMode, selectedNode, filterMode]);
 
   // Flow Edges with animated flows & labels
   const flowEdges = useMemo(() => [
@@ -398,58 +410,88 @@ export default function GraphVisualizer({
       source: 'dr-hendra',
       target: 'mitra-husada',
       sourceHandle: 'source-right',
-      targetHandle: 'target-top',
+      targetHandle: 'target-left-top',
       animated: true,
       label: 'SIP Non-Aktif (SDMK)',
-      labelStyle: { fill: '#F43F5E', fontWeight: 700, fontSize: 11 },
-      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#180812', fillOpacity: 0.9, rx: 6, ry: 6 },
-      labelBgPadding: [6, 3],
-      style: { stroke: '#F43F5E', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#F43F5E', width: 18, height: 18 }
+      labelStyle: { fill: '#F43F5E', fontWeight: 800, fontSize: 10.5, fontFamily: 'monospace' },
+      labelBgStyle: { 
+        fill: isLightMode ? '#ffffff' : '#180812', 
+        fillOpacity: 0.98, 
+        rx: 8, 
+        ry: 8,
+        stroke: isLightMode ? '#fecdd3' : '#F43F5E',
+        strokeWidth: 1.5,
+      },
+      labelBgPadding: [8, 4],
+      style: { stroke: '#F43F5E', strokeWidth: 2.5, opacity: filterMode === 'denials' ? 0.2 : 1 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#F43F5E', width: 16, height: 16 }
     },
     {
       id: 'e-event-hospital',
       source: 'baksos-event',
       target: 'mitra-husada',
       sourceHandle: 'source-right',
-      targetHandle: 'target-left',
+      targetHandle: 'target-left-bottom',
       animated: true,
       label: 'Klaster Baksos 48 Jam',
-      labelStyle: { fill: '#0284C7', fontWeight: 700, fontSize: 11 },
-      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#06162a', fillOpacity: 0.9, rx: 6, ry: 6 },
-      labelBgPadding: [6, 3],
-      style: { stroke: '#0284C7', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#0284C7', width: 18, height: 18 }
+      labelStyle: { fill: '#0284C7', fontWeight: 800, fontSize: 10.5, fontFamily: 'monospace' },
+      labelBgStyle: { 
+        fill: isLightMode ? '#ffffff' : '#06162a', 
+        fillOpacity: 0.98, 
+        rx: 8, 
+        ry: 8,
+        stroke: isLightMode ? '#bae6fd' : '#0284C7',
+        strokeWidth: 1.5,
+      },
+      labelBgPadding: [8, 4],
+      style: { stroke: '#0284C7', strokeWidth: 2.5, opacity: (filterMode === 'dpjp' || filterMode === 'denials') ? 0.2 : 1 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#0284C7', width: 16, height: 16 }
     },
     {
       id: 'e-hospital-procedure',
       source: 'mitra-husada',
       target: 'inacbg-code',
-      sourceHandle: 'source-right',
+      sourceHandle: 'source-right-top',
       targetHandle: 'target-left',
       animated: true,
       label: 'Tagihan Rp 15,3 Jt',
-      labelStyle: { fill: '#D97706', fontWeight: 700, fontSize: 11 },
-      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#1e1507', fillOpacity: 0.9, rx: 6, ry: 6 },
-      labelBgPadding: [6, 3],
-      style: { stroke: '#D97706', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706', width: 18, height: 18 }
+      labelStyle: { fill: '#D97706', fontWeight: 800, fontSize: 10.5, fontFamily: 'monospace' },
+      labelBgStyle: { 
+        fill: isLightMode ? '#ffffff' : '#1e1507', 
+        fillOpacity: 0.98, 
+        rx: 8, 
+        ry: 8,
+        stroke: isLightMode ? '#fde68a' : '#D97706',
+        strokeWidth: 1.5,
+      },
+      labelBgPadding: [8, 4],
+      style: { stroke: '#D97706', strokeWidth: 2.5, opacity: (filterMode === 'dpjp' || filterMode === 'denials') ? 0.2 : 1 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: '#D97706', width: 16, height: 16 }
     },
     {
       id: 'e-hospital-patient',
       source: 'mitra-husada',
       target: 'patient-denial',
-      sourceHandle: 'source-bottom',
+      sourceHandle: 'source-right-bottom',
       targetHandle: 'target-left',
       animated: true,
       label: isPatientDenied ? 'SANGKALAN FAKTUAL' : 'Hadir Terverifikasi',
-      labelStyle: { fill: isPatientDenied ? '#E11D48' : '#10B981', fontWeight: 700, fontSize: 11 },
-      labelBgStyle: { fill: isLightMode ? '#ffffff' : '#180812', fillOpacity: 0.9, rx: 6, ry: 6 },
-      labelBgPadding: [6, 3],
-      style: { stroke: isPatientDenied ? '#E11D48' : '#10B981', strokeWidth: 2.5 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: isPatientDenied ? '#E11D48' : '#10B981', width: 18, height: 18 }
+      labelStyle: { fill: isPatientDenied ? '#E11D48' : '#10B981', fontWeight: 800, fontSize: 10.5, fontFamily: 'monospace' },
+      labelBgStyle: { 
+        fill: isLightMode ? '#ffffff' : (isPatientDenied ? '#180812' : '#061a12'), 
+        fillOpacity: 0.98, 
+        rx: 8, 
+        ry: 8,
+        stroke: isLightMode 
+          ? (isPatientDenied ? '#fecdd3' : '#a7f3d0') 
+          : (isPatientDenied ? '#E11D48' : '#10B981'),
+        strokeWidth: 1.5,
+      },
+      labelBgPadding: [8, 4],
+      style: { stroke: isPatientDenied ? '#E11D48' : '#10B981', strokeWidth: 2.5, opacity: filterMode === 'dpjp' ? 0.2 : 1 },
+      markerEnd: { type: MarkerType.ArrowClosed, color: isPatientDenied ? '#E11D48' : '#10B981', width: 16, height: 16 }
     }
-  ], [isPatientDenied, isLightMode]);
+  ], [isPatientDenied, isLightMode, filterMode]);
 
   const handleExportGraph = () => {
     const graphData = {
@@ -528,9 +570,9 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
   return (
     <div className="space-y-4 font-inter text-slate-800 dark:text-white pb-20">
       {/* TOP HEADER STRIP - CONTROLS */}
-      <div className="w-full bg-white dark:bg-[#00153A]/85 backdrop-blur-xl px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 shadow-sm dark:shadow-2xl dark:shadow-[#00081c]/50">
+      <div className="w-full bg-white dark:bg-[#00153A]/85 backdrop-blur-xl px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col 2xl:flex-row items-start 2xl:items-center justify-between gap-3 shadow-sm dark:shadow-2xl dark:shadow-[#00081c]/50">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-bold shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-bold shadow-xs shrink-0">
             <GitBranch className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
@@ -553,7 +595,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
         </div>
 
         {/* QUICK FILTERS & EXPORT BUTTONS */}
-        <div className="flex items-center flex-wrap gap-2 text-xs">
+        <div className="flex items-center flex-wrap gap-2 text-xs w-full 2xl:w-auto justify-between 2xl:justify-end">
           
           {/* Quick Node Filter Pills */}
           <div className="flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10 font-semibold">
@@ -590,28 +632,30 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              <span>Sangkalan Mobile JKN (8)</span>
+              <span>Sangkalan (8)</span>
             </button>
           </div>
 
           {/* Export Buttons */}
-          <button
-            type="button"
-            onClick={handleExportGraph}
-            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-white/10 dark:hover:bg-white/15 dark:text-white dark:border-white/15 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition text-xs font-semibold shadow-xs cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-emerald-700 dark:text-cyan-400" />
-            <span>Ekspor JSON</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleExportGraph}
+              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-white/10 dark:hover:bg-white/15 dark:text-white dark:border-white/15 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition text-xs font-semibold shadow-xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-700 dark:text-cyan-400" />
+              <span>JSON</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleExportCypher}
-            className="bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition text-xs font-semibold shadow-xs cursor-pointer"
-          >
-            <Database className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
-            <span>Ekspor Cypher</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleExportCypher}
+              className="bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition text-xs font-semibold shadow-xs cursor-pointer"
+            >
+              <Database className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
+              <span>Cypher</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -619,7 +663,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
         {/* XYFLOW VIEWPORT CONTAINER (8 COLS) */}
-        <div className="lg:col-span-8 bg-slate-50 dark:bg-gradient-to-b dark:from-[#000c24] dark:via-[#00112e] dark:to-[#001D58] border border-slate-200 dark:border-white/10 rounded-2xl relative overflow-hidden shadow-sm dark:shadow-2xl min-h-[460px] h-[480px] xl:h-[510px]">
+        <div className="lg:col-span-8 bg-slate-50 dark:bg-gradient-to-b dark:from-[#000c24] dark:via-[#00112e] dark:to-[#001D58] border border-slate-200 dark:border-white/10 rounded-2xl relative overflow-hidden shadow-sm dark:shadow-2xl min-h-[500px] h-[520px] xl:h-[550px]">
           
           {/* Spatial Telemetry HUD (Top-Left) */}
           <div className="absolute top-3 left-3 bg-white/95 dark:bg-[#000c24]/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 text-[11px] font-mono space-y-1 z-20 shadow-md dark:shadow-xl pointer-events-none">
