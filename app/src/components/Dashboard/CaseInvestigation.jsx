@@ -451,7 +451,7 @@ export default function CaseInvestigation({
                       />
                       <Tooltip
                         content={<VolumeChartTooltip isLight={isLight} />}
-                        cursor={{ fill: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.05)' }}
+                        cursor={false}
                       />
                       <ReferenceLine
                         y={10}
@@ -522,7 +522,7 @@ export default function CaseInvestigation({
                       />
                       <Tooltip
                         content={<VolumeChartTooltip isLight={isLight} />}
-                        cursor={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.2)', strokeDasharray: '3 3' }}
+                        cursor={false}
                       />
                       <ReferenceLine
                         y={10}
