@@ -15,7 +15,7 @@ export default function MoreMenuScreen({ onNavigate, onOpenClaimTrace }) {
           id: 'antrean',
           title: 'Pendaftaran Pelayanan (Antrean)',
           subtitle: 'Ambil nomor antrean online FKTP & FKRTL',
-          icon: '/assets/images/antrian_icon.png',
+          icon: '/assets/images/antrean_icon.png',
           route: 'antrean',
         },
         {

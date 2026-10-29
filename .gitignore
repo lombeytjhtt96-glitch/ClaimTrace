@@ -1,27 +1,36 @@
+# Dependencies & Build artifacts
 node_modules/
 dist/
 build/
+app/node_modules/
+app/dist/
+
+# Python artifacts
 *.pyc
 __pycache__/
+backend/__pycache__/
 .pytest_cache/
+
+# Environment and sensitive data
 .env
 .env.local
+backend/.env
+backend/.env.local
+backend/data/
+*.duckdb*
+chroma_db/
+
+# System and logs
 .DS_Store
 *.log
 libapp.so
-*.pptx
-*.png
-app/scratch_*.js
-app/test_*.js
+/*.pptx
+/*.png
+
+# Local tooling & design artifacts
 extracted_assets/
 stitch_assets/
 screenshots/
-backend/data/
-backend/.env
-backend/.env.local
-backend/__pycache__/
-*.duckdb*
-chroma_db/
 .agent/
 .agents/
 .claude/
@@ -29,6 +38,8 @@ chroma_db/
 .cursor/
 design-skills/
 docs/
+
+# Internal documentation and generator scripts
 AGENTS.md
 DESIGN.md
 */AGENTS.md

@@ -38,7 +38,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
       sip: 'SIP: 446/782/SpA/2021',
       clinic: 'RSUPN Dr. Cipto Mangunkusumo',
       status: 'Sibuk',
-      avatar: '/assets/images/docter_icon.png',
+      avatar: '/assets/images/dokter_icon.png',
     },
   ];
 
