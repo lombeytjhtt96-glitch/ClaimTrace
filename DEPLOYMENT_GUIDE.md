@@ -36,8 +36,9 @@ claimtrace-jkn/
 3. Isi form pembuatan Space:
    - **Space name**: `claimtrace-backend`
    - **License**: `mit` (atau `apache-2.0`)
-   - **Select the Space SDK**: Pilih **Docker** -> pilih **Blank**.
-   - **Space hardware**: Pilih **Free** (`CPU basic • 2 vCPU • 16 GB RAM`).
+   - **Select the Space SDK**: Pilih **Gradio**
+   - **Choose a Gradio template**: Pilih **Blank**
+   - **Space hardware**: Pilih **ZeroGPU Free** atau **CPU basic Free**
    - **Visibility**: Pilih **Public**.
 4. Klik tombol **Create Space**.
 5. Masuk ke tab **Settings** di halaman Space Anda:

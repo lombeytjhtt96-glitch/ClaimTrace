@@ -1,3 +1,14 @@
+---
+title: ClaimTrace JKN Backend API
+emoji: 🏥
+colorFrom: green
+colorTo: emerald
+sdk: gradio
+sdk_version: 6.31.0
+app_file: space.py
+pinned: false
+---
+
 # ClaimTrace — Sistem Penapisan & Efisiensi Risiko Klaim Faskes JKN
 ### *Decision Support System (DSS) Pra-Bayar Berbasis Fusi Multi-Sinyal Determinis*
 **BPJS Kesehatan Healthkathon 2026** • Kategori: *Efisiensi Risiko pada Fasilitas Kesehatan*  
