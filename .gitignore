@@ -16,6 +16,12 @@ app/test_*.js
 extracted_assets/
 stitch_assets/
 screenshots/
+backend/data/
+backend/.env
+backend/.env.local
+backend/__pycache__/
+*.duckdb*
+chroma_db/
 .agent/
 .agents/
 .claude/
