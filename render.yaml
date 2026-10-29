@@ -1,0 +1,28 @@
+# ==============================================================================
+# RENDER DEPLOYMENT BLUEPRINT (claimtrace-backend)
+# Free Tier Web Service Configuration
+# ==============================================================================
+
+services:
+  - type: web
+    name: claimtrace-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    region: singapore
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "10000"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "https://claimtrace-jkn.vercel.app,https://claimtrace.vercel.app"
