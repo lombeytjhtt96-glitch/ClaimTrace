@@ -26,25 +26,25 @@ import {
 const CustomHospitalCard = ({ data, selected }) => (
   <div className={`w-[270px] rounded-2xl p-4 border transition-all duration-200 select-none ${
     data.isLight 
-      ? 'bg-white border-indigo-300 shadow-xl text-slate-900' 
-      : 'bg-[#00153A] border-indigo-500/60 shadow-2xl shadow-indigo-950/70 text-white'
-  } ${selected ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
+      ? 'bg-white border-emerald-400 shadow-xl text-slate-900 ring-1 ring-emerald-500/20' 
+      : 'bg-[#00153A] border-emerald-500/60 shadow-2xl shadow-emerald-950/70 text-white'
+  } ${selected ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-900' : ''}`}>
     {/* Left Target Handles (Upper for DPJP, Lower for Baksos) */}
-    <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="target" position={Position.Left} id="target-left" className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white" />
     <Handle type="target" position={Position.Left} id="target-left-top" style={{ top: '32%' }} className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
     <Handle type="target" position={Position.Left} id="target-left-bottom" style={{ top: '70%' }} className="!w-3 !h-3 !bg-sky-500 !border-2 !border-white" />
-    <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
-    <div className="flex items-center justify-between pb-2.5 border-b border-indigo-500/20">
+    <Handle type="target" position={Position.Top} id="target-top" className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white" />
+    <div className="flex items-center justify-between pb-2.5 border-b border-emerald-500/20">
       <div className="flex items-center space-x-2.5">
-        <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold shadow-inner">
-          <Hospital className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shadow-inner">
+          <Hospital className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div>
-          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-300">EPISENTRUM KLAIM</span>
+          <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">EPISENTRUM KLAIM</span>
           <h4 className="text-xs font-bold leading-tight truncate">{data.title}</h4>
         </div>
       </div>
-      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">FKRTL</span>
+      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30">FKRTL</span>
     </div>
     
     <div className="mt-2.5 space-y-1.5 text-[11px]">
@@ -58,7 +58,7 @@ const CustomHospitalCard = ({ data, selected }) => (
       </div>
     </div>
 
-    <div className="mt-3 pt-2 border-t border-indigo-500/15 flex items-center justify-between">
+    <div className="mt-3 pt-2 border-t border-emerald-500/20 flex items-center justify-between">
       <span className="text-[10px] font-mono text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
         Audit Pra-Bayar Aktif
@@ -66,10 +66,10 @@ const CustomHospitalCard = ({ data, selected }) => (
       <span className="text-[9.5px] text-slate-400 dark:text-white/40 font-mono">ID: 0132R001</span>
     </div>
     {/* Right Source Handles (Upper for INA-CBG, Lower for Peserta) */}
-    <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="source" position={Position.Right} id="source-right" className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white" />
     <Handle type="source" position={Position.Right} id="source-right-top" style={{ top: '32%' }} className="!w-3 !h-3 !bg-amber-500 !border-2 !border-white" />
     <Handle type="source" position={Position.Right} id="source-right-bottom" style={{ top: '70%' }} className="!w-3 !h-3 !bg-rose-500 !border-2 !border-white" />
-    <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-indigo-500 !border-2 !border-white" />
+    <Handle type="source" position={Position.Bottom} id="source-bottom" className="!w-3 !h-3 !bg-emerald-500 !border-2 !border-white" />
   </div>
 );
 
@@ -277,7 +277,7 @@ export default function GraphVisualizer({
       category: 'Fasilitas Kesehatan Penagih',
       risk: 'AUDIT PRA-BAYAR (Pusat Anomali)',
       details: 'Fasilitas kesehatan yang menagihkan 85 klaim paket fisioterapi INA-CBG Z-3-12-0 serentak pasca baksos dalam 48 jam.',
-      color: '#6366F1',
+      color: '#059669',
       tariff: 'Rp 15.300.000 (85 Klaim)',
       sdmkStatus: 'Pusat Faskes Teridentifikasi',
     },
@@ -572,16 +572,16 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
       {/* TOP HEADER STRIP - CONTROLS */}
       <div className="w-full bg-white dark:bg-[#00153A]/85 backdrop-blur-xl px-4 py-3 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col 2xl:flex-row items-start 2xl:items-center justify-between gap-3 shadow-sm dark:shadow-2xl dark:shadow-[#00081c]/50">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center font-bold shadow-xs shrink-0">
-            <GitBranch className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center font-bold shadow-xs shrink-0">
+            <GitBranch className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-bold text-slate-900 dark:text-white text-sm">
                 Topologi Graf Relasi Sindikat Klaim #CLM-2026-085
               </span>
-              <span className="bg-indigo-50 text-indigo-800 border border-indigo-300 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shadow-xs inline-flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shadow-xs inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 XYFLOW KARTU ENTITAS
               </span>
               <span className="text-[10px] bg-slate-100 text-slate-800 border border-slate-300 dark:bg-white/5 dark:text-[#FFCA40] dark:border-white/10 font-mono font-bold px-2 py-0.5 rounded">
@@ -604,7 +604,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
               onClick={() => { setFilterMode('all'); setSelectedNode('mitra-husada'); }}
               className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer ${
                 filterMode === 'all'
-                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
+                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
                   : 'text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -673,7 +673,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
             </div>
             <div className="text-slate-700 dark:text-white/60 space-y-0.5 text-[10px]">
               <div>KLASTER: <strong className="text-slate-900 dark:text-white font-bold">BAKSOS-085 (SERANG)</strong></div>
-              <div>SIMPUL ENTITAS: <strong className="text-indigo-600 dark:text-cyan-300 font-bold">5 UTAMA</strong> · POLA RELASI: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">TERAUTENTIKASI</strong></div>
+              <div>SIMPUL ENTITAS: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">5 UTAMA</strong> · POLA RELASI: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">TERAUTENTIKASI</strong></div>
             </div>
           </div>
 
@@ -710,7 +710,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
             <div className="bg-slate-50 dark:bg-white/5 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-[10.5px] font-mono space-y-1">
               <div className="flex justify-between text-slate-700 dark:text-white/70">
                 <span className="font-semibold">Topologi Graf:</span>
-                <span className="text-indigo-600 dark:text-cyan-300 font-bold">1:1:1:85 Star Network</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">1:1:1:85 Star Network</span>
               </div>
               <div className="flex justify-between text-slate-700 dark:text-white/70">
                 <span className="font-semibold">Klasifikasi Modus:</span>
@@ -718,7 +718,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
               </div>
               <div className="flex justify-between text-slate-700 dark:text-white/70">
                 <span className="font-semibold">Mesin Visualisasi:</span>
-                <span className="font-bold text-indigo-600 dark:text-indigo-400">XYFlow Entity Cards</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">XYFlow Entity Cards</span>
               </div>
             </div>
           </div>
@@ -738,7 +738,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-white/50">
                     Rincian Simpul Terpilih
                   </span>
-                  <span className="text-[10px] font-mono text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-300 dark:text-cyan-300 dark:bg-white/5 dark:border-white/10 font-bold">
+                  <span className="text-[10px] font-mono text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 dark:text-emerald-300 dark:bg-white/5 dark:border-white/10 font-bold">
                     {activeNodeData.id}
                   </span>
                 </div>
