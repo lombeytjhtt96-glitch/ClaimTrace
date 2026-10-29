@@ -534,8 +534,12 @@ class DuckDbAnalyticsEngine:
 
     def database_info(self) -> Dict[str, Any]:
         """Informasi ikhtisar status basis data DuckDB mencakup 100% data transaksi resmi BPJS"""
-        total_claims = self.con.execute("SELECT COUNT(*) FROM claims_warehouse;").fetchone()[0]
-        total_rp = self.con.execute("SELECT SUM(nilai_klaim_rp) FROM claims_warehouse;").fetchone()[0]
+        row_claims = self.con.execute("SELECT COUNT(*) FROM claims_warehouse;").fetchone()
+        total_claims = int(row_claims[0]) if (row_claims and row_claims[0] is not None) else 0
+
+        row_rp = self.con.execute("SELECT COALESCE(SUM(nilai_klaim_rp), 0) FROM claims_warehouse;").fetchone()
+        total_rp = int(row_rp[0]) if (row_rp and row_rp[0] is not None) else 0
+
         tables = self.list_tables()
 
         full_sample_stats = None
