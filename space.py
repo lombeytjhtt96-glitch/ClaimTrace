@@ -15,31 +15,37 @@ if str(backend_dir) not in sys.path:
 import gradio as gr
 from app.main import app as fastapi_app
 
-# Create clean Gradio status interface for judges / public visitors
+# Remove the JSON root '/' route from FastAPI router so Gradio UI cleanly serves the Space root
+fastapi_app.router.routes = [
+    r for r in fastapi_app.router.routes if getattr(r, "path", None) != "/"
+]
+
+# Create clean, professional Gradio status interface (Zero Emojis)
 with gr.Blocks(title="ClaimTrace JKN - Decision Support System API") as demo:
     gr.Markdown(
         """
         # BPJS Kesehatan — ClaimTrace JKN DSS Backend API
         ### Sistem Pengawasan & Penapisan Risiko Klaim Pra-Bayar Faskes JKN
-        **BPJS Kesehatan Healthkathon 2026** • Status Server: **Active & Healthy**
+        **BPJS Kesehatan Healthkathon 2026** • Status Layanan: **Active & Operasional**
         
         ---
         
         #### Endpoint Layanan Backend:
         - **Swagger / OpenAPI Documentation**: [`/docs`](/docs)
-        - **Health Check API**: [`/api/v1/health`](/api/v1/health)
-        - **ClaimTrace AI Real-time Engine**: [`/api/v1/claimtrace-ai/generate`](/docs#/default/generate_claimtrace_ai_api_v1_claimtrace_ai_generate_post)
-        - **Triage & Risk Scoring**: [`/api/v1/triage`](/docs#/default/run_triage_api_v1_triage_post)
+        - **Health Check & Audit Chain**: [`/api/v1/health`](/api/v1/health)
+        - **Daftar & Penapisan Klaim**: [`/api/v1/claims`](/api/v1/claims)
+        - **ClaimTrace AI Engine**: [`/api/v1/claimtrace-ai/generate`](/docs#/default/generate_claimtrace_ai_api_v1_claimtrace_ai_generate_post)
+        - **Forensik DuckDB**: [`/api/v1/duckdb/info`](/api/v1/duckdb/info)
+        - **Metrik Prometheus**: [`/metrics`](/metrics)
         
-        *Backend ini melayani frontend ClaimTrace JKN di Vercel secara aman dan real-time.*
+        *Backend ini terhubung langsung ke dashboard frontend ClaimTrace JKN (Vercel).*
         """
     )
 
 # Mount Gradio onto the existing FastAPI application
-# This preserves all `/api/v1/...` and `/docs` routes intact!
 app = gr.mount_gradio_app(fastapi_app, demo, path="/")
 
 if __name__ == "__main__":
-    import uvicorn
     port = int(os.environ.get("PORT", 7860))
+    import uvicorn
     uvicorn.run("space:app", host="0.0.0.0", port=port, reload=False)
