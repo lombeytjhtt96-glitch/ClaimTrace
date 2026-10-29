@@ -1,128 +1,95 @@
 # PANDUAN LENGKAP PENYEBARAN (DEPLOYMENT GUIDE)
 ## CLAIMTRACE JKN DSS — SISTEM PENGAWASAN KLAIM PRA-BAYAR BPJS KESEHATAN
+### 100% GRATIS & TANPA KARTU KREDIT (ZERO CREDIT CARD)
 
-Dokumen ini memandu proses pendeploy-an aplikasi **ClaimTrace JKN** secara menyeluruh, mulai dari demonstrasi lokal (on-premise), kontainerisasi Docker, hingga hosting cloud publik gratis/produksi (Vercel + Render / Railway / Cloudflare Tunnel).
+Dokumen ini memandu pendeploy-an aplikasi **ClaimTrace JKN** secara menyeluruh tanpa membutuhkan kartu kredit/debit apa pun:
+1. **Frontend**: Di-deploy ke **Vercel** (Gratis, tanpa kartu kredit via akun GitHub).
+2. **Backend**: Di-deploy ke **Hugging Face Spaces** (Gratis, tanpa kartu kredit, kapasitas 2 vCPU + 16 GB RAM).
+3. **Opsi Demo Instan**: **Cloudflare Tunnel** (Langsung online dari laptop dalam 10 detik tanpa daftar apa pun).
 
 ---
 
-## 1. STRUKTUR LINGKUNGAN APLIKASI
+## 1. STRUKTUR LINGKUNGAN DEPLOYMENT
 
 ```
 claimtrace-jkn/
-├── app/                  # Frontend Web SPA (React 18 + Vite + TailwindCSS + Lucide + Recharts + XYFlow)
-│   ├── Dockerfile        # Multi-stage production container (Node 20 build -> Nginx alpine)
-│   ├── nginx.conf        # Nginx reverse proxy & SPA history routing
-│   └── .env.example      # Template variabel lingkungan frontend (VITE_API_BASE_URL)
-├── backend/              # Backend API & AI Engine (FastAPI + Uvicorn + Google Gemini Live API)
-│   ├── Dockerfile        # Container Python 3.11-slim
+├── Dockerfile            # Container untuk Hugging Face Spaces (Port 7860, 2 vCPU, 16GB RAM)
+├── vercel.json           # Konfigurasi Vercel SPA routing
+├── app/                  # Frontend Web SPA (React 18 + Vite + TailwindCSS)
+│   ├── vercel.json       # Konfigurasi SPA rewrite untuk Vercel
+│   └── .env.example      # Template VITE_API_BASE_URL
+├── backend/              # Backend API & AI Engine (FastAPI + Python 3.11 + Google Gemini)
 │   ├── requirements.txt  # Dependensi Python
-│   └── .env.example      # Template variabel lingkungan backend (GEMINI_API_KEY)
-└── docker-compose.yml    # Orkestrasi multi-container (Frontend: 3000, Backend: 8000)
+│   └── .env.example      # Template GEMINI_API_KEY
+└── docker-compose.yml    # Konfigurasi Docker lokal
 ```
 
 ---
 
-## 2. PILIHAN A: INSTANT PUBLIC LIVE URL VIA CLOUDFLARE TUNNEL (GRATIS & TERCEPAT)
+## 2. PILIHAN UTAMA: CLOUD DEPLOYMENT GRATIS (VERCEL + HUGGING FACE SPACES)
 
-Opsi ini sangat direkomendasikan untuk **presentasi juri / panitia HealthKathon** tanpa perlu migrasi database atau konfigurasi cloud yang rumit:
+### Bagian 1: Deploy Backend ke Hugging Face Spaces (0 Kartu Kredit)
+*Hugging Face Spaces adalah platform cloud kecerdasan buatan terbesar yang menyediakan hosting Docker 100% gratis dengan 16 GB RAM tanpa meminta kartu kredit.*
 
-1. Pastikan backend dan frontend sedang berjalan di mesin lokal:
+1. Buka dan login ke **[huggingface.co](https://huggingface.co)** (cukup login menggunakan akun **GitHub** Anda).
+2. Di pojok kanan atas, klik foto profil Anda -> pilih **New Space** (atau buka [huggingface.co/new-space](https://huggingface.co/new-space)).
+3. Isi form pembuatan Space:
+   - **Space name**: `claimtrace-backend`
+   - **License**: `mit` (atau `apache-2.0`)
+   - **Select the Space SDK**: Pilih **Docker** -> pilih **Blank**.
+   - **Space hardware**: Pilih **Free** (`CPU basic • 2 vCPU • 16 GB RAM`).
+   - **Visibility**: Pilih **Public**.
+4. Klik tombol **Create Space**.
+5. Masuk ke tab **Settings** di halaman Space Anda:
+   - Scroll ke bagian **Variables and secrets**.
+   - Klik **New secret**:
+     - **Name**: `GEMINI_API_KEY`
+     - **Value**: Masukkan API Key Google AI Studio Anda.
+     - Klik **Save**.
+6. Hubungkan ke repositori GitHub:
+   - Di tab Space Anda, Anda bisa menyinkronkan repositori GitHub `lombeytjhtt96-glitch/ClaimTrace`, ATAU push langsung ke git remote Hugging Face yang disediakan di halaman Space:
+     ```bash
+     git remote add space https://huggingface.co/spaces/<USERNAME_ANDA>/claimtrace-backend
+     git push space main
+     ```
+7. Tunggu build Docker selesai (~2 menit). Status akan berubah menjadi **Running** warna hijau!
+8. Salin URL publik Space Anda:
+   - Format URL: `https://<USERNAME_ANDA>-claimtrace-backend.hf.space`
+   - Tes di browser: `https://<USERNAME_ANDA>-claimtrace-backend.hf.space/api/v1/health` (akan merespons status `"healthy"`).
+
+---
+
+### Bagian 2: Deploy Frontend ke Vercel (0 Kartu Kredit)
+*Vercel paket Hobby 100% gratis dan tidak meminta kartu kredit saat mendaftar dengan GitHub.*
+
+1. Buka dan login ke **[vercel.com](https://vercel.com)** menggunakan akun **GitHub** Anda.
+2. Di dashboard Vercel, klik **Add New...** -> pilih **Project**.
+3. Cari dan klik tombol **Import** pada repositori **`ClaimTrace`** (`lombeytjhtt96-glitch/ClaimTrace`).
+4. Pada halaman *Configure Project*:
+   - **Framework Preset**: Terdeteksi otomatis sebagai **Vite**.
+   - **Root Directory**: Klik tombol **Edit**, pilih folder **`app`**, lalu klik **Continue**.
+5. Buka bagian **Environment Variables** (klik tanda panah ke bawah):
+   - **Key**: `VITE_API_BASE_URL`
+   - **Value**: Masukkan URL Hugging Face Spaces Anda (contoh: `https://<USERNAME_ANDA>-claimtrace-backend.hf.space` — *tanpa tanda garis miring di akhir*).
+6. Klik tombol **Deploy**.
+7. Dalam ~1 menit, website Anda sudah aktif online di seluruh dunia melalui domain Vercel (misalnya: `https://claimtrace-jkn.vercel.app`).
+
+---
+
+## 3. PILIHAN ALTERNATIF TERCEPAT: CLOUDFLARE TUNNEL (INSTAN UNTUK DEMO JURI)
+
+Jika Anda ingin menampilkan aplikasi langsung kepada panitia/juri saat presentasi atau perekaman video demo tanpa perlu setup cloud:
+
+1. Jalankan backend dan frontend di mesin lokal Anda:
    ```bash
    # Terminal 1: Backend
-   cd backend
-   python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
    # Terminal 2: Frontend
-   cd app
-   npm run dev -- --host 0.0.0.0 --port 3000
+   cd app && npm run dev -- --host 0.0.0.0 --port 3000
    ```
-
-2. Jalankan Cloudflare Tunnel (tanpa registrasi kartu kredit):
+2. Jalankan perintah Cloudflare Tunnel di terminal baru (tanpa kartu kredit, tanpa registrasi akun):
    ```bash
-   # Menggunakan npx atau cloudflared binary
    npx untun@latest tunnel http://localhost:3000
-   # ATAU jika menggunakan cloudflared:
-   cloudflared tunnel --url http://localhost:3000
    ```
-3. Salin URL publik berakhiran `*.trycloudflare.com` yang dihasilkan dan bagikan langsung ke penguji/juri.
-
----
-
-## 3. PILIHAN B: DOCKER & DOCKER COMPOSE (PRODUKSI ON-PREMISE / SERVER VPS)
-
-Cocok untuk deployment di server virtual (VPS Linux / Ubuntu / Debian / WSL):
-
-### Langkah-langkah:
-1. Pastikan file `.env` di direktori `backend/` sudah memuat `GEMINI_API_KEY`:
-   ```bash
-   cp backend/.env.example backend/.env
-   # Masukkan API Key Google AI Studio Anda
-   ```
-2. Jalankan Docker Compose:
-   ```bash
-   docker compose up --build -d
-   ```
-3. Verifikasi status kontainer:
-   ```bash
-   docker compose ps
-   ```
-4. Akses sistem melalui browser:
-   - **Frontend Cockpit**: `http://localhost:3000`
-   - **Backend API & Swagger**: `http://localhost:8000/docs`
-   - **Healthcheck**: `http://localhost:8000/health`
-
----
-
-## 4. PILIHAN C: CLOUD DEPLOYMENT (VERCEL + RENDER / RAILWAY)
-
-### Bagian 1: Deploy Backend di Render.com (Gratis)
-1. Buat akun atau login di [Render.com](https://render.com).
-2. Anda memiliki 2 cara mudah:
-   - **Cara Otomatis (Blueprint)**: Klik **New +** -> **Blueprint** -> Pilih repo `ClaimTrace`. Render akan otomatis membaca file `render.yaml` yang sudah kami sediakan!
-   - **Cara Manual (Web Service)**: Klik **New +** -> **Web Service** -> Pilih repo `ClaimTrace`:
-     - **Name**: `claimtrace-backend`
-     - **Root Directory**: `backend`
-     - **Runtime**: `Python 3`
-     - **Region**: `Singapore (Southeast Asia)` *(Paling cepat & rendah latensi untuk Indonesia)*
-     - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
-     - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-     - **Plan Type**: `Free`
-3. Tambahkan **Environment Variables** di tab *Environment*:
-   - `GEMINI_API_KEY` = `YOUR_GEMINI_API_KEY` *(Gunakan Google AI Studio API Key Anda)*
-   - `APP_ENV` = `production`
-   - `DEBUG` = `false`
-4. Klik **Create Web Service** (atau **Apply** pada Blueprint).
-5. Tunggu proses build selesai (~2-3 menit). Setelah status menjadi **Live**, salin URL publik backend Anda (contoh: `https://claimtrace-backend.onrender.com`).
-6. Tes endpoint kesehatan di browser: `https://claimtrace-backend.onrender.com/api/v1/health` (harus menampilkan status `"healthy"`).
-
----
-
-### Bagian 2: Deploy Frontend di Vercel (Gratis)
-1. Buat akun atau login di [Vercel](https://vercel.com) menggunakan akun GitHub Anda.
-2. Klik **Add New...** -> **Project**.
-3. Cari dan impor repositori `ClaimTrace`.
-4. Pada form konfigurasi:
-   - **Framework Preset**: `Vite` *(Otomatis terdeteksi)*
-   - **Root Directory**: Klik tombol **Edit** lalu pilih folder `app`
-   - **Build Command**: `npm run build` *(Default)*
-   - **Output Directory**: `dist` *(Default)*
-5. Tambahkan **Environment Variable**:
-   - Key: `VITE_API_BASE_URL`
-   - Value: `https://claimtrace-backend.onrender.com` *(Gunakan URL backend yang Anda dapatkan dari Render di Bagian 1)*
-6. Klik tombol biru **Deploy**.
-7. Dalam waktu ~1 menit, situs web frontend Anda akan online dan dapat diakses dari seluruh dunia (misalnya: `https://claimtrace-jkn.vercel.app`).
-
----
-
-## 5. VERIFIKASI AKHIR SETELAH PENYEBARAN
-
-Setelah sistem berhasil di-deploy, uji ketiga fungsi inti berikut:
-1. **Otentikasi SSO Verifikator**:
-   - Login dengan NIP `199208152015031002`, Password apa saja, dan masukkan Captcha.
-2. **Kueri Chat Forensik Real-Time Google Gemini**:
-   - Buka menu **HealthAI** / Asisten Audit JKN.
-   - Ketik pertanyaan bebas: *"Apa itu ClaimTrace?"* atau *"Jelaskan anomali klaster fisioterapi Mitra Husada"*.
-   - Amati respons dinamis bebas-skrip yang langsung dipikirkan secara cerdas oleh model Google Gemini.
-3. **Simulasi Presensi Mobile JKN (Lapis 3)**:
-   - Buka tampilan Dual View / Mobile JKN di sisi kiri.
-   - Klik tombol konfirmasi presensi dan pastikan skor risiko di konsol verifikator bereaksi secara instan.
+3. Salin URL publik `https://*.trycloudflare.com` yang muncul di layar dan berikan kepada siapa saja untuk mengakses aplikasi secara live.
