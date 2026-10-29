@@ -547,7 +547,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                 <div className={`space-y-2 border-b pb-4 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <h3 className={`font-bold text-sm sm:text-base flex items-center space-x-2 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                     <span className={effectiveIsLight ? 'text-emerald-600 font-bold' : 'text-emerald-400'}>2.</span>
-                    <span>Isolasi Analitik Lokal DuckDB (Privacy-Preserving)</span>
+                    <span>Isolasi Analitik Lokal Database (Privacy-Preserving)</span>
                   </h3>
                   <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                     Pemrosesan OLAP pada transaksi klaim dioperasikan dalam lingkungan WebAssembly terisolasi di sisi peramban (<span className="italic">client-side sandboxed execution</span>). Pendekatan ini memastikan data sensitif tidak dipaparkan ke pihak ketiga serta mengeliminasi risiko serangan <span className="italic">Distributed Denial of Service</span> (DDoS) pada server inti BPJS.
@@ -806,7 +806,7 @@ export default function InstitutionalLegalModal({ isOpen, onClose, initialTab = 
                             <span className={`font-mono font-bold block ${effectiveIsLight ? 'text-rose-700' : 'text-rose-300'}`}>F3: FA0002.F1018 (Unbundling)</span>
                             <span className={`text-[10px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Lonjakan klaim massal repeat billing 48 jam</span>
                           </td>
-                          <td className={`py-2.5 px-3 font-mono font-semibold ${effectiveIsLight ? 'text-sky-800' : 'text-cyan-300'}`}>D3-NTA · Analitik DuckDB OLAP</td>
+                          <td className={`py-2.5 px-3 font-mono font-semibold ${effectiveIsLight ? 'text-sky-800' : 'text-cyan-300'}`}>D3-NTA · Analitik Database OLAP</td>
                           <td className={`py-2.5 px-3 ${effectiveIsLight ? 'text-slate-600' : 'text-white/50'}`}>Permenkes 26/2021</td>
                         </tr>
                         <tr>

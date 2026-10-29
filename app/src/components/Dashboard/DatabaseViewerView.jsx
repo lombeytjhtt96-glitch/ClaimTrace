@@ -188,7 +188,7 @@ const PRESET_QUERIES = [
     sql: 'SELECT FKL18A as diagnosa_primer, COUNT(*) as jumlah_kasus, SUM(FKL47) as total_biaya_rp, ROUND(AVG(FKL47), 0) as rata_biaya_rp FROM bpjs_fkrtl_all WHERE FKL18A IS NOT NULL GROUP BY FKL18A ORDER BY total_biaya_rp DESC LIMIT 10;'
   },
   {
-    name: '📊 Ikhtisar Portofolio 1.7M Klaim DuckDB',
+    name: '📊 Ikhtisar Portofolio 1.7M Klaim Database',
     sql: 'SELECT * FROM v_bpjs_full_summary;'
   },
   {
@@ -519,7 +519,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
         setSqlResult(json);
       }
     } catch (err) {
-      setSqlError(err.message || 'Gagal menghubungi server DuckDB.');
+      setSqlError(err.message || 'Gagal menghubungi server database.');
       setSqlResult(null);
     } finally {
       setSqlLoading(false);
@@ -584,7 +584,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const currentMeta = TABLE_METADATA[selectedTable] || {
     title: selectedTable,
-    description: 'Tabel repositori DuckDB ClaimTrace.',
+    description: 'Tabel repositori database ClaimTrace.',
     category: 'custom'
   };
 
@@ -604,12 +604,12 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               }`}>
                 <Database className="w-6 h-6" />
               </div>
-              <span>Penampil Basis Data DuckDB &amp; Data Warehouse JKN</span>
+              <span>Penampil Basis Data &amp; Data Warehouse JKN</span>
             </h1>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
               isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
             }`}>
-              DuckDB OLAP Persistent (237 MB)
+              Database OLAP Persistent (237 MB)
             </span>
             <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
               isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-white/10 text-[#FFCA40] border-white/10'
@@ -631,7 +631,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           <div className="text-right">
             <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Klaim Terindeks</div>
             <div className={`text-lg font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>6.264.346 Baris</div>
-            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>17 Tabel &amp; Views DuckDB</div>
+            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>17 Tabel &amp; Views Database</div>
           </div>
           <div className={`h-10 w-[1px] ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
           <button
@@ -643,7 +643,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 ? 'bg-white border-slate-300 text-slate-700 hover:text-emerald-700 hover:bg-slate-100' 
                 : 'bg-white/5 border-white/10 hover:border-[#FFCA40]/50 text-white/80 hover:text-[#FFCA40] hover:bg-white/10'
             }`}
-            title="Segarkan Sinkronisasi DuckDB"
+            title="Segarkan Sinkronisasi Database"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-sky-600' : isLight ? 'text-slate-600' : 'text-[#FFCA40]'}`} />
           </button>
@@ -682,7 +682,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           }`}
         >
           <Terminal className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-          <span>Konsol SQL Interaktif (DuckDB Engine)</span>
+          <span>Konsol SQL Interaktif (Database Engine)</span>
           <span className={`ml-1 text-[10px] px-2 py-0.5 rounded-full border font-bold ${
             isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-[#FFCA40] border-amber-500/30'
           }`}>
@@ -716,7 +716,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               : 'border-white/10 bg-[#00153A]/85 text-white shadow-[#00081c]/50'
           }`}>
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <span className={`text-xs font-bold whitespace-nowrap ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Pilih Tabel DuckDB:</span>
+              <span className={`text-xs font-bold whitespace-nowrap ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Pilih Tabel Database:</span>
               
               {/* Custom Searchable Dropdown */}
               <div className="relative w-full md:w-80" ref={dropdownRef}>
@@ -976,7 +976,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                       <td colSpan={columnsSchema.length + 1} className={`py-12 text-center font-sans ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                         <div className="flex flex-col items-center justify-center gap-2">
                           <RefreshCw className={`w-6 h-6 animate-spin ${isLight ? 'text-sky-600' : 'text-[#FFCA40]'}`} />
-                          <span className="text-xs">Mengambil data dari repositori DuckDB...</span>
+                          <span className="text-xs">Mengambil data dari repositori database...</span>
                         </div>
                       </td>
                     </tr>
@@ -1117,7 +1117,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 <span>Kueri Preset Analisis Klaim Resmi:</span>
               </span>
               <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Engine: DuckDB SQL OLAP (Read-Only Safe)
+                Engine: SQL OLAP Database (Read-Only Safe)
               </span>
             </div>
 
@@ -1183,7 +1183,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                   }
                 }}
                 rows={4}
-                placeholder="Tulis kueri DuckDB SQL di sini (contoh: SELECT * FROM bpjs_fkrtl_all LIMIT 10;)..."
+                placeholder="Tulis kueri SQL di sini (contoh: SELECT * FROM bpjs_fkrtl_all LIMIT 10;)..."
                 className="w-full bg-transparent font-mono text-xs text-emerald-400 placeholder-slate-500 outline-none resize-y"
                 spellCheck={false}
               />
@@ -1212,7 +1212,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 )}
               </div>
               <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                {sqlResult ? `Kolom Terbaca: ${sqlResult.columns?.length || 0}` : 'Kueri Analitis DuckDB'}
+                {sqlResult ? `Kolom Terbaca: ${sqlResult.columns?.length || 0}` : 'Kueri Analitis Database'}
               </div>
             </div>
           </div>
@@ -1238,7 +1238,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               <div className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                 <span className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   <TableIcon className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`} />
-                  <span>Hasil Kueri DuckDB ({sqlResult.row_count} baris)</span>
+                  <span>Hasil Kueri Database ({sqlResult.row_count} baris)</span>
                 </span>
                 <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Format: JSON Tabular</span>
               </div>

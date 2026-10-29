@@ -3,6 +3,7 @@ import io
 import csv
 import secrets
 import httpx
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -1155,7 +1156,7 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     elif any(k in lower for k in ["berapa pasien", "berapa pasian", "jumlah pasien", "jumlah pasian", "berapa peserta", "jumlah peserta", "total pasien", "total pasian", "total pesien"]):
         resp_text = (
             "### 📊 Rekapitulasi Jumlah Pasien & Berkas Klaim JKN Hari Ini (14 Oktober 2026)\n\n"
-            "Berdasarkan pangkalan data DuckDB terintegrasi ClaimTrace AI:\n\n"
+            "Berdasarkan database terintegrasi ClaimTrace AI:\n\n"
             "1. **Total Pasien / Berkas Klaim Hari Ini**: **4.341 Orang / Berkas**\n"
             "   * **Jalur Hijau (Lolos Otomatis / Fast-Track)**: **3.892 pasien (89,6%)** — Estimasi beban Rp 5.220.000 (Skor risiko 17.5)\n"
             "   * **Jalur Kuning (Klarifikasi Dokumen Digital)**: **364 pasien (8,4%)** — Estimasi beban Rp 1.950.000 (Skor risiko 62.0)\n"
@@ -1190,7 +1191,7 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
             "### 🔍 Tiga Lapis Bukti Multi-Sinyal (Bobot 50:30:20)\n"
             "Kalkulasi pembobotan deterministik menggabungkan 3 sinyal independen:\n"
             "1. **Lapis 1 — Radar Pola Klaim (Bobot 50%)**:\n"
-            "   * Deteksi anomali spatiotemporal dan lonjakan volume klaim abnormal via mesin analitik cepat **DuckDB OLAP** (<12 ms).\n"
+            "   * Deteksi anomali spatiotemporal dan lonjakan volume klaim abnormal via mesin analitik database berkecepatan tinggi (<12 ms).\n"
             "   * Analisis kemiripan semantik resume medis (*copypaste text detection*) menggunakan **ChromaDB Vector Matching**.\n"
             "2. **Lapis 2 — Uji Jejak Layanan DPJP (Bobot 30%)**:\n"
             "   * Pengecekan silang legalitas Surat Izin Praktik (SIP) dokter spesialis ke pangkalan data **SATUSEHAT SDMK Kemenkes**.\n"
@@ -1325,7 +1326,7 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     elif any(k in lower for k in ["statistik", "hari ini", "rekap", "volume", "triase", "ringkasan", "berapa klaim", "total klaim"]):
         resp_text = (
             "**[Statistik Operasional Verifikasi Klaim Hari Ini - Siklus 14 Oktober 2026]**\n\n"
-            "Berdasarkan konsolidasi pangkalan data analitik DuckDB dan ledger triase 3-lapis tingkat nasional:\n\n"
+            "Berdasarkan konsolidasi database analitik dan ledger triase 3-lapis tingkat nasional:\n\n"
             "### 1. Volume & Klasifikasi Triase Berkas Klaim (Total: 4.341 Berkas)\n"
             "* **Jalur Hijau (Fast-Track Pra-Bayar / Lolos Otomatis)**: **3.892 berkas (89,6%)**\n"
             "  * Estimasi Beban Biaya: Rp 5.220.000,-\n"
@@ -1441,11 +1442,14 @@ Anda memiliki kecerdasan murni untuk berpikir bebas, kritis, logis, kreatif, dan
 
 Konteks Pengguna & Sistem BPJS Kesehatan:
 - Anda mendampingi Verifikator aktif: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002).
-- Data operasional DuckDB hari ini mencatat 4.341 berkas klaim nasional: 3.892 berkas Jalur Hijau (lolos otomatis), 364 berkas Jalur Kuning (klarifikasi dokumen faskes), 85 berkas prioritas Jalur Merah (ditahan pra-bayar / HOLD_BAKB dengan nilai Rp 72.450.000,-), serta total 103 peserta JKN teridentifikasi sebagai korban kasus audit khusus.
+- Data operasional database hari ini mencatat 4.341 berkas klaim nasional: 3.892 berkas Jalur Hijau (lolos otomatis), 364 berkas Jalur Kuning (klarifikasi dokumen faskes), 85 berkas prioritas Jalur Merah (ditahan pra-bayar / HOLD_BAKB dengan nilai Rp 72.450.000,-), serta total 103 peserta JKN teridentifikasi sebagai korban kasus audit khusus.
 - Kasus prioritas yang sedang dipantau: Phantom Billing baksos fisioterapi fiktif di RS Khusus Mitra Husada dan Upcoding tingkat keparahan di RS Medika Prima.
 - Kerangka verifikasi: Lapis 1 (Klinis/ICD-10/INA-CBG), Lapis 2 (Legalitas SIP SATUSEHAT & Geovelocity OSRM), Lapis 3 (Telemetri out-of-band Mobile JKN).
 
-Prinsip Penalaran:
+Prinsip Penalaran & Terminologi Wajib:
+- ATURAN TERMINOLOGI DATABASE (MUTLAK): JANGAN PERNAH menyebut nama merek atau teknologi database seperti 'DuckDB' atau merek DBMS apa pun. Cukup sebut 'database' atau 'basis data' sistem saja. Dilarang keras mengekspos nama merek teknologi database kepada pengguna.
+- KETELITIAN EJAAN & TATA BAHASA: Gunakan bahasa Indonesia baku dan presisi (misal: 'mutakhir', bukan 'mutahir').
+- ETIKET SAPAAN: Jika pengguna hanya menyapa santai (misal: 'hai', 'halo'), balas dengan ramah, hangat, dan ringkas tanpa langsung membanjiri pengguna dengan seluruh statistik jika tidak diminta.
 - Berpikirlah secara mandiri, hidup, cerdas, dan luwes. Jawablah setiap pertanyaan pengguna secara langsung, relevan, dan alami tanpa template kaku atau hafalan.
 - Anda bebas bernalar, memberi analogi, edukasi, berdiskusi santai, maupun analisis mendalam sesuai kebutuhan pengguna."""
 
@@ -1491,6 +1495,11 @@ Prinsip Penalaran:
                             .get("parts", [])
                         ).strip()
                         clean_text, _ = redact_text_phi(text_part)
+                        # Enforce database terminology: never leak DuckDB vendor brand name
+                        clean_text = re.sub(r'\b(?:database|basis data)\s+DuckDB\b', 'database', clean_text, flags=re.IGNORECASE)
+                        clean_text = re.sub(r'\bDuckDB\s+(?:database|basis data)\b', 'database', clean_text, flags=re.IGNORECASE)
+                        clean_text = re.sub(r'\bDuckDB\b', 'database', clean_text, flags=re.IGNORECASE)
+                        clean_text = re.sub(r'\bmutahir\b', 'mutakhir', clean_text, flags=re.IGNORECASE)
 
                         usage = data.get("usageMetadata", {})
                         prompt_tokens = usage.get("promptTokenCount", len(safe_user_prompt) // 4)
@@ -1601,7 +1610,7 @@ def get_security_posture_endpoint():
         "active_controls": [
             "OWASP Secure Headers Middleware (CSP, HSTS 2-Year, X-Frame DENY, nosniff)",
             "Sliding-Window Token-Bucket Rate Limiter (Anti-DDoS & Brute Force Lockout)",
-            "DuckDB Query Firewall (Anti-SQL Injection, Stacked Query Guard, Zero File-System Access)",
+            "Database Query Firewall (Anti-SQL Injection, Stacked Query Guard, Zero File-System Access)",
             "Active PHI/PII Scrubber & NIK Pseudonymization (Zero-Leakage Guarantee)",
             "ClaimTrace AI Prompt Security Guardrail (Anti-Prompt-Injection & Anti-Jailbreak)",
             "Tamper-Evident SHA-256 Chained Forensic Audit Ledger",

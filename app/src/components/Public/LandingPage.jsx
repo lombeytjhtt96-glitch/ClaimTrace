@@ -593,7 +593,7 @@ export default function LandingPage({
                 Pemecahan episode rawat jalan dalam 1x24 jam yang seharusnya menjadi satu kesatuan paket INA-CBG, atau penagihan terapi berulang tanpa indikasi klinis.
               </p>
               <div className={`text-[11px] pt-2 border-t font-semibold ${effectiveIsLight ? 'text-amber-700 border-slate-200' : 'text-amber-300 border-white/10'}`}>
-                Temuan Empiris Data 2024: Klaim ganda sefalalgia & tension headache di hari yang sama terdeteksi via DuckDB OLAP.
+                Temuan Empiris Data 2024: Klaim ganda sefalalgia & tension headache di hari yang sama terdeteksi via database analitik OLAP.
               </div>
             </motion.div>
 
@@ -967,7 +967,7 @@ export default function LandingPage({
                   <span className="text-[11px] font-bold text-amber-400 uppercase">Fitur 05 · Analitik</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold border ${effectiveIsLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-white/60 border-white/10'}`}>&lt; 12ms OLAP</span>
                 </div>
-                <h3 className={`text-base font-bold transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Forensik Data Empiris DuckDB</h3>
+                <h3 className={`text-base font-bold transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Forensik Data Empiris Database</h3>
                 <p className={`text-xs leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                   Pemrosesan agregasi dan deteksi outlier pada 10.000+ data klaim historis riil dalam hitungan milidetik secara lokal di browser, tanpa membebani server transaksi utama BPJS.
                 </p>
