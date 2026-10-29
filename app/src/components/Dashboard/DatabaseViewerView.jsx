@@ -176,27 +176,27 @@ const TABLE_METADATA = {
 // Preset SQL Queries
 const PRESET_QUERIES = [
   {
-    name: '🏆 Top 10 Klaim Biaya Tertinggi (FKRTL)',
+    name: 'Top 10 Klaim Biaya Tertinggi (FKRTL)',
     sql: 'SELECT FKL02 as no_sep, PSTV01 as id_peserta, FKL03 as tgl_masuk, FKL19 as cbg, FKL19A as deskripsi_cbg, FKL18A as diagnosa, FKL47 as biaya_tagih_rp FROM bpjs_fkrtl_all ORDER BY FKL47 DESC LIMIT 10;'
   },
   {
-    name: '🚨 Impossible Travel: Pasien di 2 RS Berbeda',
+    name: 'Impossible Travel: Pasien di 2 RS Berbeda',
     sql: 'SELECT peserta_id, tgl_masuk, claim_1, claim_2, faskes_1, faskes_2, cbg_1, cbg_2, total_rupiah_gabungan FROM v_bpjs_full_multihospital_same_day ORDER BY total_rupiah_gabungan DESC LIMIT 10;'
   },
   {
-    name: '🏥 10 Diagnosis Primer Termahal (Total Biaya)',
+    name: '10 Diagnosis Primer Termahal (Total Biaya)',
     sql: 'SELECT FKL18A as diagnosa_primer, COUNT(*) as jumlah_kasus, SUM(FKL47) as total_biaya_rp, ROUND(AVG(FKL47), 0) as rata_biaya_rp FROM bpjs_fkrtl_all WHERE FKL18A IS NOT NULL GROUP BY FKL18A ORDER BY total_biaya_rp DESC LIMIT 10;'
   },
   {
-    name: '📊 Ikhtisar Portofolio 1.7M Klaim Database',
+    name: 'Ikhtisar Portofolio 1.7M Klaim Database',
     sql: 'SELECT * FROM v_bpjs_full_summary;'
   },
   {
-    name: '🔍 Kasus Unbundling (Klaim Terpisah RS Sama)',
+    name: 'Kasus Unbundling (Klaim Terpisah RS Sama)',
     sql: 'SELECT peserta_id, tgl_masuk, claim_1, claim_2, faskes_id, cbg_1, cbg_2, total_rupiah_gabungan FROM v_bpjs_full_same_hospital_same_day ORDER BY total_rupiah_gabungan DESC LIMIT 10;'
   },
   {
-    name: '👥 Distribusi Peserta BPJS per Hubungan Keluarga',
+    name: 'Distribusi Peserta BPJS per Hubungan Keluarga',
     sql: "SELECT CASE PSTV04 WHEN 1 THEN 'Kepala Keluarga' WHEN 2 THEN 'Istri/Pasangan' WHEN 3 THEN 'Anak' ELSE 'Lainnya' END as status_keluarga, COUNT(*) as jumlah_peserta FROM bpjs_kepesertaan_all GROUP BY 1 ORDER BY 2 DESC;"
   }
 ];

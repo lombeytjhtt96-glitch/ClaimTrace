@@ -729,7 +729,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                       : isLight ? 'text-slate-600' : 'text-white/70'
                   }`}>
                     {selectedDoctor.dailyWorkload > selectedDoctor.workloadLimit
-                      ? `⚠️ Peringatan: Melebihi kapasitas rasional pelayanan standar Permenkes 14/2021 (${selectedDoctor.workloadLimit} pasien/hari). Sangat rentan terhadap pola klaim fiktif.`
+                      ? `Peringatan: Melebihi kapasitas rasional pelayanan standar Permenkes 14/2021 (${selectedDoctor.workloadLimit} pasien/hari). Sangat rentan terhadap pola klaim fiktif.`
                       : 'Beban kerja berada dalam batas wajar standar akreditasi dan pelayanan klinis.'}
                   </p>
                 </div>
