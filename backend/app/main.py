@@ -1136,7 +1136,7 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     # 0a. Pertanyaan Identitas Pengguna / Verifikator yang Sedang Login ("aku siapa", "siapa saya", "profil saya", dll.)
     if any(k in lower for k in ["aku siapa", "siapa aku", "siapa saya", "profil saya", "nama saya", "role saya", "siapa verifikator", "identitas saya", "siapakah aku", "siapakah saya"]):
         resp_text = (
-            "### 👤 Profil & Identitas Sesi Verifikator Aktif\n\n"
+            "### Profil & Identitas Sesi Verifikator Aktif\n\n"
             "Anda saat ini terotentikasi dan login sebagai:\n"
             "* **Nama Lengkap**: **Budi Santoso, S.Kom, M.TI**\n"
             "* **NIP**: **199208152015031002**\n"
@@ -1155,7 +1155,7 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     # 0b. Pertanyaan seputar Jumlah Pasien / Peserta / Kasus Korban ("berapa pasien", "berapa pasian", "jumlah pasien", dll.)
     elif any(k in lower for k in ["berapa pasien", "berapa pasian", "jumlah pasien", "jumlah pasian", "berapa peserta", "jumlah peserta", "total pasien", "total pasian", "total pesien"]):
         resp_text = (
-            "### 📊 Rekapitulasi Jumlah Pasien & Berkas Klaim JKN Hari Ini (14 Oktober 2026)\n\n"
+            "### Rekapitulasi Jumlah Pasien & Berkas Klaim JKN Hari Ini (14 Oktober 2026)\n\n"
             "Berdasarkan database terintegrasi ClaimTrace AI:\n\n"
             "1. **Total Pasien / Berkas Klaim Hari Ini**: **4.341 Orang / Berkas**\n"
             "   * **Jalur Hijau (Lolos Otomatis / Fast-Track)**: **3.892 pasien (89,6%)** — Estimasi beban Rp 5.220.000 (Skor risiko 17.5)\n"
@@ -1175,20 +1175,20 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     # 1. Definisi & Pengenalan Sistem ClaimTrace (Pertanyaan: "claimtrace itu apa", "apa itu", "fungsi", dll.)
     elif any(k in lower for k in ["claimtrace", "apa itu", "definisi", "pengertian", "arsitektur", "konsep", "tujuan", "fungsi", "cara kerja", "sistem apa", "kamu siapa", "siapa kamu", "bantuan", "panduan"]):
         resp_text = (
-            "### 🛡️ Apa Itu ClaimTrace?\n\n"
+            "### Apa Itu ClaimTrace?\n\n"
             "**ClaimTrace** adalah **Decision Support System (DSS) Pengawasan & Penapisan Risiko Klaim Pra-Bayar Faskes JKN** "
             "yang dirancang untuk Kantor Pusat, Kedeputian Bidang Wasrik, dan Kantor Cabang BPJS Kesehatan di Seluruh Indonesia.\n\n"
             "Sistem ini berfokus pada pencegahan kebocoran kas Dana Jaminan Sosial (DJS) dari dua modus kecurangan prioritas nasional:\n"
             "1. **Sub-Kategori #6: Phantom Billing** (Klaim Fiktif Massal / Layanan Tanpa Pasien / Peminjaman Akun SIP DPJP).\n"
             "2. **Sub-Kategori #11: Repeat Billing** (Klaim Ganda / Pemecahan Episode Rawat Jalan & Inap 1x24 Jam yang Seharusnya Satu Kesatuan Paket INA-CBG).\n\n"
             "---\n\n"
-            "### ⚖️ Doktrin Operasional: *Evidence-First Triage*\n"
+            "### Doktrin Operasional: *Evidence-First Triage*\n"
             "ClaimTrace memegang teguh doktrin:\n"
             "> *\"Satu skor prioritas, tiga lapis bukti faktual, keputusan mutlak tetap di tangan verifikator medis (Human-in-the-Loop).\"*\n\n"
             "ClaimTrace **bukanlah sistem otomatis yang memvonis atau menolak klaim secara sepihak**, "
             "melainkan instrumen pendukung keputusan obyektif yang menyajikan rekonstruksi bukti ilmiah sebelum berkas disetujui untuk dicairkan.\n\n"
             "---\n\n"
-            "### 🔍 Tiga Lapis Bukti Multi-Sinyal (Bobot 50:30:20)\n"
+            "### Tiga Lapis Bukti Multi-Sinyal (Bobot 50:30:20)\n"
             "Kalkulasi pembobotan deterministik menggabungkan 3 sinyal independen:\n"
             "1. **Lapis 1 — Radar Pola Klaim (Bobot 50%)**:\n"
             "   * Deteksi anomali spatiotemporal dan lonjakan volume klaim abnormal via mesin analitik database berkecepatan tinggi (<12 ms).\n"
@@ -1200,13 +1200,13 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
             "   * Pengiriman konfirmasi kehadiran biner (Ya/Tidak) langsung ke smartphone peserta melalui notifikasi FCM *high-priority*.\n"
             "   * Menerapkan prinsip *Zero-Knowledge Presence* (Zero-PHI) sesuai **Pasal 34 UU PDP No. 27 Tahun 2022**.\n\n"
             "---\n\n"
-            "### 🚦 Triase Tiga Jalur & Batas Waktu SLA 10 Hari Kerja\n"
+            "### Triase Tiga Jalur & Batas Waktu SLA 10 Hari Kerja\n"
             "Sesuai amanat **Pasal 76 ayat (2) Perpres No. 82 Tahun 2018**, verifikasi klaim faskes wajib tuntas dalam 10 hari kerja:\n"
             "* **Jalur Hijau (Skor < 50)**: *Fast-Track* berkas wajar langsung diproses ke Berita Acara Kelayakan Bayar (BAKB) otomatis tanpa tertahan.\n"
             "* **Jalur Kuning (Skor 50 - 74)**: Status ketidakpastian administratif (bukan vonis fraud), sistem meminta konfirmasi kelengkapan berkas digital faskes.\n"
             "* **Jalur Merah (Skor ≥ 75)**: Prioritas telaah pra-bayar mendalam / penahanan sementara (*HOLD_BAKB*) untuk mencegah kerugian finansial negara.\n\n"
             "---\n\n"
-            "### 🔐 Integritas & Kepatuhan Hukum\n"
+            "### Integritas & Kepatuhan Hukum\n"
             "Setiap tindakan disposisi dan persetujuan verifikator disegel dalam **Ledger Kriptografis SHA-256** imutabel (*anti-repudiasi*) "
             "yang sah di mata hukum dan audit akuntabilitas BPK (**UU ITE No. 1 Tahun 2024**)."
         )

@@ -518,7 +518,10 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
                 : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-emerald-950/40'
             }`}
           >
-            <span>✓ {toastMsg}</span>
+            <span className="flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>{toastMsg}</span>
+            </span>
             <button 
               type="button" 
               onClick={() => setToastMsg(null)} 

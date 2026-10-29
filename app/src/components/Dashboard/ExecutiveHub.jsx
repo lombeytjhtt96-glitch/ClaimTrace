@@ -763,7 +763,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 65, top: 10, bottom: 10 }}>
-              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
               <XAxis type="number" stroke={axisStroke} tick={{ fontSize: 11 }} />
               <YAxis
                 dataKey="topic"

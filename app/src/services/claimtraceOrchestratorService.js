@@ -286,9 +286,15 @@ export async function callClaimTraceGenerateContent({
 }) {
   const startTime = performance.now();
   try {
-    const apiBase = (typeof window !== 'undefined' && window.location.hostname === 'localhost')
-      ? 'http://localhost:8000'
-      : '';
+    const apiBase = (() => {
+      if (typeof window !== 'undefined') {
+        if (import.meta.env?.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return `${window.location.protocol}//${window.location.hostname}:8000`;
+        }
+      }
+      return '';
+    })();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
     let res;

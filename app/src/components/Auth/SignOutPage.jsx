@@ -68,21 +68,21 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
               ? 'text-emerald-800 bg-emerald-50 border-emerald-300'
               : 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
           }`}>
-            ✓ Token SSO Dicabut
+            Token SSO Dicabut
           </span>
           <span className={`text-[10.5px] font-medium px-2.5 py-1 rounded-full border ${
             isLight
               ? 'text-cyan-800 bg-cyan-50 border-cyan-300'
               : 'text-cyan-300 bg-blue-500/10 border-blue-500/30'
           }`}>
-            ✓ Memori Sesi Dibersihkan
+            Memori Sesi Dibersihkan
           </span>
           <span className={`text-[10.5px] font-medium px-2.5 py-1 rounded-full border ${
             isLight
               ? 'text-slate-700 bg-slate-100 border-slate-300'
               : 'text-white/70 bg-white/5 border-white/10'
           }`}>
-            ✓ Log Audit Tercatat
+            Log Audit Tercatat
           </span>
         </div>
 

@@ -13,7 +13,9 @@ import {
   ShieldAlert,
   FileWarning,
   Fingerprint,
-  X
+  X,
+  Check,
+  Plus
 } from 'lucide-react';
 
 /**
@@ -878,7 +880,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                                 key={cat.value}
                                 type="button"
                                 onClick={() => toggleEditTag(cat.value)}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-full border transition cursor-pointer ${
+                                className={`text-xs font-bold px-3 py-1.5 rounded-full border transition cursor-pointer flex items-center gap-1.5 ${
                                   isActive
                                     ? `${activeClass} ring-2 ring-emerald-300 dark:ring-[#FFCA40]/40 shadow-xs`
                                     : isLight
@@ -886,8 +888,9 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                                       : 'bg-white/5 text-white/60 border-white/10 hover:border-white/20 hover:text-white'
                                 }`}
                               >
-                                {isActive ? '✓ ' : '+ '}
-                                {cat.label}
+                                {isActive && <Check className="w-3 h-3 shrink-0" />}
+                                {!isActive && <Plus className="w-3 h-3 shrink-0" />}
+                                <span>{cat.label}</span>
                               </button>
                             );
                           })}
@@ -1024,7 +1027,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                         setBulkTagsToAdd([...bulkTagsToAdd, cat.value]);
                       }
                     }}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-full border transition cursor-pointer ${
+                    className={`text-xs font-bold px-3 py-1.5 rounded-full border transition cursor-pointer flex items-center gap-1.5 ${
                       isSelected
                         ? `${activeColor} ring-2 ring-emerald-300 dark:ring-[#FFCA40]/40 shadow-xs`
                         : isLight
@@ -1032,8 +1035,9 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                           : 'bg-white/5 text-white/70 border-white/10 hover:border-white/20 hover:text-white'
                     }`}
                   >
-                    {isSelected ? '✓ ' : '+ '}
-                    {cat.label}
+                    {isSelected && <Check className="w-3 h-3 shrink-0" />}
+                    {!isSelected && <Plus className="w-3 h-3 shrink-0" />}
+                    <span>{cat.label}</span>
                   </button>
                 );
               })}

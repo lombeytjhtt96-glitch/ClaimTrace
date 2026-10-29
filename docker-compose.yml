@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: claimtrace-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AQ.Ab8RN6INHQ1PiChn8Zzsal5kUoI-qwGw8BmJoGuNk8wmC4GTUA}
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./backend/data:/app/data
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: claimtrace-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

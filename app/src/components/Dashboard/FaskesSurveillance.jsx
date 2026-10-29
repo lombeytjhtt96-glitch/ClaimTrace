@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
   ExternalLink, TrendingUp, Building2, MapPin, CheckCircle2, 
-  XCircle, Clock, ChevronRight, AlertOctagon, Activity
+  XCircle, Clock, ChevronRight, AlertOctagon, Activity, X
 } from 'lucide-react';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
@@ -535,11 +535,12 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 </div>
                 <button type="button"
                   onClick={() => setSelectedFaskesDetail(null)}
+                  aria-label="Tutup detail faskes"
                   className={`p-1 rounded-lg cursor-pointer ${
                     isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-100' : 'text-white/50 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
