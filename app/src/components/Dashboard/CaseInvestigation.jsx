@@ -58,8 +58,9 @@ function VolumeChartTooltip({ active, payload, isLight }) {
         <span className="font-mono font-medium">10 berkas/hari</span>
       </p>
       {data.isSpike && (
-        <div className="mt-1.5 pt-1 border-t border-rose-100 dark:border-white/10 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
-          ⚠️ Lonjakan 8.5x di atas kapasitas wajar
+        <div className="mt-1.5 pt-1 border-t border-rose-100 dark:border-white/10 text-[10px] text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+          <span>Lonjakan 8.5x di atas kapasitas wajar</span>
         </div>
       )}
     </div>
@@ -145,9 +146,9 @@ export default function CaseInvestigation({
     return (
       <g>
         <rect
-          x={x + width / 2 - 22}
+          x={x + width / 2 - 14}
           y={y - 21}
-          width={44}
+          width={28}
           height={17}
           rx={5}
           fill={isLight ? '#e11d48' : '#f43f5e'}
@@ -161,7 +162,7 @@ export default function CaseInvestigation({
           fontWeight={800}
           fontFamily="monospace"
         >
-          85 ⚠️
+          85
         </text>
       </g>
     );
@@ -543,8 +544,8 @@ export default function CaseInvestigation({
                             return (
                               <g key={`spike-dot-${index}`}>
                                 <circle cx={cx} cy={cy} r={6} fill="#e11d48" stroke="#ffffff" strokeWidth={2} />
-                                <rect x={cx - 18} y={cy - 20} width={36} height={15} rx={4} fill={isLight ? '#e11d48' : '#f43f5e'} />
-                                <text x={cx} y={cy - 9} fill="#ffffff" textAnchor="middle" fontSize={9} fontWeight={800} fontFamily="monospace">85 ⚠️</text>
+                                <rect x={cx - 14} y={cy - 20} width={28} height={15} rx={4} fill={isLight ? '#e11d48' : '#f43f5e'} />
+                                <text x={cx} y={cy - 9} fill="#ffffff" textAnchor="middle" fontSize={9.5} fontWeight={800} fontFamily="monospace">85</text>
                               </g>
                             );
                           }

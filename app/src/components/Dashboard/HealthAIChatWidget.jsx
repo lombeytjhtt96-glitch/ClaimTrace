@@ -321,7 +321,9 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
           <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24]/80 text-white'}`}>
             {messages.length === 0 && (
               <div className={`text-center py-6 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                <div className="text-4xl mb-3">👋</div>
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                  <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
                 <p className={`text-xs font-medium mb-4 px-2 leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                   Halo! Saya <strong className={isLight ? 'text-emerald-800 font-bold' : 'text-white'}>Asisten Audit JKN</strong>, kopilot multi-agen untuk Verifikator Medis BPJS Kesehatan. Ada yang bisa dibantu hari ini?
                 </p>
