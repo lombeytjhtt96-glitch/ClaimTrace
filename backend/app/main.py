@@ -1132,8 +1132,47 @@ def generate_claimtrace_local_forensic_report(prompt_text: str) -> str:
     risk_score = 0.05
     intervention_plan = None
 
+    # 0a. Pertanyaan Identitas Pengguna / Verifikator yang Sedang Login ("aku siapa", "siapa saya", "profil saya", dll.)
+    if any(k in lower for k in ["aku siapa", "siapa aku", "siapa saya", "profil saya", "nama saya", "role saya", "siapa verifikator", "identitas saya", "siapakah aku", "siapakah saya"]):
+        resp_text = (
+            "### 👤 Profil & Identitas Sesi Verifikator Aktif\n\n"
+            "Anda saat ini terotentikasi dan login sebagai:\n"
+            "* **Nama Lengkap**: **Budi Santoso, S.Kom, M.TI**\n"
+            "* **NIP**: **199208152015031002**\n"
+            "* **Peran / Jabatan**: **Analis Forensik Digital Anti-Fraud & Verifikator Klaim JKN**\n"
+            "* **Kedeputian**: **Kedeputian Bidang Pengawasan dan Pemeriksaan (Wasrik) BPJS Kesehatan**\n"
+            "* **Hak Akses Konsol**: Pra-Bayar Triage Cockpit, Ledger Audit SHA-256, OSRM Geovelocity, dan Penetapan Disposisi BAKB / HOLD_BAKB.\n\n"
+            "Anda memegang wewenang penuh verifikasi pra-bayar untuk 85 berkas klaim berisiko tinggi (Jalur Merah) hari ini."
+        )
+        intent = "user_identity_check"
+        resolved_agent = "ClaimTrace"
+        agents_invoked = ["ClaimTrace", "IA"]
+        risk_level = "none"
+        risk_score = 0.0
+        intervention_plan = None
+
+    # 0b. Pertanyaan seputar Jumlah Pasien / Peserta / Kasus Korban ("berapa pasien", "berapa pasian", "jumlah pasien", dll.)
+    elif any(k in lower for k in ["berapa pasien", "berapa pasian", "jumlah pasien", "jumlah pasian", "berapa peserta", "jumlah peserta", "total pasien", "total pasian", "total pesien"]):
+        resp_text = (
+            "### 📊 Rekapitulasi Jumlah Pasien & Berkas Klaim JKN Hari Ini (14 Oktober 2026)\n\n"
+            "Berdasarkan pangkalan data DuckDB terintegrasi ClaimTrace AI:\n\n"
+            "1. **Total Pasien / Berkas Klaim Hari Ini**: **4.341 Orang / Berkas**\n"
+            "   * **Jalur Hijau (Lolos Otomatis / Fast-Track)**: **3.892 pasien (89,6%)** — Estimasi beban Rp 5.220.000 (Skor risiko 17.5)\n"
+            "   * **Jalur Kuning (Klarifikasi Dokumen Digital)**: **364 pasien (8,4%)** — Estimasi beban Rp 1.950.000 (Skor risiko 62.0)\n"
+            "   * **Jalur Merah (Penahanan Pra-Bayar / Audit Freeze)**: **85 pasien prioritas (2,0%)** — Nilai klaim Rp 72.450.000 (Skor risiko 79.17 - 94.0)\n\n"
+            "2. **Total Peserta JKN Terdampak Kasus Audit Khusus (Korban Sindikat)**: **103 Peserta**\n"
+            "   * **85 Peserta**: Korban pencatutan identitas baksos fisioterapi fiktif di RS Khusus Mitra Husada (8 dari 10 sangkal hadir di Mobile JKN).\n"
+            "   * **18 Peserta**: Korban manipulasi keparahan / upcoding diagnosa (gastritis diubah ke perdarahan cerna berat) di RS Medika Prima."
+        )
+        intent = "analytics_query"
+        resolved_agent = "IA"
+        agents_invoked = ["IA", "CMA"]
+        risk_level = "none"
+        risk_score = 0.0
+        intervention_plan = None
+
     # 1. Definisi & Pengenalan Sistem ClaimTrace (Pertanyaan: "claimtrace itu apa", "apa itu", "fungsi", dll.)
-    if any(k in lower for k in ["claimtrace", "apa itu", "definisi", "pengertian", "arsitektur", "konsep", "tujuan", "fungsi", "cara kerja", "sistem apa", "kamu siapa", "siapa kamu", "bantuan", "panduan"]):
+    elif any(k in lower for k in ["claimtrace", "apa itu", "definisi", "pengertian", "arsitektur", "konsep", "tujuan", "fungsi", "cara kerja", "sistem apa", "kamu siapa", "siapa kamu", "bantuan", "panduan"]):
         resp_text = (
             "### 🛡️ Apa Itu ClaimTrace?\n\n"
             "**ClaimTrace** adalah **Decision Support System (DSS) Pengawasan & Penapisan Risiko Klaim Pra-Bayar Faskes JKN** "
@@ -1406,22 +1445,17 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
         }
 
     api_key = os.getenv("GEMINI_API_KEY")
-    if "fast" in pref_lower or "lite" in pref_lower:
-        mapped_preferred = "gemini-3.5-flash-lite"
-    elif "pro" in pref_lower:
-        mapped_preferred = "gemini-3.7-flash"
-    else:
-        mapped_preferred = "gemini-3.5-flash"
 
-    # Fast 2-tier model fallback: primary preferred -> stable gemini-3.5-flash
-    models = [mapped_preferred]
-    if "gemini-3.5-flash" not in models:
-        models.append("gemini-3.5-flash")
+    # Priority models: gemini-3.5-flash-lite is ultra-fast (~1.5s), backed by gemini-3.5-flash and gemini-3.6-flash
+    models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"]
+    if "pro" in pref_lower:
+        models.insert(0, "gemini-3.6-flash")
 
     # ClaimTrace Ground-Truth Operational Context
     operational_context = (
         "Konteks Sistem Operasional ClaimTrace AI BPJS Kesehatan (Tingkat Nasional):\n"
-        "- Total klaim hari ini: 4.341 berkas klaim nasional.\n"
+        "- Pengguna/Verifikator yang sedang login: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002).\n"
+        "- Total klaim & pasien hari ini: 4.341 orang / berkas klaim nasional.\n"
         "- Jalur Hijau (Fast-Track / Lolos Otomatis): 3.892 berkas (89,6%), estimasi Rp 5.220.000 (skor risiko 17.5).\n"
         "- Jalur Kuning (Klarifikasi Dokumen / Pending): 364 berkas (8,4%), estimasi Rp 1.950.000 (skor risiko 62.0).\n"
         "- Jalur Merah (Audit Freeze / HOLD_BAKB): 85 berkas prioritas (2,0%), nilai Rp 72.450.000 (skor risiko 79.17 - 94.0).\n"
@@ -1436,11 +1470,21 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
         else f"{operational_context}\n\nUser Question: {safe_user_prompt}"
     )
 
+    is_json_mode = any(k in full_prompt.lower() for k in ["respons json", "skema di atas", "objek json", "format json", "application/json"])
+
     if api_key:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        timeout_config = httpx.Timeout(18.0, connect=5.0)
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
             for model in models:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+                    gen_config = {
+                        "temperature": req.temperature or 0.25,
+                        "maxOutputTokens": 2048,
+                    }
+                    if is_json_mode:
+                        gen_config["responseMimeType"] = "application/json"
+
                     resp = await client.post(
                         url,
                         headers={
@@ -1449,10 +1493,7 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                         },
                         json={
                             "contents": [{"parts": [{"text": full_prompt}]}],
-                            "generationConfig": {
-                                "temperature": req.temperature or 0.25,
-                                "maxOutputTokens": 1024,
-                            },
+                            "generationConfig": gen_config,
                         },
                     )
                     if resp.status_code == 200:
@@ -1469,11 +1510,12 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                         usage = data.get("usageMetadata", {})
                         prompt_tokens = usage.get("promptTokenCount", len(full_prompt) // 4)
                         cand_tokens = usage.get("candidatesTokenCount", len(clean_text) // 4)
+                        print(f"[ClaimTrace AI Server Proxy] Success from model {model} ({cand_tokens} tokens generated)")
                         return {
                             "status": "success",
                             "ok": True,
                             "text": clean_text,
-                            "model_used": preferred,
+                            "model_used": f"Google Gemini ({model})",
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": cand_tokens,
                             "total_tokens": prompt_tokens + cand_tokens,
@@ -1485,10 +1527,10 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                         print(f"[ClaimTrace AI Server Proxy] Model {model} status {resp.status_code}. Trying alternative model...")
                         continue
                 except (httpx.ConnectTimeout, httpx.ConnectError, httpx.NetworkError) as net_err:
-                    print(f"[ClaimTrace AI Server Proxy] Network connection unreachable: {net_err}. Bypassing retries to maintain fast local SLA.")
-                    break
+                    print(f"[ClaimTrace AI Server Proxy] Network unreachable on {model}: {repr(net_err)}. Trying alternative model...")
+                    continue
                 except Exception as ex:
-                    print(f"[ClaimTrace AI Server Proxy] Model {model} attempt: {ex}")
+                    print(f"[ClaimTrace AI Server Proxy] Model {model} attempt exception: {type(ex).__name__}: {repr(ex)}")
                     continue
 
     # Fallback to local intelligent forensic engine
