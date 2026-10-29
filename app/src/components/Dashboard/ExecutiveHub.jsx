@@ -1240,14 +1240,14 @@ function ClaimAnomalyOverviewCard({ trendingTopics, severityDistribution, isLigh
             {Object.entries(severityDistribution).map(([level, count]) => (
               <div
                 key={level}
-                className={`p-3 rounded-xl text-center border ${
+                className={`p-3 rounded-xl text-center border transition-all ${
                   level === 'Kritis'
-                    ? isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/15 border-rose-500/30 text-white'
+                    ? isLight ? 'bg-rose-50 border-rose-300 text-rose-950 shadow-2xs' : 'bg-rose-500/15 border-rose-500/40 text-white'
                     : level === 'Tinggi'
-                    ? isLight ? 'bg-orange-50 border-orange-200 text-orange-900' : 'bg-orange-500/15 border-orange-500/30 text-white'
+                    ? isLight ? 'bg-orange-50 border-orange-300 text-orange-950 shadow-2xs' : 'bg-orange-500/15 border-orange-500/40 text-white'
                     : level === 'Sedang'
-                    ? isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/15 border-amber-500/30 text-white'
-                    : isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-500/15 border-emerald-500/30 text-white'
+                    ? isLight ? 'bg-amber-50 border-amber-300 text-amber-950 shadow-2xs' : 'bg-amber-500/15 border-amber-500/40 text-white'
+                    : isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-2xs' : 'bg-emerald-500/15 border-emerald-500/40 text-white'
                 }`}
               >
                 <div
@@ -1278,29 +1278,52 @@ function ClaimAnomalyOverviewCard({ trendingTopics, severityDistribution, isLigh
             </h3>
             <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Penapisan Tri-Layer</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {trendingTopics.map((topic, index) => {
-              const dotColors = [
-                'bg-rose-500',
-                'bg-orange-500',
-                'bg-amber-500',
-                'bg-sky-500',
-                'bg-emerald-500',
+              const topicStyles = [
+                {
+                  light: 'bg-rose-50 border-rose-300 text-rose-950 hover:bg-rose-100/90 shadow-2xs',
+                  dark: 'bg-rose-500/15 border-rose-500/35 text-rose-200 hover:bg-rose-500/25',
+                  dot: 'bg-rose-600 ring-2 ring-rose-200 dark:ring-rose-500/40',
+                  badge: 'bg-rose-100/90 text-rose-800 border-rose-200 dark:bg-rose-500/30 dark:text-rose-200 dark:border-rose-500/30',
+                },
+                {
+                  light: 'bg-orange-50 border-orange-300 text-orange-950 hover:bg-orange-100/90 shadow-2xs',
+                  dark: 'bg-orange-500/15 border-orange-500/35 text-orange-200 hover:bg-orange-500/25',
+                  dot: 'bg-orange-600 ring-2 ring-orange-200 dark:ring-orange-500/40',
+                  badge: 'bg-orange-100/90 text-orange-800 border-orange-200 dark:bg-orange-500/30 dark:text-orange-200 dark:border-orange-500/30',
+                },
+                {
+                  light: 'bg-amber-50 border-amber-300 text-amber-950 hover:bg-amber-100/90 shadow-2xs',
+                  dark: 'bg-amber-500/15 border-amber-500/35 text-amber-200 hover:bg-amber-500/25',
+                  dot: 'bg-amber-600 ring-2 ring-amber-200 dark:ring-amber-500/40',
+                  badge: 'bg-amber-100/90 text-amber-800 border-amber-200 dark:bg-amber-500/30 dark:text-amber-200 dark:border-amber-500/30',
+                },
+                {
+                  light: 'bg-sky-50 border-sky-300 text-sky-950 hover:bg-sky-100/90 shadow-2xs',
+                  dark: 'bg-sky-500/15 border-sky-500/35 text-sky-200 hover:bg-sky-500/25',
+                  dot: 'bg-sky-600 ring-2 ring-sky-200 dark:ring-sky-500/40',
+                  badge: 'bg-sky-100/90 text-sky-800 border-sky-200 dark:bg-sky-500/30 dark:text-sky-200 dark:border-sky-500/30',
+                },
+                {
+                  light: 'bg-emerald-50 border-emerald-300 text-emerald-950 hover:bg-emerald-100/90 shadow-2xs',
+                  dark: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-200 hover:bg-emerald-500/25',
+                  dot: 'bg-emerald-600 ring-2 ring-emerald-200 dark:ring-emerald-500/40',
+                  badge: 'bg-emerald-100/90 text-emerald-800 border-emerald-200 dark:bg-emerald-500/30 dark:text-emerald-200 dark:border-emerald-500/30',
+                },
               ];
-              const dotClass = dotColors[index % dotColors.length];
+              const style = topicStyles[index % topicStyles.length];
               return (
                 <span
                   key={topic.topic}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-800 border-slate-300 hover:border-slate-400 hover:bg-slate-200/60'
-                      : 'bg-white/5 text-white/90 border-white/10 hover:border-white/20 hover:bg-white/10'
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                    isLight ? style.light : style.dark
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${style.dot}`} />
                   <span>{topic.topic}</span>
-                  <span className={`text-[11px] font-mono font-bold ml-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                    ({topic.count} berkas)
+                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md border ${style.badge}`}>
+                    {topic.count} berkas
                   </span>
                 </span>
               );
