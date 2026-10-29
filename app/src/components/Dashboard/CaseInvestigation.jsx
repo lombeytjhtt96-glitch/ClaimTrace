@@ -7,6 +7,62 @@ import {
   ExternalLink, Info, Activity, GitBranch, ArrowRight, Lock, Check,
   Bot, Zap, ShieldAlert, Sparkles
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  ReferenceLine,
+  LabelList,
+  CartesianGrid,
+} from 'recharts';
+
+const volumeChartData = [
+  { date: '11 Okt', volume: 10, isSpike: false },
+  { date: '12 Okt', volume: 12, isSpike: false },
+  { date: '13 Okt', volume: 8, isSpike: false },
+  { date: '14 Okt', volume: 85, isSpike: true },
+  { date: '15 Okt', volume: 11, isSpike: false },
+];
+
+function VolumeChartTooltip({ active, payload, isLight }) {
+  if (!active || !payload?.length) return null;
+  const data = payload[0].payload;
+  return (
+    <div className={`rounded-xl border px-3 py-2 text-xs shadow-xl backdrop-blur-md ${
+      isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/60' : 'bg-[#00153A] border-white/10 text-white shadow-2xl'
+    }`}>
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <span className={`font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{data.date} 2026</span>
+        {data.isSpike && (
+          <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+            isLight ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+          }`}>
+            ANOMALI SPIKE
+          </span>
+        )}
+      </div>
+      <p className={`font-semibold flex items-center justify-between gap-4 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+        <span className={isLight ? 'text-slate-600' : 'text-white/70'}>Volume Klaim:</span>
+        <span className={`font-mono font-bold ${data.isSpike ? (isLight ? 'text-rose-600' : 'text-rose-400') : (isLight ? 'text-slate-900' : 'text-cyan-300')}`}>
+          {data.volume} berkas
+        </span>
+      </p>
+      <p className={`text-[10px] flex items-center justify-between gap-4 mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+        <span>Baseline Faskes:</span>
+        <span className="font-mono font-medium">10 berkas/hari</span>
+      </p>
+      {data.isSpike && (
+        <div className="mt-1.5 pt-1 border-t border-rose-100 dark:border-white/10 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
+          ⚠️ Lonjakan 8.5x di atas kapasitas wajar
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CaseInvestigation({ 
   caseData, 
@@ -78,6 +134,41 @@ export default function CaseInvestigation({
     { id: 'PST-77218910', name: 'Haryanto T.', status: 'denied', target: false },
     { id: 'PST-77218911', name: 'Indah K.', status: 'confirmed', target: false },
   ];
+
+  const renderCustomBarLabel = (props) => {
+    const { x, y, width, value, index } = props;
+    const item = volumeChartData[index];
+    const isSpike = item?.isSpike;
+    return (
+      <text
+        x={x + width / 2}
+        y={y - 5}
+        fill={isSpike ? (isLight ? '#e11d48' : '#fb7185') : (isLight ? '#475569' : '#94a3b8')}
+        textAnchor="middle"
+        fontSize={isSpike ? 11 : 9.5}
+        fontWeight={isSpike ? 800 : 600}
+        fontFamily="monospace"
+      >
+        {value}
+      </text>
+    );
+  };
+
+  const renderCustomXTick = ({ x, y, payload }) => {
+    const isSpike = payload?.value === '14 Okt';
+    return (
+      <text
+        x={x}
+        y={y + 12}
+        textAnchor="middle"
+        fill={isSpike ? (isLight ? '#e11d48' : '#fb7185') : (isLight ? '#475569' : '#94a3b8')}
+        fontSize={10}
+        fontWeight={isSpike ? 800 : 500}
+      >
+        {payload?.value}
+      </text>
+    );
+  };
 
   return (
     <div className={`space-y-4 font-inter ${isLight ? 'text-slate-800' : 'text-white'} tabular-nums`}>
@@ -232,67 +323,117 @@ export default function CaseInvestigation({
               </div>
             </div>
 
-            {/* MINI SPARKLINE BAR CHART WITH MOTION */}
-            <div className={`p-2.5 rounded-xl border space-y-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#000c24]/80 border-white/10'}`}>
+            {/* VOLUME HARIAN VS BASELINE (RECHARTS BAR CHART - EXECUTIVE HUB STYLE) */}
+            <div className={`p-3 rounded-xl border space-y-2 transition-all ${
+              isLight
+                ? 'bg-white border-slate-200 shadow-xs'
+                : 'bg-[#000d28]/70 border-white/10 shadow-inner'
+            }`}>
               <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-bold block uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/60'}`}>
-                  Volume Harian vs Baseline
-                </span>
-                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${isLight ? 'text-rose-700 bg-slate-100 border-slate-200' : 'text-rose-400 bg-white/10 border-white/15'}`}>
-                  Anomaly Spike
+                <div>
+                  <span className={`text-[11px] font-bold block uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
+                    Volume Harian vs Baseline
+                  </span>
+                  <span className={`text-[9.5px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    Baseline faskes: 10 berkas/hari
+                  </span>
+                </div>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                  isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                  <span>Anomaly Spike (8.5x)</span>
                 </span>
               </div>
-              <div className="flex items-end justify-between h-12 pt-1 px-1 gap-1.5 text-center font-mono tabular-nums">
-                <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className={`text-[8.5px] font-bold tabular-nums ${isLight ? 'text-slate-800' : 'text-white/50'}`}>10</span>
-                  <motion.div 
-                    initial={{ height: 0 }} 
-                    animate={{ height: '0.65rem' }} 
-                    transition={{ duration: 0.2 }}
-                    className={`w-full rounded-t ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} 
-                  />
-                  <span className={`text-[8.5px] font-semibold ${isLight ? 'text-slate-700' : 'text-white/40'}`}>11 Okt</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className={`text-[8.5px] font-bold tabular-nums ${isLight ? 'text-slate-800' : 'text-white/50'}`}>12</span>
-                  <motion.div 
-                    initial={{ height: 0 }} 
-                    animate={{ height: '0.8rem' }} 
-                    transition={{ duration: 0.2 }}
-                    className={`w-full rounded-t ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} 
-                  />
-                  <span className={`text-[8.5px] font-semibold ${isLight ? 'text-slate-700' : 'text-white/40'}`}>12 Okt</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className={`text-[8.5px] font-bold tabular-nums ${isLight ? 'text-slate-800' : 'text-white/50'}`}>8</span>
-                  <motion.div 
-                    initial={{ height: 0 }} 
-                    animate={{ height: '0.55rem' }} 
-                    transition={{ duration: 0.2 }}
-                    className={`w-full rounded-t ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} 
-                  />
-                  <span className={`text-[8.5px] font-semibold ${isLight ? 'text-slate-700' : 'text-white/40'}`}>13 Okt</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className={`text-[8.5px] font-bold tabular-nums ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>85</span>
-                  <motion.div 
-                    initial={{ height: 0 }} 
-                    animate={{ height: '2.1rem' }} 
-                    transition={{ duration: 0.2, type: "spring", stiffness: 200 }}
-                    className="w-full bg-rose-500 rounded-t shadow-xs" 
-                  />
-                  <span className={`text-[8.5px] font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>14 Okt</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className={`text-[8.5px] font-bold tabular-nums ${isLight ? 'text-slate-800' : 'text-white/50'}`}>11</span>
-                  <motion.div 
-                    initial={{ height: 0 }} 
-                    animate={{ height: '0.7rem' }} 
-                    transition={{ duration: 0.2 }}
-                    className={`w-full rounded-t ${isLight ? 'bg-slate-300' : 'bg-white/20'}`} 
-                  />
-                  <span className={`text-[8.5px] font-semibold ${isLight ? 'text-slate-700' : 'text-white/40'}`}>15 Okt</span>
-                </div>
+
+              <div className="h-40 w-full pt-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={volumeChartData}
+                    margin={{ top: 18, right: 10, left: -24, bottom: 2 }}
+                  >
+                    <defs>
+                      <linearGradient id="anomalySpikeGradientLight" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#e11d48" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#be123c" stopOpacity={0.9} />
+                      </linearGradient>
+                      <linearGradient id="anomalySpikeGradientDark" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fb7185" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#e11d48" stopOpacity={0.9} />
+                      </linearGradient>
+                      <linearGradient id="normalVolumeGradientLight" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#cbd5e1" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#94a3b8" stopOpacity={0.8} />
+                      </linearGradient>
+                      <linearGradient id="normalVolumeGradientDark" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.35)" stopOpacity={1} />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0.15)" stopOpacity={0.7} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
+                      strokeDasharray="3 3"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                      tick={renderCustomXTick}
+                      tickLine={false}
+                      axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.15)' }}
+                    />
+                    <YAxis
+                      stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
+                      domain={[0, 95]}
+                      ticks={[0, 25, 50, 75, 100]}
+                      tick={{
+                        fontSize: 9,
+                        fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
+                        fontFamily: 'monospace',
+                      }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      content={<VolumeChartTooltip isLight={isLight} />}
+                      cursor={{ fill: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255, 255, 255, 0.05)' }}
+                    />
+                    <ReferenceLine
+                      y={10}
+                      stroke={isLight ? '#0284c7' : '#38bdf8'}
+                      strokeDasharray="3 3"
+                      strokeWidth={1.5}
+                      label={{
+                        value: 'Baseline: 10',
+                        position: 'insideTopLeft',
+                        fill: isLight ? '#0284c7' : '#38bdf8',
+                        fontSize: 9,
+                        fontWeight: 700,
+                      }}
+                    />
+                    <Bar
+                      dataKey="volume"
+                      radius={[6, 6, 0, 0]}
+                      barSize={28}
+                      isAnimationActive={false}
+                    >
+                      {volumeChartData.map((entry, index) => (
+                        <Cell
+                          key={`vol-cell-${index}`}
+                          fill={
+                            entry.isSpike
+                              ? (isLight ? 'url(#anomalySpikeGradientLight)' : 'url(#anomalySpikeGradientDark)')
+                              : (isLight ? 'url(#normalVolumeGradientLight)' : 'url(#normalVolumeGradientDark)')
+                          }
+                        />
+                      ))}
+                      <LabelList
+                        dataKey="volume"
+                        content={renderCustomBarLabel}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
