@@ -1409,11 +1409,11 @@ async def generate_claimtrace_content_endpoint(req: GeminiGenerateRequest):
 @app.post("/api/v1/gemini/generate")
 async def generate_gemini_content(req: GeminiGenerateRequest):
     """
-    Secure server-side proxy for ClaimTrace AI Engine.
-    The client NEVER receives or handles raw API keys (Zero-Client-Key Architecture).
-    Implements Active Prompt Firewall (Anti-Injection/Jailbreak) and Outbound PHI Scrubber.
+    Direct real-time intelligence engine powered by Google Gemini API Studio.
+    Every query is processed live and dynamically by the Gemini LLM brain.
+    No hardcoded regex or canned static responses.
     """
-    # 1. Inspect Prompt for Injections or Jailbreaks
+    # 1. Active Prompt Firewall (Anti-Injection/Jailbreak)
     is_safe, sanitized_user_prompt, warning_note = inspect_and_sanitize_prompt(req.prompt)
     if not is_safe:
         audit_logger.record_event(
@@ -1423,67 +1423,56 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
             payload={"alert": warning_note, "raw_snippet": req.prompt[:120]}
         )
 
-    # 2. Outbound PHI Sanitize (Ensure raw NIKs/cards in user prompt are masked)
+    # 2. Outbound PHI Sanitize
     safe_user_prompt, _ = redact_text_phi(sanitized_user_prompt)
 
-    # 3. Dynamic Intent Check for domain queries to guarantee authoritative data
-    local_domain_response = generate_claimtrace_local_forensic_report(safe_user_prompt)
-
-    preferred = req.preferred_model or "claimtrace-ai-core"
-    pref_lower = preferred.lower()
-
-    # If caller specifically asked for local engine or offline mode, return instantly
-    if "local" in pref_lower or "offline" in pref_lower:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
         return {
-            "status": "success",
-            "ok": True,
-            "text": local_domain_response,
-            "model_used": "claimtrace-local-engine",
-            "prompt_tokens": len(safe_user_prompt) // 4,
-            "completion_tokens": len(local_domain_response) // 4,
-            "total_tokens": (len(safe_user_prompt) + len(local_domain_response)) // 4,
+            "status": "error",
+            "ok": False,
+            "text": "GEMINI_API_KEY belum dikonfigurasi di lingkungan server backend (.env).",
+            "model_used": "none"
         }
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    # Core Persona & Live System Knowledge for Gemini LLM
+    base_system_prompt = """Anda adalah ClaimTrace AI, asisten intelijen dan analitik mutakhir untuk Decision Support System (DSS) Pengawasan Klaim JKN BPJS Kesehatan.
+Anda memiliki kecerdasan murni untuk berpikir bebas, kritis, logis, kreatif, dan real-time langsung dari pemikiran asli Anda.
 
-    # Priority models: gemini-3.5-flash-lite is ultra-fast (~1.5s), backed by gemini-3.5-flash and gemini-3.6-flash
+Konteks Pengguna & Sistem BPJS Kesehatan:
+- Anda mendampingi Verifikator aktif: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002).
+- Data operasional DuckDB hari ini mencatat 4.341 berkas klaim nasional: 3.892 berkas Jalur Hijau (lolos otomatis), 364 berkas Jalur Kuning (klarifikasi dokumen faskes), 85 berkas prioritas Jalur Merah (ditahan pra-bayar / HOLD_BAKB dengan nilai Rp 72.450.000,-), serta total 103 peserta JKN teridentifikasi sebagai korban kasus audit khusus.
+- Kasus prioritas yang sedang dipantau: Phantom Billing baksos fisioterapi fiktif di RS Khusus Mitra Husada dan Upcoding tingkat keparahan di RS Medika Prima.
+- Kerangka verifikasi: Lapis 1 (Klinis/ICD-10/INA-CBG), Lapis 2 (Legalitas SIP SATUSEHAT & Geovelocity OSRM), Lapis 3 (Telemetri out-of-band Mobile JKN).
+
+Prinsip Penalaran:
+- Berpikirlah secara mandiri, hidup, cerdas, dan luwes. Jawablah setiap pertanyaan pengguna secara langsung, relevan, dan alami tanpa template kaku atau hafalan.
+- Anda bebas bernalar, memberi analogi, edukasi, berdiskusi santai, maupun analisis mendalam sesuai kebutuhan pengguna."""
+
+    full_system_prompt = (base_system_prompt + "\n\n" + req.system_instruction) if req.system_instruction else base_system_prompt
+
+    is_json_mode = any(k in (safe_user_prompt + (req.system_instruction or "")).lower() for k in ["respons json", "skema di atas", "objek json", "format json", "application/json"])
+
     models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"]
-    if "pro" in pref_lower:
-        models.insert(0, "gemini-3.6-flash")
 
-    # ClaimTrace Ground-Truth Operational Context
-    operational_context = (
-        "Konteks Sistem Operasional ClaimTrace AI BPJS Kesehatan (Tingkat Nasional):\n"
-        "- Pengguna/Verifikator yang sedang login: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002).\n"
-        "- Total klaim & pasien hari ini: 4.341 orang / berkas klaim nasional.\n"
-        "- Jalur Hijau (Fast-Track / Lolos Otomatis): 3.892 berkas (89,6%), estimasi Rp 5.220.000 (skor risiko 17.5).\n"
-        "- Jalur Kuning (Klarifikasi Dokumen / Pending): 364 berkas (8,4%), estimasi Rp 1.950.000 (skor risiko 62.0).\n"
-        "- Jalur Merah (Audit Freeze / HOLD_BAKB): 85 berkas prioritas (2,0%), nilai Rp 72.450.000 (skor risiko 79.17 - 94.0).\n"
-        "- Total Korban Peserta JKN Tercatat: 103 Peserta JKN. Rincian: 85 peserta korban pencatutan baksos fiktif fisioterapi di RS Khusus Mitra Husada (kuota rujukan hangus, 8 dari 10 sangkal hadir di Mobile JKN) dan 18 peserta korban manipulasi tingkat keparahan (upcoding severity level III) di RS Medika Prima.\n"
-        "- Potensi kerugian dicegah (HOLD_BAKB): Rp 72.450.000,- langsung dibekukan sebelum cair. Total eksposur sindikat faskes fiktif yang digagalkan mencapai Rp 1.300.500.000,- (Rp 1,3 Miliar).\n"
-        "- Anomali Impossible Travel: dr. Hendra Gunawan Sp.A tercatat di RSUD Pasar Rebo (09:15) dan RS Immanuel Bandung (10:00) jarak 148,6 km kecepatan transit 198,1 km/jam.\n"
-    )
-
-    full_prompt = (
-        f"{req.system_instruction}\n\n---\n\n{operational_context}\n\nUser Question: {safe_user_prompt}"
-        if req.system_instruction
-        else f"{operational_context}\n\nUser Question: {safe_user_prompt}"
-    )
-
-    is_json_mode = any(k in full_prompt.lower() for k in ["respons json", "skema di atas", "objek json", "format json", "application/json"])
-
-    if api_key:
-        timeout_config = httpx.Timeout(18.0, connect=5.0)
-        async with httpx.AsyncClient(timeout=timeout_config) as client:
-            for model in models:
+    timeout_config = httpx.Timeout(20.0, connect=5.0)
+    async with httpx.AsyncClient(timeout=timeout_config) as client:
+        for model in models:
+            for attempt in range(2):
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
                     gen_config = {
-                        "temperature": req.temperature or 0.25,
+                        "temperature": req.temperature or 0.45,
                         "maxOutputTokens": 2048,
                     }
                     if is_json_mode:
                         gen_config["responseMimeType"] = "application/json"
+
+                    payload = {
+                        "contents": [{"parts": [{"text": safe_user_prompt}]}],
+                        "systemInstruction": {"parts": [{"text": full_system_prompt}]},
+                        "generationConfig": gen_config,
+                    }
 
                     resp = await client.post(
                         url,
@@ -1491,10 +1480,7 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                             "Content-Type": "application/json",
                             "X-goog-api-key": api_key,
                         },
-                        json={
-                            "contents": [{"parts": [{"text": full_prompt}]}],
-                            "generationConfig": gen_config,
-                        },
+                        json=payload,
                     )
                     if resp.status_code == 200:
                         data = resp.json()
@@ -1504,13 +1490,12 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                             .get("content", {})
                             .get("parts", [])
                         ).strip()
-                        # Outbound PHI scrubber
                         clean_text, _ = redact_text_phi(text_part)
 
                         usage = data.get("usageMetadata", {})
-                        prompt_tokens = usage.get("promptTokenCount", len(full_prompt) // 4)
+                        prompt_tokens = usage.get("promptTokenCount", len(safe_user_prompt) // 4)
                         cand_tokens = usage.get("candidatesTokenCount", len(clean_text) // 4)
-                        print(f"[ClaimTrace AI Server Proxy] Success from model {model} ({cand_tokens} tokens generated)")
+                        print(f"[ClaimTrace AI Server Proxy] Real-time response generated by Google Gemini ({model}) - {cand_tokens} tokens")
                         return {
                             "status": "success",
                             "ok": True,
@@ -1520,29 +1505,42 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
                             "completion_tokens": cand_tokens,
                             "total_tokens": prompt_tokens + cand_tokens,
                         }
-                    elif resp.status_code in (401, 403):
-                        print(f"[ClaimTrace AI Server Proxy] Upstream authentication rejected (status {resp.status_code}). Falling back to local forensic engine.")
-                        break
-                    elif resp.status_code in (400, 404, 429, 503):
-                        print(f"[ClaimTrace AI Server Proxy] Model {model} status {resp.status_code}. Trying alternative model...")
+                    elif resp.status_code == 503:
+                        print(f"[ClaimTrace AI Server Proxy] Model {model} 503 high demand spike, retrying...")
+                        await asyncio.sleep(0.5)
                         continue
+                    elif resp.status_code in (400, 404, 429):
+                        print(f"[ClaimTrace AI Server Proxy] Model {model} status {resp.status_code}, trying next model...")
+                        break
                 except (httpx.ConnectTimeout, httpx.ConnectError, httpx.NetworkError) as net_err:
-                    print(f"[ClaimTrace AI Server Proxy] Network unreachable on {model}: {repr(net_err)}. Trying alternative model...")
-                    continue
+                    print(f"[ClaimTrace AI Server Proxy] Network error on {model}: {repr(net_err)}")
+                    break
                 except Exception as ex:
-                    print(f"[ClaimTrace AI Server Proxy] Model {model} attempt exception: {type(ex).__name__}: {repr(ex)}")
-                    continue
+                    print(f"[ClaimTrace AI Server Proxy] Model {model} exception: {repr(ex)}")
+                    break
 
-    # Fallback to local intelligent forensic engine
-    fallback_text = local_domain_response
+    # If all upstream models are completely unreachable (e.g. offline)
+    error_msg = "Maaf, koneksi ke Google Gemini AI Studio saat ini tidak dapat terhubung. Mohon periksa koneksi internet atau kuota API Studio Anda."
+    if is_json_mode:
+        import json
+        error_msg = json.dumps({
+            "response": error_msg,
+            "intent": "system_notice",
+            "resolvedAgent": "ClaimTrace",
+            "agentsInvoked": ["ClaimTrace"],
+            "riskLevel": "none",
+            "riskScore": 0.0,
+            "interventionPlan": None
+        })
+
     return {
-        "status": "success",
-        "ok": True,
-        "text": fallback_text,
-        "model_used": "claimtrace-local-engine",
-        "prompt_tokens": len(full_prompt) // 4,
-        "completion_tokens": len(fallback_text) // 4,
-        "total_tokens": (len(full_prompt) + len(fallback_text)) // 4,
+        "status": "error",
+        "ok": False,
+        "text": error_msg,
+        "model_used": "offline-notice",
+        "prompt_tokens": len(safe_user_prompt) // 4,
+        "completion_tokens": len(error_msg) // 4,
+        "total_tokens": (len(safe_user_prompt) + len(error_msg)) // 4,
     }
 
 # =========================================================================
