@@ -888,7 +888,7 @@ export default function App() {
                     type="submit"
                     className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1 text-[10.5px] font-bold border transition-colors cursor-pointer keep-white ${
                       isLight 
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 shadow-xs' 
+                        ? 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-600 shadow-xs' 
                         : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/50 shadow-xs'
                     }`}
                   >
@@ -1886,7 +1886,7 @@ export default function App() {
                               <motion.button
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => handlePatientAnswer('confirmed')}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm transition"
+                                className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm transition"
                               >
                                 <CheckCircle className="w-4 h-4" />
                                 <span>Ya, Saya Hadir</span>

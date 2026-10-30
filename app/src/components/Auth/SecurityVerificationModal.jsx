@@ -389,7 +389,7 @@ export default function SecurityVerificationModal({
                 ))}
               </div>
 
-              <div className={`p-2.5 rounded-xl border text-[11px] mb-3 space-y-1 ${
+              <div className={`p-2.5 rounded-xl border text-[11px] mb-4 space-y-1.5 ${
                 effectiveIsLight
                   ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
                   : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
@@ -436,7 +436,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyPin}
                 disabled={isVerifying || pin.join('').length < 6}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -496,7 +496,7 @@ export default function SecurityVerificationModal({
                 ))}
               </div>
 
-              <div className={`p-2.5 rounded-xl border text-[11px] mb-3 space-y-1 ${
+              <div className={`p-2.5 rounded-xl border text-[11px] mb-4 space-y-1.5 ${
                 effectiveIsLight
                   ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
                   : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
@@ -549,7 +549,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otp.join('').length < 6}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -679,7 +679,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleConfirmSession}
                 disabled={isVerifying}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
               >
                 {isVerifying ? 'Mengaktifkan Sesi...' : 'Konfirmasi & Masuk Dasbor'}
               </button>

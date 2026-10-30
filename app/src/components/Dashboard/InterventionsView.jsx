@@ -502,7 +502,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'dashboard'
                 ? isLight
-                  ? 'bg-emerald-600 text-white shadow-md'
+                  ? 'bg-emerald-700 text-white shadow-md'
                   : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
                 : isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
@@ -518,7 +518,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'queue'
                 ? isLight
-                  ? 'bg-emerald-600 text-white shadow-md'
+                  ? 'bg-emerald-700 text-white shadow-md'
                   : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
                 : isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
@@ -528,7 +528,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             <Clock className="w-3.5 h-3.5" />
             <span>Antrean Telaah (HITL)</span>
             {queuePlans.length > 0 && (
-              <span className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                 activeTab === 'queue'
                   ? isLight
                     ? 'bg-sky-800 text-white'
@@ -547,7 +547,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'plans'
                 ? isLight
-                  ? 'bg-emerald-600 text-white shadow-md'
+                  ? 'bg-emerald-700 text-white shadow-md'
                   : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
                 : isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
@@ -563,7 +563,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'users'
                 ? isLight
-                  ? 'bg-emerald-600 text-white shadow-md'
+                  ? 'bg-emerald-700 text-white shadow-md'
                   : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
                 : isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
@@ -948,7 +948,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                           note: '',
                         })
                       }
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Setujui Intervensi</span>
@@ -1181,7 +1181,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                             onClick={() => onSelectCase(getPlanCaseDossier(plan))}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5 ${
                               isLight
-                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                                 : 'bg-[#FFCA40] text-[#00134A] hover:bg-[#ffd566]'
                             }`}
                           >
@@ -1393,7 +1393,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md cursor-pointer ${
                   reviewNoteModal.type === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                    ? 'bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500'
                     : 'bg-rose-600 hover:bg-rose-500'
                 }`}
               >

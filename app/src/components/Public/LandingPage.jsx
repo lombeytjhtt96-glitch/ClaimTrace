@@ -351,7 +351,7 @@ export default function LandingPage({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogin}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Masuk Portal Verifikator</span>
@@ -438,7 +438,7 @@ export default function LandingPage({
                 whileHover={{ scale: 1.03, boxShadow: '0 12px 25px -5px rgba(16, 185, 129, 0.4)' }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleLogin}
-                className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center space-x-2 transition group cursor-pointer"
+                className="px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center space-x-2 transition group cursor-pointer"
               >
                 <Lock className="w-4 h-4 group-hover:rotate-6 transition-transform" />
                 <span>Masuk Portal Verifikator</span>
@@ -1528,7 +1528,7 @@ export default function LandingPage({
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
+                    className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center space-x-2">
@@ -1620,7 +1620,7 @@ export default function LandingPage({
                         setFormFaskes('');
                         setFormDescription('');
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border border-emerald-500 font-bold transition cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-md border border-emerald-600 font-bold transition cursor-pointer shadow-xs"
                     >
                       Kirim Laporan Baru
                     </motion.button>

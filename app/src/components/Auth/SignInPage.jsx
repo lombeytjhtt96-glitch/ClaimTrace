@@ -675,7 +675,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center justify-center space-x-2 transition-all duration-200 disabled:opacity-50 group cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs shadow-xl shadow-emerald-950/60 border border-emerald-400/30 flex items-center justify-center space-x-2 transition-all duration-200 disabled:opacity-50 group cursor-pointer"
             >
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">

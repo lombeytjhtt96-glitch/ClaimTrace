@@ -266,7 +266,7 @@ export default function CaseInvestigation({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onOpenDecision}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-950/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-950/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               aria-label="Eksekusi Berita Acara Klarifikasi Bersama"
             >
               <AlertOctagon className="w-4 h-4" />
@@ -846,7 +846,7 @@ export default function CaseInvestigation({
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.97 }}
             onClick={onOpenDecision}
-            className="text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center space-x-2 transition shadow-md shadow-emerald-900/20 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="text-xs font-bold px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white flex items-center space-x-2 transition shadow-md shadow-emerald-900/20 cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             <AlertOctagon className="w-3.5 h-3.5" />
             <span>Tindak Lanjut Konsol Keputusan</span>

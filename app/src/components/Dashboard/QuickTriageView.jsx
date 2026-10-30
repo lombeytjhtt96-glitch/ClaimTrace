@@ -623,7 +623,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                         className={`py-2 px-2.5 text-xs rounded-lg transition-all duration-200 relative cursor-pointer border flex items-center justify-center gap-2 ${
                           isSelected
                             ? isLight
-                              ? '!bg-emerald-600 !text-white !border-emerald-600 shadow-sm font-bold'
+                              ? '!bg-emerald-700 !text-white !border-emerald-700 shadow-sm font-bold'
                               : `${layer.textColor} bg-gradient-to-r from-health-blue-dark to-health-blue border border-[#FFCA40]/40 shadow-sm font-bold`
                             : isLight
                               ? 'bg-white/90 hover:bg-white text-slate-700 hover:text-slate-900 border-slate-200/90 font-semibold'
@@ -733,7 +733,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                 disabled={loading}
                 className={`px-6 py-2.5 font-bold rounded-xl transition-all duration-200 shadow-md flex items-center gap-2 text-sm cursor-pointer ${
                   isLight
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-700/20'
+                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-900/20'
                     : 'bg-gradient-to-tr from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-emerald-400/40 text-white shadow-emerald-950/20'
                 }`}
               >
@@ -805,7 +805,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                     severityChip === chip.id
                       ? isLight
-                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm font-bold'
+                        ? 'bg-emerald-700 text-white border-emerald-800 shadow-sm font-bold'
                         : 'bg-gradient-to-r from-health-blue-dark to-health-blue border-[#FFCA40]/50 text-[#FFCA40] shadow-md'
                       : isLight
                         ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
