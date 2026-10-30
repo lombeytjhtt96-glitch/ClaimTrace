@@ -13,9 +13,9 @@ pinned: false
 ### *Decision Support System (DSS) Pra-Bayar Berbasis Fusi Multi-Sinyal Determinis*
 **BPJS Kesehatan Healthkathon 2026** • Kategori: *Efisiensi Risiko pada Fasilitas Kesehatan*  
 **Fokus Sub-Kategori:** *#6 Phantom Billing & #11 Repeat Billing*  
-**Pusat Riset Rekayasa Sistem:** **TINEERENSE**  
-- **Arya Pratama, S.T., M.Kom. (Profil Fiktif)** (*Lead Systems Architect & Fullstack Security Engineer*)
-- **Dimas Daniswara, S.K.M., M.Epid. (Profil Fiktif)** (*Healthcare Domain Analyst & Machine Learning Modeler*)
+**Pusat Riset Rekayasa Sistem:** **TINEERENSE (MAN 1 Surakarta)**  
+- **Khalaf Faith Pradyatama** (*Ketua Tim · Lead Systems Architect & AppSec Engineer*)
+- **Gaudiansyah Abiyu Mahya** (*Anggota Tim · AI/ML Engineer & Healthcare Data Analyst*)
 
 ---
 

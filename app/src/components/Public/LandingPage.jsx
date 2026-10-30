@@ -1141,7 +1141,7 @@ export default function LandingPage({
                   Pusat Riset Rekayasa Sistem · TINEERENSE
                 </h3>
                 <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Divisi Riset Teknologi & Rekayasa Arsitektur Integritas Klaim Kesehatan
+                  Divisi Riset Teknologi & Rekayasa Arsitektur Integritas Klaim Kesehatan — MAN 1 Surakarta
                 </p>
               </div>
             </div>
@@ -1149,7 +1149,7 @@ export default function LandingPage({
             {/* Developer Profiles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Member 1: Profil Sintetis */}
+              {/* Member 1: Ketua Tim */}
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(16, 185, 129, 0.4)", boxShadow: "0 12px 24px -6px rgba(16, 185, 129, 0.2)" }}
                 transition={{ duration: 0.2 }}
@@ -1165,20 +1165,20 @@ export default function LandingPage({
                     transition={{ duration: 0.3 }}
                     className="w-12 h-12 rounded-xl bg-emerald-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-emerald-950/20"
                   >
-                    AP
+                    KP
                   </motion.div>
                   <div>
-                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Arya Pratama, S.T., M.Kom. (Profil Fiktif)</h4>
-                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>Lead Systems Architect & Fullstack Security Engineer</p>
-                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Sistem Arsitektur & Keamanan Siber (Data Sintetis)</p>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Khalaf Faith Pradyatama</h4>
+                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>Ketua Tim · Lead Systems Architect & AppSec Engineer</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>MAN 1 Surakarta · Rekayasa Perangkat Lunak & Keamanan Siber</p>
                   </div>
                 </div>
                 <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
-                  Bertanggung jawab atas perancangan arsitektur sistem ClaimTrace DSS, integrasi sistem konfirmasi Mobile JKN, protokol kriptografis SHA-256 anti-repudiasi.
+                  Memimpin perancangan dan arsitektur sistem ClaimTrace DSS, orkestrasi backend Python / FastAPI & basis data graf, penerapan Application Security (AppSec) & enkripsi AES-256-GCM, integrasi telemetri Mobile JKN, serta implementasi audit trail kriptografis SHA-256 anti-repudiasi.
                 </p>
               </motion.div>
 
-              {/* Member 2: Profil Sintetis */}
+              {/* Member 2: Anggota Tim */}
               <motion.div 
                 whileHover={{ y: -6, scale: 1.015, borderColor: "rgba(56, 189, 248, 0.4)", boxShadow: "0 12px 24px -6px rgba(56, 189, 248, 0.15)" }}
                 transition={{ duration: 0.2 }}
@@ -1194,16 +1194,16 @@ export default function LandingPage({
                     transition={{ duration: 0.3 }}
                     className="w-12 h-12 rounded-xl bg-cyan-600 text-white font-bold text-base flex items-center justify-center shadow-lg shadow-cyan-950/20"
                   >
-                    DD
+                    GA
                   </motion.div>
                   <div>
-                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'}`}>Dimas Daniswara, S.K.M., M.Epid. (Profil Fiktif)</h4>
-                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Healthcare Domain Analyst & Machine Learning Modeler</p>
-                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>Domain Kesehatan & Analisis Kebijakan (Data Sintetis)</p>
+                    <h4 className={`font-bold text-sm transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-cyan-700' : 'text-white group-hover:text-cyan-300'}`}>Gaudiansyah Abiyu Mahya</h4>
+                    <p className={`text-xs font-semibold ${effectiveIsLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Anggota Tim · AI/ML Engineer & Healthcare Data Analyst</p>
+                    <p className={`text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>MAN 1 Surakarta · Pemodelan AI/ML & Analisis Data Kesehatan</p>
                   </div>
                 </div>
                 <p className={`text-xs leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
-                  Bertanggung jawab atas telaah regulasi yuridis Program JKN (Perpres 82/2018, Permenkes 14 & 26/2021), perumusan bobot matematis 3 lapis bukti, kurasi dataset 10.000 klaim empiris, dan validasi beban kerja dokter spesialis di SATUSEHAT.
+                  Bertanggung jawab atas telaah regulasi yuridis Program JKN (Perpres 82/2018, UU PDP No. 27/2022, Permenkes 26/2021), perumusan bobot matematis 3 lapis bukti, kalibrasi ambang batas fusi skor risiko klaim faskes, serta validasi beban kerja dokter spesialis di SATUSEHAT SDMK.
                 </p>
               </motion.div>
 
@@ -1220,7 +1220,7 @@ export default function LandingPage({
             >
               <Info className={`w-4 h-4 shrink-0 mt-0.5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
               <p className="leading-relaxed">
-                Platform ini dikembangkan dengan metodologi rekayasa perangkat lunak mandiri yang menggabungkan verifikasi deterministik multi-sinyal, kepatuhan regulasi jaminan sosial nasional, serta mitigasi risiko operasional fasilitas kesehatan.
+                Platform ini dikembangkan secara orisinal oleh Tim TINEERENSE (MAN 1 Surakarta) untuk BPJS Kesehatan Healthkathon 2026 dengan metodologi rekayasa perangkat lunak mandiri yang menggabungkan verifikasi deterministik multi-sinyal, kepatuhan regulasi jaminan sosial nasional, serta mitigasi risiko operasional fasilitas kesehatan.
               </p>
             </motion.div>
           </motion.div>
