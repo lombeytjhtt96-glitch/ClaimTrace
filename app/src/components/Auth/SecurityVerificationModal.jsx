@@ -32,10 +32,15 @@ export default function SecurityVerificationModal({
     return initialStep === 'otp' ? 'otp' : initialStep === 'device' ? 'device' : 'pin';
   });
 
-  // Tahap 1: PIN Verifikator 6 Angka
-  const [pin, setPin] = useState(['', '', '', '', '', '']);
-  // Tahap 2: OTP Email Dinas
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const getExpectedPin = () => {
+    const isSiti = user?.email?.includes('siti') || user?.nip?.includes('1987') || (typeof identifier === 'string' && (identifier.includes('siti') || identifier.includes('1987')));
+    return isSiti ? ['1', '2', '3', '4', '5', '6'] : ['6', '5', '4', '3', '2', '1'];
+  };
+
+  // Tahap 1: PIN Verifikator 6 Angka (Pre-filled otomatis untuk kemudahan peninjauan Healthkathon)
+  const [pin, setPin] = useState(getExpectedPin);
+  // Tahap 2: OTP Email Dinas (Pre-filled otomatis dengan token simulasi 849201)
+  const [otp, setOtp] = useState(['8', '4', '9', '2', '0', '1']);
   const [otpCountdown, setOtpCountdown] = useState(55);
   // Tahap 3: Sesi Perangkat
   const [sessionDuration, setSessionDuration] = useState('1h');
@@ -51,12 +56,15 @@ export default function SecurityVerificationModal({
   useEffect(() => {
     if (!isOpen) return;
     setError(null);
+    const expected = getExpectedPin();
+    setPin(expected);
+    setOtp(['8', '4', '9', '2', '0', '1']);
     if (step === 'pin') {
       setTimeout(() => pinRefs.current[0]?.focus(), 60);
     } else if (step === 'otp') {
       setTimeout(() => otpRefs.current[0]?.focus(), 60);
     }
-  }, [step, isOpen]);
+  }, [step, isOpen, user, identifier]);
 
   useEffect(() => {
     if (!isOpen || step !== 'otp' || otpCountdown <= 0) return;
@@ -381,23 +389,23 @@ export default function SecurityVerificationModal({
                 ))}
               </div>
 
-              <div className={`p-2 rounded-lg border text-center text-[10px] mb-3 flex items-center justify-between ${
+              <div className={`p-2.5 rounded-xl border text-[11px] mb-3 space-y-1 ${
                 effectiveIsLight
-                  ? 'bg-amber-50/80 border-amber-200 text-amber-900'
-                  : 'bg-amber-950/20 border-amber-500/20 text-amber-200'
+                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                  : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
               }`}>
-                <span>PIN Default Demo: <strong>654321</strong> (Admin) / <strong>123456</strong></span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const p = (user?.email?.includes('admin') || user?.nip?.includes('1992')) ? '654321' : '123456';
-                    setPin(p.split(''));
-                    setError(null);
-                  }}
-                  className="underline font-bold hover:text-amber-700 dark:hover:text-amber-300 ml-2 cursor-pointer"
-                >
-                  Isi PIN Otomatis
-                </button>
+                <div className="flex items-center justify-between font-semibold text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    PIN Terisi Otomatis (Healthkathon)
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                    Auto-Filled
+                  </span>
+                </div>
+                <p className="text-[10px] leading-relaxed opacity-90">
+                  PIN otorisasi 6-digit ({pin.join('')}) telah terisi otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon dalam pengujian verifikasi keamanan.
+                </p>
               </div>
 
               <div className="flex items-center justify-between text-xs mb-4 px-1">
@@ -488,22 +496,23 @@ export default function SecurityVerificationModal({
                 ))}
               </div>
 
-              <div className={`p-2 rounded-lg border text-center text-[10px] mb-3 flex items-center justify-between ${
+              <div className={`p-2.5 rounded-xl border text-[11px] mb-3 space-y-1 ${
                 effectiveIsLight
-                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-                  : 'bg-emerald-950/20 border-emerald-500/20 text-emerald-200'
+                  ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                  : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
               }`}>
-                <span>Kode OTP Simulasi: <strong>849201</strong></span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOtp('849201'.split(''));
-                    setError(null);
-                  }}
-                  className="underline font-bold hover:text-emerald-700 dark:hover:text-emerald-300 ml-2 cursor-pointer"
-                >
-                  Isi OTP Otomatis
-                </button>
+                <div className="flex items-center justify-between font-semibold text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Kode OTP Terisi Otomatis (Healthkathon)
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                    Auto-Filled
+                  </span>
+                </div>
+                <p className="text-[10px] leading-relaxed opacity-90">
+                  Kode OTP Email kedinasan (849201) telah terisi otomatis agar Panitia dan Dewan Juri dapat memverifikasi alur MFA tanpa perlu membuka email eksternal.
+                </p>
               </div>
 
               <div className="flex items-center justify-between text-xs mb-4 px-1">
