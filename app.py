@@ -63,17 +63,17 @@ with gr.Blocks(title="ClaimTrace JKN - Decision Support System API") as demo:
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
-    # Launch Gradio server and register ZeroGPU hooks
+    # Launch Gradio server without Node SSR proxy so FastAPI directly handles API endpoints
     server_app, _, _ = demo.launch(
         server_name="0.0.0.0",
         server_port=port,
         prevent_thread_lock=True,
-        show_error=True
+        show_error=True,
+        ssr_mode=False
     )
     
-    # Prepend all FastAPI endpoints so they take precedence over Gradio catch-all SPA routes
-    for route in reversed(fastapi_app.routes):
-        server_app.routes.insert(0, route)
+    # Mount and register all FastAPI REST API routes so they respond directly to /api/v1/...
+    server_app.include_router(fastapi_app.router)
         
     # Block main thread to keep service live
     demo.block_thread()
