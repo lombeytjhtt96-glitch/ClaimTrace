@@ -24,8 +24,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       : typeof window !== 'undefined'
       ? localStorage.getItem('claimtrace_theme') !== 'dark'
       : true;
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState('admin.fraud@bpjs-kesehatan.go.id');
+  const [password, setPassword] = useState('Password123!');
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptchaCode());
   const [isCaptchaSpinning, setIsCaptchaSpinning] = useState(false);
@@ -251,54 +251,92 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </motion.div>
           )}
 
-          {/* QUICK DEMO ACCOUNTS PICKER */}
-          <div className={`p-2.5 rounded-xl border text-[11px] space-y-1.5 ${
+          {/* QUICK DEMO ACCOUNTS PICKER & HEALTHKATHON NOTICE */}
+          <div className={`p-2.5 rounded-xl border text-[11px] space-y-2 ${
             effectiveIsLight
-              ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
-              : 'bg-emerald-950/30 border-emerald-500/20 text-emerald-200'
+              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+              : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
           }`}>
             <div className="flex items-center justify-between font-semibold text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                Akun Uji Coba Healthkathon
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                Mode Pengujian Panitia Healthkathon
               </span>
-              <span className="text-[9px] opacity-75 font-normal">Klik untuk Isi Otomatis</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+                Auto-Filled
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setIdentifier('admin.fraud@bpjs-kesehatan.go.id');
-                  setPassword('Password123!');
-                  setCaptchaInput(captchaCode);
-                  setErrorMsg('');
-                }}
-                className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
-                  effectiveIsLight
-                    ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800 shadow-xs'
-                    : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
-                }`}
-              >
-                <span className="font-bold truncate text-emerald-700 dark:text-emerald-300">Super Admin (BS)</span>
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">Budi Santoso, S.Kom</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIdentifier('siti.rahma@bpjs-kesehatan.go.id');
-                  setPassword('Password123!');
-                  setCaptchaInput(captchaCode);
-                  setErrorMsg('');
-                }}
-                className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
-                  effectiveIsLight
-                    ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800 shadow-xs'
-                    : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
-                }`}
-              >
-                <span className="font-bold truncate text-emerald-700 dark:text-emerald-300">Verifikator (SR)</span>
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate">dr. Siti Rahma, Sp.PK</span>
-              </button>
+            
+            <p className="text-[10px] leading-relaxed opacity-90">
+              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu mengisi Kode Keamanan (CAPTCHA) di bawah ini.
+            </p>
+
+            <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-500/20">
+              <div className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 font-medium">
+                Pilih Persona Akun:
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIdentifier('admin.fraud@bpjs-kesehatan.go.id');
+                    setPassword('Password123!');
+                    setErrorMsg('');
+                  }}
+                  className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : effectiveIsLight
+                        ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800'
+                        : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
+                  }`}
+                >
+                  <span className={`font-bold truncate ${
+                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
+                      ? 'text-white'
+                      : 'text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    Super Admin (BS)
+                  </span>
+                  <span className={`text-[9px] truncate ${
+                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
+                      ? 'text-white/80'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    Budi Santoso, S.Kom
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIdentifier('siti.rahma@bpjs-kesehatan.go.id');
+                    setPassword('Password123!');
+                    setErrorMsg('');
+                  }}
+                  className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : effectiveIsLight
+                        ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800'
+                        : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
+                  }`}
+                >
+                  <span className={`font-bold truncate ${
+                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
+                      ? 'text-white'
+                      : 'text-emerald-700 dark:text-emerald-300'
+                  }`}>
+                    Verifikator (SR)
+                  </span>
+                  <span className={`text-[9px] truncate ${
+                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
+                      ? 'text-white/80'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    dr. Siti Rahma, Sp.PK
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
