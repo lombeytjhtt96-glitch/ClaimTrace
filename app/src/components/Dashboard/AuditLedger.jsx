@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
@@ -188,7 +189,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
 
   // Fetch live logs from backend if available & chain seamlessly
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/audit-logs')
+    fetch(`${API_BASE_URL}/api/v1/audit-logs`)
       .then(res => res.json())
       .then(data => {
         const rawChain = data?.chain || (Array.isArray(data) ? data : []);

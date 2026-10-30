@@ -4,6 +4,7 @@ __pycache__/
 .env
 .env.local
 *.log
-data/
 *.duckdb*
+/data/*.duckdb*
+/data/bpjs_sample_2025/
 chroma_db/

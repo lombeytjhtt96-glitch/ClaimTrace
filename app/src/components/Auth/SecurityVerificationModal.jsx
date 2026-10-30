@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Mail, Laptop, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 
@@ -112,7 +113,7 @@ export default function SecurityVerificationModal({
     setIsVerifying(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/auth/verify-pin', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,7 +145,7 @@ export default function SecurityVerificationModal({
     setIsVerifying(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/api/v1/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -172,7 +173,7 @@ export default function SecurityVerificationModal({
     try {
       setOtpCountdown(60);
       setError(null);
-      await fetch('http://localhost:8000/api/v1/auth/send-otp', {
+      await fetch(`${API_BASE_URL}/api/v1/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ export default function SecurityVerificationModal({
     setError(null);
     try {
       const durationMins = sessionDuration === '15m' ? 15 : sessionDuration === '8h' ? 480 : 60;
-      const res = await fetch('http://localhost:8000/api/v1/auth/trust-device', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/trust-device`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

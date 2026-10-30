@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Database,
@@ -297,13 +298,7 @@ const FALLBACK_ROWS = Array.from({ length: 25 }, (_, idx) => ({
   FKL47: idx % 3 === 0 ? 15300000 : idx % 2 === 0 ? 18450000 : 5800000
 }));
 
-const getApiBase = () => {
-  if (typeof window !== 'undefined') {
-    if (import.meta.env?.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-    return `${window.location.protocol}//${window.location.hostname}:8000`;
-  }
-  return 'http://localhost:8000';
-};
+const getApiBase = () => API_BASE_URL;
 
 export default function DatabaseViewerView({ isLight: propIsLight }) {
   const [themeIsLight, setThemeIsLight] = useState(() => {

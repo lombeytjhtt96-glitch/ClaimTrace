@@ -14,6 +14,8 @@
  * POST /api/v1/claimtrace-ai/generate
  */
 
+import { API_BASE_URL } from './apiConfig';
+
 // Zero Client-Side Key Architecture (NIST CSF 2.0 PR.DS-01 · UU PDP No. 27/2022)
 // All AI API credentials are securely stored on the backend server.
 // The web client NEVER receives, exposes, or processes raw API keys.
@@ -286,15 +288,7 @@ export async function callClaimTraceGenerateContent({
 }) {
   const startTime = performance.now();
   try {
-    const apiBase = (() => {
-      if (typeof window !== 'undefined') {
-        if (import.meta.env?.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return `${window.location.protocol}//${window.location.hostname}:8000`;
-        }
-      }
-      return '';
-    })();
+    const apiBase = API_BASE_URL;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
     let res;

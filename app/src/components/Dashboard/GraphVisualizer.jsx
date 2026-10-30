@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ReactFlow, 
@@ -523,7 +524,7 @@ export default function GraphVisualizer({
 
   const handleExportCypher = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/v1/graph/cypher-export');
+      const res = await fetch(`${API_BASE_URL}/api/v1/graph/cypher-export`);
       if (res.ok) {
         const text = await res.text();
         const blob = new Blob([text], { type: 'text/plain' });
