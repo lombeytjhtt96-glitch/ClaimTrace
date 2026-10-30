@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ResponsiveContainer,
@@ -1605,8 +1606,8 @@ export default function ExecutiveHub({
   const fetchLiveOverviewData = async () => {
     try {
       const [resClaims, resRisk] = await Promise.allSettled([
-        fetch('http://localhost:8000/api/v1/claims'),
-        fetch('http://localhost:8000/api/v1/duckdb/tools/financial-risk-summary')
+        fetch(`${API_BASE_URL}/api/v1/claims`),
+        fetch(`${API_BASE_URL}/api/v1/duckdb/tools/financial-risk-summary`)
       ]);
 
       let activeClaims = [];

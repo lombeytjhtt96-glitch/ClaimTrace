@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { 
   Settings, Check, X, RefreshCw, Eye, EyeOff, CheckCircle2,
   Sun, Moon, Monitor, Palette, Layers, Bot, Smartphone, 
@@ -444,7 +445,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         label: 'Titik Akhir API FastAPI Backend',
         help_text: 'Alamat gateway API mikroservis deteksi klaim dan manajemen audit kriptografis.',
         type: 'text',
-        value: 'http://localhost:8000/api/v1 (FastAPI Python 3.14)',
+        value: `${API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/api/v1 (FastAPI Production Engine)`,
         editable: false,
       },
       {

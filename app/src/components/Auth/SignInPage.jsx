@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { 
   Lock, User, Eye, EyeOff, ArrowRight, 
   AlertCircle, ArrowLeft, RefreshCw, ShieldCheck, Check
@@ -91,8 +92,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
     setIsSubmitting(true);
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8000` : 'http://localhost:8000');
-      const response = await fetch(`${apiBase}/api/v1/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
