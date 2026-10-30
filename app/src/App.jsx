@@ -128,6 +128,18 @@ export default function App() {
     setLegalModalOpen(true);
   };
 
+  const navigateToLandingSection = (sectionId) => {
+    setAuthView('landing');
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 120);
+  };
+
   // Sync state to URL for easy deep-linking and state preservation
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -626,11 +638,54 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Desktop Nav Links (Only Regulasi & PDP as requested by user) */}
-                <nav className="hidden md:flex items-center gap-7">
+                {/* Desktop Nav Links (Identik Lengkap dengan Landing Page) */}
+                <nav className="hidden md:flex items-center gap-6">
+                  <button 
+                    type="button"
+                    onClick={() => navigateToLandingSection('landing')}
+                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
+                    }`}
+                  >
+                    <span>Beranda</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => navigateToLandingSection('feature')}
+                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
+                    }`}
+                  >
+                    <span>Fitur Unggulan</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => navigateToLandingSection('about')}
+                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
+                    }`}
+                  >
+                    <span>Tentang Sistem</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => navigateToLandingSection('contact')}
+                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
+                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
+                    }`}
+                  >
+                    <span>Pengaduan WBS</span>
+                  </button>
+
                   <button
+                    type="button"
                     onClick={() => openLegalModal('privacy')}
-                    className={`text-sm font-semibold ${isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'} transition-colors py-1 relative group flex items-center space-x-1 cursor-pointer`}
+                    className={`text-sm font-semibold transition-colors py-1 relative group flex items-center space-x-1 cursor-pointer ${
+                      isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                    }`}
                   >
                     <Shield className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                     <span>Regulasi &amp; PDP</span>
