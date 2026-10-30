@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../services/apiConfig';
 import { 
   Lock, User, Eye, EyeOff, ArrowRight, 
@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
+
+const GOOGLE_RECAPTCHA_SITE_KEY = '6LcyngcuAAAAAMyAqhjwvP6I5sfStqi4CCKcZCn2';
 
 // Generator kode Captcha 5 karakter alfanumerik (mengecualikan karakter ambigu 0/O, 1/I)
 const generateCaptchaCode = () => {
@@ -29,9 +31,79 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaCode, setCaptchaCode] = useState(() => generateCaptchaCode());
   const [isCaptchaSpinning, setIsCaptchaSpinning] = useState(false);
+  const [captchaMode, setCaptchaMode] = useState('recaptcha'); // 'recaptcha' | 'manual'
+  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [recaptchaError, setRecaptchaError] = useState(false);
+  const recaptchaContainerRef = useRef(null);
+  const recaptchaWidgetId = useRef(null);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Inisialisasi Google reCAPTCHA v2 loader
+  useEffect(() => {
+    if (captchaMode !== 'recaptcha') return;
+
+    let isMounted = true;
+
+    const renderRecaptcha = () => {
+      if (!isMounted || !recaptchaContainerRef.current) return;
+      if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
+        try {
+          recaptchaContainerRef.current.innerHTML = '';
+          const targetDiv = document.createElement('div');
+          recaptchaContainerRef.current.appendChild(targetDiv);
+
+          const wid = window.grecaptcha.render(targetDiv, {
+            sitekey: GOOGLE_RECAPTCHA_SITE_KEY,
+            theme: effectiveIsLight ? 'light' : 'dark',
+            hl: 'id',
+            callback: (token) => {
+              if (isMounted) {
+                setRecaptchaToken(token);
+                setErrorMsg('');
+              }
+            },
+            'expired-callback': () => {
+              if (isMounted) {
+                setRecaptchaToken('');
+              }
+            },
+            'error-callback': () => {
+              if (isMounted) {
+                setRecaptchaError(true);
+              }
+            }
+          });
+          recaptchaWidgetId.current = wid;
+        } catch (err) {
+          console.warn('reCAPTCHA init notice:', err);
+        }
+      }
+    };
+
+    if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
+      const timer = setTimeout(renderRecaptcha, 50);
+      return () => clearTimeout(timer);
+    } else {
+      window.claimtraceRecaptchaCallback = () => {
+        renderRecaptcha();
+      };
+      const existingScript = document.getElementById('claimtrace-recaptcha-script');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.id = 'claimtrace-recaptcha-script';
+        script.src = 'https://www.google.com/recaptcha/api.js?onload=claimtraceRecaptchaCallback&render=explicit&hl=id';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [captchaMode, effectiveIsLight]);
 
   // State untuk Modal Verifikasi Keamanan Berlapis (PIN 6 Angka, OTP Email, Sesi Device)
   const [showVerificationModal, setShowVerificationModal] = useState(() => {
@@ -58,7 +130,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     setTimeout(() => setIsCaptchaSpinning(false), 300);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -76,17 +147,24 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       return;
     }
 
-    // 2. Validasi Captcha Keamanan
-    if (!captchaInput.trim()) {
-      setErrorMsg('Kode Keamanan (CAPTCHA) wajib diisi.');
-      refreshCaptchaOnFailed();
-      return;
-    }
+    // 2. Validasi Captcha / reCAPTCHA Keamanan
+    if (captchaMode === 'recaptcha') {
+      if (!recaptchaToken) {
+        setErrorMsg('Harap selesaikan verifikasi Google reCAPTCHA ("Saya bukan robot") sebelum masuk.');
+        return;
+      }
+    } else {
+      if (!captchaInput.trim()) {
+        setErrorMsg('Kode Keamanan (CAPTCHA) wajib diisi.');
+        refreshCaptchaOnFailed();
+        return;
+      }
 
-    if (captchaInput.trim().toUpperCase() !== captchaCode.toUpperCase()) {
-      setErrorMsg('Kode Keamanan (CAPTCHA) tidak sesuai. Kode telah diperbarui, silakan coba lagi.');
-      refreshCaptchaOnFailed();
-      return;
+      if (captchaInput.trim().toUpperCase() !== captchaCode.toUpperCase()) {
+        setErrorMsg('Kode Keamanan (CAPTCHA) tidak sesuai. Kode telah diperbarui, silakan coba lagi.');
+        refreshCaptchaOnFailed();
+        return;
+      }
     }
 
     // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
@@ -94,22 +172,32 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     try {
       let data = null;
       try {
+        const payloadData = {
+          identifier: identifier.trim(),
+          password: password,
+          captcha_code: captchaCode,
+          captcha_input: captchaMode === 'manual' ? captchaInput.trim().toUpperCase() : undefined,
+          recaptcha_token: captchaMode === 'recaptcha' ? recaptchaToken : undefined
+        };
+
         const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: JSON.stringify({
-            identifier: identifier.trim(),
-            password: password,
-            captcha_code: captchaCode,
-            captcha_input: captchaInput.trim().toUpperCase()
-          })
+          body: JSON.stringify(payloadData)
         });
 
         if (response.ok) {
           data = await response.json();
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          if (errData.detail) {
+            setErrorMsg(errData.detail);
+            setIsSubmitting(false);
+            return;
+          }
         }
       } catch {
         // Fallback to local authentication directory below
@@ -268,7 +356,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </div>
             
             <p className="text-[10px] leading-relaxed opacity-90">
-              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu mengisi Kode Keamanan (CAPTCHA) di bawah ini.
+              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu menyelesaikan verifikasi Google reCAPTCHA v2 di bawah ini.
             </p>
 
             <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-500/20">
@@ -282,6 +370,10 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     setIdentifier('admin.fraud@bpjs-kesehatan.go.id');
                     setPassword('Password123!');
                     setErrorMsg('');
+                    setRecaptchaToken('');
+                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                      try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                    }
                   }}
                   className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
                     identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
@@ -312,6 +404,10 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     setIdentifier('siti.rahma@bpjs-kesehatan.go.id');
                     setPassword('Password123!');
                     setErrorMsg('');
+                    setRecaptchaToken('');
+                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                      try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                    }
                   }}
                   className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
                     identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
@@ -399,108 +495,179 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               </div>
             </div>
 
-            {/* CAPTCHA KEAMANAN */}
-            <div className="space-y-1.5">
+            {/* VERIFIKASI KEAMANAN (GOOGLE RECAPTCHA V2 / KODE VISUAL) */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className={`text-xs font-semibold flex items-center space-x-1.5 ${
                   effectiveIsLight ? 'text-slate-700' : 'text-white/80'
                 }`}>
                   <ShieldCheck className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                  <span>Kode Keamanan (CAPTCHA)</span>
+                  <span>Verifikasi Keamanan</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={handleRefreshCaptcha}
-                  className={`text-[11px] font-medium flex items-center space-x-1 transition-colors group cursor-pointer ${
-                    effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
-                  }`}
-                  title="Ganti Kode Captcha"
-                >
-                  <RefreshCw className={`w-3 h-3 transition-transform duration-300 ${isCaptchaSpinning ? 'rotate-180' : 'group-hover:rotate-45'}`} />
-                  <span>Ganti Kode</span>
-                </button>
+                <div className="flex items-center space-x-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => { setCaptchaMode('recaptcha'); setErrorMsg(''); }}
+                    className={`px-2 py-0.5 rounded transition-all cursor-pointer font-medium ${
+                      captchaMode === 'recaptcha'
+                        ? (effectiveIsLight ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300' : 'bg-emerald-900/60 text-emerald-300 font-bold border border-emerald-500/40')
+                        : (effectiveIsLight ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white')
+                    }`}
+                  >
+                    Google reCAPTCHA v2
+                  </button>
+                  <span className={effectiveIsLight ? 'text-slate-300' : 'text-white/20'}>|</span>
+                  <button
+                    type="button"
+                    onClick={() => { setCaptchaMode('manual'); setErrorMsg(''); }}
+                    className={`px-2 py-0.5 rounded transition-all cursor-pointer font-medium ${
+                      captchaMode === 'manual'
+                        ? (effectiveIsLight ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300' : 'bg-emerald-900/60 text-emerald-300 font-bold border border-emerald-500/40')
+                        : (effectiveIsLight ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white')
+                    }`}
+                  >
+                    Kode Visual
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-12 gap-2.5 items-stretch">
-                {/* Visual Captcha Display Box */}
-                <div 
-                  onClick={handleRefreshCaptcha}
-                  title="Klik untuk acak ulang kode keamanan"
-                  className={`col-span-5 relative rounded-xl p-2 flex items-center justify-center cursor-pointer select-none overflow-hidden border shadow-inner group min-h-[38px] ${
-                    effectiveIsLight ? 'bg-slate-100 border-slate-300' : 'bg-[#000c24] border-white/15'
-                  }`}
-                >
-                  {/* Security Noise Grid / Lines */}
-                  <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                    <line x1="0" y1="20%" x2="100%" y2="80%" stroke="#10b981" strokeWidth="1.5" strokeDasharray="3,3" />
-                    <line x1="0" y1="80%" x2="100%" y2="20%" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="4,2" />
-                    <line x1="20%" y1="0" x2="80%" y2="100%" stroke="#a7f3d0" strokeWidth="1" strokeDasharray="2,4" />
-                    <circle cx="25%" cy="40%" r="12" stroke="#059669" strokeWidth="0.8" fill="none" opacity="0.3" />
-                    <circle cx="75%" cy="60%" r="15" stroke="#38bdf8" strokeWidth="0.8" fill="none" opacity="0.3" />
-                  </svg>
-                  
-                  {/* Distorted Captcha Characters */}
-                  <div className={`relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest font-bold text-sm ${
-                    effectiveIsLight ? 'text-slate-900 drop-shadow-xs' : 'text-emerald-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-                  }`}>
-                    {captchaCode.split('').map((char, index) => {
-                      const rotations = [-6, 8, -4, 6, -8];
-                      const yOffsets = [1, -2, 2, -1, 1];
-                      return (
-                        <span 
-                          key={index}
-                          style={{
-                            transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
-                            display: 'inline-block'
-                          }}
-                          className={effectiveIsLight 
-                            ? (index % 2 === 0 ? 'text-emerald-800' : 'text-teal-900')
-                            : (index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200')}
-                        >
-                          {char}
-                        </span>
-                      );
-                    })}
+              {captchaMode === 'recaptcha' ? (
+                <div className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                  effectiveIsLight
+                    ? 'bg-slate-50/80 border-slate-200'
+                    : 'bg-white/5 border-white/10'
+                }`}>
+                  <div className="w-full flex justify-center overflow-x-auto py-1">
+                    <div 
+                      ref={recaptchaContainerRef}
+                      className="min-h-[78px] flex items-center justify-center"
+                    />
                   </div>
-
-                  {/* Hover indicator */}
-                  <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center ${
-                    effectiveIsLight ? 'bg-slate-900/10' : 'bg-emerald-500/10'
-                  }`}>
-                    <RefreshCw className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`} />
-                  </div>
-                </div>
-
-                {/* Input Captcha Box */}
-                <div className="col-span-7 relative">
-                  <input
-                    type="text"
-                    maxLength={5}
-                    aria-label="Masukkan 5 karakter kode CAPTCHA"
-                    value={captchaInput}
-                    onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
-                    placeholder="Masukkan kode"
-                    className={`w-full h-full border rounded-xl py-2 pl-3 pr-8 text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 outline-none ${
-                      captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase()
-                        ? effectiveIsLight
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
-                          : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20'
-                        : effectiveIsLight
-                          ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
-                          : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
-                    }`}
-                  />
-                  {captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase() && (
-                    <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center pointer-events-none border ${
-                      effectiveIsLight
-                        ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                    }`}>
-                      <Check className="w-3 h-3 stroke-[2.5]" />
-                    </span>
+                  {recaptchaToken ? (
+                    <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Google reCAPTCHA terverifikasi valid</span>
+                    </div>
+                  ) : recaptchaError ? (
+                    <div className="text-center mt-1 space-y-1">
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                        Domain belum terdaftar di console Google reCAPTCHA.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCaptchaMode('manual')}
+                        className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline cursor-pointer"
+                      >
+                        Beralih ke Kode Visual untuk verifikasi instan
+                      </button>
+                    </div>
+                  ) : (
+                    <p className={`text-[10px] mt-1 text-center ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Centang kotak di atas untuk verifikasi anti-bot Google Cloud Fraud Defense
+                    </p>
                   )}
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Ketik 5 karakter kode alfanumerik berikut:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRefreshCaptcha}
+                      className={`text-[11px] font-medium flex items-center space-x-1 transition-colors group cursor-pointer ${
+                        effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                      }`}
+                      title="Ganti Kode Captcha"
+                    >
+                      <RefreshCw className={`w-3 h-3 transition-transform duration-300 ${isCaptchaSpinning ? 'rotate-180' : 'group-hover:rotate-45'}`} />
+                      <span>Ganti Kode</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-2.5 items-stretch">
+                    {/* Visual Captcha Display Box */}
+                    <div 
+                      onClick={handleRefreshCaptcha}
+                      title="Klik untuk acak ulang kode keamanan"
+                      className={`col-span-5 relative rounded-xl p-2 flex items-center justify-center cursor-pointer select-none overflow-hidden border shadow-inner group min-h-[38px] ${
+                        effectiveIsLight ? 'bg-slate-100 border-slate-300' : 'bg-[#000c24] border-white/15'
+                      }`}
+                    >
+                      {/* Security Noise Grid / Lines */}
+                      <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="0" y1="20%" x2="100%" y2="80%" stroke="#10b981" strokeWidth="1.5" strokeDasharray="3,3" />
+                        <line x1="0" y1="80%" x2="100%" y2="20%" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="4,2" />
+                        <line x1="20%" y1="0" x2="80%" y2="100%" stroke="#a7f3d0" strokeWidth="1" strokeDasharray="2,4" />
+                        <circle cx="25%" cy="40%" r="12" stroke="#059669" strokeWidth="0.8" fill="none" opacity="0.3" />
+                        <circle cx="75%" cy="60%" r="15" stroke="#38bdf8" strokeWidth="0.8" fill="none" opacity="0.3" />
+                      </svg>
+                      
+                      {/* Distorted Captcha Characters */}
+                      <div className={`relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest font-bold text-sm ${
+                        effectiveIsLight ? 'text-slate-900 drop-shadow-xs' : 'text-emerald-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
+                      }`}>
+                        {captchaCode.split('').map((char, index) => {
+                          const rotations = [-6, 8, -4, 6, -8];
+                          const yOffsets = [1, -2, 2, -1, 1];
+                          return (
+                            <span 
+                              key={index}
+                              style={{
+                                transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
+                                display: 'inline-block'
+                              }}
+                              className={effectiveIsLight 
+                                ? (index % 2 === 0 ? 'text-emerald-800' : 'text-teal-900')
+                                : (index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200')}
+                            >
+                              {char}
+                            </span>
+                          );
+                        })}
+                      </div>
+
+                      {/* Hover indicator */}
+                      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center ${
+                        effectiveIsLight ? 'bg-slate-900/10' : 'bg-emerald-500/10'
+                      }`}>
+                        <RefreshCw className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`} />
+                      </div>
+                    </div>
+
+                    {/* Input Captcha Box */}
+                    <div className="col-span-7 relative">
+                      <input
+                        type="text"
+                        maxLength={5}
+                        aria-label="Masukkan 5 karakter kode CAPTCHA"
+                        value={captchaInput}
+                        onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                        placeholder="Masukkan kode"
+                        className={`w-full h-full border rounded-xl py-2 pl-3 pr-8 text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 outline-none ${
+                          captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase()
+                            ? effectiveIsLight
+                              ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
+                              : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20'
+                            : effectiveIsLight
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
+                              : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
+                        }`}
+                      />
+                      {captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase() && (
+                        <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center pointer-events-none border ${
+                          effectiveIsLight
+                            ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                        }`}>
+                          <Check className="w-3 h-3 stroke-[2.5]" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <motion.button
