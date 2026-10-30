@@ -259,7 +259,7 @@ Timestamp: ${new Date().toISOString()}`;
                 <ShieldAlert className="w-4 h-4 text-rose-500" />
                 <span>Rekomendasi Keputusan Berdasarkan Fusi Bukti</span>
               </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border font-mono ${
+              <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold border font-mono ${
                 isLight
                   ? 'bg-rose-50 text-rose-700 border-rose-300'
                   : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
@@ -534,7 +534,7 @@ Timestamp: ${new Date().toISOString()}`;
               onClick={() => setShowPdfModal(true)}
               className={`w-full font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer ${
                 isLight
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                   : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-950/40'
               }`}
             >
@@ -702,7 +702,7 @@ Timestamp: ${new Date().toISOString()}`;
                     onClick={handleDownloadDossierPdf}
                     className={`px-4 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer transition ${
                       isLight 
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                        ? 'bg-emerald-700 hover:bg-emerald-800 text-white' 
                         : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md'
                     }`}
                   >

@@ -513,7 +513,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                 active
                   ? (isLight
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
                       : 'bg-gradient-to-r from-health-blue-dark to-health-blue border-[#FFCA40]/50 text-[#FFCA40] shadow-md shadow-[#00081c]/50')
                   : (isLight
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
@@ -578,7 +578,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
             type="submit"
             className={`px-6 py-2.5 font-bold rounded-xl shadow-xs text-sm cursor-pointer transition-all ${
               isLight
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                 : 'bg-gradient-to-tr from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-[#FFCA40]/40 text-white shadow-[#00081c]/50'
             }`}
           >
@@ -1098,7 +1098,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs ${
                   isLight
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                     : 'bg-gradient-to-tr from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-[#FFCA40]/40 text-[#FFCA40]'
                 }`}
               >

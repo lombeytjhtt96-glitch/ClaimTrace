@@ -342,7 +342,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
             onClick={() => setActiveLane('all')}
             className={`px-3 py-1.5 rounded-xl transition cursor-pointer font-bold ${
               activeLane === 'all'
-                ? 'bg-emerald-600 text-white shadow-xs'
+                ? (isLight ? 'bg-emerald-700 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm')
                 : (isLight
                     ? 'text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300'
                     : 'text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10')
@@ -383,7 +383,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
             onClick={() => setActiveLane('green')}
             className={`px-3 py-1.5 rounded-xl transition flex items-center space-x-1.5 cursor-pointer font-bold ${
               activeLane === 'green'
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? (isLight ? 'bg-emerald-700 text-white shadow-sm' : 'bg-emerald-600 text-white shadow-sm')
                 : (isLight
                     ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300'
                     : 'text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30')
@@ -555,7 +555,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
                           <span>•</span>
                           <span>{c.date}</span>
                           {c.flags.map(f => (
-                            <span key={f} className={`px-1.5 py-0.2 rounded text-[9.5px] font-bold shrink-0 ${
+                            <span key={f} className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                               f.includes('PHANTOM') || f.includes('REPEAT')
                                 ? (isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30')
                                 : (isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-white/10 text-white/70')
@@ -591,7 +591,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
                   </td>
 
                   <td className="py-3.5 px-3 text-center">
-                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold font-mono shadow-xs border ${
+                    <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono shadow-xs border ${
                       c.lane === 'red'
                         ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/40')
                         : c.lane === 'yellow'
