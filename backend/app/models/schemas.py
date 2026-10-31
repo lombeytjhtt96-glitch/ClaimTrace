@@ -77,6 +77,24 @@ class ClaimInput(BaseModel):
     fkl47_biaya_tagih: Optional[int] = None
     fkl48_biaya_verifikasi: Optional[int] = None
 
+class AIAnomalyFeatureDriver(BaseModel):
+    feature_name: str
+    feature_label: str
+    feature_value: Any
+    contribution_pct: float
+    direction: Literal["ANOMALOUS", "NORMAL"]
+
+class AIAnomalyPrediction(BaseModel):
+    is_anomaly: bool
+    anomaly_score: float  # 0.0 - 100.0%
+    confidence_score: float  # 0.0 - 100.0%
+    primary_anomaly_category: str  # "PHANTOM_BILLING", "REPEAT_BILLING", "UPCODING_SEVERITY", "IMPOSSIBLE_TRAVEL", "NORMAL_CLAIM"
+    model_family: str = "Ensemble: Isolation Forest + ChromaDB Semantic Vector (MiniLM) + Graph Traversal"
+    model_version: str = "v2.4.0-Healthkathon"
+    top_feature_drivers: List[AIAnomalyFeatureDriver] = Field(default_factory=list)
+    clinical_ai_rationale: str = ""
+    automated_recommendation: str = ""
+
 class TriageScoreBreakdown(BaseModel):
     s1_value: float
     s1_weight: float = 0.5
@@ -112,6 +130,8 @@ class TriageResult(BaseModel):
     bea_process_code: str = "C03.04 (Klaim)"
     bea_target_system: str = "VIDI (Vedika Digital Fast-Track)"
     bea_action_summary: str = ""
+    # Automatic AI Anomaly Detection Prediction
+    ai_anomaly_prediction: Optional[AIAnomalyPrediction] = None
 
 class VerifierDecisionRequest(BaseModel):
     verifier_id: str

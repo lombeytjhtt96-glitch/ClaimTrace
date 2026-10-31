@@ -1,5 +1,6 @@
 import hashlib
 import json
+import copy
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple
 
@@ -21,6 +22,7 @@ class AuditLogger:
     ) -> Dict[str, Any]:
         prev_hash = self.chain[-1]["current_hash"] if self.chain else "0" * 64
         timestamp = datetime.now(timezone.utc).isoformat()
+        frozen_payload = copy.deepcopy(payload)
         
         block_content = json.dumps({
             "prev_hash": prev_hash,
@@ -28,7 +30,7 @@ class AuditLogger:
             "event_type": event_type,
             "claim_id": claim_id,
             "actor": actor,
-            "payload": payload
+            "payload": frozen_payload
         }, sort_keys=True)
         
         current_hash = hashlib.sha256(block_content.encode("utf-8")).hexdigest()
@@ -38,7 +40,7 @@ class AuditLogger:
             "event_type": event_type,
             "claim_id": claim_id,
             "actor": actor,
-            "payload": payload,
+            "payload": frozen_payload,
             "prev_hash": prev_hash,
             "current_hash": current_hash
         }

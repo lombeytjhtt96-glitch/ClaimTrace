@@ -78,6 +78,8 @@ Sebagai bukti kesiapan penuh menuju evaluasi akhir dewan juri, ClaimTrace DSS me
    - Melindungi likuiditas keuangan rumah sakit yang berintegritas melalui Jalur Hijau (Fast-Track <24 jam).
 
 3. **Kreativitas, Inovasi, dan Teknologi (Creativity, Innovation, Technology):**
+   - **Deteksi Anomali Berbasis AI Otomatis**: Ensemble model *Unsupervised Isolation Forest* terkalibrasi dengan 10 vektor fitur matematis dipadukan dengan ruang vektor *ChromaDB HNSW Cosine Similarity (all-MiniLM-L6-v2)* dan *Graph Anomaly Traversal* untuk memindai lonjakan klaster (#6 Phantom Billing) dan klaim berulang (#11 Repeat Billing) secara otomatis pada tahap pra-bayar.
+   - **Explainable AI (XAI)**: Dekomposisi kontribusi fitur anomali matematis (ekuivalen SHAP) yang transparan, bebas halusinasi, dan dapat dipertanggungjawabkan di hadapan hukum dan auditor.
    - Paradigma Fusi Multi-Sinyal Deterministik 3 Lapis Bukti (50% Radar, 30% SATUSEHAT SDMK, 20% Mobile JKN) murni Human-in-the-Loop DSS.
    - Graph Intelligence memetakan sindikat calo rujukan faskes dan analitik OLAP DuckDB in-memory (< 12ms).
    - Rantai audit ledger kriptografis SHA-256 anti-repudiasi dan adopsi 6 standar keamanan siber internasional (MITRE F3/ATT&CK/NIST).
