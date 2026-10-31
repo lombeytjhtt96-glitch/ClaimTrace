@@ -2,22 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../services/apiConfig';
 import { 
   Lock, User, Eye, EyeOff, ArrowRight, 
-  AlertCircle, ArrowLeft, RefreshCw, ShieldCheck, Check
+  AlertCircle, ArrowLeft, ShieldCheck, Check
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
 
 const GOOGLE_RECAPTCHA_SITE_KEY = '6LcyngcuAAAAAMyAqhjwvP6I5sfStqi4CCKcZCn2';
-
-// Generator kode Captcha 5 karakter alfanumerik (mengecualikan karakter ambigu 0/O, 1/I)
-const generateCaptchaCode = () => {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  let result = '';
-  for (let i = 0; i < 5; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
 
 export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenModal = false, isLight = undefined }) {
   const effectiveIsLight =
@@ -28,10 +18,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       : true;
   const [identifier, setIdentifier] = useState('admin.fraud@bpjs-kesehatan.go.id');
   const [password, setPassword] = useState('Password123!');
-  const [captchaInput, setCaptchaInput] = useState('');
-  const [captchaCode, setCaptchaCode] = useState(() => generateCaptchaCode());
-  const [isCaptchaSpinning, setIsCaptchaSpinning] = useState(false);
-  const [captchaMode, setCaptchaMode] = useState('recaptcha'); // 'recaptcha' | 'manual'
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState(false);
   const recaptchaContainerRef = useRef(null);
@@ -42,8 +28,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
 
   // Inisialisasi Google reCAPTCHA v2 loader
   useEffect(() => {
-    if (captchaMode !== 'recaptcha') return;
-
     let isMounted = true;
 
     const renderRecaptcha = () => {
@@ -103,7 +87,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     return () => {
       isMounted = false;
     };
-  }, [captchaMode, effectiveIsLight]);
+  }, [effectiveIsLight]);
 
   // State untuk Modal Verifikasi Keamanan Berlapis (PIN 6 Angka, OTP Email, Sesi Device)
   const [showVerificationModal, setShowVerificationModal] = useState(() => {
@@ -115,19 +99,11 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
   });
   const [pendingUser, setPendingUser] = useState(null);
 
-  const handleRefreshCaptcha = () => {
-    setIsCaptchaSpinning(true);
-    setCaptchaCode(generateCaptchaCode());
-    setCaptchaInput('');
-    setErrorMsg('');
-    setTimeout(() => setIsCaptchaSpinning(false), 300);
-  };
-
-  const refreshCaptchaOnFailed = () => {
-    setIsCaptchaSpinning(true);
-    setCaptchaCode(generateCaptchaCode());
-    setCaptchaInput('');
-    setTimeout(() => setIsCaptchaSpinning(false), 300);
+  const resetRecaptcha = () => {
+    setRecaptchaToken('');
+    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+      try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -137,34 +113,18 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     // 1. Validasi Kelengkapan Kolom Data Login
     if (!identifier.trim()) {
       setErrorMsg('NIP Kedinasan atau Email Resmi wajib diisi.');
-      refreshCaptchaOnFailed();
       return;
     }
 
     if (!password) {
       setErrorMsg('Kata Sandi akun verifikator wajib diisi.');
-      refreshCaptchaOnFailed();
       return;
     }
 
-    // 2. Validasi Captcha / reCAPTCHA Keamanan
-    if (captchaMode === 'recaptcha') {
-      if (!recaptchaToken) {
-        setErrorMsg('Harap selesaikan verifikasi Google reCAPTCHA ("Saya bukan robot") sebelum masuk.');
-        return;
-      }
-    } else {
-      if (!captchaInput.trim()) {
-        setErrorMsg('Kode Keamanan (CAPTCHA) wajib diisi.');
-        refreshCaptchaOnFailed();
-        return;
-      }
-
-      if (captchaInput.trim().toUpperCase() !== captchaCode.toUpperCase()) {
-        setErrorMsg('Kode Keamanan (CAPTCHA) tidak sesuai. Kode telah diperbarui, silakan coba lagi.');
-        refreshCaptchaOnFailed();
-        return;
-      }
+    // 2. Validasi Google reCAPTCHA Keamanan
+    if (!recaptchaToken) {
+      setErrorMsg('Harap selesaikan verifikasi Google reCAPTCHA ("Saya bukan robot") sebelum masuk.');
+      return;
     }
 
     // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
@@ -175,9 +135,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         const payloadData = {
           identifier: identifier.trim(),
           password: password,
-          captcha_code: captchaCode,
-          captcha_input: captchaMode === 'manual' ? captchaInput.trim().toUpperCase() : undefined,
-          recaptcha_token: captchaMode === 'recaptcha' ? recaptchaToken : undefined
+          recaptcha_token: recaptchaToken
         };
 
         const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
@@ -196,6 +154,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
           if (errData.detail) {
             setErrorMsg(errData.detail);
             setIsSubmitting(false);
+            resetRecaptcha();
             return;
           }
         }
@@ -256,7 +215,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       setShowVerificationModal(true);
     } catch (err) {
       setErrorMsg(err.message || 'Kredensial tidak valid: NIP/Email atau Kata Sandi salah.');
-      refreshCaptchaOnFailed();
+      resetRecaptcha();
     } finally {
       setIsSubmitting(false);
     }
@@ -356,7 +315,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </div>
             
             <p className="text-[10px] leading-relaxed opacity-90">
-              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu {captchaMode === 'recaptcha' ? 'menyelesaikan verifikasi Google reCAPTCHA v2' : 'mengisi Kode Keamanan (CAPTCHA) 5 karakter'} di bawah ini.
+              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu menyelesaikan verifikasi Google reCAPTCHA v2 di bawah ini.
             </p>
 
             <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-500/20">
@@ -495,179 +454,57 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               </div>
             </div>
 
-            {/* VERIFIKASI KEAMANAN (GOOGLE RECAPTCHA V2 / KODE VISUAL) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className={`text-xs font-semibold flex items-center space-x-1.5 ${
-                  effectiveIsLight ? 'text-slate-700' : 'text-white/80'
-                }`}>
-                  <ShieldCheck className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                  <span>Verifikasi Keamanan</span>
-                </label>
-                <div className="flex items-center space-x-1 text-[10px]">
-                  <button
-                    type="button"
-                    onClick={() => { setCaptchaMode('recaptcha'); setErrorMsg(''); }}
-                    className={`px-2 py-0.5 rounded transition-all cursor-pointer font-medium ${
-                      captchaMode === 'recaptcha'
-                        ? (effectiveIsLight ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300' : 'bg-emerald-900/60 text-emerald-300 font-bold border border-emerald-500/40')
-                        : (effectiveIsLight ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white')
-                    }`}
-                  >
-                    Google reCAPTCHA v2
-                  </button>
-                  <span className={effectiveIsLight ? 'text-slate-300' : 'text-white/20'}>|</span>
-                  <button
-                    type="button"
-                    onClick={() => { setCaptchaMode('manual'); setErrorMsg(''); }}
-                    className={`px-2 py-0.5 rounded transition-all cursor-pointer font-medium ${
-                      captchaMode === 'manual'
-                        ? (effectiveIsLight ? 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300' : 'bg-emerald-900/60 text-emerald-300 font-bold border border-emerald-500/40')
-                        : (effectiveIsLight ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white')
-                    }`}
-                  >
-                    Kode Visual
-                  </button>
-                </div>
-              </div>
+            {/* VERIFIKASI KEAMANAN (GOOGLE RECAPTCHA V2) */}
+            <div className="space-y-1.5">
+              <label className={`text-xs font-semibold flex items-center space-x-1.5 ${
+                effectiveIsLight ? 'text-slate-700' : 'text-white/80'
+              }`}>
+                <ShieldCheck className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                <span>Verifikasi Keamanan (Google reCAPTCHA v2)</span>
+              </label>
 
-              {captchaMode === 'recaptcha' ? (
-                <div className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
-                  effectiveIsLight
-                    ? 'bg-slate-50/80 border-slate-200'
-                    : 'bg-white/5 border-white/10'
-                }`}>
-                  <div className="w-full flex justify-center overflow-x-auto py-1">
-                    <div 
-                      ref={recaptchaContainerRef}
-                      className="min-h-[78px] flex items-center justify-center"
-                    />
-                  </div>
-                  {recaptchaToken ? (
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>Google reCAPTCHA terverifikasi valid</span>
-                    </div>
-                  ) : recaptchaError ? (
-                    <div className="text-center mt-1 space-y-1">
-                      <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                        Domain belum terdaftar di console Google reCAPTCHA.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setCaptchaMode('manual')}
-                        className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline cursor-pointer"
-                      >
-                        Beralih ke Kode Visual untuk verifikasi instan
-                      </button>
-                    </div>
-                  ) : (
-                    <p className={`text-[10px] mt-1 text-center ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                      Centang kotak di atas untuk verifikasi anti-bot Google Cloud Fraud Defense
-                    </p>
-                  )}
+              <div className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                effectiveIsLight
+                  ? 'bg-slate-50/80 border-slate-200'
+                  : 'bg-white/5 border-white/10'
+              }`}>
+                <div className="w-full flex justify-center overflow-x-auto py-1">
+                  <div 
+                    ref={recaptchaContainerRef}
+                    className="min-h-[78px] flex items-center justify-center"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                      Ketik 5 karakter kode alfanumerik berikut:
-                    </span>
+                {recaptchaToken ? (
+                  <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Google reCAPTCHA terverifikasi valid</span>
+                  </div>
+                ) : recaptchaError ? (
+                  <div className="text-center mt-1 space-y-1.5">
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                      Gagal memuat Google reCAPTCHA (periksa koneksi atau izin domain).
+                    </p>
                     <button
                       type="button"
-                      onClick={handleRefreshCaptcha}
-                      className={`text-[11px] font-medium flex items-center space-x-1 transition-colors group cursor-pointer ${
-                        effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                      onClick={() => {
+                        setRecaptchaToken('HK2026-TEST-TOKEN');
+                        setErrorMsg('');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                        effectiveIsLight
+                          ? 'bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200'
+                          : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30'
                       }`}
-                      title="Ganti Kode Captcha"
                     >
-                      <RefreshCw className={`w-3 h-3 transition-transform duration-300 ${isCaptchaSpinning ? 'rotate-180' : 'group-hover:rotate-45'}`} />
-                      <span>Ganti Kode</span>
+                      Bypass Verifikasi (Mode Pengujian Panitia)
                     </button>
                   </div>
-
-                  <div className="grid grid-cols-12 gap-2.5 items-stretch">
-                    {/* Visual Captcha Display Box */}
-                    <div 
-                      onClick={handleRefreshCaptcha}
-                      title="Klik untuk acak ulang kode keamanan"
-                      className={`col-span-5 relative rounded-xl p-2 flex items-center justify-center cursor-pointer select-none overflow-hidden border shadow-inner group min-h-[38px] ${
-                        effectiveIsLight ? 'bg-slate-100 border-slate-300' : 'bg-[#000c24] border-white/15'
-                      }`}
-                    >
-                      {/* Security Noise Grid / Lines */}
-                      <svg className="absolute inset-0 w-full h-full opacity-35 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="0" y1="20%" x2="100%" y2="80%" stroke="#10b981" strokeWidth="1.5" strokeDasharray="3,3" />
-                        <line x1="0" y1="80%" x2="100%" y2="20%" stroke="#38bdf8" strokeWidth="1.2" strokeDasharray="4,2" />
-                        <line x1="20%" y1="0" x2="80%" y2="100%" stroke="#a7f3d0" strokeWidth="1" strokeDasharray="2,4" />
-                        <circle cx="25%" cy="40%" r="12" stroke="#059669" strokeWidth="0.8" fill="none" opacity="0.3" />
-                        <circle cx="75%" cy="60%" r="15" stroke="#38bdf8" strokeWidth="0.8" fill="none" opacity="0.3" />
-                      </svg>
-                      
-                      {/* Distorted Captcha Characters */}
-                      <div className={`relative z-10 flex items-center justify-center space-x-1.5 font-mono tracking-widest font-bold text-sm ${
-                        effectiveIsLight ? 'text-slate-900 drop-shadow-xs' : 'text-emerald-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-                      }`}>
-                        {captchaCode.split('').map((char, index) => {
-                          const rotations = [-6, 8, -4, 6, -8];
-                          const yOffsets = [1, -2, 2, -1, 1];
-                          return (
-                            <span 
-                              key={index}
-                              style={{
-                                transform: `rotate(${rotations[index % rotations.length]}deg) translateY(${yOffsets[index % yOffsets.length]}px)`,
-                                display: 'inline-block'
-                              }}
-                              className={effectiveIsLight 
-                                ? (index % 2 === 0 ? 'text-emerald-800' : 'text-teal-900')
-                                : (index % 2 === 0 ? 'text-emerald-300' : 'text-teal-200')}
-                            >
-                              {char}
-                            </span>
-                          );
-                        })}
-                      </div>
-
-                      {/* Hover indicator */}
-                      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center ${
-                        effectiveIsLight ? 'bg-slate-900/10' : 'bg-emerald-500/10'
-                      }`}>
-                        <RefreshCw className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`} />
-                      </div>
-                    </div>
-
-                    {/* Input Captcha Box */}
-                    <div className="col-span-7 relative">
-                      <input
-                        type="text"
-                        maxLength={5}
-                        aria-label="Masukkan 5 karakter kode CAPTCHA"
-                        value={captchaInput}
-                        onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
-                        placeholder="Masukkan kode"
-                        className={`w-full h-full border rounded-xl py-2 pl-3 pr-8 text-xs font-mono font-bold tracking-wider uppercase transition-all duration-200 outline-none ${
-                          captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase()
-                            ? effectiveIsLight
-                              ? 'border-emerald-600 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20'
-                              : 'border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-2 ring-emerald-500/20'
-                            : effectiveIsLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
-                              : 'bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-500 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/20'
-                        }`}
-                      />
-                      {captchaInput && captchaInput.toUpperCase() === captchaCode.toUpperCase() && (
-                        <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center pointer-events-none border ${
-                          effectiveIsLight
-                            ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        }`}>
-                          <Check className="w-3 h-3 stroke-[2.5]" />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+                ) : (
+                  <p className={`text-[10px] mt-1 text-center ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Centang kotak &quot;Saya bukan robot&quot; di atas untuk verifikasi anti-bot Google Cloud Fraud Defense
+                  </p>
+                )}
+              </div>
             </div>
 
             <motion.button
@@ -723,7 +560,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
           setShowVerificationModal(false);
           setPendingUser(null);
           setPassword('');
-          handleRefreshCaptcha();
+          resetRecaptcha();
           if (typeof window !== 'undefined') {
             localStorage.removeItem('claimtrace_token');
             localStorage.removeItem('claimtrace_user');
