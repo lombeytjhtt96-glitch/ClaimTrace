@@ -819,6 +819,101 @@ def simulate_custom_claim(claim: ClaimInput):
         "triage": triage
     }
 
+@app.post("/api/v1/ai/detect-anomaly")
+def ai_detect_claim_anomaly(claim: ClaimInput):
+    """
+    Mendeteksi anomali klaim faskes secara otomatis berbasis Artificial Intelligence.
+    Menggunakan ensemble Isolation Forest, ChromaDB Cosine Embeddings, dan Graph Traversal.
+    """
+    from app.engine.ai_anomaly_detector import ai_anomaly_engine
+    prediction = ai_anomaly_engine.detect_anomaly(claim)
+    return {
+        "status": "success",
+        "claim_id": claim.claim_id,
+        "faskes_id": claim.faskes_id,
+        "nama_faskes": claim.nama_faskes,
+        "prediction": prediction
+    }
+
+@app.get("/api/v1/ai/batch-scan")
+def ai_batch_scan_active_claims():
+    """
+    Pemindaian batch otomatis berbasis AI terhadap seluruh klaim aktif di warehouse.
+    Mendeteksi Modus #6 Phantom Billing dan Modus #11 Repeat Billing sebelum klaim dibayarkan.
+    """
+    from app.engine.ai_anomaly_detector import ai_anomaly_engine
+    total_scanned = 0
+    anomalies_detected = 0
+    phantom_billing_count = 0
+    repeat_billing_count = 0
+    results = []
+
+    for cid, claim in SYNTHETIC_CLAIMS_DATABASE.items():
+        total_scanned += 1
+        pred = ai_anomaly_engine.detect_anomaly(claim)
+        if pred.is_anomaly:
+            anomalies_detected += 1
+            if pred.primary_anomaly_category == "PHANTOM_BILLING":
+                phantom_billing_count += 1
+            elif pred.primary_anomaly_category == "REPEAT_BILLING":
+                repeat_billing_count += 1
+
+        results.append({
+            "claim_id": cid,
+            "nama_faskes": claim.nama_faskes,
+            "nilai_klaim_rp": claim.nilai_klaim_rp,
+            "ina_cbg_code": claim.ina_cbg_code,
+            "is_anomaly": pred.is_anomaly,
+            "anomaly_score": pred.anomaly_score,
+            "confidence_score": pred.confidence_score,
+            "primary_anomaly_category": pred.primary_anomaly_category,
+            "top_features": [f.model_dump() for f in pred.top_feature_drivers[:2]],
+            "recommendation": pred.automated_recommendation
+        })
+
+    # Sort descending by anomaly score
+    results.sort(key=lambda x: x["anomaly_score"], reverse=True)
+
+    return {
+        "status": "success",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "total_scanned": total_scanned,
+        "anomalies_detected": anomalies_detected,
+        "anomaly_rate_pct": round((anomalies_detected / max(1, total_scanned)) * 100.0, 1),
+        "breakdown": {
+            "phantom_billing_count": phantom_billing_count,
+            "repeat_billing_count": repeat_billing_count,
+            "other_anomalies": anomalies_detected - phantom_billing_count - repeat_billing_count
+        },
+        "scanned_claims": results
+    }
+
+@app.get("/api/v1/ai/model-info")
+def ai_model_telemetry():
+    """
+    Menampilkan metadata teknis model AI Anomaly Detector yang aktif di ClaimTrace.
+    """
+    from app.engine.ai_anomaly_detector import ai_anomaly_engine
+    return {
+        "status": "active",
+        "model_family": ai_anomaly_engine.model_family,
+        "model_version": ai_anomaly_engine.model_version,
+        "features": ai_anomaly_engine._feature_names,
+        "features_count": len(ai_anomaly_engine._feature_names),
+        "vector_space": "ChromaDB HNSW Cosine Similarity (all-MiniLM-L6-v2)",
+        "isolation_forest_params": {
+            "n_estimators": 100,
+            "contamination": 0.20,
+            "random_state": 42
+        },
+        "supported_anomaly_archetypes": [
+            "Modus #6: Phantom Billing (Klaim Fiktif Fisioterapi/Baksos Massal)",
+            "Modus #11: Repeat Billing (Penagihan Klaim Berulang/Unbundling)",
+            "Upcoding Severity CBG III tanpa bukti diagnostik",
+            "Impossible Travel / Teleportation Anomaly DPJP"
+        ]
+    }
+
 @app.get("/api/v1/graph/cypher-export")
 def export_neo4j_cypher_script():
     """

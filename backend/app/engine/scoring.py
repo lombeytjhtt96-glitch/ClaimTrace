@@ -259,10 +259,24 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
             "Lanjutkan ke alur verifikasi cepat pra-bayar (Fast-Track / Jalur Hijau) untuk penerbitan berita acara tepat waktu."
         )
 
-    # 7. Generate Cluster Graph
+    # 7. AI Automatic Anomaly Detection (Isolation Forest + ChromaDB Semantic Vector + Graph Sequence)
+    ai_prediction = None
+    try:
+        from app.engine.ai_anomaly_detector import ai_anomaly_engine
+        ai_prediction = ai_anomaly_engine.detect_anomaly(claim)
+        if ai_prediction and ai_prediction.is_anomaly:
+            indikator.append(
+                f"IND-AI-ANOMALY: Deteksi Otomatis Model AI ({ai_prediction.model_version}) "
+                f"mengidentifikasi anomali {ai_prediction.primary_anomaly_category} "
+                f"(Skor Anomali AI: {ai_prediction.anomaly_score}%, Keyakinan: {ai_prediction.confidence_score}%)"
+            )
+    except Exception:
+        pass
+
+    # 8. Generate Cluster Graph
     graph_data = generate_cluster_graph(claim)
 
-    # 8. Record Immutable Audit Event
+    # 9. Record Immutable Audit Event
     audit_entry = audit_logger.record_event(
         event_type="AUTO_TRIAGE_SCORING",
         claim_id=claim.claim_id,
@@ -275,7 +289,7 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
             "s1": claim.s1_score,
             "s2": claim.s2_score,
             "s3": claim.s3_score,
-            "indicators": indikator,
+            "indicators": list(indikator),
             "f3_tags": f3_tags,
             "attack_tags": attack_tags
         }
@@ -311,5 +325,6 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
         sla_deadline_days=sla_days,
         bea_process_code=bea_process,
         bea_target_system=bea_target,
-        bea_action_summary=bea_action
+        bea_action_summary=bea_action,
+        ai_anomaly_prediction=ai_prediction
     )

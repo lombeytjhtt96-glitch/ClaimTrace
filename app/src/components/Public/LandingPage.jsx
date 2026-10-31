@@ -393,14 +393,17 @@ export default function LandingPage({
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.04 }}
               transition={{ duration: 0.4 }}
-              className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs cursor-default border transition-colors ${
+              className={`inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs cursor-default border transition-colors ${
                 effectiveIsLight
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
               }`}
             >
               <Shield className={`w-3.5 h-3.5 animate-pulse ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-              <span>Sistem Intelijen Pengawasan & Penapisan Risiko Klaim Faskes JKN</span>
+              <span>Sistem Intelijen Pengawasan &amp; Penapisan Risiko Klaim Faskes JKN</span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${effectiveIsLight ? 'bg-white text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'}`}>
+                Deteksi Anomali Otomatis Berbasis AI
+              </span>
             </motion.div>
 
             <motion.h1 
@@ -425,7 +428,7 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
-              Decision Support System (DSS) pra-bayar untuk Kantor Pusat &amp; Kantor Cabang BPJS Kesehatan di Seluruh Indonesia. Merekonsiliasi pola penagihan INA-CBG, memvalidasi legalitas Surat Izin Praktik (SIP) dokter spesialis via SATUSEHAT SDMK Kemenkes, serta mengonfirmasi presensi kehadiran peserta melalui aplikasi Mobile JKN dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              Sistem pendukung keputusan berbasis Artificial Intelligence yang mempermudah verifikator BPJS Kesehatan dalam mendeteksi anomali klaim faskes secara otomatis, khususnya pada kasus Phantom Billing (#6) dan Repeat Billing (#11). Sistem ini bekerja secara preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis: menganalisis lonjakan klaster klaim spatiotemporal serta kemiripan Episode Fingerprint, memvalidasi silang keaktifan SIP dan beban harian dokter pada registry SATUSEHAT SDMK, serta mengonfirmasi kehadiran pasien secara langsung melalui aplikasi Mobile JKN dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
             </motion.p>
 
             <motion.div 

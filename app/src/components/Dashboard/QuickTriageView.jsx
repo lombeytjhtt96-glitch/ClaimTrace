@@ -22,6 +22,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RS Khusus Mitra Husada',
     severity: 'critical',
     status: 'new',
+    ai_anomaly_type: 'Modus #6: Phantom Billing',
+    ai_anomaly_score: 94.8,
     sla_breach_at: new Date(Date.now() + 85 * 60000).toISOString(),
     assigned_to: null,
     created_at: new Date(Date.now() - 40 * 60000).toISOString(),
@@ -32,6 +34,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RSU Harapan Bunda',
     severity: 'high',
     status: 'in_progress',
+    ai_anomaly_type: 'Modus #11: Repeat Billing',
+    ai_anomaly_score: 87.4,
     sla_breach_at: new Date(Date.now() + 3.2 * 3600000).toISOString(),
     assigned_to: 'dr. Nadia Kusuma, Sp.PK',
     created_at: new Date(Date.now() - 2.5 * 3600000).toISOString(),
@@ -42,6 +46,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RSUD Mitra Sehat',
     severity: 'moderate',
     status: 'in_progress',
+    ai_anomaly_type: 'Ketidakpastian SDMK',
+    ai_anomaly_score: 52.0,
     sla_breach_at: new Date(Date.now() + 18 * 3600000).toISOString(),
     assigned_to: 'dr. Hendra Wijaya, MARS',
     created_at: new Date(Date.now() - 6 * 3600000).toISOString(),
@@ -52,6 +58,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RS Islam Kasih Ibu',
     severity: 'high',
     status: 'new',
+    ai_anomaly_type: 'Upcoding Severity CBG III',
+    ai_anomaly_score: 86.2,
     sla_breach_at: new Date(Date.now() + 1.8 * 3600000).toISOString(),
     assigned_to: null,
     created_at: new Date(Date.now() - 1.2 * 3600000).toISOString(),
@@ -62,6 +70,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RSUP Persahabatan Jakarta',
     severity: 'moderate',
     status: 'in_progress',
+    ai_anomaly_type: 'Pola Layanan Konsisten',
+    ai_anomaly_score: 18.5,
     sla_breach_at: new Date(Date.now() + 24 * 3600000).toISOString(),
     assigned_to: 'dr. Bima Santoso, Sp.PD',
     created_at: new Date(Date.now() - 8 * 3600000).toISOString(),
@@ -72,6 +82,8 @@ const INITIAL_QUEUE_CASES = [
     hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
     severity: 'low',
     status: 'in_progress',
+    ai_anomaly_type: 'Klaim Normal Terverifikasi',
+    ai_anomaly_score: 12.0,
     sla_breach_at: new Date(Date.now() + 48 * 3600000).toISOString(),
     assigned_to: 'apt. Siti Rahmawati',
     created_at: new Date(Date.now() - 14 * 3600000).toISOString(),
@@ -832,6 +844,9 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                     ID Berkas / SEP
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                    Deteksi Anomali AI
+                  </th>
+                  <th className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                     Keparahan
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
@@ -872,6 +887,26 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                           )}
                         </div>
                         <div className={`text-[11px] font-medium mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{c.hospital}</div>
+                      </td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                            c.ai_anomaly_score >= 75
+                              ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                              : c.ai_anomaly_score >= 50
+                              ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                              : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                          }`}>
+                            {c.ai_anomaly_score ? `${c.ai_anomaly_score}%` : 'Scanned'}
+                          </span>
+                          <span className={`text-[11px] font-semibold truncate max-w-[170px] ${
+                            c.ai_anomaly_score >= 75
+                              ? (isLight ? 'text-rose-700' : 'text-rose-300')
+                              : (isLight ? 'text-slate-800' : 'text-white/90')
+                          }`}>
+                            {c.ai_anomaly_type || 'Klaim Normal'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <span
