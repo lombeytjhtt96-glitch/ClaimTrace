@@ -1011,7 +1011,7 @@ def build_presentation():
         ("T A U T A N  R E P O S I T O R I", [
             "• github.com/lombeytjhtt96-glitch/ClaimTrace",
             "• Kode sumber lengkap (Frontend & Backend)",
-            "• Skrip pengujian E2E (99/99 Unit Tests Passed)",
+            "• Skrip pengujian E2E (106/106 Automated Tests Passed - 100%)",
             "• Dokumentasi PRD, Desain & Arsitektur Lengkap"
         ]),
         ("K O N T A K  T I M  T I N E E R E N S E", [
