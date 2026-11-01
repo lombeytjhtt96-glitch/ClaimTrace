@@ -112,45 +112,44 @@
 
 ---
 
-### SEGMEN 4: LIVE DEMO APLIKASI BERJALAN (03:15 - 06:45)
-**Tampilan Layar:** Beralih dari slide ke Google Chrome Tab: `https://claimtrace-healthkathon.vercel.app/`  
-**Aksi:** Tunjukkan alamat URL Vercel yang aktif secara live.
+### SEGMEN 4: LIVE DEMO APLIKASI BERJALAN (DURASI: ±2 MENIT 15 DETIK — AMAN DI BAWAH 3 MENIT)
+**Tampilan Layar:** Beralih dari Slide 5 ke layar aplikasi ClaimTrace yang sedang berjalan: `https://claimtrace-healthkathon.vercel.app/`
 
-**Khalaf Faith Pradyatama:**  
-> "Sekarang, mari kita buktikan kesiapan produk ClaimTrace secara langsung pada platform yang telah kami deploy secara live di cloud: `claimtrace-healthkathon.vercel.app`."
+**Transisi di Slide 5 (±10 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
+> "Sekarang, mari kita buktikan cara kerja ClaimTrace secara langsung melalui empat skenario pengujian pada prototype interaktif kami!"  
+*(Langsung beralih ke layar aplikasi ClaimTrace yang sedang berjalan)*
 
-*(Aksi 1: Halaman Login & Otentikasi)*  
-**Khalaf Faith Pradyatama:**  
-> "Di halaman login, kami menerapkan perlindungan keamanan berstandar enterprise dengan Google reCAPTCHA v2 untuk menangkal serangan credential stuffing. Kami masuk menggunakan kredensial verifikator resmi: `verifikator.bpjs@jkn.go.id`."
+---
 
-*(Aksi 2: Masuk ke Command Center / Verificator Cockpit)*  
-**Khalaf Faith Pradyatama:**  
-> "Begitu masuk, verifikator disambut oleh Verificator Cockpit berdensitas tinggi. Terlihat ringkasan 10.000 klaim sintetis terkalibrasi yang diproses oleh mesin analytics: total eksposur risiko, klaim terselamatkan, rasio efisiensi, dan distribusi antrean triase.  
-> Perhatikan fitur Dual Cockpit di sisi kanan layar: kami menyertakan smartphone simulator Mobile JKN yang terhubung secara reaktif dan real-time!"
+**Langkah 1: Triage Antrean & Deteksi Klaster (±30 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
+*(Aksi di layar: Tampilkan halaman utama Dashboard Verifikator, arahkan kursor ke barisan Triage Hijau/Kuning/Merah, lalu sorot baris RS Mitra Husada)*
 
-*(Aksi 3: Skenario Investigasi Kasus Anomali Phantom Billing RS Medika Sehat)*  
-**Gaudiansyah Abiyu Mahya:**  
-> "Mari kita simulasikan penanganan kasus anomali prioritas tinggi pada antrean Jalur Merah: Kasus Episode #EP-2026-0881 di RS Medika Sehat.  
-> Ketika verifikator mengklik kasus ini, perhatikan panel **Deteksi Anomali Klaim Otomatis Berbasis Artificial Intelligence** di layar tengah.  
-> Di sini, AI secara otomatis menghitung:  
-> • AI Anomaly Score: 94.8% — Terindikasi Anomali Kritis (Tingkat Kepercayaan Model 96.8%).  
-> Dan melalui modul Explainable AI (XAI), verifikator dapat melihat faktor pemicu anomali secara transparan:  
-> 1. Terdeteksi lonjakan klaster klaim sebesar 42 klaim fisioterapi serentak dalam rentang waktu yang tidak wajar.  
-> 2. Duplikasi semantik resume medis mencapai 96% kesamaan vektor (indikasi kuat fabrikasi berkas copy-paste).  
-> 3. Konflik fisik tenaga medis: Dokter DPJP terdaftar melayani di dua faskes berjarak 45 km pada jam yang bersamaan."
+> "Saat verifikator membuka dashboard utama ClaimTrace, sistem langsung melakukan triage otomatis terhadap ribuan berkas klaim yang masuk ke dalam Jalur Hijau, Kuning, dan Merah. Klaim wajar di Jalur Hijau dapat langsung diproses fast-track. Namun perhatikan di bagian atas antrean prioritas: sistem mendeteksi klaster mencolok pada RS Mitra Husada, di mana terdapat 85 klaim fisioterapi pasca-baksos yang otomatis masuk ke Jalur Merah dengan Skor Risiko 87."
 
-*(Aksi 4: Validasi Bukti Lapis 2 & 3: SATUSEHAT SDMK & Mobile JKN Telemetry)*  
-**Gaudiansyah Abiyu Mahya:**  
-> "Selanjutnya, mari kita uji Lapis Bukti ke-2: Validasi SATUSEHAT SDMK. Sistem otomatis melakukan pengecekan nomor SIP dr. Hendra Kurniawan, Sp.KFR. Hasil validasi menunjukkan: Status SIP Tidak Aktif di faskes ini dan beban harian telah melebihi ambang batas wajar 60 pasien per hari.  
-> Lalu kita beralih ke Lapis Bukti ke-3: Telemetri Mobile JKN. Pada simulator smartphone di sisi kanan, sistem mengirimkan notifikasi konfirmasi kehadiran ke peserta JKN bernama Bapak Ahmad Fauzi.  
-> Jika pasien menekan tombol: 'Saya Tidak Pernah Menerima Pelayanan Ini'..."
+---
 
-*(Aksi klik tombol di simulator Mobile JKN)*
+**Langkah 2: Inspeksi Matriks Bukti Lapis 1 & 2 (±35 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
+*(Aksi di layar: Klik klaster RS Mitra Husada hingga panel Matriks Bukti 3 Lapis terbuka. Tunjukkan grafik lonjakan klaim Lapis 1 dan status merah SIP dokter pada Lapis 2)*
 
-**Khalaf Faith Pradyatama:**  
-> "Perhatikan! Seketika terjadi sinkronisasi real-time pada dashboard verifikator! Status konfirmasi langsung berubah menjadi *Menyangkal Kehadiran*, indikator risiko melonjak merah, dan sistem merekomendasikan tindakan tegas: **Tolak Klaim & Eskalasi Audit Forensik**.  
-> Verifikator kemudian memberikan catatan telaah dan menekan tombol **Otorisasi Putusan**.  
-> Seluruh jejak audit, waktu verifikasi, identitas verifikator, dan paket bukti secara instan dienkripsi dan disegel ke dalam **Audit Ledger SHA-256** anti-tamper. Jejak kriptografis ini tidak dapat dimanipulasi oleh pihak manapun dan sah di mata hukum."
+> "Ketika kita klik klaster tersebut untuk menginspeksi Matriks Bukti 3 Lapis:  
+> 
+> Pada Lapis 1 (Radar Pola & Episode Fingerprint), terlihat lonjakan volume klaim mencapai 8,5 kali lipat dari baseline normal faskes, disertai kemiripan pola tindakan berulang.  
+> 
+> Lebih krusial lagi pada Lapis 2 (Uji Jejak SATUSEHAT SDMK), rekonsiliasi otomatis dengan database Kemenkes mengungkap bahwa Surat Izin Praktik (SIP) dokter DPJP terkait ternyata sudah berakhir pada tanggal pelayanan, sehingga memicu Hard Trigger risiko merah!"
+
+---
+
+**Langkah 3: Simulasi Live Mobile JKN Lapis 3 (±30 Detik) — Khalaf Faith Pradyatama:**  
+*(Aksi di layar: Buka panel Simulator Mobile JKN di samping/layar terpisah, klik kirim notifikasi, lalu tekan tombol [Tidak Pernah] pada tampilan HP peserta)*
+
+> "Selanjutnya, untuk membuktikan apakah pasien benar-benar hadir pada Lapis 3, kita jalankan Simulasi Live Mobile JKN. Sistem mengirimkan notifikasi verifikasi satu-klik ke ponsel peserta dengan prinsip minimasi privasi—tanpa menampilkan rincian diagnosa sensitif. Ketika peserta menekan tombol [Tidak Pernah] karena merasa hanya ikut acara baksos pemeriksaan biasa dan tidak pernah menjalani terapi fisioterapi di RS tersebut, perhatikan bagaimana skor dan indikator di cockpit verifikator seketika bereaksi secara real-time mengonfirmasi adanya Phantom Billing!"
+
+---
+
+**Langkah 4: Eksekusi Keputusan & Cetak Audit SHA-256 (±30 Detik) — Khalaf Faith Pradyatama:**  
+*(Aksi di layar: Klik tombol [Tunda Berita Acara & Minta Klarifikasi], lalu tampilkan modal/dokumen Berkas Telaah Siap-Audit beserta kode hash SHA-256 di bagian bawahnya)*
+
+> "Berbekal bukti tiga lapis yang objektif dan bebas debat ini, verifikator dengan prinsip Human-in-the-Loop cukup mengeksekusi tombol [Tunda Berita Acara & Minta Klarifikasi] sebelum batas regulasi 10 hari kerja. Seketika itu juga, ClaimTrace menerbitkan Berkas Telaah Siap-Audit yang merangkum seluruh temuan anomali dan menguncinya dengan stempel kriptografis hash SHA-256 sehingga sah, transparan, dan tidak dapat dimanipulasi!"
 
 ---
 
