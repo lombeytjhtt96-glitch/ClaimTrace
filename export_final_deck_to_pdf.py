@@ -577,23 +577,23 @@ html_slides = """<!DOCTYPE html>
       </div>
 
       <div class="card">
-        <div class="card-tag">SKENARIO DEMO RESMI (4 LANGKAH)</div>
-        <ul style="gap: 0.12in;">
+        <div class="card-tag">SKENARIO DEMO</div>
+        <ul style="gap: 0.1in;">
           <li>
-            <strong style="color: #ffffff;">Skenario 1: Triage Antrean Klaim Cerdas</strong><br>
-            <span style="font-size: 9.5pt; color: #94a3b8;">Verifikator membuka antrean klaim terfilter secara otomatis berdasarkan skor risiko AI (Jalur Merah, Kuning, Hijau).</span>
+            <strong style="color: #10b981;">Langkah 1: Triage Antrean & Deteksi Klaster:</strong>
+            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator membuka dashboard utama; sistem otomatis menempatkan klaster 85 klaim fisioterapi RS Mitra Husada pasca-baksos ke Jalur Merah (Skor Risiko 87).</span>
           </li>
           <li>
-            <strong style="color: #ffffff;">Skenario 2: Investigasi Anomali Phantom Billing RS Medika Sehat</strong><br>
-            <span style="font-size: 9.5pt; color: #94a3b8;">AI mendeteksi lonjakan klaim fisioterapi serentak 45 pasien tanpa riwayat rujukan, dokter DPJP tidak memiliki SIP aktif di SATUSEHAT.</span>
+            <strong style="color: #10b981;">Langkah 2: Inspeksi Matriks Bukti (Lapis 1 & 2):</strong>
+            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator memeriksa detail anomali yang mengungkap lonjakan klaim 8,5x baseline normal (Lapis 1) serta validasi SATUSEHAT SDMK bahwa SIP dokter DPJP telah berakhir (Lapis 2).</span>
           </li>
           <li>
-            <strong style="color: #ffffff;">Skenario 3: Konfirmasi Pasien via Mobile JKN Simulator</strong><br>
-            <span style="font-size: 9.5pt; color: #94a3b8;">Pasien menyatakan "Tidak Pernah Menerima Pelayanan", skor anomali AI langsung melonjak ke 94.8% (Risiko Kritis).</span>
+            <strong style="color: #10b981;">Langkah 3: Simulasi Live Mobile JKN (Lapis 3):</strong>
+            <span style="font-size: 9.5pt; color: #cbd5e1;">Sistem mengirim notifikasi konfirmasi kehadiran 1-klik ke ponsel peserta; saat peserta memilih [Tidak Pernah], skor risiko di cockpit langsung ter-update secara real-time.</span>
           </li>
           <li>
-            <strong style="color: #ffffff;">Skenario 4: Vonis Penolakan & Penguncian SHA-256 Ledger</strong><br>
-            <span style="font-size: 9.5pt; color: #94a3b8;">Verifikator merekomendasikan Penundaan/Penolakan Pembayaran, stempel hash anti-manipulasi terkunci di database audit.</span>
+            <strong style="color: #10b981;">Langkah 4: Keputusan & Cetak Audit Trail:</strong>
+            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator mengeksekusi [Tunda Berita Acara & Minta Klarifikasi] sebelum batas 10 hari kerja dan mencetak berkas siap-audit berstempel hash SHA-256.</span>
           </li>
         </ul>
       </div>

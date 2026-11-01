@@ -726,25 +726,34 @@ def build_presentation():
     tf_dm.margin_top = Inches(0.18)
 
     pdm_tag = tf_dm.paragraphs[0]
-    pdm_tag.text = "S K E N A R I O  D E M O  ( 1 0  M E N I T )"
+    pdm_tag.text = "S K E N A R I O  D E M O"
     pdm_tag.font.size = Pt(10)
     pdm_tag.font.bold = True
     pdm_tag.font.name = FONT_NAME
     pdm_tag.font.color.rgb = EMERALD_DARK
 
     demo_steps = [
-        ("1", "Triage Antrean & Deteksi Klaster:", "Verifikator membuka dashboard, sistem menampilkan 85 klaim fisioterapi RS Mitra Husada pasca-baksos masuk Jalur Merah (Skor 87)."),
-        ("2", "Inspeksi Matriks Bukti 3 Lapis:", "Verifikator memeriksa lonjakan klaim 8,5x baseline (L1) dan validasi SATUSEHAT yang mengungkap SIP DPJP telah berakhir (L2)."),
-        ("3", "Simulasi Live Mobile JKN:", "Notifikasi presensi terkirim ke ponsel peserta; peserta memilih [Tidak Pernah Hadir] -> Skor di cockpit seketika bereaksi reaktif!"),
-        ("4", "Keputusan & Cetak Audit Trail:", "Verifikator mengeksekusi [Tunda Berita Acara & Minta Klarifikasi], sistem menerbitkan berkas audit dengan stempel hash SHA-256.")
+        ("Langkah 1:", "Triage Antrean & Deteksi Klaster:", "Verifikator membuka dashboard utama; sistem otomatis menempatkan klaster 85 klaim fisioterapi RS Mitra Husada pasca-baksos ke Jalur Merah (Skor Risiko 87)."),
+        ("Langkah 2:", "Inspeksi Matriks Bukti (Lapis 1 & 2):", "Verifikator memeriksa detail anomali yang mengungkap lonjakan klaim 8,5x baseline normal (Lapis 1) serta validasi SATUSEHAT SDMK bahwa SIP dokter DPJP telah berakhir (Lapis 2)."),
+        ("Langkah 3:", "Simulasi Live Mobile JKN (Lapis 3):", "Sistem mengirim notifikasi konfirmasi kehadiran 1-klik ke ponsel peserta; saat peserta memilih [Tidak Pernah], skor risiko di cockpit langsung ter-update secara real-time."),
+        ("Langkah 4:", "Keputusan & Cetak Audit Trail:", "Verifikator mengeksekusi [Tunda Berita Acara & Minta Klarifikasi] sebelum batas 10 hari kerja dan mencetak berkas siap-audit berstempel hash SHA-256.")
     ]
 
-    for num, stitle, sdesc in demo_steps:
+    for step_lbl, stitle, sdesc in demo_steps:
         p_s = tf_dm.add_paragraph()
-        p_s.text = f"• Langkah {num} - {stitle} {sdesc}"
-        p_s.font.size = Pt(8.5)
-        p_s.font.name = FONT_NAME
-        p_s.font.color.rgb = TEXT_DARK
+        run1 = p_s.add_run()
+        run1.text = f"{step_lbl} {stitle} "
+        run1.font.bold = True
+        run1.font.size = Pt(9.5)
+        run1.font.name = FONT_NAME
+        run1.font.color.rgb = EMERALD_DARK
+
+        run2 = p_s.add_run()
+        run2.text = sdesc
+        run2.font.bold = False
+        run2.font.size = Pt(9.5)
+        run2.font.name = FONT_NAME
+        run2.font.color.rgb = TEXT_DARK
         p_s.space_before = Pt(4)
 
     # Right Bottom: Tautan Prototype
@@ -760,25 +769,26 @@ def build_presentation():
     tf_lk.margin_top = Inches(0.12)
 
     plk_tag = tf_lk.paragraphs[0]
-    plk_tag.text = "T A U T A N  P R O T O T Y P E  &  R E P O S I T O R I"
+    plk_tag.text = "T A U T A N  P R O T O T Y P E  ( B I L A  A D A )"
     plk_tag.font.size = Pt(9.5)
     plk_tag.font.bold = True
     plk_tag.font.name = FONT_NAME
     plk_tag.font.color.rgb = EMERALD_DARK
 
     p_l1 = tf_lk.add_paragraph()
-    p_l1.text = "• Web App Local Master: http://localhost:3000 (React Master Suite)"
-    p_l1.font.size = Pt(8.5)
+    p_l1.text = "• Live Web Deploy: https://claimtrace-healthkathon.vercel.app/"
+    p_l1.font.size = Pt(9)
     p_l1.font.bold = True
     p_l1.font.name = FONT_NAME
     p_l1.font.color.rgb = TEXT_DARK
     p_l1.space_before = Pt(2)
 
     p_l2 = tf_lk.add_paragraph()
-    p_l2.text = "• Repositori: github.com/tineerense/claimtrace-jkn"
-    p_l2.font.size = Pt(8.5)
+    p_l2.text = "• Repositori: https://github.com/lombeytjhtt96-glitch/ClaimTrace"
+    p_l2.font.size = Pt(9)
     p_l2.font.name = FONT_NAME
-    p_l2.font.color.rgb = TEXT_MUTED
+    p_l2.font.color.rgb = TEXT_DARK
+    p_l2.space_before = Pt(1)
 
     # =========================================================================
     # SLIDE 7: 6 PENJELASAN FITUR
