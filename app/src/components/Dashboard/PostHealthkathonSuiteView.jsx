@@ -27,6 +27,13 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../../services/apiConfig';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
+
+function cleanAiDisplayText(str) {
+  if (!str || typeof str !== 'string') return '';
+  // Remove single-asterisk markdown italics (*upcoding* -> upcoding) without touching *** masking or **bold**
+  return str.replace(/(?<!\*)\*([A-Za-z0-9][^*\n]{0,60}?)\*(?!\*)/g, '$1');
+}
 
 const ACTION_LABELS = {
   TUNDA_BERITA_ACARA_KLARIFIKASI: 'Tunda Berita Acara & Minta Klarifikasi (SOP 10 Hari)',
@@ -793,7 +800,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
   const totalRecoveryAllCases = cases.reduce((acc, c) => acc + c.potential_recovery_rp, 0);
 
   return (
-    <div className={`space-y-5 ${isLight ? 'text-slate-800' : 'text-white'} tabular-nums`}>
+    <div className={`space-y-5 pb-14 ${isLight ? 'text-slate-800' : 'text-white'} tabular-nums`}>
       {/* HEADER BANNER */}
       <div
         className={`rounded-2xl border p-5 transition-all ${
@@ -1253,9 +1260,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                         <span>Telaah Auditor Koding Klinis:</span>
                       </span>
                     </div>
-                    <p className="text-[11px] whitespace-pre-line leading-relaxed">
-                      {simAuditResult.ai_clinical_reasoning}
-                    </p>
+                    <div className="text-[11px] leading-relaxed">
+                      <MarkdownRenderer content={cleanAiDisplayText(simAuditResult.ai_clinical_reasoning)} isLight={isLight} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1374,8 +1381,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
 
               {fristaAiAnalysis?.ai_forensic_analysis && (
-                <div className="text-xs whitespace-pre-line leading-relaxed pt-1 border-t border-slate-200/30">
-                  {fristaAiAnalysis.ai_forensic_analysis}
+                <div className="text-xs leading-relaxed pt-1 border-t border-slate-200/30">
+                  <MarkdownRenderer content={cleanAiDisplayText(fristaAiAnalysis.ai_forensic_analysis)} isLight={isLight} />
                 </div>
               )}
             </div>
@@ -1564,11 +1571,15 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 </div>
 
                 <div
-                  className={`p-4 rounded-xl border text-xs whitespace-pre-line leading-relaxed ${
+                  className={`p-4 rounded-xl border text-xs leading-relaxed ${
                     isLight ? 'bg-emerald-50/50 border-emerald-200 text-slate-800' : 'bg-[#000d24] border-emerald-500/30 text-slate-200'
                   }`}
                 >
-                  {isQueryingRag ? 'Sedang menyusun penalaran hukum dan klinis...' : ragResponse.synthesized_response}
+                  {isQueryingRag ? (
+                    'Sedang menyusun penalaran hukum dan klinis...'
+                  ) : (
+                    <MarkdownRenderer content={cleanAiDisplayText(ragResponse.synthesized_response)} isLight={isLight} />
+                  )}
                 </div>
 
                 <div className="space-y-2.5">
@@ -1584,7 +1595,6 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-bold text-emerald-500">{reg.regulation}</span>
-                        <span className="text-[10px] font-mono opacity-60">{reg.doc_id}</span>
                       </div>
                       <div className="text-[11px] font-semibold">{reg.section}</div>
                       <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{reg.summary}</p>

@@ -654,6 +654,9 @@ class PostHealthkathonExpansionEngine:
 
         # 2. Hybrid Scoring: Chroma Vector Similarity + Keyword Match + Active Case Typology Affinity
         scored_docs = []
+        is_all_cases_query = any(
+            kw in q_lower for kw in ["semua", "semuanya", "seluruh", "4 skenario", "4 kasus", "empat skenario", "empat kasus", "lengkap"]
+        )
         has_explicit_other_case_kw = any(
             kw in q_lower for kw in ["sepsis", "a41.9", "k92.2", "katarak", "fragmentasi", "unbundling", "repeat", "cloning", "fisioterapi", "baksos", "phantom"]
         )
@@ -664,18 +667,21 @@ class PostHealthkathonExpansionEngine:
                     score += 30.0
             if any(word in doc["summary"].lower() for word in q_lower.split() if len(word) > 3):
                 score += 10.0
+            if is_all_cases_query:
+                score += 25.0
             # Boost regulations matching the active claim_id or typology_code
             affinities = doc.get("typology_affinity", [])
             if case_ctx["claim_id"] in affinities or case_ctx["typology_code"] in affinities:
                 # Strong boost when user asks a contextual question like "apa hukum ini", "apa sanksinya", etc.
-                score += 22.0 if has_explicit_other_case_kw else 45.0
+                score += 18.0 if (has_explicit_other_case_kw or is_all_cases_query) else 45.0
 
             scored_docs.append((score, doc))
 
         scored_docs.sort(key=lambda x: x[0], reverse=True)
-        top_docs = [d for s, d in scored_docs if s > 0][:3]
+        max_docs = 6 if is_all_cases_query else 3
+        top_docs = [d for s, d in scored_docs if s > 0][:max_docs]
         if not top_docs:
-            top_docs = self.regulatory_corpus[:3]
+            top_docs = self.regulatory_corpus[:max_docs]
 
         synthesized_answer = (
             f"Berdasarkan telaah HealthAI RAG terhadap regulasi JKN yang berlaku "

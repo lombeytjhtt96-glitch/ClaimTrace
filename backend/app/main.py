@@ -1887,6 +1887,9 @@ Prinsip Penalaran & Terminologi Wajib:
                         clean_text = re.sub(r'\bDuckDB\s+(?:database|basis data)\b', 'database', clean_text, flags=re.IGNORECASE)
                         clean_text = re.sub(r'\bDuckDB\b', 'database', clean_text, flags=re.IGNORECASE)
                         clean_text = re.sub(r'\bmutahir\b', 'mutakhir', clean_text, flags=re.IGNORECASE)
+                        if not is_json_mode:
+                            # Remove single-asterisk markdown italics around terms (*upcoding* -> upcoding) without touching *** masking or **bold**
+                            clean_text = re.sub(r'(?<!\*)\*([A-Za-z0-9][^\*\n]{0,60}?)\*(?!\*)', r'\1', clean_text)
 
                         usage = data.get("usageMetadata", {})
                         prompt_tokens = usage.get("promptTokenCount", len(safe_user_prompt) // 4)
@@ -2433,6 +2436,10 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
         f"[{i+1}] {d['regulation']} ({d['section']}): {d['summary']} | Instruksi: {d['verificator_instruction']}"
         for i, d in enumerate(top_docs)
     )
+    all_cases_summary_str = "\n".join(
+        f"- {c['claim_id']} ({c['hospital']}): {c['typology_name']} | Tagihan Rp {c['claimed_tariff_rp']:,.0f} -> Terverifikasi Rp {c['verified_tariff_rp']:,.0f} (Recovery Rp {c['potential_recovery_rp']:,.0f}) | Regulasi: {c['regulation_ref']}"
+        for c in expansion_engine.typology_cases
+    )
 
     rag_prompt = (
         f"Pertanyaan Pengguna / Verifikator: \"{req.query}\"\n\n"
@@ -2447,12 +2454,12 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
         f"- Temuan Diskrepansi Klinis & Bukti 4 Lapis: {case_ctx['clinical_discrepancy']}\n"
         f"- Bukti Objektif Lab/Vital/Telemetri: {json.dumps(case_ctx['vital_lab_evidence'], ensure_ascii=False)}\n"
         f"- Status Biometrik FRISTA (Lapis 4): {frista_ctx.get('frista_status', '-')} - {frista_ctx.get('batch_anomaly_detail', '')}\n\n"
-        f"Dokumen Regulasi Hasil Retrieval Vektor ChromaDB:\n{docs_context_str}\n\n"
+        f"Ringkasan Seluruh 4 Skenario Klaim yang Dipantau di Pusat Ekspansi 4 Pilar:\n{all_cases_summary_str}\n\n"
+        f"Dokumen Regulasi Hasil Retrieval Vektor:\n{docs_context_str}\n\n"
         f"Instruksi Menjawab:\n"
-        f"Jawablah pertanyaan pengguna (\"{req.query}\") secara langsung, cerdas, komprehensif, dan kontekstual terhadap Kasus Aktif "
-        f"({case_ctx['claim_id']} - {case_ctx['hospital']}) beserta dasar hukum/regulasi spesifiknya (pasal, undang-undang, Permenkes, "
-        f"Perpres, sanksi administratif/pidana bila relevan, serta langkah konkret yang harus diambil Verifikator BPJS Kesehatan). "
-        f"Jangan gunakan template statis dan jangan gunakan emoji sama sekali."
+        f"1. Jika pengguna bertanya tentang 'semuanya', 'semua kasus', atau 'seluruh dasar hukum', jabarkan dasar hukum dan pasal regulasi untuk KEEMPAT skenario klaim di atas secara lengkap (Phantom Billing CLM-2026-10-085, Upcoding Severity CLM-2026-8806, Services Unbundling CLM-2026-8809, dan Repeat Billing CLM-2026-8802).\n"
+        f"2. Jika pengguna bertanya spesifik tentang 'kasus ini' atau topik tertentu, fokuskan pada Kasus Aktif ({case_ctx['claim_id']} - {case_ctx['hospital']}) beserta dasar hukumnya.\n"
+        f"3. Jangan gunakan tanda bintang tunggal (*kata*) untuk memiringkan istilah asing dan jangan gunakan emoji sama sekali."
     )
 
     try:
