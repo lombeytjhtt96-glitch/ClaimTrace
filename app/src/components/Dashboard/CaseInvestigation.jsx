@@ -77,6 +77,7 @@ export default function CaseInvestigation({
   onOpenGraph,
   onOpenDecision,
   onOpenAgentCopilot,
+  onOpenExpansionSuite,
   isLight = false
 }) {
   const [volumeViewType, setVolumeViewType] = useState('bar'); // 'bar' | 'area'
@@ -935,12 +936,68 @@ export default function CaseInvestigation({
 
       </div>
 
+      {/* LAPIS BUKTI KE-4 (QUAD-TRIANGULATION): TELEMETRI BIOMETRIK FRISTA & EKSPANSI MULTI-TIPOLOGI */}
+      <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl shadow-[#00081c]/50'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5 border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-600 text-white">
+              LAPIS 4 · QUAD-TRIANGULATION
+            </span>
+            <h3 className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              Telemetri Biometrik FRISTA BPJS (Face + Sidik Jari) &amp; Deteksi Multi-Tipologi (Upcoding #4 · Unbundling #9)
+            </h3>
+          </div>
+          {onOpenExpansionSuite && (
+            <button
+              type="button"
+              onClick={onOpenExpansionSuite}
+              className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition cursor-pointer shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Buka Suite Ekspansi 4 Pilar (FRISTA · Upcoding · RAG · QR PDF)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+          <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/30'}`}>
+            <div className="text-[10px] font-mono uppercase font-bold text-rose-600 dark:text-rose-300">Log Biometrik FRISTA SEP</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-rose-900' : 'text-white'}`}>94.1% Bypass Manual</div>
+            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-rose-800' : 'text-rose-200/80'}`}>
+              80/85 SEP diterbitkan pukul 22:14–23:48 WIB tanpa pemindaian wajah 3D Liveness maupun sidik jari.
+            </p>
+          </div>
+          <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+            <div className="text-[10px] font-mono uppercase font-bold text-amber-600 dark:text-amber-300">Audit Upcoding (Modus #4)</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>Severity Level I -&gt; III</div>
+            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+              Deteksi otomatis klaim komorbiditas berat (A41.9 / K92.2) tanpa bukti lab kultur darah &amp; laktat.
+            </p>
+          </div>
+          <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+            <div className="text-[10px] font-mono uppercase font-bold text-cyan-700 dark:text-cyan-300">Audit Unbundling (Modus #9)</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>Split 3 SEP / 5 Hari</div>
+            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+              Deteksi pemecahan paket diagnostik &amp; poli menjadi klaim terpisah beruntun untuk arbitrase tarif CBG.
+            </p>
+          </div>
+          <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
+            <div className="text-[10px] font-mono uppercase font-bold text-emerald-700 dark:text-emerald-300">Skor Fusi 4 Lapis (Quad)</div>
+            <div className={`text-lg font-extrabold mt-0.5 font-mono ${isLight ? 'text-emerald-900' : 'text-emerald-300'}`}>91.8 / 100</div>
+            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-emerald-800' : 'text-emerald-200/80'}`}>
+              0.35·L1 + 0.25·L2 + 0.20·L3 + 0.20·L4 (FRISTA) · Siap Cetak Berita Acara QR SHA-256.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* CROSS-VALIDATION EVIDENCE TABLE - DARK GLASS TABLE */}
       <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl shadow-[#00081c]/50'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
         <div className="flex items-center justify-between">
           <span className={`text-xs font-bold flex items-center space-x-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
             <FileText className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
-            <span>Matriks Sintesis Bukti Pra-Bayar (Cross-Validation)</span>
+            <span>Matriks Sintesis Bukti Pra-Bayar (4-Layer Quad-Triangulation)</span>
           </span>
           <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'text-slate-700 bg-slate-100 border-slate-200' : 'text-white/50 bg-white/5 border-white/10'}`}>
             Protokol DSS BPJS Kesehatan
@@ -992,6 +1049,18 @@ export default function CaseInvestigation({
                   </td>
                   <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-purple-900' : 'text-purple-300'}`}>F3: FA0001.F1005 · D3FEND: D3-MFA</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>UU PDP No. 27/2022</td>
+                </tr>
+                <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
+                  <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>Lapis 4 (FRISTA)</td>
+                  <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Biometrik FRISTA &amp; Audit Upcoding/Unbundling</td>
+                  <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
+                    94.1% Bypass Biometrik (80/85 SEP Tanpa Liveness)
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>BIOMETRIC FAIL</span>
+                  </td>
+                  <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>D3FEND: D3-BA · ISO 30107-3</td>
+                  <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>SE BPJS FRISTA 2024</td>
                 </tr>
               </tbody>
             </table>

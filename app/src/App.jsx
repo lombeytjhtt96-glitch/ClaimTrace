@@ -60,6 +60,7 @@ import InterventionsView from './components/Dashboard/InterventionsView';
 import DatabaseViewerView from './components/Dashboard/DatabaseViewerView';
 import HealthAIChatView from './components/Dashboard/HealthAIChatView';
 import HealthAIChatWidget from './components/Dashboard/HealthAIChatWidget';
+import PostHealthkathonSuiteView from './components/Dashboard/PostHealthkathonSuiteView';
 
 export default function App() {
   // Read initial view & tab from URL params for instant navigation & deep-linking
@@ -81,7 +82,7 @@ export default function App() {
       const v = params.get('view');
       if (v === 'health_ai') return 'health_ai_chat';
       const t = params.get('tab');
-      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
+      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
         return t;
       }
     }
@@ -170,7 +171,7 @@ export default function App() {
           setAuthView(v);
         }
         const t = params.get('tab');
-        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
+        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
           setDashboardTab(t);
         }
         const m = params.get('mode');
@@ -237,6 +238,7 @@ export default function App() {
       group: 'Forensik Bukti 3 Lapis',
       items: [
         { id: 'investigation', label: 'Matriks 3 Lapis Bukti', icon: FileText, badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
+        { id: 'expansion_suite', label: 'Ekspansi 4 Pilar (Next-Gen)', icon: Layers, badge: '4 Lapis', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
         { id: 'graph', label: 'Peta Sindikat Faskes', icon: GitBranch },
         { id: 'empirical', label: 'Forensik Data Empiris', icon: Database },
         { id: 'faskes', label: 'Surveilans Faskes (FRI)', icon: Building2 },
@@ -2135,6 +2137,13 @@ export default function App() {
                         onOpenGraph={() => setDashboardTab('graph')}
                         onOpenDecision={() => setDashboardTab('decision')}
                         onOpenAgentCopilot={() => setDashboardTab('agent_copilot')}
+                        onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
+                        isLight={isLight}
+                      />
+                    )}
+
+                    {dashboardTab === 'expansion_suite' && (
+                      <PostHealthkathonSuiteView
                         isLight={isLight}
                       />
                     )}
@@ -2359,6 +2368,7 @@ export default function App() {
                         onSetVerificatorAction={setVerificatorAction}
                         onBackToInvestigation={() => setDashboardTab('investigation')}
                         onBackToQueue={() => setDashboardTab('queue')}
+                        onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
                         isLight={isLight}
                       />
                     )}

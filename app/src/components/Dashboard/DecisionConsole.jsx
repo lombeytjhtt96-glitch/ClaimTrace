@@ -18,6 +18,7 @@ export default function DecisionConsole({
   onSetVerificatorAction,
   onBackToInvestigation,
   onBackToQueue,
+  onOpenExpansionSuite,
   isLight: propIsLight
 }) {
   const [internalIsLight, setInternalIsLight] = useState(() => {
@@ -524,23 +525,39 @@ Timestamp: ${new Date().toISOString()}`;
           }`}>
             <h4 className={`text-xs font-bold flex items-center space-x-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
               <FileCheck className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
-              <span>Berkas Berita Acara Siap-Audit (BAKB)</span>
+              <span>Berkas Berita Acara Siap-Audit (BAKB · 4 Lapis + QR SHA-256)</span>
             </h4>
             <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-              Seluruh bukti Lapis 1 (Pola), Lapis 2 (SATUSEHAT), dan Lapis 3 (Mobile JKN) siap dicetak menjadi lembar rekomendasi resmi tim verifikator BPJS.
+              Seluruh bukti Lapis 1 (Pola), Lapis 2 (SATUSEHAT), Lapis 3 (Mobile JKN), dan Lapis 4 (Biometrik FRISTA) siap dicetak menjadi lembar rekomendasi resmi tim verifikator BPJS.
             </p>
 
-            <button type="button"
-              onClick={() => setShowPdfModal(true)}
-              className={`w-full font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer ${
-                isLight
-                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                  : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-950/40'
-              }`}
-            >
-              <Download className="w-4 h-4" />
-              <span>Buka Pratinjau &amp; Cetak Dokumen PDF</span>
-            </button>
+            <div className="space-y-2">
+              <button type="button"
+                onClick={() => setShowPdfModal(true)}
+                className={`w-full font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer ${
+                  isLight
+                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                    : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-950/40'
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                <span>Buka Pratinjau &amp; Cetak Dokumen PDF</span>
+              </button>
+
+              {onOpenExpansionSuite && (
+                <button type="button"
+                  onClick={onOpenExpansionSuite}
+                  className={`w-full font-bold text-xs py-2 px-3 rounded-xl border transition flex items-center justify-center space-x-2 cursor-pointer ${
+                    isLight
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                      : 'bg-white/10 hover:bg-white/15 text-emerald-300 border-white/15'
+                  }`}
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Cetak Berita Acara FKRTL + QR-Code SHA-256 (Suite 4 Pilar)</span>
+                </button>
+              )}
+            </div>
           </div>
 
         </div>
@@ -640,7 +657,7 @@ Timestamp: ${new Date().toISOString()}`;
                 {/* Multi-layer Findings */}
                 <div className="space-y-1.5 text-[11px]">
                   <h4 className={`font-bold border-b pb-1 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
-                    I. TEMUAN KECURANGAN MULTI-LAPIS (EVIDENCE SYNTHESIS)
+                    I. TEMUAN KECURANGAN MULTI-LAPIS (4-LAYER QUAD-TRIANGULATION)
                   </h4>
                   <ul className={`list-disc pl-4 space-y-1 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                     <li>
@@ -651,6 +668,9 @@ Timestamp: ${new Date().toISOString()}`;
                     </li>
                     <li>
                       <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 3 (Mobile JKN Confirmation):</strong> Verifikasi out-of-band ke peserta terdaftar mengonfirmasi 8 dari 10 peserta tidak pernah hadir menerima layanan.
+                    </li>
+                    <li>
+                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 4 (Telemetri Biometrik FRISTA BPJS):</strong> 94.1% (80 dari 85 SEP) diterbitkan secara manual pada malam hari (22:14–23:48 WIB) tanpa pemindaian wajah 3D Liveness maupun sidik jari peserta.
                     </li>
                   </ul>
                 </div>

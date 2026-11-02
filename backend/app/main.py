@@ -2264,6 +2264,93 @@ def get_icd10_statistics():
         "language_support": ["Bahasa Indonesia", "English (International)"]
     }
 
+# ==============================================================================
+# POST-HEALTHKATHON EXPANSION SUITE (LOCALHOST DEVELOPMENT)
+# 1. Multi-Typology Fraud Detection (Upcoding #4 & Unbundling/Fragmentation #9)
+# 2. FRISTA Biometric & Liveness Telemetry (Quad-Triangulation / Lapis 4)
+# 3. HealthAI Copilot RAG Regulatory & INA-CBG Clinical Coding Auditor
+# 4. Berita Acara Resmi & Cryptographic SHA-256 QR Matrix Dossier Generator
+# ==============================================================================
+from app.engine.post_healthkathon_expansion import expansion_engine
+
+class ClinicalCodingAuditRequest(BaseModel):
+    claim_id: Optional[str] = "CLM-2026-8806"
+    icd10_primary: str = "K29.7"
+    icd10_secondary: List[str] = ["A41.9", "K92.2"]
+    hemoglobin: float = 13.6
+    leukocytes: float = 7400.0
+    temperature: float = 36.7
+    sofa_score: int = 0
+    visit_count_7d: int = 1
+    claimed_tariff_rp: int = 14850000
+
+class RegulatoryRagRequest(BaseModel):
+    query: str
+    claim_id: Optional[str] = "CLM-2026-8806"
+
+class BeritaAcaraGenerateRequest(BaseModel):
+    claim_id: str = "CLM-2026-10-085"
+    verifier_name: str = "Khalaf Faith Pradyatama"
+    verifier_nip: str = "198704202011012001"
+    action_type: str = "TUNDA_BERITA_ACARA_KLARIFIKASI"
+    custom_notes: Optional[str] = None
+
+@app.get("/api/v1/expansion/typologies")
+def get_expanded_typology_cases(typology: Optional[str] = Query(None, description="Filter kode tipologi (UPCODING, UNBUNDLING, PHANTOM, REPEAT)")):
+    """
+    Mengembalikan daftar kasus multi-tipologi kecurangan JKN (Upcoding Severity Level,
+    Services Unbundling/Fragmentation, Phantom Billing, dan Repeat Billing) beserta analisis pemulihan biaya.
+    """
+    return expansion_engine.list_typology_cases(typology_filter=typology)
+
+@app.post("/api/v1/expansion/audit-coding")
+def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
+    """
+    Mengaudit kesesuaian koding diagnosis primer/sekunder INA-CBG terhadap tanda vital dan laboratorium
+    untuk mendeteksi Upcoding Tingkat Keparahan (#4) serta Pemecahan Episode (#9).
+    """
+    return expansion_engine.audit_clinical_coding(
+        claim_id=req.claim_id,
+        icd10_primary=req.icd10_primary,
+        icd10_secondary=req.icd10_secondary,
+        hemoglobin=req.hemoglobin,
+        leukocytes=req.leukocytes,
+        temperature=req.temperature,
+        sofa_score=req.sofa_score,
+        visit_count_7d=req.visit_count_7d,
+        claimed_tariff_rp=req.claimed_tariff_rp
+    )
+
+@app.get("/api/v1/expansion/frista-biometrics")
+def get_frista_biometric_telemetry(claim_id: str = Query("CLM-2026-10-085", description="ID Berkas Klaim")):
+    """
+    Mengembalikan hasil verifikasi log biometrik FRISTA (Face Recognition & Sidik Jari BPJS Kesehatan)
+    sebagai Lapis Bukti Ke-4 (Quad-Triangulation).
+    """
+    return expansion_engine.get_frista_biometric_verification(claim_id=claim_id)
+
+@app.post("/api/v1/expansion/rag-regulatory")
+def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
+    """
+    Menjalankan pencarian Retrieval-Augmented Generation (RAG) pada korpus regulasi JKN
+    (Permenkes No. 3/2023, Permenkes No. 26/2021, Perpres No. 82/2018, UU PDP No. 27/2022).
+    """
+    return expansion_engine.query_regulatory_rag(query=req.query, claim_id=req.claim_id)
+
+@app.post("/api/v1/expansion/berita-acara")
+def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
+    """
+    Menerbitkan dokumen Berita Acara Hasil Verifikasi Klaim FKRTL lengkap dengan
+    stempel hash kriptografis SHA-256 dan matriks QR 21x21 deterministik.
+    """
+    return expansion_engine.generate_berita_acara_dossier(
+        claim_id=req.claim_id,
+        verifier_name=req.verifier_name,
+        verifier_nip=req.verifier_nip,
+        action_type=req.action_type,
+        custom_notes=req.custom_notes
+    )
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
