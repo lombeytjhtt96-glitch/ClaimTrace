@@ -821,14 +821,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   className={`p-2 rounded-lg shrink-0 ${
                     active
                       ? isLight
-                        ? 'bg-white/20 text-white'
+                        ? 'bg-emerald-800 text-white border border-emerald-400/50 shadow-inner'
                         : 'bg-emerald-500 text-slate-950'
                       : isLight
-                        ? 'bg-white text-emerald-700 border border-slate-200'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-white/10 text-emerald-400'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 stroke-[2.25]" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold truncate">{tab.title}</div>
@@ -915,7 +915,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
           >
             <div className="flex items-start justify-between gap-3 border-b pb-3 border-slate-200/20">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 font-bold">
+                <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'}`}>
                   {selectedCase.typology_code}
                 </span>
                 <h2 className="text-base font-bold mt-1.5">{selectedCase.typology_name}</h2>
@@ -925,7 +925,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
               <div className="text-right">
                 <span className="text-[10px] uppercase tracking-wider block opacity-70">Skor Risiko Klaim</span>
-                <span className="text-2xl font-extrabold font-mono text-rose-500">{selectedCase.risk_score}</span>
+                <span className="text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-400">{selectedCase.risk_score}</span>
               </div>
             </div>
 
@@ -933,7 +933,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50/60 border-rose-200' : 'bg-rose-950/30 border-rose-500/30'}`}>
                 <span className="text-[10px] font-bold uppercase opacity-75 block">Tagihan Diajukan Faskes</span>
-                <div className="text-sm font-extrabold font-mono text-rose-500 mt-1">
+                <div className={`text-sm font-extrabold font-mono mt-1 ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
                   Rp {selectedCase.claimed_tariff_rp.toLocaleString('id-ID')}
                 </div>
                 <div className="text-[11px] font-mono mt-0.5 opacity-80">{selectedCase.ina_cbg_claimed}</div>
@@ -941,7 +941,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-sky-50/60 border-sky-200' : 'bg-sky-950/30 border-sky-500/30'}`}>
                 <span className="text-[10px] font-bold uppercase opacity-75 block">Tarif Sah Terverifikasi</span>
-                <div className="text-sm font-extrabold font-mono text-sky-400 mt-1">
+                <div className={`text-sm font-extrabold font-mono mt-1 ${isLight ? 'text-sky-700' : 'text-sky-300'}`}>
                   Rp {selectedCase.verified_tariff_rp.toLocaleString('id-ID')}
                 </div>
                 <div className="text-[11px] font-mono mt-0.5 opacity-80">{selectedCase.ina_cbg_verified}</div>
@@ -949,7 +949,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50 border-emerald-300' : 'bg-emerald-950/40 border-emerald-500/40'}`}>
                 <span className="text-[10px] font-bold uppercase opacity-75 block">Potensi Cost Recovery</span>
-                <div className="text-sm font-extrabold font-mono text-emerald-500 mt-1">
+                <div className={`text-sm font-extrabold font-mono mt-1 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                   Rp {selectedCase.potential_recovery_rp.toLocaleString('id-ID')}
                 </div>
                 <div className="text-[11px] mt-0.5 opacity-80">Efisiensi Dana JKN</div>
@@ -994,10 +994,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
           >
             <div className="flex items-center justify-between border-b pb-3 border-slate-200/20">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-emerald-500" />
+                <Sliders className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-sm font-bold">Simulator Audit Koding INA-CBG Interaktif</h3>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
                 Real-Time Engine
               </span>
             </div>
@@ -1091,10 +1091,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold">Hasil Evaluasi Otomatis:</span>
                   <span
-                    className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                    className={`px-2 py-0.5 rounded font-bold text-[10px] border ${
                       simAuditResult.upcoding_detected || simAuditResult.unbundling_detected
-                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                        : isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                     }`}
                   >
                     {simAuditResult.upcoding_detected
@@ -1159,8 +1159,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <span
                 className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border ${
                   selectedFrista.lapis4_biometric_risk_score > 70
-                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                    : isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                 }`}
               >
                 {selectedFrista.frista_status}
@@ -1367,10 +1367,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <>
                 <div className="flex items-center justify-between border-b pb-3 border-slate-200/20">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <h3 className="text-sm font-bold">Sintesis Telaah Hukum & Klinis HealthAI</h3>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
                     Confidence: {(ragResponse.confidence * 100).toFixed(1)}%
                   </span>
                 </div>
@@ -1398,7 +1398,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                       </div>
                       <div className="text-[11px] font-semibold">{reg.section}</div>
                       <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{reg.summary}</p>
-                      <div className="text-[11px] font-bold text-sky-400 pt-1">
+                      <div className={`text-[11px] font-bold pt-1 ${isLight ? 'text-sky-700' : 'text-sky-300'}`}>
                         Instruksi Verifikator: {reg.verificator_instruction}
                       </div>
                     </div>
@@ -1567,7 +1567,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <tbody>
                   <tr>
                     <td className="p-2.5 border border-slate-500/20 font-mono">{baDossier.claim_summary.ina_cbg_claimed}</td>
-                    <td className="p-2.5 border border-slate-500/20 font-mono font-bold text-sky-400">
+                    <td className={`p-2.5 border border-slate-500/20 font-mono font-bold ${isLight ? 'text-sky-700' : 'text-sky-300'}`}>
                       {baDossier.claim_summary.ina_cbg_verified}
                     </td>
                     <td className="p-2.5 border border-slate-500/20 text-right font-mono">

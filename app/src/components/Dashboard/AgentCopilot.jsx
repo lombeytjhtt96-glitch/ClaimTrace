@@ -1440,7 +1440,7 @@ export default function AgentCopilot({
                         <span
                           className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                             isActive
-                              ? isLight ? 'bg-white/20 text-white' : 'bg-[#000c24]/20 text-[#000c24]'
+                              ? isLight ? 'bg-emerald-800 text-white border border-emerald-400/40' : 'bg-[#000c24]/20 text-[#000c24]'
                               : isLight ? 'bg-slate-200 text-slate-700' : 'bg-white/10 text-white/70'
                           }`}
                         >
