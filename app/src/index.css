@@ -216,23 +216,23 @@
   stroke: #ffffff !important;
 }
 
-/* Ensure pastel mint/emerald badges & pills have dark emerald text and vivid green icon strokes */
-#cockpit-root.theme-light span.bg-emerald-50 svg,
-#cockpit-root.theme-light span.bg-emerald-100 svg,
-#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) svg,
-#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) svg {
+/* Ensure pastel mint/emerald badges & pills have dark emerald text and vivid green icon strokes (excluding solid buttons inside them) */
+#cockpit-root.theme-light span.bg-emerald-50 svg:not(button *),
+#cockpit-root.theme-light span.bg-emerald-100 svg:not(button *),
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) svg:not(button *),
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) svg:not(button *) {
   stroke: #059669 !important;
   color: #059669 !important;
 }
 
-#cockpit-root.theme-light span.bg-emerald-50 p,
-#cockpit-root.theme-light span.bg-emerald-50 span:not([class*="bg-white"]):not(.keep-white),
-#cockpit-root.theme-light span.bg-emerald-100 p,
-#cockpit-root.theme-light span.bg-emerald-100 span:not([class*="bg-white"]):not(.keep-white),
-#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) p,
-#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) span:not([class*="bg-white"]):not(.keep-white),
-#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) p,
-#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) span:not([class*="bg-white"]):not(.keep-white) {
+#cockpit-root.theme-light span.bg-emerald-50 p:not(button *),
+#cockpit-root.theme-light span.bg-emerald-50 span:not(button *):not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light span.bg-emerald-100 p:not(button *),
+#cockpit-root.theme-light span.bg-emerald-100 span:not(button *):not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) p:not(button *),
+#cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) span:not(button *):not([class*="bg-white"]):not(.keep-white),
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) p:not(button *),
+#cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) span:not(button *):not([class*="bg-white"]):not(.keep-white) {
   color: #064e3b !important;
 }
 
