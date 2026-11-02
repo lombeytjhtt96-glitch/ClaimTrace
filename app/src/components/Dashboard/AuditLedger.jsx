@@ -9,15 +9,31 @@ import {
 } from 'lucide-react';
 
 const CLAIM_METADATA_MAP = {
+  'CLM-2026-10-085': { nominal: 15300000, faskes: 'RS Khusus Mitra Husada (Kelas C)', actorRole: 'Verifikator Medis BPJS Kesehatan' },
   'CLM-2026-8801': { nominal: 15300000, faskes: 'RS Khusus Mitra Husada', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8802': { nominal: 1950000, faskes: 'RS Swasta As-Syifa (Kelas C)', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8803': { nominal: 4200000, faskes: 'RS Khusus Mata Nusantara (Kelas B)', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8804': { nominal: 1020000, faskes: 'Klinik Pratama Hemodialisis Sehat Mandiri', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8805': { nominal: 18400000, faskes: 'RS Daerah Kartini (Kelas B)', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8806': { nominal: 38750000, faskes: 'RS Medika Prima (Kelas B)', actorRole: 'Mesin Penapisan Lapis 1-3' },
+  'CLM-2026-8809': { nominal: 3000000, faskes: 'RS Umum Bhinneka Husada (Kelas B)', actorRole: 'Verifikator Medis BPJS Kesehatan' },
   'KLAIM-2026-0881': { nominal: 12500000, faskes: 'RS Swasta Medika Kasih', actorRole: 'Verifikator Medis Senior' },
   'KLAIM-2026-0882': { nominal: 3540000, faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta', actorRole: 'Pemeriksa Wasrik Pusat' },
   'KLAIM-2026-0875': { nominal: 1850000, faskes: 'RS Hermina Kemayoran Jakarta', actorRole: 'Verifikator Medis Senior' },
+};
+
+const cleanIndicatorText = (rawText) => {
+  if (!rawText) return '';
+  return String(rawText)
+    .replace(/^IND-[A-Z0-9-]+:\s*/i, '')
+    .replace(/\(v2\.4\.0-Healthkathon\)/gi, 'ClaimTrace AI')
+    .replace(/\bPHANTOM_BILLING\b/g, 'Klaim Fiktif (Phantom Billing)')
+    .replace(/\bREPEAT_BILLING\b/g, 'Penagihan Berulang (Repeat Billing)')
+    .replace(/\bUPCODING_SEVERITY\b/g, 'Upcoding Tingkat Keparahan INA-CBG')
+    .replace(/\bIMPOSSIBLE_TRAVEL\b/g, 'Anomali Spatiotemporal DPJP')
+    .replace(/Modus #6\s*/gi, '')
+    .replace(/Modus #11\s*/gi, '')
+    .trim();
 };
 
 export default function AuditLedger({ isLight: propIsLight }) {
@@ -173,9 +189,51 @@ export default function AuditLedger({ isLight: propIsLight }) {
         return 'Log Akses Data Medis (UU PDP No. 27/2022)';
       case 'AUTO_TRIAGE_SCORING':
         return 'Skoring Triase Otomatis (Lapis 1-3)';
+      case 'BERITA_ACARA_ISSUED':
+        return 'Penerbitan Berita Acara Verifikasi Klaim';
+      case 'CLINICAL_RULE_VIOLATION_FLAGGED':
+        return 'Temuan Pelanggaran Kaidah Koding Klinis';
       default:
         return action?.replace(/_/g, ' ') || 'Aksi Sistem ClaimTrace';
     }
+  };
+
+  const formatActionCategory = (action) => {
+    switch (action) {
+      case 'CLAIM_REJECTED_PHANTOM':
+        return 'Ketetapan Penolakan Klaim Pra-Bayar';
+      case 'MOBILE_JKN_DISPATCH':
+        return 'Konfirmasi Kehadiran Peserta Out-of-Band';
+      case 'WASRIK_INVESTIGATION_FLAG':
+        return 'Eskalasi Pemeriksaan Khusus Wasrik';
+      case 'CLAIM_APPROVED_FASTTRACK':
+        return 'Otomasi Persetujuan Klaim Vedika Digital';
+      case 'DATA_ACCESS_AUDIT_LOG':
+        return 'Audit Kepatuhan Privasi Data Medis';
+      case 'AUTO_TRIAGE_SCORING':
+        return 'Evaluasi Algoritmik Multi-Sinyal ClaimTrace';
+      case 'BERITA_ACARA_ISSUED':
+        return 'Dokumen Hukum Resmi Berstempel SHA-256';
+      default:
+        return 'Pencatatan Ledger Kriptografis BPJS Kesehatan';
+    }
+  };
+
+  const formatBlockSummaryText = (block) => {
+    if (!block || !block.details) return 'Pemeriksaan kepatuhan integritas klaim memenuhi standar ISO 27001 dan UU PDP No. 27/2022.';
+    const d = block.details;
+    if (d.reason) return d.reason;
+    if (d.complianceStandard) {
+      return `${d.complianceStandard}${d.ipAddress ? ` · Akses dari ${d.ipAddress}` : ''}`;
+    }
+    if (d.channel) {
+      return `Pengiriman tantangan konfirmasi kehadiran peserta melalui ${d.channel} (Batas waktu respons: ${d.challengeTtl || 300} detik · Status Bukti Kriptografis: ${d.zkProofStatus === 'ISSUED' ? 'Terbit' : d.zkProofStatus || 'Aktif'}).`;
+    }
+    if (d.triage_lane !== undefined || d.final_score !== undefined) {
+      const laneLabel = d.triage_lane === 'MERAH' ? 'Jalur Merah (Prioritas Audit Kritis)' : d.triage_lane === 'KUNING' ? 'Jalur Kuning (Klarifikasi Administratif)' : 'Jalur Hijau (Lolos Cepat Vedika)';
+      return `Klaim ${block.claimId} di ${block.faskes} dievaluasi dengan Skor Risiko Akhir ${d.final_score ?? d.raw_score ?? 0}/100 dan ditempatkan pada ${laneLabel} (Skor Lapis 1: ${d.s1 ?? 0}, Lapis 2: ${d.s2 ?? 0}, Lapis 3: ${d.s3 ?? 0}).`;
+    }
+    return 'Pemeriksaan kepatuhan integritas klaim memenuhi standar ISO 27001 dan UU PDP No. 27/2022.';
   };
 
   const [copiedKey, setCopiedKey] = useState(null);
@@ -194,10 +252,25 @@ export default function AuditLedger({ isLight: propIsLight }) {
       .then(data => {
         const rawChain = data?.chain || (Array.isArray(data) ? data : []);
         if (rawChain.length > 0) {
-          const mapped = rawChain.map(b => {
-            const meta = CLAIM_METADATA_MAP[b.claim_id] || {};
-            // Keep blockchain sequence continuous from block 1084 upwards
-            const blockIndex = b.index > 1000 ? b.index : 1084 + (b.index || 1);
+          // Deduplicate repeated AUTO_TRIAGE_SCORING events for the same claim_id (keep the most recent evaluation)
+          const seenAutoTriageClaims = new Set();
+          const dedupedRaw = [];
+          for (let i = rawChain.length - 1; i >= 0; i--) {
+            const item = rawChain[i];
+            const evType = item.event_type || item.action || 'AUTO_TRIAGE_SCORING';
+            const cId = item.claim_id || item.claimId || 'CLM-BPJS';
+            if (evType === 'AUTO_TRIAGE_SCORING') {
+              if (seenAutoTriageClaims.has(cId)) continue;
+              seenAutoTriageClaims.add(cId);
+            }
+            dedupedRaw.unshift(item);
+          }
+
+          const mapped = dedupedRaw.map((b, idx) => {
+            const cId = b.claim_id || b.claimId || 'CLM-BPJS';
+            const meta = CLAIM_METADATA_MAP[cId] || {};
+            // Keep blockchain sequence continuous from block 1085 upwards without gaps
+            const blockIndex = 1085 + idx;
             return {
               index: blockIndex,
               timestamp: b.timestamp,
@@ -205,8 +278,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
               actor: b.actor === 'CLAIMTRACE_CORE_ENGINE_V1' || b.actor === 'CLAIMTRACE_CORE_ENGINE' || !b.actor ? 'Mesin Utama ClaimTrace (L1-3)' : b.actor,
               actorNip: b.actor_nip || 'SYSTEM-DSS-01',
               actorRole: b.actor_role || meta.actorRole || (b.actor?.includes('WASRIK') ? 'Pemeriksa Wasrik' : 'Mesin Penapisan Lapis 1-3'),
-              claimId: b.claim_id || b.claimId || 'CLM-BPJS',
-              faskes: b.faskes || meta.faskes || 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+              claimId: cId,
+              faskes: b.payload?.faskes || b.faskes || meta.faskes || 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
               nominal: b.payload?.nominal || b.nominal || meta.nominal || 0,
               prevHash: b.prev_hash || b.prevHash || '00000000000000000000000000000000',
               currentHash: b.current_hash || b.currentHash || 'abcdef1234567890',
@@ -219,6 +292,11 @@ export default function AuditLedger({ isLight: propIsLight }) {
           const merged = [...mapped, ...initialBlocks.filter(p => !mapped.some(m => m.claimId === p.claimId))];
           merged.sort((a, b) => b.index - a.index);
           setBlocks(merged);
+          setSelectedBlock(prev => {
+            if (!prev) return merged[0];
+            const updatedMatch = merged.find(m => m.index === prev.index || m.claimId === prev.claimId);
+            return updatedMatch || merged[0];
+          });
         }
       })
       .catch(() => {
@@ -292,7 +370,7 @@ Tanggal & Waktu: ${selectedBlock.timestamp}
 - Nomor Registrasi Klaim : ${selectedBlock.claimId}
 - Fasilitas Kesehatan    : ${selectedBlock.faskes}
 - Nominal DJS Terlindungi: Rp ${(selectedBlock.nominal || 0).toLocaleString('id-ID')}
-- Tindakan/Action        : ${selectedBlock.action}
+- Jenis Ketetapan        : ${formatActionTitle(selectedBlock.action)}
 
 2. PETUGAS PEMERIKSA
 - Nama Auditor Medis     : ${selectedBlock.actor}
@@ -300,7 +378,7 @@ Tanggal & Waktu: ${selectedBlock.timestamp}
 - Jabatan Verifikator    : ${selectedBlock.actorRole}
 
 3. CATATAN FORENSIK & REKOMENDASI
-${selectedBlock.details.reason || selectedBlock.details.complianceStandard || 'Pemeriksaan kepatuhan integritas klaim memenuhi standar ISO 27001 dan UU PDP 27/2022.'}
+${formatBlockSummaryText(selectedBlock)}
 
 4. VALIDASI KRIPTOGRAFIS
 - Previous Block Hash    : ${selectedBlock.prevHash}
@@ -591,7 +669,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                           <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
                             isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                           }`}>
-                            PDP ACCESS
+                            AKSES DATA
+                          </span>
+                        )}
+                        {b.action.includes('BERITA_ACARA') && (
+                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                            isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          }`}>
+                            BERITA ACARA
                           </span>
                         )}
                       </div>
@@ -655,7 +740,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       BLOK LEDGER #{selectedBlock.index}
                     </span>
                     <h3 className={`text-xs font-bold mt-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{formatActionTitle(selectedBlock.action)}</h3>
-                    <span className={`text-[9.5px] font-mono block ${isLight ? 'text-slate-500' : 'text-white/40'}`}>{selectedBlock.action}</span>
+                    <span className={`text-[10px] font-medium block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{formatActionCategory(selectedBlock.action)}</span>
                     <p className={`text-[10.5px] font-mono mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>{selectedBlock.timestamp}</p>
                   </div>
                   <div className="text-right">
@@ -787,13 +872,87 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 </div>
 
                 {/* PAYLOAD REASON & DETAILS */}
-                <div className={`p-3 rounded-xl border text-xs space-y-2 relative z-10 ${
-                  isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/10 text-white/70'
+                <div className={`p-3 rounded-xl border text-xs space-y-2.5 relative z-10 ${
+                  isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/10 text-white/80'
                 }`}>
-                  <span className={`text-[10px] font-bold uppercase ${isLight ? 'text-slate-700' : 'text-white/70'}`}>Detil Keputusan:</span>
-                  <p className={`text-[11px] leading-relaxed font-sans ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
-                    {selectedBlock.details.reason || selectedBlock.details.complianceStandard || JSON.stringify(selectedBlock.details)}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+                      Rincian Keputusan &amp; Bukti Audit:
+                    </span>
+                    {selectedBlock.details?.triage_lane && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        selectedBlock.details.triage_lane === 'MERAH'
+                          ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                          : selectedBlock.details.triage_lane === 'KUNING'
+                          ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                          : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                      }`}>
+                        JALUR {selectedBlock.details.triage_lane} · SKOR {selectedBlock.details.final_score ?? selectedBlock.details.raw_score}/100
+                      </span>
+                    )}
+                  </div>
+
+                  <p className={`text-[11px] leading-relaxed font-sans ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                    {formatBlockSummaryText(selectedBlock)}
                   </p>
+
+                  {selectedBlock.details?.s1 !== undefined && (
+                    <div className="grid grid-cols-3 gap-1.5 pt-1">
+                      <div className={`p-2 rounded-lg border text-center ${
+                        isLight ? 'bg-white border-slate-200' : 'bg-black/25 border-white/10'
+                      }`}>
+                        <span className={`text-[9.5px] block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Lapis 1 (Episode)</span>
+                        <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedBlock.details.s1}/100</span>
+                      </div>
+                      <div className={`p-2 rounded-lg border text-center ${
+                        isLight ? 'bg-white border-slate-200' : 'bg-black/25 border-white/10'
+                      }`}>
+                        <span className={`text-[9.5px] block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Lapis 2 (SDMK)</span>
+                        <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedBlock.details.s2}/100</span>
+                      </div>
+                      <div className={`p-2 rounded-lg border text-center ${
+                        isLight ? 'bg-white border-slate-200' : 'bg-black/25 border-white/10'
+                      }`}>
+                        <span className={`text-[9.5px] block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Lapis 3 (Mobile)</span>
+                        <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedBlock.details.s3}/100</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {Array.isArray(selectedBlock.details?.indicators) && selectedBlock.details.indicators.length > 0 && (
+                    <div className={`pt-2 border-t space-y-1.5 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider block ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                        Indikator Temuan Verifikasi:
+                      </span>
+                      <ul className="space-y-1">
+                        {selectedBlock.details.indicators.map((ind, idx) => (
+                          <li key={idx} className={`text-[10.5px] leading-snug flex items-start gap-1.5 ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+                            <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
+                              selectedBlock.details.triage_lane === 'MERAH'
+                                ? 'bg-rose-500'
+                                : selectedBlock.details.triage_lane === 'KUNING'
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`} />
+                            <span>{cleanIndicatorText(ind)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {(Array.isArray(selectedBlock.details?.f3_tags) && selectedBlock.details.f3_tags.length > 0) && (
+                    <div className={`pt-2 border-t flex flex-wrap gap-1 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
+                      {selectedBlock.details.f3_tags.map((tag, idx) => (
+                        <span key={`f3-${idx}`} className={`text-[9.5px] font-mono px-2 py-0.5 rounded border ${
+                          isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-cyan-200'
+                        }`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {selectedBlock.details.beritaAcaraNo && (
                     <div className={`pt-2.5 font-mono text-[11px] flex items-center justify-between border-t mt-2 ${
                       isLight ? 'border-slate-200 text-emerald-800' : 'border-white/10 text-cyan-300'
@@ -804,7 +963,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       </div>
                       <button type="button" 
                         onClick={() => handleDownloadBahp(selectedBlock.details.beritaAcaraNo)}
-                        className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition shadow-xs cursor-pointer border ${
+                        className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition shadow-xs cursor-pointer border keep-white ${
                           isLight 
                             ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' 
                             : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/30'

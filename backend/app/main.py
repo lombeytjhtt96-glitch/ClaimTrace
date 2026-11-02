@@ -2537,6 +2537,25 @@ async def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
         custom_notes=custom_notes
     )
     dossier["ai_model_used"] = ai_model_used
+
+    # Record Berita Acara issuance in the SHA-256 Tamper-Evident Audit Ledger
+    try:
+        audit_logger.record_event(
+            event_type="BERITA_ACARA_ISSUED",
+            claim_id=req.claim_id,
+            actor=req.verifier_name,
+            payload={
+                "reason": dossier.get("custom_notes", "Penerbitan Berita Acara Hasil Verifikasi Klaim FKRTL"),
+                "beritaAcaraNo": dossier.get("ba_number"),
+                "nominal": dossier.get("financial_summary", {}).get("potential_recovery_rp", 0),
+                "faskes": dossier.get("claim_summary", {}).get("hospital"),
+                "verificatorAction": dossier.get("verificator_decision", {}).get("action_type"),
+                "sha256_seal": dossier.get("cryptographic_seal", {}).get("sha256_hash")
+            }
+        )
+    except Exception as e:
+        print(f"[BeritaAcara AuditLog] Warning: {e}")
+
     return dossier
 
 if __name__ == "__main__":
