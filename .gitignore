@@ -46,7 +46,25 @@ DESIGN.md
 */DESIGN.md
 enhance_ui_skills.py
 generate_pptx.py
+build_final_deck.py
+export_final_deck_to_pdf.py
 start_all.bat
 start_all.sh
 *.bat
 *.sh
+
+# Competition Submission, Decks, Video Scripts & Metadata (Private - Do NOT track in Git)
+*.pptx
+*.pdf
+*.zip
+*.webm
+*.mp4
+*.mkv
+ClaimTrace_Healthkathon_*
+PANDUAN_RECORDING_VIDEO_DEMO.md
+RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
+METADATA_SUBMISI_HEALTHKATHON.txt
+SUBMISSION_HEALTHKATHON_*
+videos/
+*/videos/
+app/scripts/record_*.js
