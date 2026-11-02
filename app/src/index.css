@@ -168,6 +168,18 @@
   color: #0f172a !important;
 }
 
+/* Preserve translucent dark badge background when bg-white/10..20 is nested inside a solid colored button */
+#cockpit-root.theme-light [class*="bg-emerald-600"] [class*="bg-white/"],
+#cockpit-root.theme-light [class*="bg-emerald-700"] [class*="bg-white/"],
+#cockpit-root.theme-light [class*="bg-emerald-800"] [class*="bg-white/"],
+#cockpit-root.theme-light [class*="bg-rose-600"] [class*="bg-white/"],
+#cockpit-root.theme-light [class*="bg-rose-700"] [class*="bg-white/"],
+#cockpit-root.theme-light [class*="bg-blue-600"] [class*="bg-white/"] {
+  background-color: rgba(6, 78, 59, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+
 /* Borders in Light Mode */
 #cockpit-root.theme-light [class*="border-white/"] {
   border-color: #e2e8f0 !important;
