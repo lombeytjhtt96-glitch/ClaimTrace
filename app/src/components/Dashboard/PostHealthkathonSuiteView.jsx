@@ -1280,10 +1280,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <button
                 type="button"
                 onClick={() => setActivePillar('berita_acara')}
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                className="keep-white px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-sm shrink-0"
               >
-                <span>Terbitkan Berita Acara</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="keep-white text-white">Terbitkan Berita Acara</span>
+                <ArrowRight className="keep-white w-3.5 h-3.5 text-white" />
               </button>
             </div>
           </div>
