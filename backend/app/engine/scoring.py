@@ -261,13 +261,26 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
 
     # 7. AI Automatic Anomaly Detection (Isolation Forest + ChromaDB Semantic Vector + Graph Sequence)
     ai_prediction = None
+    ai_category_labels = {
+        "PHANTOM_BILLING": "Klaim Fiktif (Phantom Billing)",
+        "REPEAT_BILLING": "Penagihan Berulang (Repeat Billing)",
+        "IMPOSSIBLE_TRAVEL": "Tabrakan Spatiotemporal DPJP (Impossible Travel)",
+        "UPCODING_SEVERITY": "Upcoding Tingkat Keparahan INA-CBG",
+        "ADMINISTRATIVE_HARD_TRIGGER": "Pelanggaran Izin Praktik DPJP",
+        "ADMINISTRATIVE_UNCERTAINTY": "Ketidakpastian Sinkronisasi Administratif",
+        "NORMAL_CLAIM": "Klaim Normal Terverifikasi",
+    }
     try:
         from app.engine.ai_anomaly_detector import ai_anomaly_engine
         ai_prediction = ai_anomaly_engine.detect_anomaly(claim)
         if ai_prediction and ai_prediction.is_anomaly:
+            readable_ai_cat = ai_category_labels.get(
+                ai_prediction.primary_anomaly_category,
+                ai_prediction.primary_anomaly_category.replace("_", " ").title()
+            )
             indikator.append(
-                f"IND-AI-ANOMALY: Deteksi Otomatis Model AI ({ai_prediction.model_version}) "
-                f"mengidentifikasi anomali {ai_prediction.primary_anomaly_category} "
+                f"IND-AI-ANOMALY: Deteksi Otomatis Mesin AI ClaimTrace "
+                f"mengidentifikasi anomali {readable_ai_cat} "
                 f"(Skor Anomali AI: {ai_prediction.anomaly_score}%, Keyakinan: {ai_prediction.confidence_score}%)"
             )
     except Exception:
@@ -276,24 +289,35 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     # 8. Generate Cluster Graph
     graph_data = generate_cluster_graph(claim)
 
-    # 9. Record Immutable Audit Event
-    audit_entry = audit_logger.record_event(
-        event_type="AUTO_TRIAGE_SCORING",
-        claim_id=claim.claim_id,
-        actor="CLAIMTRACE_CORE_ENGINE_V1",
-        payload={
-            "raw_score": raw_score,
-            "final_score": final_score,
-            "triage_lane": lane,
-            "hard_trigger": hard_trigger,
-            "s1": claim.s1_score,
-            "s2": claim.s2_score,
-            "s3": claim.s3_score,
-            "indicators": list(indikator),
-            "f3_tags": f3_tags,
-            "attack_tags": attack_tags
-        }
+    # 9. Record Immutable Audit Event (Deduplicated per claim_id for AUTO_TRIAGE_SCORING)
+    existing_triage_entry = next(
+        (
+            e for e in reversed(audit_logger.chain)
+            if e.get("claim_id") == claim.claim_id and e.get("event_type") == "AUTO_TRIAGE_SCORING"
+        ),
+        None
     )
+    if existing_triage_entry is not None:
+        audit_entry = existing_triage_entry
+    else:
+        audit_entry = audit_logger.record_event(
+            event_type="AUTO_TRIAGE_SCORING",
+            claim_id=claim.claim_id,
+            actor="CLAIMTRACE_CORE_ENGINE_V1",
+            payload={
+                "reason": ringkasan,
+                "raw_score": raw_score,
+                "final_score": final_score,
+                "triage_lane": lane,
+                "hard_trigger": hard_trigger,
+                "s1": claim.s1_score,
+                "s2": claim.s2_score,
+                "s3": claim.s3_score,
+                "indicators": list(indikator),
+                "f3_tags": f3_tags,
+                "attack_tags": attack_tags
+            }
+        )
 
     breakdown = TriageScoreBreakdown(
         s1_value=claim.s1_score,

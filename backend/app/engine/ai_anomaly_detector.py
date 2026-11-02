@@ -32,7 +32,7 @@ class AIAnomalyDetector:
 
     def __init__(self):
         self.model_family = "Ensemble: Isolation Forest + ChromaDB Semantic Vector (MiniLM) + Graph Traversal"
-        self.model_version = "v2.4.0-Healthkathon"
+        self.model_version = "ClaimTrace AI Core"
         self.isolation_forest: Optional[IsolationForest] = None
         self._feature_names = [
             "cluster_surge_ratio",
@@ -266,20 +266,30 @@ class AIAnomalyDetector:
         anomaly_score = normalized_if_anomaly
         confidence_score = 92.5
 
-        if (surge >= 3.0 and not claim.episode_meta.terdaftar_baksos_resmi) or (sem_sim >= 0.85 and denial >= 0.4):
-            primary_cat = "PHANTOM_BILLING"
-            # Calibration for Modus #6 Phantom Billing
-            anomaly_score = max(anomaly_score, 88.0 + min(11.0, (surge - 3.0) * 1.5 + sem_sim * 5.0))
-            confidence_score = 96.8
+        if cluster_id == "CLS-UPCODING-SEVERITY":
+            primary_cat = "UPCODING_SEVERITY"
+            anomaly_score = max(anomaly_score, 87.0)
+            confidence_score = 91.0
             ai_rationale = (
-                f"Model AI mendeteksi anomali kritis Modus #6 Phantom Billing. "
-                f"Tercatat lonjakan klaster {surge:.1f}x baseline ({int(raw_dict['cluster_claim_count'])} klaim), "
-                f"diperkuat oleh deteksi kesamaan semantik narasi resume medis {sem_sim*100:.1f}% di ChromaDB "
-                f"dan {int(denial*100)}% peserta menyangkal kehadiran via Mobile JKN."
+                f"Model AI mendeteksi diskrepansi Upcoding Keparahan INA-CBG ({claim.ina_cbg_code}) bernilai "
+                f"Rp{claim.nilai_klaim_rp:,} tanpa dukungan data objektif diagnostik di rekam medis terintegrasi."
             )
             ai_recommendation = (
-                "Tahan proses pembayaran pra-bayar (Jalur Merah). Terbitkan tiket verifikasi lapangan SIGAP "
-                "untuk audit keaslian rekam medis fisik dan bukti presensi layanan massal."
+                "Minta faskes mengunggah bukti penunjang laboratorium/radiologi definitif sebelum klaim disetujui."
+            )
+
+        elif cluster_id == "CLS-GEODIST-COLLISION" or "Anomali Kecepatan Fisik" in claim.dpjp_meta.catatan_sdmk:
+            primary_cat = "IMPOSSIBLE_TRAVEL"
+            anomaly_score = max(anomaly_score, 93.5)
+            confidence_score = 97.4
+            ai_rationale = (
+                "Model AI mendeteksi anomali collision spatiotemporal DPJP (Impossible Travel). "
+                "Telemetri SATUSEHAT SDMK mendeteksi tindakan bedah simultan oleh DPJP yang sama di dua kota berbeda "
+                "dalam selisih waktu fisik yang mustahil ditempuh."
+            )
+            ai_recommendation = (
+                "Alihkan klaim ke Jalur Merah. Verifikasi log kamar operasi (OK) faskes dan validasi "
+                "kehadiran fisik dokter spesialis yang bersangkutan."
             )
 
         elif repeat or cluster_id == "CLS-REPEAT-11":
@@ -297,30 +307,20 @@ class AIAnomalyDetector:
                 "dan konfirmasi ke faskes terkait potensi unbundling atau re-submission administratif."
             )
 
-        elif cluster_id == "CLS-GEODIST-COLLISION" or "Anomali Kecepatan Fisik" in claim.dpjp_meta.catatan_sdmk:
-            primary_cat = "IMPOSSIBLE_TRAVEL"
-            anomaly_score = max(anomaly_score, 93.5)
-            confidence_score = 97.4
+        elif (surge >= 3.0 and not claim.episode_meta.terdaftar_baksos_resmi) or (sem_sim >= 0.85 and denial >= 0.4):
+            primary_cat = "PHANTOM_BILLING"
+            # Calibration for Modus #6 Phantom Billing
+            anomaly_score = max(anomaly_score, 88.0 + min(11.0, (surge - 3.0) * 1.5 + sem_sim * 5.0))
+            confidence_score = 96.8
             ai_rationale = (
-                "Model AI mendeteksi anomali collision spatiotemporal DPJP (Impossible Travel). "
-                "Telemetri SATUSEHAT SDMK mendeteksi tindakan bedah simultan oleh DPJP yang sama di dua kota berbeda "
-                "dalam selisih waktu fisik yang mustahil ditempuh."
+                f"Model AI mendeteksi anomali kritis Modus #6 Phantom Billing. "
+                f"Tercatat lonjakan klaster {surge:.1f}x baseline ({int(raw_dict['cluster_claim_count'])} klaim), "
+                f"diperkuat oleh deteksi kesamaan semantik narasi resume medis {sem_sim*100:.1f}% di ChromaDB "
+                f"dan {int(denial*100)}% peserta menyangkal kehadiran via Mobile JKN."
             )
             ai_recommendation = (
-                "Alihkan klaim ke Jalur Merah. Verifikasi log kamar operasi (OK) faskes dan validasi "
-                "kehadiran fisik dokter spesialis yang bersangkutan."
-            )
-
-        elif cluster_id == "CLS-UPCODING-SEVERITY":
-            primary_cat = "UPCODING_SEVERITY"
-            anomaly_score = max(anomaly_score, 87.0)
-            confidence_score = 91.0
-            ai_rationale = (
-                f"Model AI mendeteksi diskrepansi Upcoding Keparahan INA-CBG ({claim.ina_cbg_code}) bernilai "
-                f"Rp{claim.nilai_klaim_rp:,} tanpa dukungan data objektif diagnostik di rekam medis terintegrasi."
-            )
-            ai_recommendation = (
-                "Minta faskes mengunggah bukti penunjang laboratorium/radiologi definitif sebelum klaim disetujui."
+                "Tahan proses pembayaran pra-bayar (Jalur Merah). Terbitkan tiket verifikasi lapangan SIGAP "
+                "untuk audit keaslian rekam medis fisik dan bukti presensi layanan massal."
             )
 
         else:
