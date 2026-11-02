@@ -28,14 +28,21 @@ import {
 import { API_BASE_URL } from '../../services/apiConfig';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 
+const ACTION_LABELS = {
+  TUNDA_BERITA_ACARA_KLARIFIKASI: 'Tunda Berita Acara & Minta Klarifikasi (SOP 10 Hari)',
+  KOREKSI_DOWNGRADE_TARIF_INACBG: 'Koreksi / Downgrade Tarif INA-CBG Sesuai Bukti Klinis',
+  GABUNGKAN_EPISODE_UNBUNDLING: 'Rekonsiliasi & Gabungkan Episode Terfragmentasi',
+  TOLAK_KLAIM_ESKALASI_AUDIT_FORENSIK: 'Tolak Klaim & Eskalasi Audit Investigasi'
+};
+
 const INITIAL_TYPOLOGY_CASES = [
   {
     claim_id: 'CLM-2026-8806',
     sep_number: '0145R0081026V008806',
     hospital: 'RS Medika Prima (Kelas B)',
     hospital_class: 'FKRTL Kelas B',
-    typology_code: 'MODUS_04_UPCODING_SEVERITY',
-    typology_name: 'Sub-kategori #4: Upcoding Tingkat Keparahan (Severity Level I ke III)',
+    typology_code: 'TIPOLOGI UPCODING SEVERITY',
+    typology_name: 'Upcoding Tingkat Keparahan (Severity Level I ke III)',
     ina_cbg_claimed: 'K-4-17-III',
     ina_cbg_verified: 'K-4-17-I',
     icd10_primary: 'K29.7 (Gastritis, unspecified)',
@@ -51,21 +58,21 @@ const INITIAL_TYPOLOGY_CASES = [
     clinical_discrepancy:
       'Pasien dirawat 2 hari dengan keluhan dyspepsia ringan. Koder faskes menambahkan diagnosis sekunder A41.9 (Sepsis) dan K92.2 (Perdarahan GI) untuk menaikkan tarif dari Rp 3,2 Juta ke Rp 14,85 Juta. Audit rekam medis elektronik menunjukkan tanda vital stabil, Hb 13,6 g/dL, Leukosit 7.400/uL, tanpa kultur darah.',
     vital_lab_evidence: {
-      hemoglobin: '13.6 g/dL (Normal - Tidak ada anemia/perdarahan GI)',
-      leukocytes: '7.400 /uL (Normal - Tidak memenuhi kriteria SIRS/Sepsis)',
-      temperature_sofa: 'Suhu 36.7 C | Skor SOFA = 0 | Tanpa Vasopressor/ICU',
-      endoscopy_blood_culture: 'Tidak dilakukan endoskopi maupun kultur darah'
+      'Kadar Hemoglobin (Hb)': '13,6 g/dL (Normal — Tidak ada anemia/perdarahan GI)',
+      'Hitung Leukosit': '7.400 /uL (Normal — Tidak memenuhi kriteria SIRS/Sepsis)',
+      'Suhu & Skor SOFA': 'Suhu 36,7 C | Skor SOFA = 0 | Tanpa Vasopressor/ICU',
+      'Endoskopi & Kultur Darah': 'Tidak dilakukan endoskopi maupun kultur darah'
     },
     regulation_ref: 'Permenkes RI No. 26 Tahun 2021 Bab III (Kaidah Koding Sepsis A41.9 & Perdarahan GI K92.2)',
-    recommended_action: 'KOREKSI_DOWNGRADE_SEVERITY_I'
+    recommended_action: 'Koreksi / Downgrade Tarif INA-CBG Sesuai Bukti Klinis'
   },
   {
     claim_id: 'CLM-2026-8809',
     sep_number: '0118R0121026V008809',
     hospital: 'RS Umum Bhinneka Husada',
     hospital_class: 'FKRTL Kelas B',
-    typology_code: 'MODUS_09_UNBUNDLING_FRAGMENTATION',
-    typology_name: 'Sub-kategori #9: Services Unbundling & Pemecahan Episode Rawat Jalan',
+    typology_code: 'TIPOLOGI UNBUNDLING EPISODE',
+    typology_name: 'Services Unbundling & Pemecahan Episode Rawat Jalan',
     ina_cbg_claimed: 'Q-5-44-0 + Q-5-18-0 + Z-3-27-0 (3 Episode Pecahan)',
     ina_cbg_verified: 'Q-5-44-0 (1 Episode Paket Terpadu)',
     icd10_primary: 'H25.9 (Senile cataract, unspecified)',
@@ -81,23 +88,23 @@ const INITIAL_TYPOLOGY_CASES = [
     clinical_discrepancy:
       'Pemeriksaan poli mata, biometri USG mata, dan evaluasi pra-operasi katarak yang seharusnya menjadi satu paket episode rawat jalan dipecah menjadi 3 kunjungan SEP berbeda dalam 4 hari berturut-turut tanpa indikasi kegawatdaruratan baru.',
     vital_lab_evidence: {
-      episode_interval: '3 SEP diterbitkan pada tanggal 10, 11, dan 13 Oktober 2026',
-      procedure_overlap: 'Visus + Slit-lamp + Biometri dipecah per hari',
-      dpjp_consistency: 'Dilayani oleh DPJP Mata yang sama (dr. Rina Wijaya, Sp.M)',
-      frista_check: 'Log FRISTA valid, namun pola penagihan melanggar aturan bundling'
+      'Rentang Penerbitan SEP': '3 SEP diterbitkan pada tanggal 10, 11, dan 13 Oktober 2026',
+      'Pemecahan Tindakan': 'Visus + Slit-lamp + Biometri dipecah per hari',
+      'Konsistensi DPJP': 'Dilayani oleh DPJP Mata yang sama (dr. Rina Wijaya, Sp.M)',
+      'Evaluasi Biometrik FRISTA': 'Log FRISTA valid, namun pola penagihan melanggar aturan bundling'
     },
     regulation_ref: 'Permenkes RI No. 3 Tahun 2023 Pasal 35 & Pasal 37 (Ketentuan Episode Rawat Jalan)',
-    recommended_action: 'GABUNGKAN_SATU_EPISODE_PAKET'
+    recommended_action: 'Rekonsiliasi & Gabungkan Episode Terfragmentasi'
   },
   {
     claim_id: 'CLM-2026-10-085',
     sep_number: '0132R0011026V000085',
     hospital: 'RS Khusus Mitra Husada',
     hospital_class: 'FKRTL Kelas C',
-    typology_code: 'MODUS_06_PHANTOM_BILLING',
-    typology_name: 'Sub-kategori #6: Phantom Billing (Klaim Fiktif Fisioterapi Pasca-Baksos)',
+    typology_code: 'TIPOLOGI PHANTOM BILLING',
+    typology_name: 'Phantom Billing (Klaim Fiktif Fisioterapi Pasca-Baksos)',
     ina_cbg_claimed: 'Z-3-12-0',
-    ina_cbg_verified: 'INVALID_PHANTOM',
+    ina_cbg_verified: 'Tidak Layak Bayar (Klaim Fiktif)',
     icd10_primary: 'M54.5 (Low Back Pain)',
     icd10_secondary: ['-'],
     icd9_procedures: ['93.39 (Other Physical Therapy)', '93.11 (Assisting Exercise)'],
@@ -111,23 +118,23 @@ const INITIAL_TYPOLOGY_CASES = [
     clinical_discrepancy:
       'Lonjakan volume 8,5x lipat dari baseline harian (85 klaim dalam 1 hari pasca-baksos). SIP DPJP dr. Hendra, Sp.KFR telah kedaluwarsa di SATUSEHAT SDMK. 8 dari 10 sampel peserta menyangkal pernah hadir menerima fisioterapi di Mobile JKN.',
     vital_lab_evidence: {
-      volume_spike: '85 berkas/hari (Baseline: 10 berkas/hari)',
-      sip_status: 'EXPIRED (Berakhir 30 Sep 2026)',
-      frista_bypass_rate: '94.1% menggunakan Manual Exception tanpa scan wajah FRISTA',
-      mobile_jkn_denial: '80.0% peserta menyatakan Tidak Pernah Hadir'
+      'Lonjakan Volume Klaim': '85 berkas/hari (Baseline: 10 berkas/hari)',
+      'Status SIP SATUSEHAT': 'Kedaluwarsa (Berakhir 30 Sep 2026)',
+      'Tingkat Bypass FRISTA': '94,1% menggunakan persetujuan manual tanpa scan wajah',
+      'Konfirmasi Mobile JKN': '80,0% peserta menyatakan Tidak Pernah Hadir'
     },
     regulation_ref: 'Permenkes No. 26 Tahun 2021 & Perpres No. 82 Tahun 2018 Pasal 74',
-    recommended_action: 'TUNDA_BERITA_ACARA_KLARIFIKASI'
+    recommended_action: 'Tunda Berita Acara & Minta Klarifikasi (SOP 10 Hari)'
   },
   {
     claim_id: 'CLM-2026-8802',
     sep_number: '0132R0041026V008802',
     hospital: 'RS Swasta As-Syifa (Kelas C)',
     hospital_class: 'FKRTL Kelas C',
-    typology_code: 'MODUS_11_REPEAT_BILLING',
-    typology_name: 'Sub-kategori #11: Repeat Billing & Cloning Resume Medis (Penagihan Berulang)',
+    typology_code: 'TIPOLOGI REPEAT BILLING',
+    typology_name: 'Repeat Billing & Penyalinan Resume Medis (Penagihan Berulang)',
     ina_cbg_claimed: 'Z-3-12-0 (Tagihan Ganda Siklus 7 Hari)',
-    ina_cbg_verified: 'DITOLAK_DUPLIKAT',
+    ina_cbg_verified: 'Ditolak (6 Sesi Duplikat)',
     icd10_primary: 'M51.1 (Lumbar disc disorders with radiculopathy)',
     icd10_secondary: ['-'],
     icd9_procedures: ['93.35 (Other heat therapy / Diathermy)', '93.27 (Stretching of muscle or tendon)'],
@@ -141,13 +148,13 @@ const INITIAL_TYPOLOGY_CASES = [
     clinical_discrepancy:
       'ChromaDB mendeteksi kesamaan semantik teks resume fisioterapi sebesar 98,4% pada 6 tagihan tambahan. Hash tanda tangan digital dan tanda vital identik 100% dengan kunjungan minggu sebelumnya.',
     vital_lab_evidence: {
-      vector_cosine_similarity: '0.984 (Identik 98,4% pada 6 lembar asesmen fisioterapi)',
-      vital_sign_cloning: 'TD 128/82 mmHg, Nadi 78x/mnt, VAS 6/10 sama persis di 6 tanggal berbeda',
-      frista_biometric: '6 sesi klaim tambahan tidak memiliki log check-in FRISTA',
-      mobile_jkn_feedback: 'Peserta mengonfirmasi hanya hadir 1x seminggu (bukan 3x seminggu)'
+      'Kemiripan Semantik Resume': '0,984 (Identik 98,4% pada 6 lembar asesmen fisioterapi)',
+      'Duplikasi Tanda Vital': 'TD 128/82 mmHg, Nadi 78x/mnt, VAS 6/10 sama persis di 6 tanggal berbeda',
+      'Rekaman Biometrik FRISTA': '6 sesi klaim tambahan tidak memiliki log check-in FRISTA',
+      'Konfirmasi Mobile JKN': 'Peserta mengonfirmasi hanya hadir 1x seminggu (bukan 3x seminggu)'
     },
     regulation_ref: 'Permenkes RI No. 3 Tahun 2023 & Permenkes RI No. 16 Tahun 2019 (Pencegahan Kecurangan JKN)',
-    recommended_action: 'TOLAK_TAGIHAN_BERULANG'
+    recommended_action: 'Tolak Klaim & Eskalasi Audit Investigasi'
   }
 ];
 
@@ -159,12 +166,12 @@ const INITIAL_FRISTA_MAP = {
     patient_masked: 'Bpk. A***d F***i (0001829***191)',
     service_date: '2026-10-14',
     sep_issued_time: '2026-10-14T21:44:12+07:00',
-    frista_status: 'ANOMALI_BYPASS_MASIF',
-    authentication_method: 'MANUAL_APPROVAL_BYPASS (Tanpa Scan Wajah FRISTA)',
+    frista_status: 'Anomali Bypass Masif (94,1%)',
+    authentication_method: 'Bypass Persetujuan Manual (Tanpa Scan Wajah FRISTA)',
     face_similarity_score: 0.0,
     face_threshold_required: 0.85,
-    liveness_check: 'FAILED_NO_BIOMETRIC_SESSION',
-    fingerprint_fallback: 'NOT_RECORDED',
+    liveness_check: 'Gagal — Tidak Ada Sesi Rekaman Biometrik',
+    fingerprint_fallback: 'Tidak Terekam',
     device_id: 'ADM-TERM-MTH-02 (IP: 10.24.88.14 - Bulk Script Trigger)',
     batch_anomaly_detail:
       '80 dari 85 SEP pada klaster ini diterbitkan antara pukul 21:15 - 22:30 WIB (di luar jam operasional poli rehabilitasi medik) menggunakan fitur bypass manual tanpa rekaman kamera FRISTA maupun sidik jari.',
@@ -175,7 +182,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_3_mobile_jkn: 92.0,
       lapis_4_frista_biometric: 96.0,
       fused_quad_score: 91.8,
-      verdict: 'MERAH_KRITIS_TERKONFIRMASI_4_LAPIS'
+      verdict: 'Jalur Merah Kritis — Terkonfirmasi 4 Lapis Bukti'
     }
   },
   'CLM-2026-8806': {
@@ -185,12 +192,12 @@ const INITIAL_FRISTA_MAP = {
     patient_masked: 'Ibu S***i M***i (0002941***882)',
     service_date: '2026-10-12',
     sep_issued_time: '2026-10-12T08:42:19+07:00',
-    frista_status: 'TERVERIFIKASI_HADIR_NAMUN_UPCODING',
-    authentication_method: 'FRISTA_FACE_RECOGNITION_V3',
+    frista_status: 'Hadir Fisik Valid · Anomali Koding',
+    authentication_method: 'Otentikasi Wajah FRISTA v3.2',
     face_similarity_score: 0.934,
     face_threshold_required: 0.85,
-    liveness_check: 'PASSED_ACTIVE_BLINK_3D',
-    fingerprint_fallback: 'MATCHED',
+    liveness_check: 'Valid — Kedipan Aktif & Kedalaman 3D Terverifikasi',
+    fingerprint_fallback: 'Cocok',
     device_id: 'FRISTA-MPB-IGD-01',
     batch_anomaly_detail:
       'Pasien benar-benar hadir secara fisik (FRISTA Face Match 93,4%). Namun terjadi manipulasi koding pasca-pelayanan (Upcoding Severity Level I ke III dengan penambahan kode A41.9 Sepsis tanpa dasar lab).',
@@ -201,7 +208,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_3_mobile_jkn: 35.0,
       lapis_4_frista_biometric: 15.0,
       fused_quad_score: 89.5,
-      verdict: 'MERAH_UPCODING_KLINIS_MURNI'
+      verdict: 'Jalur Merah — Ketidaksesuaian Koding Severity Level'
     }
   },
   'CLM-2026-8809': {
@@ -211,12 +218,12 @@ const INITIAL_FRISTA_MAP = {
     patient_masked: 'Bpk. H***o S***o (0001442***019)',
     service_date: '2026-10-10',
     sep_issued_time: '2026-10-10T09:15:04+07:00',
-    frista_status: 'ANOMALI_FREKUENSI_BERUNTUN',
-    authentication_method: 'FRISTA_FACE_RECOGNITION_V3',
+    frista_status: 'Anomali Kunjungan Beruntun',
+    authentication_method: 'Otentikasi Wajah FRISTA v3.2',
     face_similarity_score: 0.892,
     face_threshold_required: 0.85,
-    liveness_check: 'PASSED_ACTIVE_BLINK_3D',
-    fingerprint_fallback: 'NOT_REQUIRED',
+    liveness_check: 'Valid — Kedipan Aktif & Kedalaman 3D Terverifikasi',
+    fingerprint_fallback: 'Tidak Diperlukan',
     device_id: 'FRISTA-BHN-POLI-04',
     batch_anomaly_detail:
       'Terdeteksi 3 kali check-in FRISTA dalam 4 hari untuk rangkaian pra-operasi katarak yang seharusnya diselesaikan dalam 1 episode kunjungan poli mata terpadu.',
@@ -227,7 +234,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_3_mobile_jkn: 60.0,
       lapis_4_frista_biometric: 68.0,
       fused_quad_score: 81.4,
-      verdict: 'KUNING_MERAH_FRAGMENTASI_EPISODE'
+      verdict: 'Jalur Merah — Indikasi Pemecahan Episode Rawat Jalan'
     }
   },
   'CLM-2026-8802': {
@@ -237,12 +244,12 @@ const INITIAL_FRISTA_MAP = {
     patient_masked: 'Ibu R***a W***i (0003118***405)',
     service_date: '2026-10-15',
     sep_issued_time: '2026-10-15T19:52:40+07:00',
-    frista_status: 'SPOOFING_REPLAY_DETECTED',
-    authentication_method: 'FRISTA_FACE_RECOGNITION_V3 (Flagged Spoof)',
+    frista_status: 'Terdeteksi Spoofing Layar',
+    authentication_method: 'Otentikasi Wajah FRISTA v3.2 (Indikasi Spoof)',
     face_similarity_score: 0.781,
     face_threshold_required: 0.85,
-    liveness_check: 'FAILED_SCREEN_MOIRE_PATTERN_DETECTED',
-    fingerprint_fallback: 'BYPASSED_DEVICE_ERROR_CLAIM',
+    liveness_check: 'Gagal — Terdeteksi Pola Layar Ponsel (Moire Spoofing)',
+    fingerprint_fallback: 'Bypass Klaim Gangguan Alat',
     device_id: 'FRISTA-ASY-REHAB-01',
     batch_anomaly_detail:
       'Pada 6 tagihan sesi fisioterapi berulang (Repeat Billing), sensor anti-spoofing FRISTA mendeteksi pola moire layar ponsel (indikasi pemindaian foto wajah peserta dari layar HP petugas) dengan skor liveness gagal.',
@@ -253,7 +260,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_3_mobile_jkn: 89.0,
       lapis_4_frista_biometric: 94.5,
       fused_quad_score: 86.4,
-      verdict: 'MERAH_REPEAT_BILLING_SPOOF_BIOMETRIK'
+      verdict: 'Jalur Merah Kritis — Penagihan Berulang & Spoofing Biometrik'
     }
   }
 };
@@ -394,7 +401,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         upcoding = true;
         flags.push({
           code: 'A41.9',
-          type: 'UPCODING_SEVERITY_LEVEL_III',
+          type: 'Upcoding Severity Level III',
           severity_impact: 'Menaikkan klaim dari Severity Level I ke Severity Level III secara tidak sah',
           clinical_finding: `Leukosit ${Number(simLeukocytes).toLocaleString('id-ID')}/uL (Normal), Suhu ${simTemp} C, Skor SOFA = ${simSofa}. Tidak ada bukti disfungsi organ akut.`,
           regulation_citation: 'Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Sepsis',
@@ -408,7 +415,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         upcoding = true;
         flags.push({
           code: 'K92.2',
-          type: 'UPCODING_GI_HEMORRHAGE',
+          type: 'Upcoding Komorbid Perdarahan GI',
           severity_impact: 'Penambahan komorbid perdarahan saluran cerna tanpa bukti klinis',
           clinical_finding: `Kadar Hemoglobin ${simHb} g/dL berada dalam batas normal tanpa bukti hematemesis/melena.`,
           regulation_citation: 'Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Penyakit Pencernaan',
@@ -421,7 +428,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       unbundling = true;
       flags.push({
         code: simPrimaryIcd,
-        type: 'SERVICES_UNBUNDLING_FRAGMENTATION',
+        type: 'Pemecahan Episode (Unbundling)',
         severity_impact: `Pemecahan 1 rangkaian episode menjadi ${simVisits7d} kunjungan SEP dalam 7 hari`,
         clinical_finding: `Terdeteksi ${simVisits7d} penerbitan SEP rawat jalan beruntun untuk tindakan yang seharusnya satu paket.`,
         regulation_citation: 'Permenkes RI No. 3 Tahun 2023 Pasal 35 & Pasal 37',
@@ -599,6 +606,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     const fakeHash =
       'a8f4c291e7b038d561294fa71c80b3e5921d47c60983ab12e5f4890c1a2b3d4e'.slice(0, 56) +
       selectedClaimId.slice(-8).replace(/[^a-zA-Z0-9]/g, 'f');
+    const actionLabel = ACTION_LABELS[baActionType] || baActionType;
 
     setBaDossier({
       ba_number: `BA-VERIF/JKN-FKRTL/2026/11/${selectedClaimId.split('-').pop()}`,
@@ -612,10 +620,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       },
       claim_summary: selectedCase,
       frista_biometric_evidence: selectedFrista,
-      action_taken: baActionType,
+      action_taken: actionLabel,
       verifier_notes:
         finalNotes ||
-        `Berdasarkan triangulasi 4 lapis bukti (Analitik AI Spatiotemporal, Registry SATUSEHAT SDMK, Konfirmasi Mobile JKN Peserta, serta Log Biometrik FRISTA), klaim ${selectedCase.claim_id} pada ${selectedCase.hospital} ditetapkan berstatus ${baActionType} dengan nilai efisiensi/koreksi sebesar Rp ${selectedCase.potential_recovery_rp.toLocaleString('id-ID')}.`,
+        `Berdasarkan triangulasi 4 lapis bukti (Analitik AI Spatiotemporal, Registry SATUSEHAT SDMK, Konfirmasi Mobile JKN Peserta, serta Log Biometrik FRISTA), klaim ${selectedCase.claim_id} pada ${selectedCase.hospital} ditetapkan dengan putusan '${actionLabel}' dan nilai efisiensi/koreksi sebesar Rp ${selectedCase.potential_recovery_rp.toLocaleString('id-ID')}.`,
       cryptographic_seal: {
         algorithm: 'SHA-256 Tamper-Evident Chained Hash',
         document_hash: fakeHash,
@@ -674,7 +682,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     <strong>Identitas Fasilitas Kesehatan:</strong> ${c.hospital} (${c.hospital_class})<br/>
     <strong>ID Klaim / Nomor SEP:</strong> ${c.claim_id} / ${c.sep_number}<br/>
     <strong>Tipologi Anomali Terdeteksi:</strong> ${c.typology_name}<br/>
-    <strong>Status Putusan Verifikator:</strong> ${baDossier.action_taken}
+    <strong>Status Putusan Verifikator:</strong> ${ACTION_LABELS[baDossier.action_taken] || baDossier.action_taken}
   </div>
 
   <table>
@@ -850,7 +858,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             {
               id: 'typology',
               title: '1. Deteksi Upcoding & Unbundling',
-              subtitle: 'Modus #4 Severity III & Modus #9 Fragmentasi',
+              subtitle: 'Upcoding Severity Level & Unbundling Episode',
               icon: Scale
             },
             {
@@ -945,6 +953,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     setSimSofa(0);
                     setSimVisits7d(1);
                     setSimClaimedRp(14850000);
+                    setBaActionType('KOREKSI_DOWNGRADE_TARIF_INACBG');
                   } else if (c.claim_id === 'CLM-2026-8809') {
                     setSimPrimaryIcd('H25.9');
                     setSimSecondaryIcd('Z01.0');
@@ -953,6 +962,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     setSimSofa(0);
                     setSimVisits7d(3);
                     setSimClaimedRp(1840000);
+                    setBaActionType('GABUNGKAN_EPISODE_UNBUNDLING');
                   } else if (c.claim_id === 'CLM-2026-10-085') {
                     setSimPrimaryIcd('M54.5');
                     setSimSecondaryIcd('Z50.1');
@@ -961,6 +971,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     setSimSofa(0);
                     setSimVisits7d(5);
                     setSimClaimedRp(15300000);
+                    setBaActionType('TUNDA_BERITA_ACARA_KLARIFIKASI');
                   } else if (c.claim_id === 'CLM-2026-8802') {
                     setSimPrimaryIcd('M51.1');
                     setSimSecondaryIcd('M54.5');
@@ -969,6 +980,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     setSimSofa(0);
                     setSimVisits7d(6);
                     setSimClaimedRp(4650000);
+                    setBaActionType('TOLAK_KLAIM_ESKALASI_AUDIT_FORENSIK');
                   }
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-2 ${
@@ -1736,7 +1748,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                 <div className="text-[10px] uppercase opacity-60">Status Ketetapan Verifikator</div>
-                <div className="font-bold text-sm text-rose-500 mt-0.5">{baDossier.action_taken}</div>
+                <div className="font-bold text-sm text-rose-500 mt-0.5">
+                  {ACTION_LABELS[baDossier.action_taken] || baDossier.action_taken}
+                </div>
                 <div className="text-[11px] opacity-80 mt-0.5">{baDossier.claim_summary.typology_name}</div>
               </div>
             </div>
