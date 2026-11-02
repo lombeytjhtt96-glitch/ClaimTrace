@@ -112,6 +112,12 @@
 }
 
 /* Modal Backdrops in Light Mode: maintain dark translucent overlay for focus */
+.fixed.inset-0,
+[class*="space-y-"] > .fixed {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 #cockpit-root.theme-light .fixed.inset-0[class*="bg-[#00081c]"],
 #cockpit-root.theme-light .fixed.inset-0[class*="bg-[#000c24]"],
 #cockpit-root.theme-light .fixed.inset-0[class*="bg-black"] {
