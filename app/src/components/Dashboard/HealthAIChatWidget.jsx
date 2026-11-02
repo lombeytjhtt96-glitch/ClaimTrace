@@ -476,20 +476,12 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
                         </div>
                       )}
 
-                      {/* Processing Time & ClaimTrace AI Model Telemetry */}
+                      {/* Processing Time Telemetry */}
                       {m.metrics?.processing_time_ms && (
                         <div className={`flex items-center gap-1.5 text-[9.5px] font-mono ${
                           isLight ? 'text-slate-500' : 'text-white/40'
                         }`}>
                           <span>{m.metrics.processing_time_ms.toFixed(0)}ms</span>
-                          {m.metrics.model_used && (
-                            <>
-                              <span>·</span>
-                              <span className={isLight ? 'text-emerald-700 font-semibold' : 'text-cyan-300 font-semibold'}>
-                                {m.metrics.model_used}
-                              </span>
-                            </>
-                          )}
                         </div>
                       )}
                     </div>
