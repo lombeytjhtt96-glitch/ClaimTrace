@@ -505,11 +505,11 @@ export default function AgentCopilot({
                   : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} />
-                SYS:HEALTHY · {telemetry.active_model}
+                STATUS: AKTIF &amp; NORMAL
               </span>
             </div>
             <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Arsitektur Multi-Agen Forensik Klaim BPJS Kesehatan: Observabilitas LangGraph StateGraph, Manajemen Model Inferensi ClaimTrace AI, Kebijakan Autopilot Otonom, dan ReAct Loop Forensik
+              Arsitektur Multi-Agen Forensik Klaim BPJS Kesehatan: Observabilitas LangGraph StateGraph, Kebijakan Autopilot Otonom, dan ReAct Loop Forensik
             </p>
           </div>
         </div>
@@ -812,7 +812,7 @@ export default function AgentCopilot({
                         </span>
                       </div>
                       <div className={`text-[10px] mt-1 ${isLight ? 'text-emerald-800 font-medium' : 'text-white/60'}`}>
-                        STATUS: HEALTHY · Model: {telemetry.active_model}
+                        STATUS: AKTIF &amp; TERVERIFIKASI
                       </div>
                     </button>
                   </div>
@@ -1053,7 +1053,6 @@ export default function AgentCopilot({
                         <th className="py-2.5 pl-3 pr-2">ID</th>
                         <th className="py-2.5 px-2">WAKTU</th>
                         <th className="py-2.5 px-2">AGEN</th>
-                        <th className="py-2.5 px-2">MODEL</th>
                         <th className="py-2.5 px-2 text-right">DURASI</th>
                         <th className="py-2.5 px-2 text-right">EVALUASI BUKTI</th>
                         <th className="py-2.5 pl-2 pr-3 text-right">POTENSI FRAUD (IDR)</th>
@@ -1082,9 +1081,6 @@ export default function AgentCopilot({
                               }`}>
                                 {exec.graph_name}
                               </span>
-                            </td>
-                            <td className={`py-2.5 px-2 text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                              {exec.model_used || 'ClaimTrace Core'}
                             </td>
                             <td className={`py-2.5 px-2 text-right font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                               {exec.total_execution_time_ms}ms
@@ -1980,7 +1976,7 @@ export default function AgentCopilot({
                   : 'bg-gradient-to-r from-[#FFCA40]/10 to-blue-500/10 border-[#FFCA40]/30 text-white'
               }`}>
                 <div className={`flex items-center justify-between text-xs font-bold ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
-                  <span>Hasil Sintesis Langsung ClaimTrace AI ({liveAiSynthesis.modelUsed})</span>
+                  <span>Hasil Sintesis Langsung ClaimTrace AI</span>
                   <span className={`font-mono ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
                     {liveAiSynthesis.durationMs}ms · {liveAiSynthesis.totalTokens} token
                   </span>

@@ -192,9 +192,23 @@ export function getAiTelemetryState() {
     }
     const parsed = JSON.parse(raw);
 
+    let needsResave = false;
+    if (typeof parsed?.active_model === 'string' && /gemini|flash/i.test(parsed.active_model)) {
+      parsed.active_model = 'ClaimTrace AI Core';
+      needsResave = true;
+    }
+    if (Array.isArray(parsed?.langgraph_executions)) {
+      parsed.langgraph_executions = parsed.langgraph_executions.map((ex) => {
+        if (typeof ex.model_used === 'string' && /gemini|flash/i.test(ex.model_used)) {
+          needsResave = true;
+          return { ...ex, model_used: 'ClaimTrace AI Core' };
+        }
+        return ex;
+      });
+    }
+
     // Sanitasi otomatis kalimat deskripsi yang terpotong pada riwayat keputusan agent_decisions
     if (Array.isArray(parsed?.agent_decisions)) {
-      let needsResave = false;
       parsed.agent_decisions = parsed.agent_decisions.map((d) => {
         const r = d.agent_reasoning || '';
         if (r.endsWith('statis') || r.includes('berikut adalah statis')) {
@@ -212,9 +226,9 @@ export function getAiTelemetryState() {
         }
         return d;
       });
-      if (needsResave) {
-        localStorage.setItem(STORAGE_KEY_TELEMETRY, JSON.stringify(parsed));
-      }
+    }
+    if (needsResave) {
+      localStorage.setItem(STORAGE_KEY_TELEMETRY, JSON.stringify(parsed));
     }
 
     return parsed;
@@ -281,7 +295,7 @@ export function reviewAutopilotDecision(decisionId, newStatus, reviewerNote) {
 export async function callClaimTraceGenerateContent({
   prompt,
   systemInstruction,
-  preferredModel = 'gemini-3.5-flash-lite',
+  preferredModel = 'ClaimTrace AI Core',
   temperature = 0.25,
   graphName = 'claimtrace_ai',
   nodePath = 'START → claimtrace_decision → synthesize → END',

@@ -1671,10 +1671,10 @@ export default function ExecutiveHub({
           report_generated_at: new Date().toISOString(),
           report_period:
             reportType === 'mingguan'
-              ? `7 Hari Terakhir (${res.modelUsed} · ${res.durationMs}ms)`
+              ? `7 Hari Terakhir (${res.durationMs}ms)`
               : reportType === 'bulanan'
-                ? `30 Hari Terakhir (${res.modelUsed} · ${res.durationMs}ms)`
-                : `Periode Kustom (${res.modelUsed} · ${res.durationMs}ms)`,
+                ? `30 Hari Terakhir (${res.durationMs}ms)`
+                : `Periode Kustom (${res.durationMs}ms)`,
           ia_summary: res.summary,
         },
       }));

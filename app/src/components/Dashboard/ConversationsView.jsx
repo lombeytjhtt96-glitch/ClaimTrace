@@ -351,7 +351,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
 
   const handleExport = () => {
     const csvRows = [
-      ['Session ID', 'Judul Sesi', 'Pengguna', 'Peran', 'Faskes', 'Berkas Klaim', 'Tingkat Risiko', 'Skor Risiko', 'Model AI', 'Total Pesan', 'Waktu Mulai', 'Waktu Selesai'],
+      ['Session ID', 'Judul Sesi', 'Pengguna', 'Peran', 'Faskes', 'Berkas Klaim', 'Tingkat Risiko', 'Skor Risiko', 'Total Pesan', 'Waktu Mulai', 'Waktu Selesai'],
     ];
 
     groups.forEach((g) => {
@@ -365,7 +365,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
           `"${s.claim_id || '-'}"`,
           `"${s.risk_level}"`,
           s.risk_score || 0,
-          `"${s.model_used || '-'}"`,
           s.message_count || 0,
           `"${s.first_time || ''}"`,
           `"${s.last_time || ''}"`,
@@ -678,8 +677,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                           }`}>
                             <span>Klaim Terkait: <strong className={isLight ? 'text-slate-800' : 'text-white/80'}>{session.claim_id}</strong></span>
                             <span>•</span>
-                            <span>Model: <span className={`font-mono font-semibold ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>{session.model_used}</span></span>
-                            <span>•</span>
                             <span>{session.message_count} pesan ({session.tokens_total} token)</span>
                           </div>
                         </div>
@@ -765,13 +762,6 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                       {selectedSession.session_id}
                     </span>
                     <span className={isLight ? 'text-slate-300' : 'text-white/20'}>•</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                      isLight
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-                    }`}>
-                      {selectedSession.model_used}
-                    </span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                       isLight
                         ? 'bg-rose-50 text-rose-800 border-rose-300'
