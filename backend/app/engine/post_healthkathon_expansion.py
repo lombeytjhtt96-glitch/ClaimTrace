@@ -604,7 +604,7 @@ class PostHealthkathonExpansionEngine:
             },
             "flags": flags,
             "human_in_the_loop_notice": (
-                "Rekomendasi audit koding ini dihasilkan secara otomatis oleh HealthAI Engine (Isolation Forest + Gemini LLM). "
+                "Rekomendasi audit koding ini dihasilkan secara otomatis oleh HealthAI Engine. "
                 "Kewenangan koreksi akhir dan penerbitan Berita Acara berada pada Verifikator BPJS Kesehatan."
             )
         }

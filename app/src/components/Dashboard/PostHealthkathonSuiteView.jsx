@@ -1174,8 +1174,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <Cpu className="keep-white w-4 h-4 text-white" />
               <span className="keep-white text-white">
                 {isAuditingCoding
-                  ? 'Menjalankan Isolation Forest ML & Gemini Auditor...'
-                  : 'Evaluasi Kepatuhan Koding & Hitung Koreksi Tarif (AI Live)'}
+                  ? 'Mengevaluasi Kepatuhan Koding & Bukti Klinis...'
+                  : 'Evaluasi Kepatuhan Koding & Hitung Koreksi Tarif'}
               </span>
             </button>
 
@@ -1206,12 +1206,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     </span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="opacity-75">Skor Anomali Isolation Forest ML:</span>
+                    <span className="opacity-75">Skor Anomali Klinis:</span>
                     <span className="font-mono font-bold text-rose-500">
                       {simAuditResult.anomaly_score} / 100
-                      {simAuditResult.isolation_forest_raw_score !== undefined
-                        ? ` (Raw: ${simAuditResult.isolation_forest_raw_score})`
-                        : ''}
                     </span>
                   </div>
                 </div>
@@ -1241,10 +1238,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-bold flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>Opini Dokter Auditor AI (Real-Time LLM):</span>
-                      </span>
-                      <span className="text-[10px] font-mono opacity-75">
-                        {simAuditResult.ai_model_used || 'Google Gemini'}
+                        <span>Telaah Auditor Koding Klinis:</span>
                       </span>
                     </div>
                     <p className="text-[11px] whitespace-pre-line leading-relaxed">
@@ -1337,17 +1331,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-bold flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                   <Sparkles className="w-4 h-4" />
-                  <span>Analisis Forensik Biometrik AI (Real-Time LLM):</span>
+                  <span>Analisis Forensik Biometrik & Presensi:</span>
                 </div>
-                {fristaAiAnalysis?.model_used && (
-                  <span className="text-[10px] font-mono opacity-75">{fristaAiAnalysis.model_used}</span>
-                )}
               </div>
 
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Tanyakan ke AI tentang log biometrik / 4 lapis bukti kasus ini..."
+                  placeholder="Tanyakan tentang log biometrik / 4 lapis bukti kasus ini..."
                   value={fristaAiFocus}
                   onChange={(e) => setFristaAiFocus(e.target.value)}
                   onKeyDown={(e) => {
@@ -1366,7 +1357,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   disabled={isAuditingFrista}
                   className="keep-white px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shrink-0"
                 >
-                  <span className="keep-white text-white">{isAuditingFrista ? 'Menalar...' : 'Analisis AI'}</span>
+                  <span className="keep-white text-white">{isAuditingFrista ? 'Menganalisis...' : 'Analisis'}</span>
                 </button>
               </div>
 
@@ -1478,13 +1469,13 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <div>
                 <h2 className="text-base font-bold">HealthAI RAG Regulasi & Koding</h2>
                 <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Pencarian Vektor ChromaDB & Penalaran Hukum Google Gemini LLM
+                  Pencarian Semantik Pasal Regulasi JKN & Pedoman INA-CBG
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold block">Pertanyaan Audit Regulasi / Kaidah Koding (Bebas Tanya Apa Saja):</label>
+              <label className="text-xs font-bold block">Pertanyaan Audit Regulasi / Kaidah Koding:</label>
               <textarea
                 rows={3}
                 value={ragQuery}
@@ -1495,7 +1486,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     executeRagQuery(ragQuery, selectedClaimId);
                   }
                 }}
-                placeholder="Ketik pertanyaan bebas, misal: 'apa hukum ini', 'apakah ini pidana atau perdata?', dll..."
+                placeholder="Ketik pertanyaan audit regulasi, pasal, atau kaidah koding kasus aktif..."
                 className={`w-full p-3 rounded-xl border text-xs leading-relaxed ${
                   isLight ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-[#000d24] border-white/15 text-white'
                 }`}
@@ -1509,8 +1500,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <Search className="keep-white w-4 h-4 text-white" />
                 <span className="keep-white text-white">
                   {isQueryingRag
-                    ? 'ClaimTrace AI (Gemini LLM + ChromaDB) Sedang Menalar...'
-                    : 'Telusuri Regulasi & Bedah Kasus Aktif (AI Live)'}
+                    ? 'Menelusuri Korpus Regulasi & Membedah Kasus...'
+                    : 'Telusuri Regulasi & Bedah Kasus Aktif'}
                 </span>
               </button>
             </div>
@@ -1551,12 +1542,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 border-slate-200/20">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <h3 className="text-sm font-bold">Sintesis Telaah Hukum & Klinis HealthAI (Real-Time LLM)</h3>
+                    <h3 className="text-sm font-bold">Sintesis Telaah Hukum & Klinis HealthAI</h3>
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-sky-500/15 text-sky-300 border-sky-500/30'}`}>
-                      {ragResponse.model_used || 'Google Gemini LLM'}
-                    </span>
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
                       Confidence: {((ragResponse.confidence || 0.972) * 100).toFixed(1)}%
                     </span>
@@ -1568,13 +1556,12 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     isLight ? 'bg-emerald-50/50 border-emerald-200 text-slate-800' : 'bg-[#000d24] border-emerald-500/30 text-slate-200'
                   }`}
                 >
-                  {isQueryingRag ? 'Sedang menyusun penalaran hukum dan klinis berbasis AI...' : ragResponse.synthesized_response}
+                  {isQueryingRag ? 'Sedang menyusun penalaran hukum dan klinis...' : ragResponse.synthesized_response}
                 </div>
 
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span>Kutipan Pasal & Dokumen Regulasi Terkait (Retrieval Vektor ChromaDB):</span>
-                    <span className="text-[10px] font-mono opacity-70">{ragResponse.vector_engine || 'ChromaDB Cosine HNSW'}</span>
+                    <span>Kutipan Pasal & Dokumen Regulasi Terkait:</span>
                   </div>
                   {ragResponse.retrieved_regulations.map((reg, idx) => (
                     <div

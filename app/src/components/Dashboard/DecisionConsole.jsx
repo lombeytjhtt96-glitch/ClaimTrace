@@ -443,7 +443,7 @@ Timestamp: ${new Date().toISOString()}`;
                     }`}
                   >
                     <Sparkles className="w-3 h-3" />
-                    <span>{isDraftingAiNotes ? 'Menyusun Narasi AI...' : 'Susun Catatan dengan AI (Gemini LLM)'}</span>
+                    <span>{isDraftingAiNotes ? 'Menyusun Narasi...' : 'Susun Catatan Otomatis'}</span>
                   </button>
                   <span className={`text-[9.5px] font-mono font-bold ${
                     isLight ? 'text-emerald-700' : 'text-cyan-300'
