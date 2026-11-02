@@ -6,6 +6,7 @@ import {
   Send, UserCheck, Stethoscope, ChevronRight, Check, X,
   FileCheck, ShieldAlert, Gavel, Ban, Sparkles
 } from 'lucide-react';
+import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 
 export default function DecisionConsole({ 
   caseData,
@@ -71,6 +72,28 @@ export default function DecisionConsole({
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
+  const [isDraftingAiNotes, setIsDraftingAiNotes] = useState(false);
+
+  const handleDraftNotesWithAi = async () => {
+    setIsDraftingAiNotes(true);
+    try {
+      const actionLabel =
+        verificatorAction === 'audit'
+          ? 'Jadwalkan Audit Faktual Lapangan'
+          : verificatorAction === 'override'
+            ? 'Override Manual Loloskan Klaim'
+            : 'Tunda Berita Acara & Minta Klarifikasi Faskes (SOP 10 Hari)';
+      const res = await callClaimTraceGenerateContent({
+        prompt: `Susun 1 paragraf formal 'Catatan Resmi Verifikator' (maksimal 95 kata) untuk Berita Acara Kelengkapan Berkas (BAKB) BPJS Kesehatan atas klaim ${currentCase.id} (${currentCase.hospital}, SEP: ${currentCase.sep}, Kode: ${currentCase.code}, Tagihan: ${currentCase.tariff}, DPJP: ${currentCase.dpjp}). Skor risiko: ${totalScore}/100 (S1=${s1}, S2=${s2}, S3=${s3}). Keputusan: ${actionLabel}. Cantumkan dasar hukum Perpres No. 82/2018 Pasal 74-76 dan Permenkes No. 16/2019. Jangan gunakan emoji.`,
+        systemInstruction: 'Anda adalah Pejabat Verifikator Senior BPJS Kesehatan. Tulis paragraf hukum resmi tanpa emoji.'
+      });
+      if (res?.text) {
+        setNotes(res.text.trim());
+      }
+    } finally {
+      setIsDraftingAiNotes(false);
+    }
+  };
 
   const handleDownloadDossierPdf = () => {
     const reportText = `BPJS KESEHATAN KANTOR PUSAT
@@ -404,14 +427,29 @@ Timestamp: ${new Date().toISOString()}`;
 
             {/* VERIFIER NOTES TEXTAREA */}
             <div className="space-y-1.5 pt-2">
-              <label className={`text-[10.5px] font-bold flex items-center justify-between ${
+              <div className={`text-[10.5px] font-bold flex flex-wrap items-center justify-between gap-2 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <span>Catatan Resmi Verifikator (Wajib untuk Berita Acara):</span>
-                <span className={`text-[9.5px] font-mono font-bold ${
-                  isLight ? 'text-emerald-700' : 'text-cyan-300'
-                }`}>TERENKRIPSI STANDAR UU PDP</span>
-              </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDraftNotesWithAi}
+                    disabled={isDraftingAiNotes}
+                    className={`px-2 py-0.5 rounded border text-[10px] font-bold flex items-center gap-1 cursor-pointer transition ${
+                      isLight
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>{isDraftingAiNotes ? 'Menyusun Narasi AI...' : 'Susun Catatan dengan AI (Gemini LLM)'}</span>
+                  </button>
+                  <span className={`text-[9.5px] font-mono font-bold ${
+                    isLight ? 'text-emerald-700' : 'text-cyan-300'
+                  }`}>TERENKRIPSI STANDAR UU PDP</span>
+                </div>
+              </div>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

@@ -2271,6 +2271,7 @@ def get_icd10_statistics():
 # 3. HealthAI Copilot RAG Regulatory & INA-CBG Clinical Coding Auditor
 # 4. Berita Acara Resmi & Cryptographic SHA-256 QR Matrix Dossier Generator
 # ==============================================================================
+import json
 from app.engine.post_healthkathon_expansion import expansion_engine
 
 class ClinicalCodingAuditRequest(BaseModel):
@@ -2283,6 +2284,11 @@ class ClinicalCodingAuditRequest(BaseModel):
     sofa_score: int = 0
     visit_count_7d: int = 1
     claimed_tariff_rp: int = 14850000
+    include_ai_reasoning: bool = True
+
+class FristaAiAuditRequest(BaseModel):
+    claim_id: str = "CLM-2026-10-085"
+    custom_focus: Optional[str] = None
 
 class RegulatoryRagRequest(BaseModel):
     query: str
@@ -2294,6 +2300,7 @@ class BeritaAcaraGenerateRequest(BaseModel):
     verifier_nip: str = "198704202011012001"
     action_type: str = "TUNDA_BERITA_ACARA_KLARIFIKASI"
     custom_notes: Optional[str] = None
+    use_ai_narrative: bool = False
 
 @app.get("/api/v1/expansion/typologies")
 def get_expanded_typology_cases(typology: Optional[str] = Query(None, description="Filter kode tipologi (UPCODING, UNBUNDLING, PHANTOM, REPEAT)")):
@@ -2304,12 +2311,12 @@ def get_expanded_typology_cases(typology: Optional[str] = Query(None, descriptio
     return expansion_engine.list_typology_cases(typology_filter=typology)
 
 @app.post("/api/v1/expansion/audit-coding")
-def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
+async def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
     """
     Mengaudit kesesuaian koding diagnosis primer/sekunder INA-CBG terhadap tanda vital dan laboratorium
-    untuk mendeteksi Upcoding Tingkat Keparahan (#4) serta Pemecahan Episode (#9).
+    menggunakan Scikit-Learn IsolationForest + Google Gemini LLM Clinical Auditor.
     """
-    return expansion_engine.audit_clinical_coding(
+    result = expansion_engine.audit_clinical_coding(
         claim_id=req.claim_id,
         icd10_primary=req.icd10_primary,
         icd10_secondary=req.icd10_secondary,
@@ -2320,6 +2327,41 @@ def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
         visit_count_7d=req.visit_count_7d,
         claimed_tariff_rp=req.claimed_tariff_rp
     )
+    if req.include_ai_reasoning:
+        try:
+            flags_summary = "; ".join(
+                f"{f['code']} ({f['type']}): {f['clinical_finding']}" for f in result.get("flags", [])
+            ) or "Tidak ditemukan diskrepansi koding."
+            ai_prompt = (
+                f"Lakukan audit koding klinis INA-CBG secara ringkas, tajam, dan objektif (maksimal 4 poin) untuk parameter berikut:\n"
+                f"- ID Klaim: {result['claim_id']}\n"
+                f"- ICD-10 Primer: {result['primary_diagnosis']}\n"
+                f"- ICD-10 Sekunder: {', '.join(result['secondary_diagnoses'])}\n"
+                f"- Parameter Vital & Lab: Hemoglobin = {req.hemoglobin} g/dL, Leukosit = {req.leukocytes:,.0f}/uL, "
+                f"Suhu = {req.temperature} C, Skor SOFA = {req.sofa_score}, Frekuensi SEP 7 Hari = {req.visit_count_7d}x\n"
+                f"- Skor Anomali Isolation Forest ML: {result['anomaly_score']}/100 (Raw Score: {result.get('isolation_forest_raw_score')})\n"
+                f"- Tagihan Diajukan: Rp {req.claimed_tariff_rp:,.0f} -> Tarif Terverifikasi: Rp {result['financial_impact']['verified_tariff_rp']:,.0f} "
+                f"(Cost Recovery: Rp {result['financial_impact']['cost_recovery_rp']:,.0f})\n"
+                f"- Temuan Rule Engine: {flags_summary}\n\n"
+                f"Berikan analisis klinis dan regulasi (Permenkes No. 26/2021 & Permenkes No. 3/2023) serta instruksi tegas bagi Verifikator BPJS Kesehatan."
+            )
+            ai_res = await generate_gemini_content(
+                GeminiGenerateRequest(
+                    prompt=ai_prompt,
+                    system_instruction=(
+                        "Anda adalah Dokter Auditor Koding Klinis INA-CBG & Spesialis Anti-Fraud JKN BPJS Kesehatan. "
+                        "Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji sama sekali."
+                    ),
+                    temperature=0.25
+                )
+            )
+            if ai_res and ai_res.get("text"):
+                result["ai_clinical_reasoning"] = ai_res["text"]
+                result["ai_model_used"] = ai_res.get("model_used", "Google Gemini")
+                result["ai_total_tokens"] = ai_res.get("total_tokens", 0)
+        except Exception as e:
+            print(f"[AuditCoding AI] Warning: {e}")
+    return result
 
 @app.get("/api/v1/expansion/frista-biometrics")
 def get_frista_biometric_telemetry(claim_id: str = Query("CLM-2026-10-085", description="ID Berkas Klaim")):
@@ -2329,27 +2371,166 @@ def get_frista_biometric_telemetry(claim_id: str = Query("CLM-2026-10-085", desc
     """
     return expansion_engine.get_frista_biometric_verification(claim_id=claim_id)
 
+@app.post("/api/v1/expansion/frista-ai-audit")
+async def run_frista_quad_ai_audit(req: FristaAiAuditRequest):
+    """
+    Menjalankan analisis forensik AI real-time (Google Gemini LLM + Quad-Triangulation 4 Lapis)
+    terhadap telemetri biometrik FRISTA, SATUSEHAT SDMK, dan Mobile JKN.
+    """
+    bio_data = expansion_engine.get_frista_biometric_verification(claim_id=req.claim_id)
+    log = bio_data["biometric_telemetry"]
+    case_ctx = next((c for c in expansion_engine.typology_cases if c["claim_id"] == req.claim_id), expansion_engine.typology_cases[0])
+    qt = log["quad_triangulation"]
+
+    focus_str = f"\nFokus Pertanyaan Tambahan Verifikator: {req.custom_focus}" if req.custom_focus else ""
+    ai_prompt = (
+        f"Lakukan analisis forensik biometrik FRISTA dan Matriks Bukti 4 Lapis (Quad-Triangulation) untuk berkas klaim berikut:\n"
+        f"- ID Klaim / SEP: {log['claim_id']} / {log['sep_number']} ({log['hospital']})\n"
+        f"- Tipologi Kasus: {case_ctx['typology_name']}\n"
+        f"- Status Biometrik FRISTA (Lapis 4): {log['frista_status']} | Metode: {log['authentication_method']}\n"
+        f"- Skor Face Recognition: {log['face_similarity_score']*100:.1f}% (Ambang Batas: {log['face_threshold_required']*100:.0f}%)\n"
+        f"- Status 3D Liveness Anti-Spoofing: {log['liveness_check']} | Sidik Jari: {log['fingerprint_fallback']}\n"
+        f"- Waktu Cetak SEP & Terminal: {log['sep_issued_time']} pada {log['device_id']}\n"
+        f"- Detail Anomali Log Loket: {log['batch_anomaly_detail']}\n"
+        f"- Skor Quad-Triangulation: Lapis 1 (AI Spatiotemporal) = {qt['lapis_1_spatiotemporal_ai']}, "
+        f"Lapis 2 (SATUSEHAT SDMK) = {qt['lapis_2_satusehat_sdmk']}, Lapis 3 (Mobile JKN) = {qt['lapis_3_mobile_jkn']}, "
+        f"Lapis 4 (FRISTA Biometrik) = {qt['lapis_4_frista_biometric']} -> Skor Fusi = {qt['fused_quad_score']}/100 ({qt['verdict']})."
+        f"{focus_str}\n\n"
+        f"Susun telaah forensik digital yang tajam (mencakup pembuktian keaslian kehadiran fisik peserta, korelasi antar-4 lapis bukti, "
+        f"serta rekomendasi tindakan hukum/administratif bagi Verifikator BPJS Kesehatan)."
+    )
+    ai_res = await generate_gemini_content(
+        GeminiGenerateRequest(
+            prompt=ai_prompt,
+            system_instruction=(
+                "Anda adalah Analis Forensik Biometrik FRISTA & Integritas Klaim JKN BPJS Kesehatan. "
+                "Berikan analisis teknis dan hukum yang tajam dalam bahasa Indonesia baku tanpa menggunakan emoji."
+            ),
+            temperature=0.3
+        )
+    )
+    return {
+        "status": "success",
+        "claim_id": req.claim_id,
+        "biometric_telemetry": log,
+        "ai_forensic_analysis": ai_res.get("text", log["batch_anomaly_detail"]),
+        "model_used": ai_res.get("model_used", "ClaimTrace AI Core"),
+        "total_tokens": ai_res.get("total_tokens", 0)
+    }
+
 @app.post("/api/v1/expansion/rag-regulatory")
-def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
+async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
     """
-    Menjalankan pencarian Retrieval-Augmented Generation (RAG) pada korpus regulasi JKN
-    (Permenkes No. 3/2023, Permenkes No. 26/2021, Perpres No. 82/2018, UU PDP No. 27/2022).
+    Menjalankan pencarian Retrieval-Augmented Generation (RAG) berbasis Vektor ChromaDB + Google Gemini LLM
+    pada korpus regulasi JKN (Permenkes No. 16/2019, Permenkes No. 3/2023, Permenkes No. 26/2021, Perpres No. 82/2018, UU PDP No. 27/2022).
     """
-    return expansion_engine.query_regulatory_rag(query=req.query, claim_id=req.claim_id)
+    base_rag = expansion_engine.query_regulatory_rag(query=req.query, claim_id=req.claim_id)
+    case_ctx = base_rag["claim_context"]
+    frista_ctx = base_rag.get("frista_context") or expansion_engine.frista_logs.get(case_ctx["claim_id"], {})
+    top_docs = base_rag["retrieved_regulations"]
+
+    docs_context_str = "\n".join(
+        f"[{i+1}] {d['regulation']} ({d['section']}): {d['summary']} | Instruksi: {d['verificator_instruction']}"
+        for i, d in enumerate(top_docs)
+    )
+
+    rag_prompt = (
+        f"Pertanyaan Pengguna / Verifikator: \"{req.query}\"\n\n"
+        f"Konteks Kasus Klaim Aktif yang Sedang Dipilih di Layar:\n"
+        f"- ID Klaim / SEP: {case_ctx['claim_id']} / {case_ctx['sep_number']}\n"
+        f"- Fasilitas Kesehatan: {case_ctx['hospital']} ({case_ctx['hospital_class']})\n"
+        f"- Tipologi Kecurangan Terdeteksi: {case_ctx['typology_name']} ({case_ctx['typology_code']})\n"
+        f"- Koding INA-CBG: Diajukan {case_ctx['ina_cbg_claimed']} (Rp {case_ctx['claimed_tariff_rp']:,.0f}) vs "
+        f"Terverifikasi {case_ctx['ina_cbg_verified']} (Rp {case_ctx['verified_tariff_rp']:,.0f}) -> "
+        f"Potensi Cost Recovery: Rp {case_ctx['potential_recovery_rp']:,.0f}\n"
+        f"- Diagnosis ICD-10: Primer {case_ctx['icd10_primary']}, Sekunder {', '.join(case_ctx['icd10_secondary'])}\n"
+        f"- Temuan Diskrepansi Klinis & Bukti 4 Lapis: {case_ctx['clinical_discrepancy']}\n"
+        f"- Bukti Objektif Lab/Vital/Telemetri: {json.dumps(case_ctx['vital_lab_evidence'], ensure_ascii=False)}\n"
+        f"- Status Biometrik FRISTA (Lapis 4): {frista_ctx.get('frista_status', '-')} - {frista_ctx.get('batch_anomaly_detail', '')}\n\n"
+        f"Dokumen Regulasi Hasil Retrieval Vektor ChromaDB:\n{docs_context_str}\n\n"
+        f"Instruksi Menjawab:\n"
+        f"Jawablah pertanyaan pengguna (\"{req.query}\") secara langsung, cerdas, komprehensif, dan kontekstual terhadap Kasus Aktif "
+        f"({case_ctx['claim_id']} - {case_ctx['hospital']}) beserta dasar hukum/regulasi spesifiknya (pasal, undang-undang, Permenkes, "
+        f"Perpres, sanksi administratif/pidana bila relevan, serta langkah konkret yang harus diambil Verifikator BPJS Kesehatan). "
+        f"Jangan gunakan template statis dan jangan gunakan emoji sama sekali."
+    )
+
+    try:
+        ai_res = await generate_gemini_content(
+            GeminiGenerateRequest(
+                prompt=rag_prompt,
+                system_instruction=(
+                    "Anda adalah HealthAI Legal & Clinical Coding RAG Copilot untuk Verifikator BPJS Kesehatan. "
+                    "Anda menggabungkan pencarian vektor regulasi ChromaDB dengan penalaran hukum kesehatan dan koding INA-CBG. "
+                    "Jawab setiap pertanyaan pengguna secara langsung, tajam, akurat, dan kontekstual terhadap kasus klaim yang sedang aktif. "
+                    "Dilarang menggunakan emoji."
+                ),
+                temperature=0.3
+            )
+        )
+        if ai_res and ai_res.get("text"):
+            base_rag["synthesized_response"] = ai_res["text"]
+            base_rag["model_used"] = ai_res.get("model_used", "Google Gemini")
+            base_rag["total_tokens"] = ai_res.get("total_tokens", 0)
+            base_rag["ai_live"] = True
+    except Exception as e:
+        print(f"[RAG Regulatory AI] Warning: {e}")
+        base_rag["model_used"] = "ClaimTrace Hybrid RAG Engine"
+        base_rag["ai_live"] = False
+
+    return base_rag
 
 @app.post("/api/v1/expansion/berita-acara")
-def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
+async def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
     """
     Menerbitkan dokumen Berita Acara Hasil Verifikasi Klaim FKRTL lengkap dengan
-    stempel hash kriptografis SHA-256 dan matriks QR 21x21 deterministik.
+    narasi hukum AI (opsional/otomatis), stempel hash kriptografis SHA-256, dan matriks QR 21x21 deterministik.
     """
-    return expansion_engine.generate_berita_acara_dossier(
+    custom_notes = req.custom_notes
+    ai_model_used = "Deterministic Legal Seal"
+
+    if req.use_ai_narrative:
+        case_ctx = next((c for c in expansion_engine.typology_cases if c["claim_id"] == req.claim_id), expansion_engine.typology_cases[0])
+        frista_ctx = expansion_engine.frista_logs.get(req.claim_id, expansion_engine.frista_logs["CLM-2026-10-085"])
+        ba_prompt = (
+            f"Susun 1 paragraf formal 'Uraian Putusan & Landasan Hukum Verifikator' (maksimal 110 kata) untuk dicantumkan di dalam "
+            f"dokumen resmi BERITA ACARA HASIL VERIFIKASI & KLARIFIKASI KLAIM FKRTL BPJS Kesehatan dengan rincian:\n"
+            f"- Nomor Klaim / SEP: {case_ctx['claim_id']} / {case_ctx['sep_number']} ({case_ctx['hospital']})\n"
+            f"- Tipologi Anomali: {case_ctx['typology_name']}\n"
+            f"- Ketetapan Putusan Verifikator: {req.action_type}\n"
+            f"- Tagihan Awal: Rp {case_ctx['claimed_tariff_rp']:,.0f} -> Tarif Terverifikasi: Rp {case_ctx['verified_tariff_rp']:,.0f} "
+            f"(Potensi Cost Recovery: Rp {case_ctx['potential_recovery_rp']:,.0f})\n"
+            f"- Bukti 4 Lapis (Quad-Triangulation): {case_ctx['clinical_discrepancy']} | Log FRISTA Lapis 4: {frista_ctx['frista_status']} "
+            f"(Skor Fusi: {frista_ctx['quad_triangulation']['fused_quad_score']}/100)\n"
+            f"- Rujukan Regulasi: {case_ctx['regulation_ref']} & Perpres No. 82 Tahun 2018 Pasal 74.\n\n"
+            f"Tuliskan langsung isi paragraf narasi putusan hukum resmi tanpa judul pembuka dan tanpa emoji."
+        )
+        try:
+            ai_res = await generate_gemini_content(
+                GeminiGenerateRequest(
+                    prompt=ba_prompt,
+                    system_instruction=(
+                        "Anda adalah Pejabat Perancang Berita Acara Verifikasi Klaim FKRTL BPJS Kesehatan. "
+                        "Gunakan bahasa hukum administrasi negara yang baku, tegas, dan objektif tanpa emoji."
+                    ),
+                    temperature=0.25
+                )
+            )
+            if ai_res and ai_res.get("text"):
+                custom_notes = ai_res["text"].strip()
+                ai_model_used = ai_res.get("model_used", "Google Gemini")
+        except Exception as e:
+            print(f"[BeritaAcara AI] Warning: {e}")
+
+    dossier = expansion_engine.generate_berita_acara_dossier(
         claim_id=req.claim_id,
         verifier_name=req.verifier_name,
         verifier_nip=req.verifier_nip,
         action_type=req.action_type,
-        custom_notes=req.custom_notes
+        custom_notes=custom_notes
     )
+    dossier["ai_model_used"] = ai_model_used
+    return dossier
 
 if __name__ == "__main__":
     import uvicorn
