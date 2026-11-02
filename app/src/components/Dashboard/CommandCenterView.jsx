@@ -717,7 +717,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                               ? 'bg-slate-100 text-slate-700 border-slate-200'
                               : 'bg-white/10 text-white/80 border-white/10'
                           }`}>
-                            {user.role}
+                            {user.role_label || user.role?.replace(/_/g, ' ')}
                           </span>
                           <span
                             className={`px-2 py-0.2 rounded-full text-[9.5px] font-bold uppercase tracking-wider border ${
@@ -974,7 +974,10 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
       {/* User Profile Slide-over Drawer */}
       <AnimatePresence>
         {drawerOpen && selectedUser && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 !mt-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm"
+            onClick={() => setDrawerOpen(false)}
+          >
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -990,7 +993,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-14 h-14 rounded-2xl ${selectedUser.avatar_color} text-white font-bold flex items-center justify-center text-lg shadow-md`}
+                      className={`w-14 h-14 rounded-2xl ${selectedUser.avatar_color} text-white font-bold flex items-center justify-center text-lg shadow-md keep-white`}
                     >
                       {selectedUser.avatar_initials}
                     </div>
@@ -1005,7 +1008,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                           isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/10'
                         }`}>
-                          {selectedUser.role}
+                          {selectedUser.role_label || selectedUser.role?.replace(/_/g, ' ')}
                         </span>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
@@ -1131,14 +1134,14 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                           href={getWhatsAppLink(selectedUser.phone, selectedUser)}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex-1 text-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                          className="flex-1 text-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm keep-white"
                         >
                           <Phone className="w-3.5 h-3.5" />
                           <span>Kirim Pesan WA</span>
                         </a>
                         <a
                           href={`mailto:${selectedUser.email}`}
-                          className="flex-1 text-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                          className="flex-1 text-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm keep-white"
                         >
                           <Mail className="w-3.5 h-3.5" />
                           <span>Kirim Email</span>
@@ -1290,7 +1293,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                       });
                     }
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-sm cursor-pointer keep-white"
                 >
                   Buka Berkas Investigasi
                 </button>
@@ -1302,7 +1305,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
 
       {/* CRM Note Dialog Modal */}
       {crmNoteModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-6 space-y-4 ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
           }`}>
