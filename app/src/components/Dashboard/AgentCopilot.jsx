@@ -2317,7 +2317,7 @@ export default function AgentCopilot({
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
-                            'X-Verificator-Role': 'VERIFIKATOR_MEDIS',
+                            'X-Verificator-Role': 'VERIFICATOR_MEDIS',
                             'X-Verificator-NIP': '198704202011012001',
                           },
                           body: JSON.stringify({
