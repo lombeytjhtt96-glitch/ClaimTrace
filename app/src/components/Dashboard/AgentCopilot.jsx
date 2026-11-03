@@ -36,14 +36,130 @@ import {
   DollarSign,
   ChevronRight,
 } from 'lucide-react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import {
   getAiTelemetryState,
+  saveAiTelemetryState,
   setActiveClaimTraceModel,
   updateAutopilotPolicyState,
   reviewAutopilotDecision,
   callClaimTraceGenerateContent,
   CLAIMTRACE_MODEL_CHAIN,
 } from '../../services/claimtraceOrchestratorService';
+
+const formatActionTypeLabel = (actionType) => {
+  const map = {
+    hold_bakb_and_escalate: 'Tahan BAKB & Eskalasi Investigasi',
+    issue_bakk_clarification: 'Terbitkan Berita Acara Klarifikasi (BAKK)',
+    dispatch_lapis3_push_challenge: 'Kirim Konfirmasi Presensi Mobile JKN (Lapis 3)',
+    orchestrated_chat_response: 'Respons Konsultasi Asisten Audit AI',
+    general_inquiry: 'Tanya Jawab Regulasi & Koding JKN',
+    claim_audit: 'Telaah Audit Forensik Berkas Klaim',
+  };
+  return map[actionType] || String(actionType || 'Tindakan Otonom AI').replace(/_/g, ' ');
+};
+
+const formatPolicyDecisionLabel = (policy) => {
+  const map = {
+    REQUIRE_VERIFIKATOR_APPROVAL: 'Wajib Otorisasi Verifikator (HITL)',
+    AUTO_APPROVED_BY_POLICY: 'Disetujui Otomatis Sesuai Kebijakan',
+  };
+  return map[policy] || String(policy || '').replace(/_/g, ' ');
+};
+
+const formatStatusLabel = (status) => {
+  const map = {
+    awaiting_approval: 'Menunggu Otorisasi',
+    confirmed: 'Terkonfirmasi',
+    approved: 'Disetujui & Disegel',
+    rejected: 'Ditolak Verifikator',
+    failed: 'Ditolak / Batal',
+    running: 'Sedang Diproses',
+  };
+  return map[status] || String(status || '').replace(/_/g, ' ');
+};
+
+const formatToolNameLabel = (toolName) => {
+  const map = {
+    query_claims_database: 'Kueri Basis Data Klaim Historis (Lapis 1)',
+    query_duckdb_claims: 'Kueri Basis Data Klaim Historis (Lapis 1)',
+    query_satusehat_sdmk: 'Validasi SIP Dokter SATUSEHAT SDMK (Lapis 2)',
+    send_mobile_jkn_telemetry: 'Telemetri Presensi Mobile JKN (Lapis 3)',
+    rag_search_regulations: 'Pencarian Semantik Regulasi JKN (RAG)',
+    compile_investigation_brief: 'Kompilasi Bukti Fusi Multi-Lapis',
+    calculate_fusion_score: 'Kalkulasi Skor Fusi 3 Lapis Bukti',
+    propose_bakb_disposition: 'Usulan Disposisi BAKB & Berita Acara',
+  };
+  return map[toolName] || String(toolName || '').replace(/_/g, ' ');
+};
+
+const formatObservationValue = (val) => {
+  if (typeof val === 'boolean') return val ? 'Ya (Terdeteksi)' : 'Tidak';
+  if (Array.isArray(val)) {
+    return val
+      .map((item) => (typeof item === 'object' && item !== null ? item.citation || item.title || item.id : String(item)))
+      .join(', ');
+  }
+  const codeMap = {
+    EXPIRED_MUTASI: 'Kedaluwarsa / Mutasi Faskes',
+    ACTIVE_WITH_CLINICAL_MISMATCH: 'Aktif (Diskrepansi Otorisasi Klinis)',
+    OVERQUOTA_SPLIT_EPISODE: 'Melebihi Kuota (Pemecahan Episode)',
+    DUPLICATE_TIMESTAMP_LOG: 'Log Otorisasi Duplikat (< 15 Menit)',
+    ACTIVE: 'Aktif & Valid',
+    DELIVERED: 'Terkirim ke Ponsel Peserta',
+    TUNDA_BAYAR_BAKB: 'Tunda Pembayaran BAKB (Jalur Merah)',
+    'DITAHAN_SEMENTARA (TUNDA BAYAR)': 'Ditahan Sementara (Tunda Bayar)',
+    MERAH: 'Jalur Merah (Prioritas Audit Kritis)',
+    KUNING: 'Jalur Kuning (Klarifikasi Administratif)',
+    HIJAU: 'Jalur Hijau (Lolos Cepat)',
+  };
+  return codeMap[val] || String(val ?? '-');
+};
+
+const OBSERVATION_KEY_LABELS = {
+  total_claims_queried: 'Total Klaim Dianalisis',
+  cluster_surge_ratio: 'Rasio Lonjakan Klaster',
+  primary_icd10: 'Diagnosis Utama (ICD-10)',
+  primary_icd9cm: 'Prosedur Utama (ICD-9-CM)',
+  baseline_daily_average: 'Rata-rata Harian Normal',
+  anomalous_burst_detected: 'Anomali Lonjakan Terdeteksi',
+  baksos_authorization_registered: 'Izin Baksos Terdaftar',
+  dpjp_name: 'Dokter Penanggung Jawab (DPJP)',
+  str_number: 'Nomor STR Dokter',
+  sip_status: 'Status SIP di SATUSEHAT',
+  sip_valid_until: 'Masa Berlaku SIP',
+  service_date: 'Tanggal Pelayanan',
+  active_facility: 'Faskes Terdaftar Aktif',
+  daily_patient_quota: 'Batas Kuota Harian (Permenkes)',
+  billed_patients_today: 'Pasien Ditagihkan Hari Ini',
+  compliance_violation: 'Pelanggaran Kepatuhan',
+  fcm_status: 'Status Notifikasi Mobile JKN',
+  verified_participants: 'Sampel Peserta Diverifikasi',
+  sample_size: 'Ukuran Sampel Peserta',
+  confirmations_received: 'Respons Diterima',
+  answered_attended: 'Mengonfirmasi Hadir',
+  answered_NOT_attended: 'Menyangkal Hadir',
+  denial_rate_pct: 'Persentase Sangkalan Kehadiran',
+  zero_phi_guarantee: 'Jaminan Privasi (UU PDP)',
+  matched_regulations_count: 'Jumlah Regulasi Terkait',
+  citations: 'Landasan Regulasi',
+  faithfulness_score: 'Skor Akurasi Regulasi',
+  action_recommendation: 'Rekomendasi Tindakan',
+  anomaly_score: 'Skor Anomali Fusi',
+  formula: 'Formula Fusi Multi-Sinyal',
+  s1_pola_tagihan: 'Skor Lapis 1 (Pola Klaim)',
+  s2_jejak_sdmk: 'Skor Lapis 2 (SATUSEHAT SDMK)',
+  s3_mobile_jkn: 'Skor Lapis 3 (Mobile JKN)',
+  total_score: 'Skor Risiko Akhir',
+  triage_lane: 'Jalur Triase',
+  sla_days: 'Batas Waktu SLA (Hari Kerja)',
+  recommendation: 'Rekomendasi Disposisi',
+  disposition_id: 'Nomor Registrasi Disposisi',
+  bakb_status: 'Status Dokumen BAKB',
+  requires_verificator_approval: 'Wajib Persetujuan Verifikator',
+  impact: 'Dampak Perlindungan Dana JKN',
+  legal_action: 'Tindak Lanjut Hukum',
+};
 
 /**
  * AgentCopilot:
@@ -403,13 +519,41 @@ export default function AgentCopilot({
   const [liveTraceLoading, setLiveTraceLoading] = useState(false);
 
   // ReAct Trajectory state
-  const [agentData] = useState(DEFAULT_AGENT_DATA);
+  const [activeReActClaimId, setActiveReActClaimId] = useState(selectedClaimId || 'CLM-2026-10-085');
+  const [agentData, setAgentData] = useState(DEFAULT_AGENT_DATA);
   const [isRunningAudit, setIsRunningAudit] = useState(false);
   const [liveAiSynthesis, setLiveAiSynthesis] = useState(null);
   const [approvalStatus, setApprovalStatus] = useState('pending');
+  const [sealedBlockHash, setSealedBlockHash] = useState('0x9f84c2...a4b5c6');
   const [verifierNotes, setVerifierNotes] = useState(
     'Disetujui penundaan penandatanganan BAKB berdasarkan pembuktian fusi 3 lapis: SIP DPJP kedaluwarsa di SATUSEHAT dan 80% sangkalan peserta di Mobile JKN.'
   );
+
+  const fetchReActTrajectory = async (targetClaimId) => {
+    const cid = targetClaimId || activeReActClaimId || 'CLM-2026-10-085';
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/agent/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim_id: cid, verifier_nip: '198704202011012001' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.steps)) {
+          setAgentData(data);
+          if (data.sha256_audit_seal) {
+            setSealedBlockHash(`${data.sha256_audit_seal.slice(0, 10)}...${data.sha256_audit_seal.slice(-8)}`);
+          }
+        }
+      }
+    } catch {
+      // keep existing agentData fallback if offline
+    }
+  };
+
+  useEffect(() => {
+    fetchReActTrajectory(activeReActClaimId);
+  }, [activeReActClaimId]);
 
   useEffect(() => {
     const onUpdate = () => setTelemetry(getAiTelemetryState());
@@ -467,8 +611,13 @@ export default function AgentCopilot({
 
   const handleRunLiveReActSynthesis = async () => {
     setIsRunningAudit(true);
+    await fetchReActTrajectory(activeReActClaimId);
+    const stepSummary = (agentData.steps || [])
+      .filter((s) => s.observation?.finding)
+      .map((s) => `(${s.step_number}) ${s.observation.finding}`)
+      .join(', ');
     const res = await callClaimTraceGenerateContent({
-      prompt: `Berikan kesimpulan eksekutif audit forensik (3-4 kalimat) untuk berkas klaim ${selectedClaimId} di RS Khusus Mitra Husada dengan temuan: (1) Lonjakan 85 klaim fisioterapi ICD-10 M62.8 (8.5x rata-rata harian), (2) SIP DPJP dr. Hendra Sp.KFR kedaluwarsa di SATUSEHAT, (3) 80% peserta menyangkal kehadiran di Mobile JKN Lapis 3. Sebutkan rekomendasi tindak lanjut BAKB dan dasar hukumnya.`,
+      prompt: `Berikan kesimpulan eksekutif audit forensik (3-4 kalimat padat tanpa tanda bintang miring) untuk berkas klaim ${agentData.claim_id} di ${agentData.faskes_name} dengan temuan: ${stepSummary || 'Diskrepansi multi-lapis terdeteksi'}. Sebutkan rekomendasi tindak lanjut BAKB dan dasar hukumnya.`,
       preferredModel: telemetry.active_model,
       graphName: 'tca',
       nodePath: 'START → claimtrace_decision → parallel_crisis (L1∥CMA) → synthesize → END',
@@ -1470,7 +1619,7 @@ export default function AgentCopilot({
                       <div className="space-y-1.5 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`font-mono text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                            #{item.id} · {item.action_type}
+                            #{item.id} · {formatActionTypeLabel(item.action_type)}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -1487,7 +1636,7 @@ export default function AgentCopilot({
                                   : 'bg-blue-500/20 text-cyan-300 border border-blue-500/30'
                             }`}
                           >
-                            {item.risk_level}
+                            {item.risk_level === 'critical' ? 'KRITIS' : item.risk_level === 'high' ? 'TINGGI' : 'SEDANG'}
                           </span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
                             isLight
@@ -1503,7 +1652,7 @@ export default function AgentCopilot({
                         <div className={`flex flex-wrap items-center gap-3 text-[11px] font-mono pt-1 ${
                           isLight ? 'text-slate-400' : 'text-white/40'
                         }`}>
-                          <span>Kebijakan: {item.policy_decision}</span>
+                          <span>Kebijakan: {formatPolicyDecisionLabel(item.policy_decision)}</span>
                           <span>•</span>
                           <span>Atestasi: {item.attestation_record_id}</span>
                         </div>
@@ -1520,7 +1669,7 @@ export default function AgentCopilot({
                                   type: 'approve',
                                   actionId: item.id,
                                   title: `Setujui Tindakan Autopilot #${item.id}`,
-                                  message: `Apakah Anda yakin menyetujui tindakan ${item.action_type}? Tindakan akan dijadwalkan untuk dieksekusi secara otomatis.`,
+                                  message: `Apakah Anda yakin menyetujui tindakan "${formatActionTypeLabel(item.action_type)}"? Tindakan akan dijadwalkan untuk dieksekusi dan disegel ke Ledger Audit SHA-256.`,
                                   inputLabel: 'Catatan Verifikator Medis (Opsional)',
                                   inputPlaceholder: 'Tuliskan catatan disposisi persetujuan...',
                                   confirmLabel: 'Setujui Tindakan',
@@ -1541,7 +1690,7 @@ export default function AgentCopilot({
                                   type: 'reject',
                                   actionId: item.id,
                                   title: `Tolak Tindakan Autopilot #${item.id}`,
-                                  message: `Apakah Anda yakin menolak tindakan ${item.action_type}? Tindakan ini tidak akan dijalankan.`,
+                                  message: `Apakah Anda yakin menolak tindakan "${formatActionTypeLabel(item.action_type)}"? Tindakan ini tidak akan dijalankan.`,
                                   inputLabel: 'Alasan Penolakan (Wajib Diisi)',
                                   inputPlaceholder: 'Tuliskan alasan penolakan tindakan...',
                                   confirmLabel: 'Tolak Tindakan',
@@ -1571,7 +1720,7 @@ export default function AgentCopilot({
                                   : 'bg-white/10 text-white/50 border border-white/10'
                             }`}
                           >
-                            {item.status}
+                            {formatStatusLabel(item.status)}
                           </span>
                         )}
                       </div>
@@ -1823,18 +1972,18 @@ export default function AgentCopilot({
                       {/* ACTION */}
                       <td className="px-3 py-3">
                         <div className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                          #{item.id} · {item.action_type}
+                          #{item.id} · {formatActionTypeLabel(item.action_type)}
                         </div>
                         <div className={`text-[10px] font-mono mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                          risk={item.risk_level} intent={item.next_step || 'system_fallback'}
+                          Risiko: {item.risk_level === 'critical' ? 'Kritis' : item.risk_level === 'high' ? 'Tinggi' : 'Sedang'} · Sub-Agen: {String(item.next_step || 'IA').toUpperCase()}
                         </div>
                       </td>
 
                       {/* POLICY */}
                       <td className="px-3 py-3">
-                        <div className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{item.policy_decision}</div>
+                        <div className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{formatPolicyDecisionLabel(item.policy_decision)}</div>
                         <div className={`text-[10px] font-mono mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                          next={item.next_step || 'none'}
+                          Rute: {String(item.next_step || 'ia').toUpperCase()}
                         </div>
                       </td>
 
@@ -1860,7 +2009,7 @@ export default function AgentCopilot({
                                 : 'bg-white/10 text-white/60 border border-white/10'
                           }`}
                         >
-                          {item.status}
+                          {formatStatusLabel(item.status)}
                         </span>
                         {item.status === 'awaiting_approval' && (
                           <button
@@ -1884,10 +2033,10 @@ export default function AgentCopilot({
 
                       {/* ATTESTATION */}
                       <td className={`px-3 py-3 font-mono text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                        <div>record: {item.attestation_record_id || '-'}</div>
-                        <div className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>status: {item.status}</div>
+                        <div>No. Registrasi: {item.attestation_record_id || '-'}</div>
+                        <div className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>Status: {formatStatusLabel(item.status)}</div>
                         <div className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                          hash: {item.attestation_tx_hash ? `${item.attestation_tx_hash.slice(0, 8)}...${item.attestation_tx_hash.slice(-6)}` : '-'}
+                          Segel: {item.attestation_tx_hash ? `${item.attestation_tx_hash.slice(0, 8)}...${item.attestation_tx_hash.slice(-6)}` : '-'}
                         </div>
                       </td>
 
@@ -1949,7 +2098,7 @@ export default function AgentCopilot({
                   Lintasan Penalaran ReAct (Thought → Tool Call → Observation)
                 </h3>
                 <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  Berkas Klaim: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{agentData.claim_id}</strong> · {agentData.faskes_name}
+                  Berkas Klaim Aktif: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{agentData.claim_id}</strong> · {agentData.faskes_name}
                 </p>
               </div>
               <button
@@ -1967,6 +2116,43 @@ export default function AgentCopilot({
                   ? 'Menyusun Sintesis via ClaimTrace AI...'
                   : 'Susun Sintesis Yuridis Live (ClaimTrace AI)'}
               </button>
+            </div>
+
+            {/* Scenario Selector Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`text-xs font-semibold mr-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                Pilih Berkas Investigasi:
+              </span>
+              {[
+                { id: 'CLM-2026-10-085', label: 'CLM-2026-10-085 · RS Khusus Mitra Husada (Phantom Billing)' },
+                { id: 'CLM-2026-8806', label: 'CLM-2026-8806 · RS Medika Prima (Upcoding Severity III)' },
+                { id: 'CLM-2026-8809', label: 'CLM-2026-8809 · RS Umum Bhinneka Husada (Unbundling Episode)' },
+                { id: 'CLM-2026-8802', label: 'CLM-2026-8802 · RS Swasta As-Syifa (Repeat Billing)' },
+              ].map((sc) => {
+                const isSelected = activeReActClaimId === sc.id;
+                return (
+                  <button
+                    key={sc.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveReActClaimId(sc.id);
+                      setApprovalStatus('pending');
+                      setLiveAiSynthesis(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      isSelected
+                        ? isLight
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-[#FFCA40] text-[#000c24] border-[#FFCA40] shadow-xs'
+                        : isLight
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-white/5 hover:bg-white/10 text-white/70 border-white/10'
+                    }`}
+                  >
+                    {sc.label}
+                  </button>
+                );
+              })}
             </div>
 
             {liveAiSynthesis && (
@@ -1990,6 +2176,9 @@ export default function AgentCopilot({
             <div className="space-y-4">
               {agentData.steps.map((step) => {
                 const isHitlStep = step.status === 'awaiting_approval';
+                const obsEntries = step.observation
+                  ? Object.entries(step.observation).filter(([k]) => k !== 'finding' && k !== 'sla_countdown_active')
+                  : [];
                 return (
                   <div
                     key={step.step_number}
@@ -2003,8 +2192,8 @@ export default function AgentCopilot({
                           : 'bg-white/5 border-white/10 text-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs mb-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
                             isHitlStep ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
@@ -2016,34 +2205,63 @@ export default function AgentCopilot({
                           Langkah {step.step_number}
                         </span>
                         {step.tool_call && (
-                          <span className={`font-mono text-[11px] px-2 py-0.5 rounded font-semibold border ${
+                          <span className={`text-[11px] px-2.5 py-0.5 rounded-md font-semibold border ${
                             isLight
-                              ? 'bg-sky-100 border-emerald-200 text-emerald-800'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                               : 'bg-white/10 border-white/10 text-cyan-300'
                           }`}>
-                            tool: {step.tool_call.tool_name}
+                            Instrumen: {formatToolNameLabel(step.tool_call.tool_name)}
                           </span>
                         )}
                       </div>
                       <span className={`font-mono text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                        {step.duration_ms}ms · {step.tokens_used} tok
+                        {step.duration_ms}ms · {step.tokens_used} token
                       </span>
                     </div>
 
-                    <div className={`text-xs leading-relaxed mb-2 pl-7 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                    <div className={`text-xs leading-relaxed mb-3 pl-7 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                       <strong className={isLight ? 'text-slate-900' : 'text-white'}>Penalaran Agen: </strong>
                       {step.thought}
                     </div>
 
                     {step.observation && (
                       <div className="pl-7">
-                        <pre className={`border rounded-lg p-3 text-[11px] font-mono overflow-x-auto shadow-inner ${
+                        <div className={`rounded-xl border p-3.5 space-y-2.5 ${
                           isLight
-                            ? 'bg-slate-100 border-slate-300 text-slate-800'
-                            : 'bg-slate-950 border-slate-800 text-emerald-400'
+                            ? 'bg-white border-slate-200 text-slate-800 shadow-2xs'
+                            : 'bg-[#000c24]/80 border-white/10 text-white'
                         }`}>
-                          {JSON.stringify(step.observation, null, 2)}
-                        </pre>
+                          {step.observation.finding && (
+                            <div className={`text-xs font-semibold leading-relaxed pb-2 border-b ${
+                              isLight ? 'text-emerald-900 border-slate-100' : 'text-[#FFCA40] border-white/10'
+                            }`}>
+                              Temuan Observasi: {step.observation.finding}
+                            </div>
+                          )}
+                          {obsEntries.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {obsEntries.map(([k, v]) => (
+                                <div
+                                  key={k}
+                                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] ${
+                                    isLight ? 'bg-slate-50 border-slate-200/80' : 'bg-white/5 border-white/10'
+                                  }`}
+                                >
+                                  <div className={`text-[10px] font-semibold uppercase tracking-wide ${
+                                    isLight ? 'text-slate-500' : 'text-white/50'
+                                  }`}>
+                                    {OBSERVATION_KEY_LABELS[k] || k.replace(/_/g, ' ')}
+                                  </div>
+                                  <div className={`font-bold mt-0.5 break-words ${
+                                    isLight ? 'text-slate-900' : 'text-white'
+                                  }`}>
+                                    {formatObservationValue(v)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2064,7 +2282,7 @@ export default function AgentCopilot({
                   Gerbang Otorisasi Verifikator Medis (Human-in-the-Loop)
                 </span>
                 <h3 className={`text-base font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Rekomendasi Tindakan: Jalur Khusus (Tunda Bayar BAKB)
+                  Rekomendasi Tindakan ({agentData.claim_id}): Jalur Merah (Tunda Bayar BAKB)
                 </h3>
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
@@ -2072,7 +2290,7 @@ export default function AgentCopilot({
                   ? 'bg-slate-100 border-slate-300 text-slate-800'
                   : 'bg-white/10 border-white/20 text-white'
               }`}>
-                Skor Fusi: 94.0 / 100
+                Skor Fusi: {agentData.final_score || 94.0} / 100
               </span>
             </div>
 
@@ -2092,8 +2310,32 @@ export default function AgentCopilot({
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setApprovalStatus('approved');
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/api/v1/agent/approve`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-Verificator-Role': 'VERIFIKATOR_MEDIS',
+                            'X-Verificator-NIP': '198704202011012001',
+                          },
+                          body: JSON.stringify({
+                            trace_id: agentData.trace_id || 'tr-2026-jkn-clm202610085',
+                            action: 'TUNDA_BAYAR',
+                            verifier_nip: '198704202011012001',
+                            notes: verifierNotes,
+                          }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.sha256_block_hash) {
+                            setSealedBlockHash(`${data.sha256_block_hash.slice(0, 10)}...${data.sha256_block_hash.slice(-8)}`);
+                          }
+                        }
+                      } catch {
+                        // fallback to local seal
+                      }
                       const state = getAiTelemetryState();
                       const existingIndex = state.agent_decisions.findIndex((d) => d.id === 901);
                       if (existingIndex !== -1) {
@@ -2112,7 +2354,7 @@ export default function AgentCopilot({
                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-2 cursor-pointer shadow-sm transition-all"
                   >
                     <Check className="w-4 h-4" />
-                    Setujui Rekomendasi & Segel Ledger SHA-256
+                    Setujui Rekomendasi &amp; Segel Ledger SHA-256
                   </button>
                   <button
                     type="button"
@@ -2163,7 +2405,7 @@ export default function AgentCopilot({
                   </div>
                   {approvalStatus === 'approved' && (
                     <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-emerald-100/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300/50">
-                      SEALED: 0x9f84c2...a4b5c6
+                      SEGEL SHA-256: {sealedBlockHash}
                     </span>
                   )}
                 </div>

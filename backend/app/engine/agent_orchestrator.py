@@ -118,15 +118,15 @@ class ClaimTraceAgentOrchestrator:
         """
         return [
             {
-                "name": "query_duckdb_claims",
-                "description": "Menjalankan query OLAP cepat pada 10.000 data klaim untuk mendeteksi unbundling, klaim berulang 1x24 jam, dan lonjakan volume.",
+                "name": "query_claims_database",
+                "description": "Menjalankan query analitik OLAP cepat pada basis data klaim untuk mendeteksi unbundling, klaim berulang 1x24 jam, upcoding severity, dan lonjakan volume.",
                 "tier": "read",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "faskes_id": {"type": "string", "description": "ID atau nama faskes yang ditelaah"},
                         "patient_nik": {"type": "string", "description": "NIK peserta jika ingin memeriksa riwayat"},
-                        "detection_mode": {"type": "string", "enum": ["phantom_billing", "repeat_billing", "cluster_surge"]}
+                        "detection_mode": {"type": "string", "enum": ["phantom_billing", "repeat_billing", "upcoding_severity", "unbundling_episode", "cluster_surge"]}
                     },
                     "required": ["faskes_id"]
                 }
@@ -226,13 +226,45 @@ class ClaimTraceAgentOrchestrator:
         tier = "read"
 
         try:
-            if tool_name == "query_duckdb_claims":
+            if tool_name in ("query_claims_database", "query_duckdb_claims"):
                 tier = "read"
                 faskes = args.get("faskes_id", "")
-                mode = args.get("detection_mode", "phantom_billing")
-                
-                # Execute realistic DuckDB query logic
-                if "Mitra Husada" in faskes or "085" in faskes:
+                claim_id = args.get("claim_id", "")
+
+                if "8806" in claim_id or "Medika Prima" in faskes:
+                    res = {
+                        "total_claims_queried": 1,
+                        "cluster_surge_ratio": 4.6,
+                        "primary_icd10": "K29.7 (Gastritis) + A41.9 (Sepsis, unspecified) + K92.2 (GI Hemorrhage)",
+                        "primary_icd9cm": "99.21 (Injection of antibiotic)",
+                        "baseline_daily_average": 1.0,
+                        "anomalous_burst_detected": True,
+                        "baksos_authorization_registered": False,
+                        "finding": "Deteksi Upcoding Severity Level III (K-4-17-III senilai Rp 14.850.000 vs seharusnya K-4-17-I senilai Rp 3.200.000). Klaim menyertakan diagnosis sekunder A41.9 Sepsis dan K92.2 tanpa bukti SOFA >= 2, kultur darah, maupun endoskopi."
+                    }
+                elif "8809" in claim_id or "Bhinneka Husada" in faskes:
+                    res = {
+                        "total_claims_queried": 3,
+                        "cluster_surge_ratio": 3.0,
+                        "primary_icd10": "I25.1 (Atherosclerotic heart disease)",
+                        "primary_icd9cm": "89.52 (Electrocardiogram) + 88.72 (Echocardiography)",
+                        "baseline_daily_average": 1.0,
+                        "anomalous_burst_detected": True,
+                        "baksos_authorization_registered": False,
+                        "finding": "Deteksi Services Unbundling & Fragmentasi Episode: 3 SEP rawat jalan terpisah diterbitkan dalam rentang 48 jam untuk 1 rangkaian pemeriksaan poli jantung, laboratorium, dan ekokardiografi elektif (selisih tarif Rp 1.850.000)."
+                    }
+                elif "8802" in claim_id or "As-Syifa" in faskes:
+                    res = {
+                        "total_claims_queried": 2,
+                        "cluster_surge_ratio": 2.0,
+                        "primary_icd10": "G44.2 (Tension-type headache)",
+                        "primary_icd9cm": "87.03 (CT Scan of Head)",
+                        "baseline_daily_average": 1.0,
+                        "anomalous_burst_detected": True,
+                        "baksos_authorization_registered": False,
+                        "finding": "Deteksi Repeat/Clone Billing: Penagihan ganda untuk episode dan tindakan identik dalam jendela waktu < 24 jam dengan kemiripan semantik resume medis 98,2%."
+                    }
+                elif "Mitra Husada" in faskes or "085" in faskes or "085" in claim_id:
                     res = {
                         "total_claims_queried": 85,
                         "cluster_surge_ratio": 8.5,
@@ -241,7 +273,7 @@ class ClaimTraceAgentOrchestrator:
                         "baseline_daily_average": 10.0,
                         "anomalous_burst_detected": True,
                         "baksos_authorization_registered": False,
-                        "finding": "Lonjakan penagihan fisioterapi massal 8.5x dari rata-rata harian faskes tanpa izin resmi baksos BPJS."
+                        "finding": "Lonjakan penagihan fisioterapi massal 8,5x dari rata-rata harian faskes tanpa izin resmi baksos BPJS Kesehatan."
                     }
                 else:
                     res = {
@@ -256,8 +288,48 @@ class ClaimTraceAgentOrchestrator:
                 tier = "read"
                 dpjp = args.get("dpjp_name", "")
                 faskes = args.get("faskes_id", "")
+                claim_id = args.get("claim_id", "")
                 
-                if "Hendra" in dpjp or "Mitra Husada" in faskes:
+                if "8806" in claim_id or "Medika Prima" in faskes:
+                    res = {
+                        "dpjp_name": dpjp or "dr. Bambang Wijaya, Sp.PD",
+                        "str_number": "STR-3174-2020-8806",
+                        "sip_status": "ACTIVE_WITH_CLINICAL_MISMATCH",
+                        "sip_valid_until": "2027-06-30",
+                        "service_date": "2026-10-18",
+                        "active_facility": "RS Medika Prima (Kelas B)",
+                        "daily_patient_quota": 35,
+                        "billed_patients_today": 28,
+                        "compliance_violation": True,
+                        "finding": "SIP DPJP aktif, namun tanda tangan elektronik resume medis klaim Severity Level III dilakukan oleh akun koder administrasi tanpa paraf verifikasi DPJP atas diagnosis sekunder A41.9 Sepsis."
+                    }
+                elif "8809" in claim_id or "Bhinneka Husada" in faskes:
+                    res = {
+                        "dpjp_name": dpjp or "dr. Rina Kusuma, Sp.JP",
+                        "str_number": "STR-3273-2021-8809",
+                        "sip_status": "OVERQUOTA_SPLIT_EPISODE",
+                        "sip_valid_until": "2027-09-15",
+                        "service_date": "2026-10-19",
+                        "active_facility": "RS Umum Bhinneka Husada (Kelas B)",
+                        "daily_patient_quota": 35,
+                        "billed_patients_today": 52,
+                        "compliance_violation": True,
+                        "finding": "Tercatat 52 SEP rawat jalan pada hari yang sama karena pemecahan kunjungan diagnostik dan tindakan ekokardiografi menjadi episode terpisah (melanggar Permenkes No. 3 Tahun 2023 Pasal 35)."
+                    }
+                elif "8802" in claim_id or "As-Syifa" in faskes:
+                    res = {
+                        "dpjp_name": dpjp or "dr. Lukman Hakim, Sp.S",
+                        "str_number": "STR-3578-2019-8802",
+                        "sip_status": "DUPLICATE_TIMESTAMP_LOG",
+                        "sip_valid_until": "2027-03-20",
+                        "service_date": "2026-10-15",
+                        "active_facility": "RS Swasta As-Syifa (Kelas C)",
+                        "daily_patient_quota": 35,
+                        "billed_patients_today": 31,
+                        "compliance_violation": True,
+                        "finding": "Ditemukan log otorisasi DPJP identik pada 2 nomor SEP berbeda untuk pasien yang sama dalam selisih waktu 14 menit."
+                    }
+                elif "Hendra" in dpjp or "Mitra Husada" in faskes or "085" in claim_id:
                     res = {
                         "dpjp_name": "dr. Hendra, Sp.KFR",
                         "str_number": "STR-3372-2021-0091",
@@ -304,7 +376,40 @@ class ClaimTraceAgentOrchestrator:
             elif tool_name == "send_mobile_jkn_telemetry":
                 tier = "compute"
                 claim_id = args.get("claim_id", "")
-                if "085" in claim_id:
+                if "8806" in claim_id:
+                    res = {
+                        "fcm_status": "DELIVERED",
+                        "sample_size": 1,
+                        "confirmations_received": 1,
+                        "answered_attended": 1,
+                        "answered_NOT_attended": 0,
+                        "denial_rate_pct": 0.0,
+                        "zero_phi_guarantee": "Pasien mengonfirmasi hadir dirawat di ruang bangsal biasa (bukan ICU) selama 3 hari karena dispepsia ringan.",
+                        "finding": "Peserta hadir di bangsal reguler namun tidak pernah dirawat di ICU atau menerima transfusi darah/endoskopi sebagaimana diklaim pada tagihan Severity Level III."
+                    }
+                elif "8809" in claim_id:
+                    res = {
+                        "fcm_status": "DELIVERED",
+                        "sample_size": 1,
+                        "confirmations_received": 1,
+                        "answered_attended": 1,
+                        "answered_NOT_attended": 2,
+                        "denial_rate_pct": 66.7,
+                        "zero_phi_guarantee": "Konfirmasi presensi episode rawat jalan tervalidasi bersama log biometrik FRISTA BPJS.",
+                        "finding": "Peserta mengonfirmasi hanya datang 1 kali ke RS, sedangkan 2 SEP rawat jalan lainnya diterbitkan tanpa kehadiran peserta (bypass biometrik FRISTA)."
+                    }
+                elif "8802" in claim_id:
+                    res = {
+                        "fcm_status": "DELIVERED",
+                        "sample_size": 1,
+                        "confirmations_received": 1,
+                        "answered_attended": 1,
+                        "answered_NOT_attended": 1,
+                        "denial_rate_pct": 50.0,
+                        "zero_phi_guarantee": "Konfirmasi presensi biner tervalidasi sesuai Pasal 34 UU PDP No. 27/2022.",
+                        "finding": "Peserta mengonfirmasi hanya 1 kali menerima layanan poli saraf, menyangkal SEP duplikat kedua pada hari yang sama."
+                    }
+                elif "085" in claim_id:
                     res = {
                         "fcm_status": "DELIVERED",
                         "sample_size": 10,
@@ -407,30 +512,74 @@ class ClaimTraceAgentOrchestrator:
         """
         trace_id = f"tr-2026-jkn-{claim_id.lower().replace('-', '')}-{uuid.uuid4().hex[:6]}"
         claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
-        
-        faskes_name = getattr(claim, 'hospital_name', 'RS Khusus Mitra Husada') if claim else 'RS Khusus Mitra Husada'
-        patient_name = getattr(claim, 'patient_name', 'Siti Aminah') if claim else 'Siti Aminah'
-        dpjp_name = getattr(claim, 'dpjp_name', 'dr. Hendra, Sp.KFR') if claim else 'dr. Hendra, Sp.KFR'
+
+        scenario_meta = {
+            "CLM-2026-10-085": {
+                "faskes": "RS Khusus Mitra Husada",
+                "patient": "Siti Aminah",
+                "dpjp": "dr. Hendra, Sp.KFR",
+                "mode": "phantom_billing",
+                "s1": 85.0, "s2": 95.0, "s3": 80.0,
+                "nominal": 15300000,
+                "rag_query": "phantom billing perpres 82 2018 permenkes 26 2021 tunda bayar bakb",
+            },
+            "CLM-2026-8806": {
+                "faskes": "RS Medika Prima (Kelas B)",
+                "patient": "Tn. Rahmat Hidayat (Sintetis)",
+                "dpjp": "dr. Bambang Wijaya, Sp.PD",
+                "mode": "upcoding_severity",
+                "s1": 94.0, "s2": 88.0, "s3": 95.0,
+                "nominal": 11650000,
+                "rag_query": "upcoding sepsis a41.9 permenkes 26 2021 perpres 82 2018",
+            },
+            "CLM-2026-8809": {
+                "faskes": "RS Umum Bhinneka Husada (Kelas B)",
+                "patient": "Ny. Ratna Sari (Sintetis)",
+                "dpjp": "dr. Rina Kusuma, Sp.JP",
+                "mode": "unbundling_episode",
+                "s1": 86.0, "s2": 82.0, "s3": 84.0,
+                "nominal": 1850000,
+                "rag_query": "fragmentasi episode rawat jalan permenkes 3 2023 perpres 82 2018",
+            },
+            "CLM-2026-8802": {
+                "faskes": "RS Swasta As-Syifa (Kelas C)",
+                "patient": "Tn. Dedi Kurniawan (Sintetis)",
+                "dpjp": "dr. Lukman Hakim, Sp.S",
+                "mode": "repeat_billing",
+                "s1": 90.0, "s2": 85.0, "s3": 88.0,
+                "nominal": 1950000,
+                "rag_query": "repeat billing klaim ganda permenkes 26 2021 perpres 82 2018",
+            },
+        }.get(claim_id, {})
+
+        faskes_name = scenario_meta.get("faskes") or (getattr(claim, 'hospital_name', 'RS Khusus Mitra Husada') if claim else 'RS Khusus Mitra Husada')
+        patient_name = scenario_meta.get("patient") or (getattr(claim, 'patient_name', 'Siti Aminah') if claim else 'Siti Aminah')
+        dpjp_name = scenario_meta.get("dpjp") or (getattr(claim, 'dpjp_name', 'dr. Hendra, Sp.KFR') if claim else 'dr. Hendra, Sp.KFR')
+        detection_mode = scenario_meta.get("mode", "phantom_billing")
+        s1_val = scenario_meta.get("s1", 85.0)
+        s2_val = scenario_meta.get("s2", 95.0)
+        s3_val = scenario_meta.get("s3", 80.0)
+        rag_query = scenario_meta.get("rag_query", "phantom billing perpres 82 2018 permenkes 26 2021 tunda bayar bakb")
 
         steps: List[AgentStep] = []
         spans: List[AgentTraceSpan] = []
         overall_start = time.perf_counter()
 
-        # Step 1: Query Historical Pattern Radar (DuckDB OLAP)
+        # Step 1: Query Historical Pattern Radar (OLAP Analytics)
         step1_start = time.perf_counter()
-        t1 = self.execute_tool("query_duckdb_claims", {"faskes_id": faskes_name, "detection_mode": "phantom_billing"})
+        t1 = self.execute_tool("query_claims_database", {"faskes_id": faskes_name, "claim_id": claim_id, "detection_mode": detection_mode})
         step1_dur = round((time.perf_counter() - step1_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=1,
-            thought="Memulai penapisan pra-bayar kasus klaim. Langkah pertama adalah menjalankan query analitik pada basis data historis faskes melalui DuckDB OLAP untuk mendeteksi anomali volume, pemecahan episode, atau lonjakan pasca-kegiatan massal.",
-            tool_call=ToolCallRequest(tool_name="query_duckdb_claims", arguments={"faskes_id": faskes_name, "detection_mode": "phantom_billing"}),
+            thought=f"Memulai penapisan pra-bayar berkas klaim {claim_id} di {faskes_name}. Menjalankan query analitik pada basis data historis faskes untuk mendeteksi anomali koding INA-CBG, unbundling episode, atau lonjakan volume klaim.",
+            tool_call=ToolCallRequest(tool_name="query_claims_database", arguments={"faskes_id": faskes_name, "claim_id": claim_id, "detection_mode": detection_mode}),
             observation=t1.output,
             tokens_used=320,
             duration_ms=step1_dur
         ))
         spans.append(AgentTraceSpan(
             span_id=f"span-1-{uuid.uuid4().hex[:4]}",
-            name="tool:query_duckdb_claims",
+            name="tool:query_claims_database",
             span_type="tool_execution",
             start_time=datetime.now(timezone.utc).isoformat(),
             duration_ms=t1.duration_ms,
@@ -439,12 +588,12 @@ class ClaimTraceAgentOrchestrator:
 
         # Step 2: Validate Doctor Licensing via SATUSEHAT SDMK
         step2_start = time.perf_counter()
-        t2 = self.execute_tool("query_satusehat_sdmk", {"dpjp_name": dpjp_name, "faskes_id": faskes_name, "service_date": "2026-10-12"})
+        t2 = self.execute_tool("query_satusehat_sdmk", {"dpjp_name": dpjp_name, "faskes_id": faskes_name, "claim_id": claim_id, "service_date": "2026-10-12"})
         step2_dur = round((time.perf_counter() - step2_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=2,
-            thought=f"Ditemukan lonjakan abnormal 8.5x dari baseline faskes. Sekarang memvalidasi identitas dan legalitas Surat Izin Praktik (SIP) dokter penanggung jawab pelayanan ({dpjp_name}) secara silang ke basis data registri SATUSEHAT SDMK Kemenkes.",
-            tool_call=ToolCallRequest(tool_name="query_satusehat_sdmk", arguments={"dpjp_name": dpjp_name, "faskes_id": faskes_name, "service_date": "2026-10-12"}),
+            thought=f"Temuan Lapis 1 terkonfirmasi ({t1.output.get('finding', '')}). Sekarang memvalidasi identitas, kuota harian, dan legalitas Surat Izin Praktik (SIP) DPJP ({dpjp_name}) secara silang ke registri SATUSEHAT SDMK Kemenkes.",
+            tool_call=ToolCallRequest(tool_name="query_satusehat_sdmk", arguments={"dpjp_name": dpjp_name, "faskes_id": faskes_name, "claim_id": claim_id, "service_date": "2026-10-12"}),
             observation=t2.output,
             tokens_used=410,
             duration_ms=step2_dur
@@ -464,7 +613,7 @@ class ClaimTraceAgentOrchestrator:
         step3_dur = round((time.perf_counter() - step3_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=3,
-            thought="SIP dokter terbukti tidak aktif/mutasi pada tanggal pelayanan dan kuota harian terlampaui 85 pasien/hari. Melakukan konfirmasi presensi langsung out-of-band ke peserta terdaftar melalui aplikasi Mobile JKN (Respons Biner: Ya/Tidak) berstandar pelindungan data spesifik UU PDP No. 27/2022.",
+            thought=f"Melakukan verifikasi presensi langsung out-of-band ke peserta terdaftar melalui aplikasi Mobile JKN Lapis 3 & log biometrik FRISTA berstandar pelindungan data spesifik UU PDP No. 27/2022.",
             tool_call=ToolCallRequest(tool_name="send_mobile_jkn_telemetry", arguments={"claim_id": claim_id, "faskes_name": faskes_name, "service_date": "2026-10-12"}),
             observation=t3.output,
             tokens_used=385,
@@ -481,12 +630,12 @@ class ClaimTraceAgentOrchestrator:
 
         # Step 4: Hybrid RAG Search for Juridical Citations
         step4_start = time.perf_counter()
-        t4 = self.execute_tool("rag_search_regulations", {"query": "phantom billing perpres 82 2018 permenkes 26 2021 tunda bayar bakb"})
+        t4 = self.execute_tool("rag_search_regulations", {"query": rag_query})
         step4_dur = round((time.perf_counter() - step4_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=4,
-            thought="Hasil telemetri Mobile JKN mengonfirmasi 80% peserta menyangkal hadir. Mencari landasan hukum yuridis definitif melalui korpus regulasi Program JKN untuk memastikan seluruh usulan penundaan dapat dipertanggungjawabkan di hadapan hukum dan auditor BPK.",
-            tool_call=ToolCallRequest(tool_name="rag_search_regulations", arguments={"query": "phantom billing perpres 82 2018 permenkes 26 2021 tunda bayar bakb"}),
+            thought="Menghubungkan temuan diskrepansi klinis dan presensi ke korpus regulasi Program JKN (Permenkes No. 26/2021, Permenkes No. 3/2023, Perpres No. 82/2018, dan UU PDP No. 27/2022) untuk landasan hukum Berita Acara.",
+            tool_call=ToolCallRequest(tool_name="rag_search_regulations", arguments={"query": rag_query}),
             observation=t4.output,
             tokens_used=510,
             duration_ms=step4_dur
@@ -502,12 +651,13 @@ class ClaimTraceAgentOrchestrator:
 
         # Step 5: Tri-Signal Fusion Score Computation
         step5_start = time.perf_counter()
-        t5 = self.execute_tool("calculate_fusion_score", {"s1": 85.0, "s2": 95.0, "s3": 80.0})
+        t5 = self.execute_tool("calculate_fusion_score", {"s1": s1_val, "s2": s2_val, "s3": s3_val})
+        computed_score = t5.output.get("total_score", 87.0)
         step5_dur = round((time.perf_counter() - step5_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=5,
-            thought="Mengalkulasi fusi deterministik multi-sinyal 3 lapis bukti (Lapis 1 Pola: 85.0, Lapis 2 SDMK: 95.0, Lapis 3 Mobile JKN: 80.0) menghasilkan skor prioritas 87.0 / 100.",
-            tool_call=ToolCallRequest(tool_name="calculate_fusion_score", arguments={"s1": 85.0, "s2": 95.0, "s3": 80.0}),
+            thought=f"Mengalkulasi fusi deterministik multi-sinyal 3 lapis bukti (Lapis 1 Pola: {s1_val}, Lapis 2 SDMK: {s2_val}, Lapis 3 Mobile JKN: {s3_val}) menghasilkan skor prioritas {computed_score} / 100.",
+            tool_call=ToolCallRequest(tool_name="calculate_fusion_score", arguments={"s1": s1_val, "s2": s2_val, "s3": s3_val}),
             observation=t5.output,
             tokens_used=290,
             duration_ms=step5_dur
@@ -518,7 +668,7 @@ class ClaimTraceAgentOrchestrator:
             span_type="tool_execution",
             start_time=datetime.now(timezone.utc).isoformat(),
             duration_ms=t5.duration_ms,
-            attributes={"score": 87.0, "lane": "MERAH"}
+            attributes={"score": computed_score, "lane": "MERAH"}
         ))
 
         # Step 6: High-Risk Action Proposal (Requires Human-in-the-Loop Approval)
@@ -537,7 +687,7 @@ class ClaimTraceAgentOrchestrator:
         step6_dur = round((time.perf_counter() - step6_start) * 1000, 2)
         steps.append(AgentStep(
             step_number=6,
-            thought="TINDAKAN BERISIKO TINGGI: Skor berada pada Jalur Merah (87.0 >= 70). Berdasarkan regulasi dan doktrin Human-in-the-Loop, AI Agent menangguhkan eksekusi dan memohon konfirmasi yuridis dari Verifikator Medis sebelum membekukan klaim faskes.",
+            thought=f"TINDAKAN BERISIKO TINGGI: Skor berada pada Jalur Merah ({computed_score} >= 70). Berdasarkan regulasi dan doktrin Human-in-the-Loop, AI Agent menangguhkan eksekusi dan memohon konfirmasi yuridis dari Verifikator Medis sebelum membekukan klaim faskes.",
             tool_call=ToolCallRequest(tool_name="propose_bakb_disposition", arguments={"claim_id": claim_id, "recommended_lane": "MERAH"}),
             observation=t6.output,
             tokens_used=440,
@@ -559,22 +709,22 @@ class ClaimTraceAgentOrchestrator:
             "hospital": faskes_name,
             "dpjp": dpjp_name,
             "lapis_1_pola": {
-                "score": 85.0,
-                "surge_ratio": "8.5x",
-                "total_claims": 85,
-                "finding": "Lonjakan penagihan fisioterapi massal pasca baksos tanpa izin resmi."
+                "score": s1_val,
+                "surge_ratio": f"{t1.output.get('cluster_surge_ratio', 8.5)}x",
+                "total_claims": t1.output.get("total_claims_queried", 85),
+                "finding": t1.output.get("finding", "Anomali pola tagihan terdeteksi.")
             },
             "lapis_2_sdmk": {
-                "score": 95.0,
-                "sip_status": "EXPIRED_MUTASI",
-                "overcapacity": "85 px / hari (maks 40)",
-                "finding": "SIP DPJP tidak aktif di faskes ini dan melebihi ambang batas Permenkes 14/2021."
+                "score": s2_val,
+                "sip_status": t2.output.get("sip_status", "EXPIRED_MUTASI"),
+                "overcapacity": f"{t2.output.get('billed_patients_today', 85)} px / hari (maks {t2.output.get('daily_patient_quota', 40)})",
+                "finding": t2.output.get("finding", "Ketidaksesuaian registri SATUSEHAT SDMK.")
             },
             "lapis_3_mobile_jkn": {
-                "score": 80.0,
-                "denial_rate": "80%",
-                "sample_respondents": 10,
-                "finding": "8 dari 10 peserta terdaftar menyangkal pernah hadir menerima fisioterapi."
+                "score": s3_val,
+                "denial_rate": f"{t3.output.get('denial_rate_pct', 80)}%",
+                "sample_respondents": t3.output.get("sample_size", 10),
+                "finding": t3.output.get("finding", "Diskrepansi konfirmasi presensi peserta.")
             }
         }
 
@@ -599,7 +749,7 @@ class ClaimTraceAgentOrchestrator:
         }
 
         # SHA-256 seal for initial proposal
-        seal_payload = f"{trace_id}:{claim_id}:87.0:MERAH:{datetime.now(timezone.utc).isoformat()}"
+        seal_payload = f"{trace_id}:{claim_id}:{computed_score}:MERAH:{datetime.now(timezone.utc).isoformat()}"
         initial_seal = hashlib.sha256(seal_payload.encode()).hexdigest()
 
         response = AgentInvestigationResponse(
@@ -609,7 +759,7 @@ class ClaimTraceAgentOrchestrator:
             patient_name=patient_name,
             current_status="AWAITING_HUMAN_APPROVAL",
             final_lane="MERAH",
-            final_score=87.0,
+            final_score=computed_score,
             steps=steps,
             spans=spans,
             evidence_dossier=evidence,
@@ -633,22 +783,40 @@ class ClaimTraceAgentOrchestrator:
         an immutable SHA-256 sealed block in the audit ledger.
         """
         if trace_id not in self.traces_db:
-            # Generate deterministic fallback if trace was created in stateless session
-            record = self.run_investigation_loop("CLM-2026-10-085", verifier_nip)
+            inferred_claim = "CLM-2026-10-085"
+            if "8806" in trace_id:
+                inferred_claim = "CLM-2026-8806"
+            elif "8809" in trace_id:
+                inferred_claim = "CLM-2026-8809"
+            elif "8802" in trace_id:
+                inferred_claim = "CLM-2026-8802"
+            record = self.run_investigation_loop(inferred_claim, verifier_nip)
             self.traces_db[trace_id] = record
 
         record = self.traces_db[trace_id]
         record.current_status = "COMPLETED"
         record.human_action_required = False
 
+        nominal_map = {
+            "CLM-2026-10-085": 15300000,
+            "CLM-2026-8806": 11650000,
+            "CLM-2026-8809": 1850000,
+            "CLM-2026-8802": 1950000,
+        }
+        nominal_val = nominal_map.get(record.claim_id, 15300000)
+        actor_display = "Budi Santoso, S.Kom, M.TI (Verifikator Medis)" if verifier_nip in ("198704202011012001", "199208152015031002") else verifier_nip
+
         # Stamp immutable audit ledger
         entry = self.audit_logger.record_event(
             event_type="HUMAN_IN_THE_LOOP_APPROVAL",
             claim_id=record.claim_id,
-            actor=verifier_nip,
+            actor=actor_display,
             payload={
                 "action": action,
-                "notes": f"[AI AGENT APPROVED] {notes} · Trace: {trace_id}",
+                "faskes": record.faskes_name,
+                "nominal": nominal_val,
+                "djsProtected": nominal_val,
+                "reason": f"Otorisasi Verifikator Medis (HITL): {notes}",
                 "triage_score": record.final_score,
                 "trace_id": trace_id
             }
