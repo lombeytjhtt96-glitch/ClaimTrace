@@ -191,6 +191,12 @@ export default function AuditLedger({ isLight: propIsLight }) {
         return 'Skoring Triase Otomatis (Lapis 1-3)';
       case 'BERITA_ACARA_ISSUED':
         return 'Penerbitan Berita Acara Verifikasi Klaim';
+      case 'HUMAN_IN_THE_LOOP_APPROVAL':
+        return 'Otorisasi Verifikator Medis (Human-in-the-Loop)';
+      case 'VERIFIER_DECISION_FINALIZED':
+        return 'Penetapan Keputusan Akhir Verifikator';
+      case 'PATIENT_PRESENCE_RESPONSE':
+        return 'Konfirmasi Presensi Peserta Mobile JKN';
       case 'CLINICAL_RULE_VIOLATION_FLAGGED':
         return 'Temuan Pelanggaran Kaidah Koding Klinis';
       default:
@@ -203,6 +209,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
       case 'CLAIM_REJECTED_PHANTOM':
         return 'Ketetapan Penolakan Klaim Pra-Bayar';
       case 'MOBILE_JKN_DISPATCH':
+      case 'PATIENT_PRESENCE_RESPONSE':
         return 'Konfirmasi Kehadiran Peserta Out-of-Band';
       case 'WASRIK_INVESTIGATION_FLAG':
         return 'Eskalasi Pemeriksaan Khusus Wasrik';
@@ -214,6 +221,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
         return 'Evaluasi Algoritmik Multi-Sinyal ClaimTrace';
       case 'BERITA_ACARA_ISSUED':
         return 'Dokumen Hukum Resmi Berstempel SHA-256';
+      case 'HUMAN_IN_THE_LOOP_APPROVAL':
+      case 'VERIFIER_DECISION_FINALIZED':
+        return 'Pengesahan Keputusan Verifikator Berstempel SHA-256';
       default:
         return 'Pencatatan Ledger Kriptografis BPJS Kesehatan';
     }
@@ -677,6 +687,27 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                           }`}>
                             BERITA ACARA
+                          </span>
+                        )}
+                        {b.action.includes('HUMAN_IN_THE_LOOP') && (
+                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                            isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          }`}>
+                            OTORISASI HITL
+                          </span>
+                        )}
+                        {b.action.includes('VERIFIER_DECISION') && (
+                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                            isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                          }`}>
+                            KETETAPAN AUDIT
+                          </span>
+                        )}
+                        {b.action.includes('PATIENT_PRESENCE') && (
+                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                            isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                          }`}>
+                            RESPONS PESERTA
                           </span>
                         )}
                       </div>

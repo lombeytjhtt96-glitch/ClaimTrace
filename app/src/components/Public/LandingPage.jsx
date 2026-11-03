@@ -1342,7 +1342,7 @@ export default function LandingPage({
                 <ul className={`text-xs space-y-1.5 leading-relaxed pt-2 border-t ${effectiveIsLight ? 'text-slate-600 border-slate-200' : 'text-white/70 border-white/10'}`}>
                   <li>• Fusi Multi-Sinyal Deterministik 3 Lapis Bukti (50% Radar, 30% SATUSEHAT, 20% Mobile JKN).</li>
                   <li>• Human-in-the-Loop DSS: rekomendasi eviden transparan tanpa black-box bias.</li>
-                  <li>• Graph Database kolusi sindikat rujukan & forensik OLAP DuckDB sub-12ms.</li>
+                  <li>• Graph Database kolusi sindikat rujukan &amp; forensik basis data analitik OLAP sub-12ms.</li>
                   <li>• Audit Ledger Kriptografis SHA-256 anti-repudiasi & adopsi 6 standar siber dunia.</li>
                 </ul>
               </motion.div>
