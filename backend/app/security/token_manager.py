@@ -55,10 +55,7 @@ def verify_access_token(token: str) -> Tuple[bool, Optional[Dict[str, Any]], Opt
     Returns: (is_valid, payload_dict, rejection_reason)
     """
     if not token or not token.startswith("ct."):
-        # Fallback support for legacy tokens during transition
-        if token and token.startswith("bpjs-token-"):
-            return True, {"sub": "198704202011012001", "name": "dr. Siti Rahma, Sp.PK", "role": "VERIFICATOR_MEDIS"}, None
-        return False, None, "Format token sesi tidak valid."
+        return False, None, "Format token sesi tidak valid. Token harus memiliki tanda tangan kriptografis ct.<payload>.<sig>."
 
     if token in REVOKED_TOKENS:
         return False, None, "Token telah dicabut (Revoked) melalui proses logout resmi."

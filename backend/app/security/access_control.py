@@ -10,6 +10,7 @@ Core Principles (Internet2 Grouper Doctrine):
 5. Attribute-Based Access Control (ABAC): Support branch/kantor cabang scoping.
 """
 
+import os
 from enum import Enum
 from typing import Optional, List, Dict, Any, Set
 from dataclasses import dataclass, field
@@ -198,9 +199,12 @@ def resolve_subject(
             raise HTTPException(status_code=401, detail=error_msg or "Sesi otentikasi tidak valid.")
         return resolve_subject_from_payload(payload or {})
 
-    if x_verificator_nip or x_verificator_role:
-        nip = x_verificator_nip or "UNKNOWN-NIP"
-        role = x_verificator_role or "GUEST"
+    # Disallow unauthenticated client header spoofing & body parameter impersonation.
+    # Test headers and fallback verifier IDs are strictly isolated to automated test runners (pytest).
+    is_test_runner = bool(os.getenv("PYTEST_CURRENT_TEST") or os.getenv("CLAIMTRACE_ALLOW_TEST_HEADERS") == "1")
+    if is_test_runner and (x_verificator_nip or x_verificator_role or fallback_verifier_id):
+        nip = x_verificator_nip or fallback_verifier_id or "198704202011012001"
+        role = x_verificator_role or "VERIFICATOR_MEDIS"
         known = KNOWN_ACTORS.get(nip)
         unit = known["unit"] if known else "Kantor Pusat BPJS Kesehatan"
         name = known["name"] if known else f"Verifikator ({nip})"
@@ -212,32 +216,7 @@ def resolve_subject(
             "unit": unit
         })
 
-    if fallback_verifier_id:
-        clean_id = fallback_verifier_id.strip()
-        if clean_id in KNOWN_ACTORS:
-            actor_data = KNOWN_ACTORS[clean_id]
-            return resolve_subject_from_payload(actor_data)
-        
-        # Pattern-based matching for test runners and external verifiers
-        id_lower = clean_id.lower()
-        if "analyst" in id_lower or "fraud_analyst" in id_lower or "auditor_read" in id_lower:
-            role = "ANALYST"
-        elif "admin" in id_lower or "security" in id_lower:
-            role = "ADMIN"
-        elif clean_id.startswith("VRF-") or "verif" in id_lower:
-            role = "VERIFICATOR"
-        else:
-            role = "GUEST"
-
-        return resolve_subject_from_payload({
-            "sub": clean_id,
-            "nip": clean_id,
-            "name": f"Aktor Verifikasi ({clean_id})",
-            "role": role,
-            "unit": "Kantor Pusat BPJS Kesehatan"
-        })
-
-    # Fail closed
+    # Fail closed: reject unauthenticated calls on protected endpoints
     raise HTTPException(
         status_code=401,
         detail="Header Autentikasi diperlukan. Sertakan Bearer token atau X-BPJS-Token yang sah."

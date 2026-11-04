@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search,
@@ -972,12 +973,13 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
       </div>
 
       {/* User Profile Slide-over Drawer */}
-      <AnimatePresence>
-        {drawerOpen && selectedUser && (
-          <div
-            className="fixed inset-0 !mt-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm"
-            onClick={() => setDrawerOpen(false)}
-          >
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {drawerOpen && selectedUser && (
+            <div
+              className="fixed inset-0 !mt-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm"
+              onClick={() => setDrawerOpen(false)}
+            >
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -1301,11 +1303,15 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
 
       {/* CRM Note Dialog Modal */}
-      {crmNoteModal.isOpen && (
-        <div className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {crmNoteModal.isOpen && (
+            <div className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-6 space-y-4 ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
           }`}>
@@ -1356,6 +1362,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
           </div>
         </div>
       )}
+    </AnimatePresence>,
+    document.body
+  )}
 
       {/* Floating Toast Notification */}
       <AnimatePresence>

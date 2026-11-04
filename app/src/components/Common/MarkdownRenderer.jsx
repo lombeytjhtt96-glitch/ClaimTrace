@@ -38,10 +38,10 @@ export function renderInlineMarkdown(text, isLight = false, isUser = false) {
           key={idx}
           className={
             isUser
-              ? 'font-bold text-white'
+              ? 'font-black text-white'
               : isLight
-              ? 'font-bold text-emerald-950'
-              : 'font-bold text-white text-emerald-400'
+              ? 'font-black text-slate-950 tracking-tight'
+              : 'font-black text-emerald-300 tracking-tight'
           }
         >
           {t.value}

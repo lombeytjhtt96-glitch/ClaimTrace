@@ -5,6 +5,7 @@ Protects against Brute-Force, Resource Starvation, and Denial-of-Service (DoS) a
 NIST CSF 2.0 PR.AC-07 & OWASP API Security Top 10 API4:2023 (Unrestricted Resource Consumption).
 """
 
+import os
 import time
 import threading
 from typing import Dict, Tuple, Optional
@@ -102,9 +103,16 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
 
     async def dispatch(self, request: Request, call_next):
-        # Determine client IP (considering reverse proxy X-Forwarded-For)
+        # Determine client IP: Default to peer socket host for anti-spoofing defense.
+        # Only trust X-Forwarded-For if explicitly configured behind a validated reverse proxy.
+        peer_ip = request.client.host if request.client else "127.0.0.1"
+        trusted_proxies = set(os.getenv("CLAIMTRACE_TRUSTED_PROXIES", "127.0.0.1,::1").split(","))
         forwarded = request.headers.get("x-forwarded-for")
-        client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "127.0.0.1")
+        
+        if forwarded and peer_ip in trusted_proxies and os.getenv("CLAIMTRACE_TRUST_PROXY_HEADERS") == "1":
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = peer_ip
         path = request.url.path
 
         # 1. Check Brute-Force Auth Lockout

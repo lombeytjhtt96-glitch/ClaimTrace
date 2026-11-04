@@ -2317,6 +2317,7 @@ export default function AgentCopilot({
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('claimtrace_token') || ''}`,
                             'X-Verificator-Role': 'VERIFICATOR_MEDIS',
                             'X-Verificator-NIP': '198704202011012001',
                           },

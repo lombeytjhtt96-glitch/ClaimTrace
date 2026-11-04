@@ -29,10 +29,23 @@ import { API_BASE_URL } from '../../services/apiConfig';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 
+export function formatActionLabel(str) {
+  if (!str || typeof str !== 'string') return '';
+  if (ACTION_LABELS[str]) return ACTION_LABELS[str];
+  return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function cleanAiDisplayText(str) {
   if (!str || typeof str !== 'string') return '';
-  // Remove single-asterisk markdown italics (*upcoding* -> upcoding) without touching *** masking or **bold**
-  return str.replace(/(?<!\*)\*([A-Za-z0-9][^*\n]{0,60}?)\*(?!\*)/g, '$1');
+  // Convert single-asterisk emphasis (*upcoding* -> **upcoding**) so terms are truly bolded!
+  let res = str.replace(/(?<!\*)\*([A-Za-z0-9][^*\n]{0,60}?)\*(?!\*)/g, '**$1**');
+  // Auto-bold key legal regulation citations
+  res = res.replace(/^(\d+\.\s+)(Permenkes[^\n]+|Peraturan Presiden[^\n]+|Undang-Undang[^\n]+|Perpres[^\n]+)/gm, '$1**$2**');
+  // Auto-bold standard section subheadings
+  res = res.replace(/^(\s*[-•]\s*)(Substansi|Relevansi Kasus|Tindakan Verifikator|Landasan Hukum & Kaidah Regulasi|Analisis Kasus Aktif|Potensi Efisiensi Biaya \(Cost Recovery\)|Tindakan Verifikator Disarankan)(\s*:)/gm, '$1**$2**$3');
+  // Auto-bold summary conclusion header
+  res = res.replace(/^(Kesimpulan Tindakan Konkret Verifikator:?)/gm, '**$1**');
+  return res;
 }
 
 const ACTION_LABELS = {
@@ -689,7 +702,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     <strong>Identitas Fasilitas Kesehatan:</strong> ${c.hospital} (${c.hospital_class})<br/>
     <strong>ID Klaim / Nomor SEP:</strong> ${c.claim_id} / ${c.sep_number}<br/>
     <strong>Tipologi Anomali Terdeteksi:</strong> ${c.typology_name}<br/>
-    <strong>Status Putusan Verifikator:</strong> ${ACTION_LABELS[baDossier.action_taken] || baDossier.action_taken}
+    <strong>Status Putusan Verifikator:</strong> ${formatActionLabel(baDossier.action_taken)}
   </div>
 
   <table>
@@ -1759,7 +1772,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                 <div className="text-[10px] uppercase opacity-60">Status Ketetapan Verifikator</div>
                 <div className="font-bold text-sm text-rose-500 mt-0.5">
-                  {ACTION_LABELS[baDossier.action_taken] || baDossier.action_taken}
+                  {formatActionLabel(baDossier.action_taken)}
                 </div>
                 <div className="text-[11px] opacity-80 mt-0.5">{baDossier.claim_summary.typology_name}</div>
               </div>
