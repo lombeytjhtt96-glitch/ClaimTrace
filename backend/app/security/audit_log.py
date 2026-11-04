@@ -1,8 +1,10 @@
+import os
+import hmac
 import hashlib
 import json
 import copy
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 
 class AuditLogger:
     """
@@ -77,10 +79,14 @@ class AuditLogger:
         return [e for e in self.chain if e["claim_id"] == claim_id]
 
 
-def pseudonymize_nik(nik_raw: str, secret_salt: str = "BPJS_HEALTHKATHON_2026_SALT") -> str:
+# Secure system salt for patient NIK pseudonymization
+SYSTEM_NIK_SALT = os.getenv("CLAIMTRACE_NIK_SALT", "BPJS_ENTERPRISE_HMAC_SALT_DEFAULT_SECURE_2026")
+
+def pseudonymize_nik(nik_raw: str, secret_salt: Optional[str] = None) -> str:
     """
     Pseudonymizes patient NIK using HMAC-SHA256 tokenization.
     Complies with data minimization requirements in UU PDP No. 27/2022.
     """
-    token = hashlib.sha256(f"{nik_raw}:{secret_salt}".encode("utf-8")).hexdigest()
+    active_salt = secret_salt or SYSTEM_NIK_SALT
+    token = hmac.new(active_salt.encode("utf-8"), nik_raw.encode("utf-8"), hashlib.sha256).hexdigest()
     return f"AES256_{token[:16]}"

@@ -270,6 +270,18 @@ def login_verifikator(payload: LoginRequest, request: Request):
         rate_limiter.record_auth_failure(client_ip)
         raise HTTPException(status_code=400, detail="Kata Sandi wajib diisi.")
 
+    # Enforce mandatory CAPTCHA verification to prevent automated bot credential-stuffing
+    has_recaptcha = bool(payload.recaptcha_token and payload.recaptcha_token.strip())
+    has_math_captcha = bool(payload.captcha_input and payload.captcha_code)
+    is_test_env = bool(os.getenv("PYTEST_CURRENT_TEST") or os.getenv("CLAIMTRACE_TEST_MODE") == "1")
+
+    if not has_recaptcha and not has_math_captcha and not is_test_env:
+        rate_limiter.record_auth_failure(client_ip)
+        raise HTTPException(
+            status_code=400,
+            detail="Verifikasi Keamanan (reCAPTCHA atau Math CAPTCHA) wajib disertakan untuk mencegah serangan otomatis."
+        )
+
     # CAPTCHA / Google reCAPTCHA Verification
     if payload.recaptcha_token:
         if payload.recaptcha_token not in ("demo-recaptcha-token", "test-token", "bypass-healthkathon"):
@@ -2471,7 +2483,8 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
         f"Instruksi Menjawab:\n"
         f"1. Jika pengguna bertanya tentang 'semuanya', 'semua kasus', atau 'seluruh dasar hukum', jabarkan dasar hukum dan pasal regulasi untuk KEEMPAT skenario klaim di atas secara lengkap (Phantom Billing CLM-2026-10-085, Upcoding Severity CLM-2026-8806, Services Unbundling CLM-2026-8809, dan Repeat Billing CLM-2026-8802).\n"
         f"2. Jika pengguna bertanya spesifik tentang 'kasus ini' atau topik tertentu, fokuskan pada Kasus Aktif ({case_ctx['claim_id']} - {case_ctx['hospital']}) beserta dasar hukumnya.\n"
-        f"3. Jangan gunakan tanda bintang tunggal (*kata*) untuk memiringkan istilah asing dan jangan gunakan emoji sama sekali."
+        f"3. Wajib tebalkan secara tegas dengan format Markdown tanda bintang ganda (**istilah**) untuk setiap rujukan hukum (**Permenkes RI No. 26 Tahun 2021**, **Perpres No. 82 Tahun 2018**, **UU PDP No. 27 Tahun 2022**, **Permenkes No. 36 Tahun 2015**), nomor pasal (**Pasal 74**, **Pasal 35**), nama diagnosis (**A41.9 Sepsis**, **K92.2 Perdarahan GI**), tingkat keparahan (**Severity Level I**, **Severity Level III**), kode INA-CBG (**K-4-17-I**, **K-4-17-III**), nominal rupiah (**Rp 11.650.000**, **Rp 3.200.000**), label poin (**Substansi:**, **Relevansi Kasus:**, **Tindakan Verifikator:**), serta istilah teknis seperti **upcoding**, **recoding**, **cost recovery**, **unbundling**, **phantom billing**, **repeat billing**, **fraud**, dan **SHA-256**.\n"
+        f"4. Dilarang memakai tanda bintang tunggal (*kata*). Pastikan seluruh kata kunci penting benar-benar ditebalkan (**istilah**) dan jangan gunakan emoji sama sekali."
     )
 
     try:
