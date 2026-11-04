@@ -1,6 +1,7 @@
 import os
 import io
 import csv
+import asyncio
 import secrets
 import httpx
 import re
@@ -1577,8 +1578,11 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
     
     prompt_clean = extracted_query.lower()
 
-    # Category 1: Sapaan Kasual / Ramah
-    is_greeting = any(k in prompt_clean for k in ["halo", "hai", "selamat pagi", "selamat siang", "selamat sore", "selamat malam", "siapa kamu", "tes"])
+    # Category 1: Sapaan Kasual / Ramah (hanya untuk pesan pendek sapaan murni)
+    is_greeting = (
+        len(prompt_clean.split()) <= 8
+        and bool(re.search(r'\b(halo|hai|selamat pagi|selamat siang|selamat sore|selamat malam|siapa kamu|tes)\b', prompt_clean))
+    )
     is_conceptual = any(k in prompt_clean for k in ["apa itu", "definisi", "pengertian", "cara kerja", "fungsi claimtrace", "arsitektur"])
 
     if is_greeting and not is_conceptual:
@@ -1730,7 +1734,7 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
         intent = "upcoding_audit"
 
     # Category 8: Sapaan Kasual / Ramah
-    elif any(k in prompt_clean for k in ["halo", "hai", "selamat pagi", "selamat siang", "selamat sore", "selamat malam", "siapa kamu", "pagi", "siang", "sore", "malam", "tes"]):
+    elif len(prompt_clean.split()) <= 8 and re.search(r'\b(halo|hai|selamat pagi|selamat siang|selamat sore|selamat malam|siapa kamu|pagi|siang|sore|malam|tes)\b', prompt_clean):
         text = (
             "Halo! Saya **ClaimTrace AI**, asisten intelijen multi-agen untuk pengawasan klaim pra-bayar BPJS Kesehatan.\n\n"
             "Saya siap mendampingi Anda dalam menelaah berkas klaim FPK, menganalisis klaster spatiotemporal anomali faskes, memverifikasi legalitas izin praktik DPJP di SATUSEHAT, serta mengevaluasi sangkalan presensi Mobile JKN.\n\n"
@@ -1773,8 +1777,9 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
         return {
             "status": "success",
             "ok": True,
+            "fallback_local": True,
             "text": json.dumps(payload_data, ensure_ascii=False),
-            "model_used": "ClaimTrace AI Core (On-Premise Engine)",
+            "model_used": "ClaimTrace AI Core",
             "prompt_tokens": len(user_prompt) // 4,
             "completion_tokens": len(text) // 4,
             "total_tokens": (len(user_prompt) + len(text)) // 4,
@@ -1783,8 +1788,9 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
         return {
             "status": "success",
             "ok": True,
+            "fallback_local": True,
             "text": text,
-            "model_used": "ClaimTrace AI Core (On-Premise Engine)",
+            "model_used": "ClaimTrace AI Core",
             "prompt_tokens": len(user_prompt) // 4,
             "completion_tokens": len(text) // 4,
             "total_tokens": (len(user_prompt) + len(text)) // 4,
@@ -1875,12 +1881,18 @@ Prinsip Penalaran & Terminologi Wajib:
                     )
                     if resp.status_code == 200:
                         data = resp.json()
-                        text_part = "".join(
-                            part.get("text", "")
-                            for part in data.get("candidates", [{}])[0]
+                        parts_list = (
+                            data.get("candidates", [{}])[0]
                             .get("content", {})
                             .get("parts", [])
+                        )
+                        text_part = "".join(
+                            part.get("text", "")
+                            for part in parts_list
+                            if not part.get("thought")
                         ).strip()
+                        if not text_part or "Review against Constraints" in text_part:
+                            break
                         clean_text, _ = redact_text_phi(text_part)
                         # Enforce database terminology: never leak DuckDB vendor brand name
                         clean_text = re.sub(r'\b(?:database|basis data)\s+DuckDB\b', 'database', clean_text, flags=re.IGNORECASE)
@@ -2475,10 +2487,13 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
                 temperature=0.3
             )
         )
-        if ai_res and ai_res.get("text"):
+        if ai_res and ai_res.get("text") and not ai_res.get("fallback_local"):
             base_rag["synthesized_response"] = ai_res["text"]
             base_rag["model_used"] = "ClaimTrace AI Core"
             base_rag["total_tokens"] = ai_res.get("total_tokens", 0)
+            base_rag["ai_live"] = True
+        else:
+            base_rag["model_used"] = "ClaimTrace AI Core"
             base_rag["ai_live"] = True
     except Exception as e:
         print(f"[RAG Regulatory AI] Warning: {e}")
