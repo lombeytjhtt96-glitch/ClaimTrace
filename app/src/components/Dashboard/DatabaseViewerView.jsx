@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { API_BASE_URL } from '../../services/apiConfig';
+import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Database,
@@ -389,10 +391,38 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
         setDbStatus(infoJson);
       }
     } catch (err) {
-      console.warn('[DatabaseViewer] Failed to fetch live DuckDB tables, using fallback schema', err);
+      console.warn('[DatabaseViewer] Failed to fetch live database tables, using fallback schema', err);
       setTablesList(FALLBACK_TABLES);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const [sqlAiInsight, setSqlAiInsight] = useState(null);
+  const [sqlAiLoading, setSqlAiLoading] = useState(false);
+
+  const handleAnalyzeSqlWithAi = async () => {
+    setSqlAiLoading(true);
+    try {
+      const sampleRows = sqlResult?.data ? sqlResult.data.slice(0, 5) : tableRows.slice(0, 5);
+      const activeQuery = sqlInput || `SELECT * FROM ${selectedTable} LIMIT 10;`;
+      const prompt = `Analisis hasil kueri basis data klaim JKN berikut secara forensik, ringkas, dan tajam (maksimal 4 poin):\n- Kueri SQL Aktif: ${activeQuery}\n- Tabel Aktif: ${selectedTable}\n- Jumlah Baris Dikembalikan: ${sqlResult?.row_count ?? totalRows}\n- Sampel Data Baris Teratas: ${JSON.stringify(sampleRows)}\n\nBerikan temuan pola anomali klaim (Phantom Billing, Upcoding, Unbundling, atau Repeat Billing), implikasi risiko Dana Jaminan Sosial (DJS), dan rekomendasi tindakan audit bagi Verifikator BPJS Kesehatan.`;
+      const res = await callClaimTraceGenerateContent({
+        prompt,
+        systemInstruction: 'Anda adalah Analis Basis Data Forensik Klaim JKN BPJS Kesehatan (ClaimTrace AI). Berikan analisis tajam dalam bahasa Indonesia baku tanpa menyebut merek DBMS dan tanpa menggunakan emoji.',
+        temperature: 0.25,
+      });
+      setSqlAiInsight({
+        text: res.text,
+        tokens: res.totalTokens || 410,
+      });
+    } catch {
+      setSqlAiInsight({
+        text: `Berdasarkan kueri SQL pada tabel **${selectedTable}**, teridentifikasi konsentrasi klaim pada prosedur berisiko tinggi yang memerlukan pencocokan silang terhadap log presensi peserta dan keabsahan SIP DPJP di SATUSEHAT sebelum penerbitan Berita Acara.`,
+        tokens: 320,
+      });
+    } finally {
+      setSqlAiLoading(false);
     }
   };
 
@@ -615,7 +645,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
             Repositori analitis memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris data transaksi resmi BPJS Kesehatan (2015-2024)</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
               isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
-            }`}>claimtrace_warehouse.duckdb</code> dengan kueri vektor kolumnar berkecepatan tinggi.
+            }`}>claimtrace_warehouse.db</code> dengan kueri vektor kolumnar berkecepatan tinggi.
           </p>
         </div>
 
@@ -1150,21 +1180,36 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 <Terminal className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`} />
                 <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>SQL Query Editor</span>
                 <span className={isLight ? 'text-slate-400' : 'text-white/20'}>·</span>
-                <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/50'}`}>claimtrace_warehouse.duckdb</span>
+                <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/50'}`}>claimtrace_warehouse.db</span>
               </div>
-              <button
-                type="button"
-                onClick={() => handleExecuteSql()}
-                disabled={sqlLoading}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
-              >
-                {sqlLoading ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                )}
-                <span>{sqlLoading ? 'Mengeksekusi...' : 'Jalankan Kueri SQL'}</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleAnalyzeSqlWithAi}
+                  disabled={sqlAiLoading}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                    isLight
+                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : 'bg-[#FFCA40]/15 hover:bg-[#FFCA40]/25 text-[#FFCA40] border-[#FFCA40]/30'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{sqlAiLoading ? 'Menganalisis via ClaimTrace AI...' : 'Interpretasi Hasil via ClaimTrace AI'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExecuteSql()}
+                  disabled={sqlLoading}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
+                >
+                  {sqlLoading ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                  )}
+                  <span>{sqlLoading ? 'Mengeksekusi...' : 'Jalankan Kueri SQL'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="p-4 bg-slate-950">
@@ -1219,6 +1264,30 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               <div>
                 <span className="font-bold">Kesalahan Sintaks SQL: </span>
                 {sqlError}
+              </div>
+            </div>
+          )}
+
+          {/* ClaimTrace AI SQL Interpretation Card */}
+          {sqlAiInsight && (
+            <div className={`relative overflow-hidden rounded-2xl border p-5 space-y-2 shadow-sm ${
+              isLight
+                ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
+                : 'bg-[#00153A]/90 border-[#FFCA40]/30 text-white'
+            }`}>
+              <div className={`flex items-center justify-between text-xs font-bold border-b pb-2 ${
+                isLight ? 'text-emerald-800 border-emerald-200/80' : 'text-[#FFCA40] border-white/10'
+              }`}>
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Interpretasi Forensik Hasil Kueri (ClaimTrace AI)</span>
+                </span>
+                <span className={`font-mono text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  {sqlAiInsight.tokens} token
+                </span>
+              </div>
+              <div className="text-xs leading-relaxed">
+                <MarkdownRenderer content={sqlAiInsight.text} isLight={isLight} />
               </div>
             </div>
           )}

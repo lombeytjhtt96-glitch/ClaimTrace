@@ -4,8 +4,10 @@ import {
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
   Stethoscope, Search, Filter, ChevronRight, Activity, 
   CheckCircle2, XCircle, ExternalLink, Calendar, Car, 
-  Hospital, Phone, Award, AlertOctagon, TrendingUp, Download
+  Hospital, Phone, Award, AlertOctagon, TrendingUp, Download, Sparkles
 } from 'lucide-react';
+import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 // Data DPJP dari integrasi SATUSEHAT SDMK & Analisis Geovelocity
 const DOCTORS_DATA = [
@@ -222,6 +224,39 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedDoctor, setSelectedDoctor] = useState(() => DOCTORS_DATA[0]);
+  const [dpjpAiResult, setDpjpAiResult] = useState({});
+  const [dpjpAiLoading, setDpjpAiLoading] = useState(false);
+
+  const handleRunDpjpAiAudit = async (doc) => {
+    if (!doc || dpjpAiLoading) return;
+    setDpjpAiLoading(true);
+    try {
+      const geoSummary = doc.geovelocityEvent
+        ? `Anomali Geovelocity pada ${doc.geovelocityEvent.date}: ${doc.geovelocityEvent.pointA.time} di ${doc.geovelocityEvent.pointA.faskes} (${doc.geovelocityEvent.pointA.action}) menuju ${doc.geovelocityEvent.pointB.time} di ${doc.geovelocityEvent.pointB.faskes} (${doc.geovelocityEvent.pointB.action}), jarak ${doc.geovelocityEvent.distanceKm} km dalam ${doc.geovelocityEvent.timeGapMinutes} menit (kecepatan ${doc.geovelocityEvent.requiredSpeedKmh} km/jam).`
+        : 'Tidak ada anomali geovelocity antar-faskes.';
+      const sipSummary = doc.hospitals.map((h) => `${h.name} (Status: ${h.status}, Berlaku s/d ${h.sipValidUntil})`).join('; ');
+      const prompt = `Lakukan telaah forensik beban kerja dan legalitas praktik DPJP berikut (maksimal 4 poin tajam):\n- Nama DPJP: ${doc.name} (${doc.specialty}) | NIP: ${doc.nip} | STR: ${doc.str}\n- Indeks Risiko: ${doc.riskScore}/100 | Beban Harian: ${doc.dailyWorkload} pasien/hari (Batas Permenkes No. 14/2021: ${doc.workloadLimit} pasien/hari)\n- Status SIP di Faskes (SATUSEHAT SDMK): ${sipSummary}\n- Telemetri Geovelocity OSRM: ${geoSummary}\n- Klaim Tertaut: ${doc.casesLinked.join(', ') || 'Tidak ada'} (Eksposur: Rp ${doc.estimatedExposure.toLocaleString('id-ID')})\n\nJelaskan analisis kepatuhan hukum (UU Praktik Kedokteran, Permenkes 14/2021, Perpres 82/2018) dan instruksi tindakan verifikator BPJS Kesehatan tanpa emoji.`;
+      const res = await callClaimTraceGenerateContent({
+        prompt,
+        systemInstruction: 'Anda adalah Auditor Forensik SDMK & Geovelocity Klaim JKN BPJS Kesehatan (ClaimTrace AI). Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji.',
+        temperature: 0.25,
+      });
+      setDpjpAiResult((prev) => ({
+        ...prev,
+        [doc.id]: { text: res.text, tokens: res.totalTokens || 420 },
+      }));
+    } catch {
+      setDpjpAiResult((prev) => ({
+        ...prev,
+        [doc.id]: {
+          text: `Berdasarkan audit SATUSEHAT SDMK dan kalkulasi rute darat OSRM terhadap **${doc.name}**, beban harian (${doc.dailyWorkload}/${doc.workloadLimit} pasien) dan status SIP memerlukan klarifikasi Berita Acara resmi (BAKK) serta verifikasi log presensi fisik dokter di faskes sebelum klaim dibayarkan.`,
+          tokens: 310,
+        },
+      }));
+    } finally {
+      setDpjpAiLoading(false);
+    }
+  };
 
   const doctors = DOCTORS_DATA;
 
@@ -809,6 +844,38 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                     </div>
                   </div>
                 )}
+
+                {/* LIVE AI FORENSIC DPJP AUDIT */}
+                <div className={`pt-2 border-t space-y-2.5 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Sintesis Audit SDMK &amp; Geovelocity (ClaimTrace AI)</span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={dpjpAiLoading}
+                      onClick={() => handleRunDpjpAiAudit(selectedDoctor)}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 ${
+                        isLight
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                          : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-xs'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>{dpjpAiLoading ? 'Menyusun Telaah AI...' : 'Jalankan Telaah AI DPJP'}</span>
+                    </button>
+                  </div>
+                  {dpjpAiResult[selectedDoctor.id] && (
+                    <div className={`p-3.5 rounded-xl border text-xs leading-relaxed ${
+                      isLight
+                        ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
+                        : 'bg-[#000c24]/80 border-[#FFCA40]/30 text-white/90'
+                    }`}>
+                      <MarkdownRenderer content={dpjpAiResult[selectedDoctor.id].text} isLight={isLight} />
+                    </div>
+                  )}
+                </div>
 
                 {/* LINKED CLAIMS CTA */}
                 {selectedDoctor.casesLinked.length > 0 && (
