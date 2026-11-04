@@ -12,8 +12,43 @@ import time
 import hashlib
 from typing import Dict, Any, Tuple, Optional, Set
 
+import secrets
+
+def _resolve_session_secret() -> bytes:
+    """
+    Resolves HMAC session secret key securely.
+    Prioritizes CLAIMTRACE_SESSION_SECRET from environment.
+    If absent, generates or reads a cryptographically secure 256-bit key from a protected local secret file.
+    Zero static fallback string to prevent credential cracking.
+    """
+    env_secret = os.getenv("CLAIMTRACE_SESSION_SECRET")
+    if env_secret and len(env_secret.strip()) >= 16:
+        return env_secret.strip().encode("utf-8")
+    
+    secret_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+    os.makedirs(secret_dir, exist_ok=True)
+    secret_file = os.path.join(secret_dir, ".session_secret")
+    
+    if os.path.exists(secret_file):
+        try:
+            with open(secret_file, "rb") as f:
+                key = f.read().strip()
+                if len(key) >= 32:
+                    return key
+        except Exception:
+            pass
+            
+    new_key = secrets.token_hex(32).encode("utf-8")
+    try:
+        with open(secret_file, "wb") as f:
+            f.write(new_key)
+        os.chmod(secret_file, 0o600)
+    except Exception:
+        pass
+    return new_key
+
 # Master Secret Key for HMAC-SHA256 Token Signing
-SECRET_KEY = os.getenv("CLAIMTRACE_SESSION_SECRET", "BPJS_KESEHATAN_CLAIMTRACE_ENTERPRISE_HMAC_SECRET_2026").encode("utf-8")
+SECRET_KEY = _resolve_session_secret()
 
 # In-memory blacklist for revoked tokens (e.g. on logout or session breach)
 REVOKED_TOKENS: Set[str] = set()

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Shield,
   AlertCircle,
@@ -965,9 +966,9 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
       </div>
 
       {/* Modal Rincian & Penugasan Berkas Klaim */}
-      {selectedCase && (
+      {selectedCase && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setSelectedCase(null)}
         >
           <div
@@ -1106,7 +1107,8 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

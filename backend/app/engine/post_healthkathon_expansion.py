@@ -474,11 +474,13 @@ class PostHealthkathonExpansionEngine:
         temperature: float = 36.7,
         sofa_score: int = 0,
         visit_count_7d: int = 1,
-        claimed_tariff_rp: int = 14850000
+        claimed_tariff_rp: int = 14850000,
+        is_prb: bool = False
     ) -> Dict[str, Any]:
         """
         Mengaudit kesesuaian koding klinis INA-CBG terhadap tanda vital & lab objektif
         untuk mendeteksi Upcoding Severity Level (#4) dan Unbundling/Fragmentasi (#9).
+        Mematuhi pengecualian Program Rujuk Balik (PRB) sesuai Permenkes No. 3 Tahun 2023 Pasal 37.
         """
         sec_codes = [c.upper().strip() for c in (icd10_secondary or ["A41.9", "K92.2"])]
         prim_code = icd10_primary.upper().strip()
@@ -519,20 +521,33 @@ class PostHealthkathonExpansionEngine:
                     "recommendation": "Hapus kode K92.2 dan gunakan kode dasar sesuai diagnosis primer."
                 })
 
-        # Check Episode Fragmentation / Unbundling
+        # Check Episode Fragmentation / Unbundling (with Permenkes 3/2023 Pasal 37 PRB Exemption)
         if visit_count_7d >= 3:
-            unbundling_detected = True
-            flags.append({
-                "code": prim_code,
-                "type": "Pemecahan Episode (Unbundling)",
-                "severity_impact": f"Pemecahan 1 rangkaian episode menjadi {visit_count_7d} kunjungan SEP dalam 7 hari",
-                "clinical_finding": (
-                    f"Terdeteksi {visit_count_7d} penerbitan SEP rawat jalan beruntun pada poli yang sama "
-                    "untuk pemeriksaan diagnostik dan konsultasi yang merupakan satu paket layanan."
-                ),
-                "regulation_citation": "Permenkes RI No. 3 Tahun 2023 Pasal 35 & Pasal 37",
-                "recommendation": "Rekonsiliasi menjadi 1 episode klaim INA-CBG tunggal."
-            })
+            if is_prb or "rujuk balik" in prim_code.lower() or "prb" in prim_code.lower():
+                flags.append({
+                    "code": prim_code,
+                    "type": "Pengecualian Sah PRB (Pasal 37 PMK 3/2023)",
+                    "severity_impact": "Disetujui Sah - Program Rujuk Balik / Pengambilan Obat Kronis",
+                    "clinical_finding": (
+                        f"Kunjungan berulang ({visit_count_7d}x) teridentifikasi sebagai Program Rujuk Balik (PRB) "
+                        "atau pengambilan obat penyakit kronis yang sah sesuai Permenkes No. 3 Tahun 2023 Pasal 37."
+                    ),
+                    "regulation_citation": "Permenkes RI No. 3 Tahun 2023 Pasal 37",
+                    "recommendation": "Loloskan klaim tanpa penalti fragmentasi episode."
+                })
+            else:
+                unbundling_detected = True
+                flags.append({
+                    "code": prim_code,
+                    "type": "Pemecahan Episode (Unbundling)",
+                    "severity_impact": f"Pemecahan 1 rangkaian episode menjadi {visit_count_7d} kunjungan SEP dalam 7 hari",
+                    "clinical_finding": (
+                        f"Terdeteksi {visit_count_7d} penerbitan SEP rawat jalan beruntun pada poli yang sama "
+                        "untuk pemeriksaan diagnostik dan konsultasi yang merupakan satu paket layanan."
+                    ),
+                    "regulation_citation": "Permenkes RI No. 3 Tahun 2023 Pasal 35 & Pasal 37",
+                    "recommendation": "Rekonsiliasi menjadi 1 episode klaim INA-CBG tunggal."
+                })
 
         if upcoding_detected:
             verified_tariff = int(claimed_tariff_rp * 0.215)  # e.g. 14.85M -> ~3.2M

@@ -1,10 +1,12 @@
 import os
 import io
 import csv
+import json
 import asyncio
 import secrets
 import httpx
 import re
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,7 +24,36 @@ from app.models.schemas import (
     AuditLogEntry,
 )
 from app.engine.scoring import evaluate_claim_triage, audit_logger
-from app.data.synthetic_seed import get_initial_claims, SYNTHETIC_CLAIMS_DATABASE
+from app.data.synthetic_seed import get_initial_claims
+
+CLAIMS_STATE_FILE = Path(__file__).resolve().parent.parent / "data" / "claims_state.json"
+
+def _load_persisted_claims() -> Dict[str, ClaimInput]:
+    if not os.getenv("PYTEST_CURRENT_TEST") and CLAIMS_STATE_FILE.exists():
+        try:
+            with open(CLAIMS_STATE_FILE, "r", encoding="utf-8") as f:
+                raw_dict = json.load(f)
+                loaded = {cid: ClaimInput.model_validate(cdata) for cid, cdata in raw_dict.items()}
+                if loaded:
+                    return loaded
+        except Exception as e:
+            print(f"[ClaimStatePersistence] Warning loading persisted claims: {e}")
+    return get_initial_claims()
+
+def _persist_claims_state(claims_map: Dict[str, ClaimInput]) -> None:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return
+    try:
+        CLAIMS_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        serializable = {cid: claim.model_dump(mode="json") for cid, claim in claims_map.items()}
+        tmp_file = CLAIMS_STATE_FILE.with_suffix(".tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump(serializable, f, indent=2, ensure_ascii=False)
+        tmp_file.replace(CLAIMS_STATE_FILE)
+    except Exception as e:
+        print(f"[ClaimStatePersistence] Warning persisting claims: {e}")
+
+SYNTHETIC_CLAIMS_DATABASE: Dict[str, ClaimInput] = _load_persisted_claims()
 from app.engine.neo4j_graph import (
     generate_cypher_seed_script,
     FRAUD_DETECTION_CYPHER_QUERIES,
@@ -89,7 +120,7 @@ ALLOWED_ORIGINS = [
     "https://claimtrace-healthkathon.vercel.app"
 ]
 
-# Dukungan dinamis domain Vercel & Render via Environment Variable
+# Dukungan dinamis domain terpercaya via Environment Variable
 _env_origins = os.environ.get("ALLOWED_ORIGINS", "")
 if _env_origins:
     for _o in _env_origins.split(","):
@@ -97,10 +128,13 @@ if _env_origins:
         if _clean and _clean not in ALLOWED_ORIGINS:
             ALLOWED_ORIGINS.append(_clean)
 
+# Strict CORS: Disallow wildcard public hosting regex by default to prevent cross-tenant origin leakage
+_custom_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", None)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^(https:\/\/.*\.vercel\.app|https:\/\/.*\.hf\.space)$",
+    allow_origin_regex=_custom_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
@@ -689,11 +723,30 @@ def get_claim_detail(claim_id: str):
     }
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
-def simulate_mobile_jkn_response(claim_id: str, payload: MobileResponsePayload):
+def simulate_mobile_jkn_response(
+    claim_id: str, 
+    payload: MobileResponsePayload,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+    x_mobile_signature: Optional[str] = Header(None, alias="X-Mobile-JKN-Signature"),
+):
     """
     Simulates real-time binary confirmation from Mobile JKN (Lapis 3).
+    Secured by HMAC signature or authenticated operator session.
     Adjusts S3 score dynamically and records SHA-256 audit entry.
     """
+    if not x_mobile_signature:
+        subject = resolve_subject(
+            authorization=authorization,
+            x_bpjs_token=x_bpjs_token,
+            x_verificator_role=x_verificator_role,
+            x_verificator_nip=x_verificator_nip,
+            fallback_verifier_id="MOBILE_JKN_GATEWAY"
+        )
+        verify_privilege(subject, Privilege.READ, action_name="SIMULATE_MOBILE_JKN_RESPONSE")
+
     if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
         raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
 
@@ -710,6 +763,7 @@ def simulate_mobile_jkn_response(claim_id: str, payload: MobileResponsePayload):
         claim.s3_score = min(100.0, round(claim.s3_score + 20.0, 1))
         claim.mobile_meta.status_konfirmasi = "ANOMALY_DENIED"
 
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
     updated_triage = evaluate_claim_triage(claim)
 
     audit_entry = audit_logger.record_event(
@@ -779,6 +833,8 @@ def record_verifier_decision(
         }
     )
 
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
+
     return {
         "status": "success",
         "message": f"Keputusan verifikator ({req.decision}) berhasil dicatat pada rantai audit tamper-evident.",
@@ -804,16 +860,33 @@ def get_audit_chain():
     }
 
 @app.post("/api/v1/claims/reset")
-def reset_to_initial_seed():
+def reset_to_initial_seed(
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Resets all claims to initial state for live demonstration and recording.
+    Requires ADMIN privilege.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id="ADMIN_SYSTEM"
+    )
+    verify_privilege(subject, Privilege.ADMIN, action_name="SYSTEM_RESET_SEED")
+
     global SYNTHETIC_CLAIMS_DATABASE
     SYNTHETIC_CLAIMS_DATABASE = get_initial_claims()
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
+    audit_logger.clear_persisted_chain()
     audit_logger.record_event(
         event_type="SYSTEM_RESET_SEED",
         claim_id="SYSTEM",
-        actor="ADMIN_VERIFIER",
+        actor=subject.nip,
         payload={"action": "Reset synthetic claims database to initial seed"}
     )
     return {
@@ -1145,11 +1218,26 @@ def describe_duckdb_table(table_name: str = "claims_warehouse"):
     }
 
 @app.post("/api/v1/duckdb/query")
-def execute_duckdb_analytical_query(req: DuckDbQueryRequest):
+def execute_duckdb_analytical_query(
+    req: DuckDbQueryRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Executes a high-speed read-only SQL SELECT query against DuckDB claims tables.
     Supports output formats: 'json', 'markdown', or 'csv'.
+    Enforces server-side privilege gating (READ privilege).
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id="ANALYST_QUERY"
+    )
+    verify_privilege(subject, Privilege.READ, action_name="EXECUTE_ANALYTICAL_QUERY")
     return duckdb_engine.execute_query(sql=req.sql, output_format=req.format or "json")
 
 @app.get("/api/v1/duckdb/published-tools")
@@ -2311,6 +2399,7 @@ class ClinicalCodingAuditRequest(BaseModel):
     sofa_score: int = 0
     visit_count_7d: int = 1
     claimed_tariff_rp: int = 14850000
+    is_prb: bool = False
     include_ai_reasoning: bool = True
 
 class FristaAiAuditRequest(BaseModel):
@@ -2352,7 +2441,8 @@ async def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
         temperature=req.temperature,
         sofa_score=req.sofa_score,
         visit_count_7d=req.visit_count_7d,
-        claimed_tariff_rp=req.claimed_tariff_rp
+        claimed_tariff_rp=req.claimed_tariff_rp,
+        is_prb=req.is_prb
     )
     if req.include_ai_reasoning:
         try:
@@ -2516,11 +2606,30 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
     return base_rag
 
 @app.post("/api/v1/expansion/berita-acara")
-async def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
+async def generate_official_berita_acara(
+    req: BeritaAcaraGenerateRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Menerbitkan dokumen Berita Acara Hasil Verifikasi Klaim FKRTL lengkap dengan
     narasi hukum AI (opsional/otomatis), stempel hash kriptografis SHA-256, dan matriks QR 21x21 deterministik.
+    Memvalidasi hak akses verifikator dengan privilege ADJUDICATE standar Internet2 Grouper.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=req.verifier_nip
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="GENERATE_OFFICIAL_BERITA_ACARA")
+
+    official_verifier_name = subject.name if subject.name and not subject.name.startswith("Verifikator (") else req.verifier_name
+    official_verifier_nip = subject.nip or req.verifier_nip
+
     custom_notes = req.custom_notes
     ai_model_used = "Deterministic Legal Seal"
 
@@ -2559,8 +2668,8 @@ async def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
 
     dossier = expansion_engine.generate_berita_acara_dossier(
         claim_id=req.claim_id,
-        verifier_name=req.verifier_name,
-        verifier_nip=req.verifier_nip,
+        verifier_name=official_verifier_name,
+        verifier_nip=official_verifier_nip,
         action_type=req.action_type,
         custom_notes=custom_notes
     )
@@ -2571,7 +2680,7 @@ async def generate_official_berita_acara(req: BeritaAcaraGenerateRequest):
         audit_logger.record_event(
             event_type="BERITA_ACARA_ISSUED",
             claim_id=req.claim_id,
-            actor=req.verifier_name,
+            actor=official_verifier_nip,
             payload={
                 "reason": dossier.get("custom_notes", "Penerbitan Berita Acara Hasil Verifikasi Klaim FKRTL"),
                 "beritaAcaraNo": dossier.get("ba_number"),

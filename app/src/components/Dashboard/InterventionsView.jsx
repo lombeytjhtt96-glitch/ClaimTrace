@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ClipboardList,
@@ -1324,8 +1325,8 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
       )}
 
       {/* Review Modal Dialog */}
-      {reviewNoteModal.isOpen && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+      {reviewNoteModal.isOpen && typeof document !== 'undefined' && createPortal(
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 ${
           isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
         }`}>
           <div className={`w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl border ${
@@ -1401,7 +1402,8 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {/* Toast Feedback Notification */}
       <AnimatePresence>

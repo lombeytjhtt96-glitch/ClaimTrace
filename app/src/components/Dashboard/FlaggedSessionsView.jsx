@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Flag,
   RefreshCw,
@@ -985,8 +986,8 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
       </div>
 
       {/* Bulk Tag Modal */}
-      {showBulkTagModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      {showBulkTagModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-4">
           <div className={`border rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900'
@@ -1074,7 +1075,8 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
