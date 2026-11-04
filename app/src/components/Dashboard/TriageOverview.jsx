@@ -6,7 +6,7 @@ import {
   Lock, Calendar, Check, X, ArrowDownUp, FileText
 } from 'lucide-react';
 
-export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
+export default function TriageOverview({ onSelectCase, isLight: propIsLight, initialSearchQuery = '' }) {
   const [internalIsLight, setInternalIsLight] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('theme');
@@ -39,8 +39,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight }) {
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
   const [activeLane, setActiveLane] = useState('all'); // 'all' | 'red' | 'yellow' | 'green'
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [selectedFaskes, setSelectedFaskes] = useState('all');
+
+  useEffect(() => {
+    if (typeof initialSearchQuery === 'string') {
+      setSearchQuery(initialSearchQuery);
+    }
+  }, [initialSearchQuery]);
 
   const claims = [
     {

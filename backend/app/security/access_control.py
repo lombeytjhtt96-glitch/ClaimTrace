@@ -204,7 +204,7 @@ def resolve_subject(
     is_test_runner = bool(os.getenv("PYTEST_CURRENT_TEST") or os.getenv("CLAIMTRACE_ALLOW_TEST_HEADERS") == "1")
     if is_test_runner and (x_verificator_nip or x_verificator_role or fallback_verifier_id):
         nip = x_verificator_nip or fallback_verifier_id or "198704202011012001"
-        role = x_verificator_role or "VERIFICATOR_MEDIS"
+        role = x_verificator_role or ("ADMIN" if "ADMIN" in str(fallback_verifier_id).upper() else ("ANALYST" if "ANALYST" in str(fallback_verifier_id).upper() else "VERIFICATOR_MEDIS"))
         known = KNOWN_ACTORS.get(nip)
         unit = known["unit"] if known else "Kantor Pusat BPJS Kesehatan"
         name = known["name"] if known else f"Verifikator ({nip})"

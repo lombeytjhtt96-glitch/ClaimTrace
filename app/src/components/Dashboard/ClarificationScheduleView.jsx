@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar,
@@ -1063,9 +1064,9 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
       )}
 
       {/* Appointment Detail Modal */}
-      {selectedAppointment && (
+      {selectedAppointment && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in"
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-fade-in"
           onClick={() => setSelectedAppointment(null)}
         >
           <div
@@ -1299,7 +1300,8 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -478,7 +478,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       upcoding_detected: upcoding,
       unbundling_detected: unbundling,
       anomaly_score: upcoding || unbundling ? 91.4 : 14.2,
-      ml_engine: 'Scikit-Learn IsolationForest + Gemini Clinical Auditor',
+      ml_engine: 'Scikit-Learn IsolationForest + ClaimTrace AI Clinical Auditor',
       ai_clinical_reasoning: aiReasoning,
       ai_model_used: aiModel,
       financial_impact: {

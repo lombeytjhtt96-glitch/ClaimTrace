@@ -426,7 +426,7 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
             {"text": f"MITRE F3 Mapping: {', '.join(triage.mitre_f3_tags)}"},
             {"text": f"MITRE ATT&CK Mapping: {', '.join(triage.mitre_attack_tags)}"},
             {"text": f"Dasar Hukum: {', '.join(triage.regulatory_basis)}"},
-            {"text": f"SLA Vedika Deadline: {triage.sla_deadline_days} Hari Kalender"}
+            {"text": f"SLA Vedika Deadline: {triage.sla_deadline_days} Hari Kerja (Perpres 82/2018)"}
         ]
     }
 

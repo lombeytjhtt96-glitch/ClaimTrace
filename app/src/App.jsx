@@ -327,6 +327,7 @@ export default function App() {
     return false;
   });
   const [headerSearch, setHeaderSearch] = useState('');
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [headerAlerts, setHeaderAlerts] = useState([
     {
       id: 'ALT-01',
@@ -379,6 +380,17 @@ export default function App() {
     }, 3200);
     return () => clearTimeout(timer);
   }, [toastMessage]);
+
+  // Handle HTTP 401 Unauthorized Session Expiration Interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setToastMessage('Sesi login verifikator telah kedaluwarsa. Silakan masuk kembali.');
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('claimtrace:session-expired', handleSessionExpired);
+      return () => window.removeEventListener('claimtrace:session-expired', handleSessionExpired);
+    }
+  }, []);
 
   // Auto-dismiss Push Notifikasi Mobile JKN setelah 4.5 detik jika tidak diinteraksi
   useEffect(() => {
@@ -868,8 +880,8 @@ export default function App() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (headerSearch.trim()) {
+                      setGlobalSearchQuery(headerSearch.trim());
                       setDashboardTab('queue');
-                      setHeaderSearch('');
                     }
                   }}
                   className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-72 xl:w-80 relative ml-2 transition-colors ${
@@ -2123,6 +2135,7 @@ export default function App() {
                           setDashboardTab('investigation');
                         }} 
                         isLight={isLight}
+                        initialSearchQuery={globalSearchQuery}
                       />
                     )}
 

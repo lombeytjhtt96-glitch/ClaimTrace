@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   AlertOctagon, CheckCircle2, AlertTriangle, FileText, 
@@ -604,12 +605,12 @@ Timestamp: ${new Date().toISOString()}`;
 
       {/* PDF DOSSIER PREVIEW MODAL WITH MOTION */}
       <AnimatePresence>
-        {showPdfModal && (
+        {showPdfModal && typeof document !== 'undefined' && createPortal(
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -770,7 +771,8 @@ Timestamp: ${new Date().toISOString()}`;
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
 
