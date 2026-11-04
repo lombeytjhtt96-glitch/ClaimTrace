@@ -291,12 +291,12 @@ const TOPOLOGY_NODES = [
   },
   {
     id: 'claimtrace_ai',
-    label: 'CLAIMTRACE_AI (ORCHESTRATOR)',
+    label: 'CLAIMTRACE AI (ORKESTRATOR)',
     role: 'DECISION NODE (CLAIMTRACE AI)',
     status: 'healthy',
     successRate: '99.4',
     description:
-      'Node keputusan pertama (diadaptasi dari health_ai_decision_node). Mengklasifikasikan intensi, menghitung risiko awal, dan merutekan ke sub-agen spesialis.',
+      'Node keputusan utama orkestrator multi-agen. Mengklasifikasikan intensi, menghitung risiko awal, dan merutekan ke sub-agen spesialis.',
   },
   {
     id: 'tca',
@@ -749,7 +749,7 @@ export default function AgentCopilot({
                   </span>
                 </div>
                 <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Pemantauan waktu-nyata seluruh StateGraph Multi-Agen ClaimTrace JKN (`claimtrace_ai`, `STA`, `TCA`, `CMA`, `IA`) dengan proteksi anti-prompt injection (AML.T0043) &amp; anti-evasion (AML.T0047).
+                  Pemantauan waktu-nyata seluruh StateGraph Multi-Agen ClaimTrace JKN (ClaimTrace AI, STA, TCA, CMA, IA) dengan proteksi anti-prompt injection (AML.T0043) &amp; anti-evasion (AML.T0047).
                 </p>
               </div>
               <div className="flex items-center gap-2">

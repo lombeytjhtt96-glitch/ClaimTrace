@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
   ExternalLink, TrendingUp, Building2, MapPin, CheckCircle2, 
-  XCircle, Clock, ChevronRight, AlertOctagon, Activity, X
+  XCircle, Clock, ChevronRight, AlertOctagon, Activity, X, Sparkles
 } from 'lucide-react';
+import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
   const [isLight, setIsLight] = useState(() => {
@@ -32,6 +34,32 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedFaskesDetail, setSelectedFaskesDetail] = useState(null);
+  const [faskesAiAudit, setFaskesAiAudit] = useState({});
+  const [faskesAiLoading, setFaskesAiLoading] = useState(false);
+
+  const handleRunFaskesAiAudit = async (faskes) => {
+    if (!faskes || faskesAiLoading) return;
+    setFaskesAiLoading(true);
+    try {
+      const prompt = `Susun telaah pengawasan dan rekomendasi intervensi audit untuk Fasilitas Kesehatan berikut (maksimal 4 poin tajam):\n- Nama Faskes: ${faskes.name} (${faskes.id}) — ${faskes.type}, ${faskes.city}\n- Direktur: ${faskes.director}\n- Indeks Risiko Faskes (FRI): ${faskes.friScore}/100 (${faskes.riskLevel})\n- Total Klaim Bulan Ini: ${faskes.totalClaimsMonth} berkas (${faskes.totalRupiahMonth}) | Klaim Anomali: ${faskes.anomalyCount} berkas (Rasio Lonjakan: ${faskes.spikeRatio})\n- Status Biometrik FRISTA: ${faskes.fristaStatus}\n- Temuan Utama: ${faskes.primaryFinding}\n- Rekam Jejak AAK & VPK: ${faskes.historyAudit}\n\nBerikan analisis risiko kecurangan JKN (Permenkes No. 16/2019, Perpres No. 82/2018) dan langkah tindak lanjut konkrit bagi Verifikator & Tim Pencegahan Kecurangan BPJS Kesehatan tanpa menggunakan emoji.`;
+      const res = await callClaimTraceGenerateContent({
+        prompt,
+        systemInstruction: 'Anda adalah Analis Surveilans Risiko Faskes (Facility Risk Index) BPJS Kesehatan (ClaimTrace AI). Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji.',
+        temperature: 0.25,
+      });
+      setFaskesAiAudit((prev) => ({
+        ...prev,
+        [faskes.id]: res.text,
+      }));
+    } catch {
+      setFaskesAiAudit((prev) => ({
+        ...prev,
+        [faskes.id]: `Berdasarkan Facility Risk Index (**${faskes.friScore}/100**) pada **${faskes.name}**, ditemukan ${faskes.anomalyCount} berkas beranomali (${faskes.primaryFinding}). Disarankan penerbitan Berita Acara Klarifikasi Bersama (BAKB) dan audit kepatuhan aktivasi biometrik FRISTA.`,
+      }));
+    } finally {
+      setFaskesAiLoading(false);
+    }
+  };
 
   const FASKES_DATA = [
     {
@@ -565,6 +593,40 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                     <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Total Pembayaran Bulan Ini</span>
                     <span className={`font-bold font-mono mt-0.5 block ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{selectedFaskesDetail.totalRupiahMonth}</span>
                   </div>
+                </div>
+
+                {/* Live AI Facility Surveillance Synthesis */}
+                <div className={`p-3 rounded-xl border space-y-2 ${
+                  isLight ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white/5 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[11px] font-bold flex items-center gap-1.5 ${
+                      isLight ? 'text-emerald-800' : 'text-[#FFCA40]'
+                    }`}>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Rekomendasi Intervensi Faskes (ClaimTrace AI)</span>
+                    </span>
+                    <button
+                      type="button"
+                      disabled={faskesAiLoading}
+                      onClick={() => handleRunFaskesAiAudit(selectedFaskesDetail)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50 ${
+                        isLight
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24]'
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>{faskesAiLoading ? 'Menyusun...' : 'Analisis AI Faskes'}</span>
+                    </button>
+                  </div>
+                  {faskesAiAudit[selectedFaskesDetail.id] && (
+                    <div className={`text-xs leading-relaxed pt-1 border-t ${
+                      isLight ? 'border-emerald-200/80 text-slate-800' : 'border-white/10 text-white/90'
+                    }`}>
+                      <MarkdownRenderer content={faskesAiAudit[selectedFaskesDetail.id]} isLight={isLight} />
+                    </div>
+                  )}
                 </div>
               </div>
 

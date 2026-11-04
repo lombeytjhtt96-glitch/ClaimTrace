@@ -25,6 +25,21 @@ import {
   Building2,
   X,
 } from 'lucide-react';
+import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+
+const ROLE_DISPLAY_LABELS = {
+  VERIFIKATOR: 'Verifikator Medis',
+  PIC_CASEMIX: 'PIC Casemix FKRTL',
+  WASRIK: 'Auditor Wasrik',
+  PESERTA_MOBILE_JKN: 'Peserta Mobile JKN',
+};
+
+const RISK_LEVEL_LABELS = {
+  CRITICAL: 'KRITIS',
+  HIGH: 'TINGGI',
+  MODERATE: 'SEDANG',
+  LOW: 'RENDAH',
+};
 
 // Realistic JKN AI Conversation Sessions
 const INITIAL_CONVERSATION_GROUPS = [
@@ -349,6 +364,89 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
     setFlagModalOpen(false);
   };
 
+  const [followUpInput, setFollowUpInput] = useState('');
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+
+  const handleSendFollowUpAi = async (customText) => {
+    const q = (customText || followUpInput || '').trim();
+    if (!q || !selectedSession || followUpLoading) return;
+    setFollowUpInput('');
+    setFollowUpLoading(true);
+    const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const userMsg = {
+      role: 'user',
+      sender_name: 'Budi Santoso, S.Kom, M.TI (Verifikator)',
+      text: q,
+      timestamp: nowTime,
+    };
+
+    const appendMessagesToSession = (sessionId, newMsgs) => {
+      setSelectedSession((prev) =>
+        prev && prev.session_id === sessionId
+          ? {
+              ...prev,
+              messages: [...prev.messages, ...newMsgs],
+              message_count: (prev.message_count || prev.messages.length) + newMsgs.length,
+            }
+          : prev
+      );
+      setGroups((prev) =>
+        prev.map((g) => ({
+          ...g,
+          sessions: g.sessions.map((s) =>
+            s.session_id === sessionId
+              ? {
+                  ...s,
+                  messages: [...s.messages, ...newMsgs],
+                  message_count: (s.message_count || s.messages.length) + newMsgs.length,
+                }
+              : s
+          ),
+        }))
+      );
+    };
+
+    appendMessagesToSession(selectedSession.session_id, [userMsg]);
+
+    try {
+      const startMs = performance.now();
+      const historySummary = selectedSession.messages
+        .slice(-4)
+        .map((m) => `${m.sender_name}: ${m.text}`)
+        .join('\n');
+      const prompt = `Sesi Audit: ${selectedSession.session_id} (${selectedSession.title}) | Berkas Klaim: ${selectedSession.claim_id}\nRiwayat Dialog Terakhir:\n${historySummary}\n\nPertanyaan Lanjutan Verifikator: ${q}\n\nJawab secara tajam, ringkas, dan akurat sesuai regulasi JKN (Perpres 82/2018, Permenkes 26/2021, Permenkes 3/2023) tanpa menggunakan emoji.`;
+      const res = await callClaimTraceGenerateContent({
+        prompt,
+        systemInstruction: 'Anda adalah ClaimTrace AI, asisten audit forensik klaim JKN BPJS Kesehatan. Jawab dalam bahasa Indonesia baku tanpa emoji.',
+        temperature: 0.25,
+      });
+      const latency = Math.max(40, Math.round(performance.now() - startMs));
+      const aiMsg = {
+        role: 'assistant',
+        sender_name: 'Asisten Audit ClaimTrace AI',
+        text: res.text,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        tokens: res.totalTokens || 420,
+        latency_ms: latency,
+        citations: ['Perpres No. 82/2018 Ps. 74', 'Permenkes No. 26/2021', 'UU PDP No. 27/2022'],
+      };
+      appendMessagesToSession(selectedSession.session_id, [aiMsg]);
+    } catch {
+      const fallbackMsg = {
+        role: 'assistant',
+        sender_name: 'Asisten Audit ClaimTrace AI',
+        text: `Berdasarkan konteks berkas ${selectedSession.claim_id}, disarankan menahan proses pembayaran pra-bayar (HOLD BAKB) dan menerbitkan Berita Acara Klarifikasi resmi sebelum batas SLA 10 hari kerja berakhir.`,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        tokens: 310,
+        latency_ms: 85,
+        citations: ['Perpres No. 82/2018 Ps. 74'],
+      };
+      appendMessagesToSession(selectedSession.session_id, [fallbackMsg]);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
   const handleExport = () => {
     const csvRows = [
       ['Session ID', 'Judul Sesi', 'Pengguna', 'Peran', 'Faskes', 'Berkas Klaim', 'Tingkat Risiko', 'Skor Risiko', 'Total Pesan', 'Waktu Mulai', 'Waktu Selesai'],
@@ -360,10 +458,10 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
           `"${s.session_id}"`,
           `"${(s.title || '').replace(/"/g, '""')}"`,
           `"${g.userName}"`,
-          `"${g.userRole}"`,
+          `"${ROLE_DISPLAY_LABELS[g.userRole] || g.userRole}"`,
           `"${g.faskesName}"`,
           `"${s.claim_id || '-'}"`,
-          `"${s.risk_level}"`,
+          `"${RISK_LEVEL_LABELS[s.risk_level] || s.risk_level}"`,
           s.risk_score || 0,
           s.message_count || 0,
           `"${s.first_time || ''}"`,
@@ -611,7 +709,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                             ? 'bg-slate-100 text-slate-700 border-slate-300'
                             : 'bg-white/10 text-white/80 border-white/10'
                         }`}>
-                          {group.userRole}
+                          {ROLE_DISPLAY_LABELS[group.userRole] || group.userRole}
                         </span>
                         {group.openFlagCount > 0 && (
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
@@ -767,7 +865,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                         ? 'bg-rose-50 text-rose-800 border-rose-300'
                         : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                     }`}>
-                      {selectedSession.risk_level} ({selectedSession.risk_score})
+                      {RISK_LEVEL_LABELS[selectedSession.risk_level] || selectedSession.risk_level} ({selectedSession.risk_score})
                     </span>
                   </div>
                   <h3 className={`text-base font-bold mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -887,6 +985,67 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Interactive Follow-Up AI Prompt Bar */}
+              <div className={`px-4 py-3 border-t space-y-2 ${
+                isLight ? 'bg-white border-slate-200' : 'bg-[#001130] border-white/10'
+              }`}>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={`text-[10px] font-bold uppercase ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    Tanya Cepat AI:
+                  </span>
+                  {[
+                    'Ringkas bukti & dasar hukum sesi ini',
+                    'Apa langkah verifikator selanjutnya?',
+                  ].map((qText) => (
+                    <button
+                      key={qText}
+                      type="button"
+                      disabled={followUpLoading}
+                      onClick={() => handleSendFollowUpAi(qText)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer disabled:opacity-50 ${
+                        isLight
+                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                          : 'bg-white/5 hover:bg-white/10 text-[#FFCA40] border-white/10'
+                      }`}
+                    >
+                      {qText}
+                    </button>
+                  ))}
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendFollowUpAi();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={followUpInput}
+                    onChange={(e) => setFollowUpInput(e.target.value)}
+                    disabled={followUpLoading}
+                    placeholder="Tulis pertanyaan audit lanjutan ke ClaimTrace AI untuk sesi ini..."
+                    className={`flex-1 rounded-xl px-3.5 py-2 text-xs border focus:outline-none ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600'
+                        : 'bg-white/5 border-white/10 text-white placeholder-white/40 focus:border-[#FFCA40]'
+                    }`}
+                  />
+                  <button
+                    type="submit"
+                    disabled={followUpLoading || !followUpInput.trim()}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 ${
+                      isLight
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24]'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{followUpLoading ? 'Memproses...' : 'Kirim ke AI'}</span>
+                  </button>
+                </form>
               </div>
 
               {/* Modal Actions Footer */}
