@@ -20,8 +20,10 @@ def test_get_expanded_typology_cases():
     assert data["total_cases"] >= 4
     assert data["summary_metrics"]["total_cost_recovery_rp"] > 0
     codes = [c["typology_code"] for c in data["cases"]]
-    assert "MODUS_04_UPCODING_SEVERITY" in codes
-    assert "MODUS_09_UNBUNDLING_FRAGMENTATION" in codes
+    assert "TIPOLOGI UPCODING SEVERITY" in codes
+    assert "TIPOLOGI UNBUNDLING EPISODE" in codes
+    assert "TIPOLOGI PHANTOM BILLING" in codes
+    assert "TIPOLOGI REPEAT BILLING" in codes
 
 
 def test_audit_clinical_coding_upcoding():
@@ -103,3 +105,38 @@ def test_generate_official_berita_acara():
     assert len(seal["document_hash"]) == 64
     assert len(seal["qr_matrix_21x21"]) == 21
     assert len(seal["qr_matrix_21x21"][0]) == 21
+
+
+def test_agent_four_scenarios_and_hitl_approval():
+    for claim_id in ["CLM-2026-10-085", "CLM-2026-8806", "CLM-2026-8809", "CLM-2026-8802"]:
+        run_resp = client.post("/api/v1/agent/run", json={"claim_id": claim_id})
+        assert run_resp.status_code == 200
+        run_data = run_resp.json()
+        assert run_data["claim_id"] == claim_id
+        assert len(run_data["steps"]) == 6
+        # Ensure zero DuckDB brand leaks in agent thoughts or tool names
+        for step in run_data["steps"]:
+            assert "duckdb" not in step["thought"].lower()
+            if step.get("tool_call"):
+                assert "duckdb" not in step["tool_call"]["tool_name"].lower()
+
+    # Test HITL approval with VERIFICATOR_MEDIS role
+    trace_id = run_data["trace_id"]
+    app_resp = client.post(
+        "/api/v1/agent/approve",
+        headers={
+            "X-Verificator-Role": "VERIFICATOR_MEDIS",
+            "X-Verificator-NIP": "198704202011012001",
+        },
+        json={
+            "trace_id": trace_id,
+            "action": "TUNDA_BAYAR",
+            "verifier_nip": "198704202011012001",
+            "notes": "Otorisasi pengujian otomatis sesuai pedoman Karpathy Goal-Driven Execution.",
+        },
+    )
+    assert app_resp.status_code == 200
+    app_data = app_resp.json()
+    assert app_data["status"] == "success"
+    assert len(app_data["sha256_block_hash"]) == 64
+
