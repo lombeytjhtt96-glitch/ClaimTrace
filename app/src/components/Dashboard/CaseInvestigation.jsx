@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import TemporalAlertCard from './TemporalAlertCard';
 import { 
   ChevronRight, ArrowLeft, AlertTriangle, ShieldCheck, 
   Clock, Hospital, Stethoscope, UserCheck, AlertOctagon,
@@ -479,6 +480,14 @@ export default function CaseInvestigation({
           </div>
         </div>
       </div>
+
+      {/* LAST30DAYS TEMPORAL REGULATORY RADAR CARD */}
+      <TemporalAlertCard
+        claimId={currentCase.id}
+        cbgCode={currentCase.code}
+        primaryDiagnosis={currentCase.primaryDiagnosis || (currentCase.code?.startsWith('H') ? 'H25.9' : currentCase.code?.startsWith('Z') ? 'K92.2' : 'K92.2')}
+        isLight={isLight}
+      />
 
       {/* 3-LAYER EVIDENCE MATRIX - GLASS PANELS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">

@@ -24,18 +24,36 @@ ACTIVE_30DAY_REGULATORY_CIRCULARS = [
         "id": "CIRC-2026-10-01",
         "title": "Surat Edaran Bersama KPK-BPJS No. 4/2026: Pengetatan Audit Digital Hemodialisis",
         "effective_date": "2026-10-15",
-        "affected_codes": ["Z49.1", "Z49.2"],
+        "affected_codes": ["Z49.1", "Z49.2", "N18.5", "39.95", "N-3-10-0"],
         "category": "Phantom & Repeat Billing",
         "summary": "Verifikasi biometrik lapis 4 FRISTA diwajibkan untuk setiap sesi cuci darah. Tindakan tanpa log sidik jari valid tidak dapat ditagihkan ke kas jaminan BPJS.",
+        "severity": "CRITICAL"
+    },
+    {
+        "id": "CIRC-2026-10-10",
+        "title": "Surat Edaran Bersama KPK-BPJS No. 2/2026: Penertiban Klaim Fisioterapi Massal dan Bakti Sosial Fiktif",
+        "effective_date": "2026-10-10",
+        "affected_codes": ["M54.5", "93.39", "Z-3-12-0"],
+        "category": "Phantom Billing & Fictitious Care",
+        "summary": "Klaim fisioterapi rawat jalan massal (>30 kasus/hari/faskes) atau berlabel bakti sosial wajib diverifikasi presensi biometrik Mobile JKN. Klaim tanpa log fisik dibatalkan otomatis.",
         "severity": "CRITICAL"
     },
     {
         "id": "CIRC-2026-10-18",
         "title": "SE Direktur Jaminan Pelayanan Kesehatan BPJS No. 18/2026: Verifikasi Visus Katarak",
         "effective_date": "2026-10-18",
-        "affected_codes": ["H25.0", "H25.1", "H25.9"],
+        "affected_codes": ["H25.0", "H25.1", "H25.9", "13.41", "H-2-36-0"],
         "category": "Upcoding Prosedur",
         "summary": "Prosedur fakoemulsifikasi wajib melampirkan foto slit-lamp dan lembar refraksi pre-operasi. Upcoding katarak imatur menjadi matur tanpa bukti visus ditolak otomatis.",
+        "severity": "HIGH"
+    },
+    {
+        "id": "CIRC-2026-10-20",
+        "title": "Edaran Teknis BPJS Kes No. 22/2026: Validasi Klaim Berulang Rawat Jalan Tingkat Lanjut",
+        "effective_date": "2026-10-20",
+        "affected_codes": ["K29.7", "89.03", "K-4-17-I"],
+        "category": "Repeat Billing & Fragmentation",
+        "summary": "Klaim rawat jalan berulang dengan diagnosis gastritis tanpa jeda minimal 7 hari atau tanpa rujukan FKTP baru wajib diaudit manual untuk mencegah fragmentasi klaim berulang.",
         "severity": "HIGH"
     },
     {
@@ -51,7 +69,7 @@ ACTIVE_30DAY_REGULATORY_CIRCULARS = [
         "id": "CIRC-2026-11-01",
         "title": "Edaran Teknis BPJS Kes No. 33/2026: Investigasi Klaim Perdarahan Gastrointestinal",
         "effective_date": "2026-11-01",
-        "affected_codes": ["K92.2", "K25.0", "K26.0"],
+        "affected_codes": ["K92.2", "K25.0", "K26.0", "45.16", "44.13", "K-1-10-III"],
         "category": "Phantom Billing & Medical Necessity",
         "summary": "Klaim melena/hematemesis berat dengan kode tingkat keparahan III wajib menyertakan bukti serah terima kantong darah PMI atau hasil endoskopi saluran cerna.",
         "severity": "HIGH"
@@ -60,7 +78,7 @@ ACTIVE_30DAY_REGULATORY_CIRCULARS = [
         "id": "CIRC-2026-11-04",
         "title": "Nota Kesepahaman Tim Fraud Nasional: Deteksi Anomali Klaim Sesar (SC) Non-Indikasi",
         "effective_date": "2026-11-04",
-        "affected_codes": ["O82.0", "O82.9"],
+        "affected_codes": ["O82.0", "O82.9", "74.0", "74.1"],
         "category": "Unbundling & Clinical Inconsistency",
         "summary": "Faskes dengan rasio persalinan SC melebihi 60% tanpa partograf terverifikasi masuk dalam daftar prioritas audit uji petik lapangan.",
         "severity": "MEDIUM"
