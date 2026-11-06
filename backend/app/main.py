@@ -83,6 +83,8 @@ from app.engine.evidence_chain import (
     CdsEvaluationDossier,
     build_cognitive_triage_brief,
     CognitiveTriageBrief,
+    build_security_audit_dossier,
+    SecurityAuditCoverageLedger,
 )
 
 # Enterprise Defensive Security Modules
@@ -2213,6 +2215,15 @@ def get_security_posture_endpoint():
             "broken_block_index": broken_idx
         }
     }
+
+@app.get("/api/v1/security/audit-ledger", response_model=SecurityAuditCoverageLedger)
+def get_security_audit_ledger_endpoint():
+    """
+    Exposes the formal Cloudflare Security Audit coverage ledger and findings dossier.
+    Implements 6-phase harness workflow, strict 3-verdict taxonomy (confirmed, needs_validation, rejected),
+    and deterministic cryptographic audit verification hash.
+    """
+    return build_security_audit_dossier()
 
 # =========================================================================
 # PROMETHEUS OBSERVABILITY & METRICS ENDPOINTS (Inspired by prometheus/prometheus-mcp)
