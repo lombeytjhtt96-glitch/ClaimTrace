@@ -34,7 +34,11 @@ chroma_db/
 .codex/
 .cursor/
 design-skills/
-docs/
+docs/*
+!docs/agents/
+!docs/agents/*
+!docs/adr/
+!docs/adr/*
 
 # Internal documentation and generator scripts
 AGENTS.md
