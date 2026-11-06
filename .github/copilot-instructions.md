@@ -60,6 +60,10 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - For `confirmed` vulnerabilities, calibrate severity strictly against demonstrated local impact.
   - Adversarial Verification: Verification of candidate findings must be conducted independently from candidate hypothesis generation.
   - Expose `/api/v1/security/audit-ledger` delivering `SecurityAuditCoverageLedger` with deterministic cryptographic audit hashes.
+- Humanizer Plain Prose & Anti-AI Tells (blader/humanizer v3.1.0 Standards):
+  - Strip all 26 Wikipedia signs of AI writing from clinical adjudication prose, dispute reports, and summary briefs.
+  - Enforce removal of staged run-ups (§4), not-X-but-Y formulas (§1), dramatic closers (§2), forced triads (§6), decorative em-dashes (§8), buzzwords like "krusial/lanskap/merajut" (§12), and chatbot wrappers (§22).
+  - Expose `/api/v1/claims/humanize-prose` and `/api/v1/claims/{claim_id}/humanized-narrative` returning `HumanizedAdjudicationText`.
 
 ---
 
