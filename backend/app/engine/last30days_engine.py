@@ -202,20 +202,23 @@ def generate_claim_30day_intelligence(
         data = getattr(claim_data, "__dict__", {})
 
     dx_primary = str(
-        data.get("fkl10_diagprimer") or data.get("diagnosa_primer") or getattr(claim_data, "fkl10_diagprimer", "K92.2")
+        data.get("icd10_primary") or data.get("fkl10_diagprimer") or data.get("diagnosa_primer") or getattr(claim_data, "icd10_primary", getattr(claim_data, "fkl10_diagprimer", "K92.2"))
+    ).strip().upper()
+    proc_code = str(
+        data.get("icd9cm_procedure") or data.get("prosedur") or getattr(claim_data, "icd9cm_procedure", "")
     ).strip().upper()
     cbg_code = str(
-        data.get("ina_cbg_code") or data.get("kode_cbg") or getattr(claim_data, "ina_cbg_code", "")
+        data.get("ina_cbg_code") or data.get("fkl30_kode_cbg") or data.get("kode_cbg") or getattr(claim_data, "ina_cbg_code", "")
     ).strip().upper()
     faskes = str(
-        data.get("fkl05_kode_faskes") or data.get("hospital") or getattr(claim_data, "fkl05_kode_faskes", "FASKES-001")
+        data.get("nama_faskes") or data.get("fkl05_kode_faskes") or data.get("hospital") or getattr(claim_data, "nama_faskes", "FASKES-001")
     )
-    tarif = data.get("fkl33_biaya_riil") or data.get("biaya_riil") or data.get("tarif_diajukan") or getattr(claim_data, "fkl33_biaya_riil", 0)
+    tarif = data.get("nilai_klaim_rp") or data.get("fkl31_tarif_cbg") or data.get("fkl33_biaya_riil") or data.get("biaya_riil") or data.get("tarif_diajukan") or getattr(claim_data, "nilai_klaim_rp", 0)
 
     # Match active regulatory circulars within 30 days
     matched_circulars = []
     for circ in ACTIVE_30DAY_REGULATORY_CIRCULARS:
-        if any(code in dx_primary or code in cbg_code for code in circ["affected_codes"]):
+        if any(code in dx_primary or code in cbg_code or code in proc_code for code in circ["affected_codes"]):
             matched_circulars.append(circ)
 
     # Calculate 30-day risk elevation factor
