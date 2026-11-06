@@ -177,6 +177,8 @@ def root():
         "docs": "/docs"
     }
 
+@app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route("/healthz", methods=["GET", "HEAD"])
 @app.api_route("/api/v1/health", methods=["GET", "HEAD"])
 def health_check():
     valid, broken_idx = audit_logger.verify_integrity()
