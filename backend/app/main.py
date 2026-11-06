@@ -86,6 +86,11 @@ from app.engine.evidence_chain import (
     build_security_audit_dossier,
     SecurityAuditCoverageLedger,
 )
+from app.engine.humanizer_engine import (
+    HumanizedAdjudicationText,
+    humanize_claim_prose,
+    generate_humanized_claim_narrative,
+)
 
 # Enterprise Defensive Security Modules
 from app.security.security_headers import SecurityHeadersMiddleware
@@ -178,6 +183,9 @@ class RepeatBillingToolRequest(BaseModel):
 
 class ReaAnalyzeRequest(BaseModel):
     code: str
+
+class HumanizeProseRequest(BaseModel):
+    text: str
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
@@ -831,6 +839,26 @@ def get_claim_cognitive_triage_brief_endpoint(claim_id: str):
     triage = evaluate_claim_triage(claim)
     chain = build_claim_evidence_chain(claim, triage)
     return build_cognitive_triage_brief(claim, triage, chain)
+
+@app.post("/api/v1/claims/humanize-prose", response_model=HumanizedAdjudicationText)
+def humanize_claim_prose_endpoint(payload: HumanizeProseRequest):
+    """
+    Humanizes arbitrary AI-generated adjudication prose using blader/humanizer doctrine.
+    Identifies and removes 26 AI writing tells (staging, forced triads, buzzwords, chatbot residue)
+    to produce natural human clinical prose without changing factual claims.
+    """
+    return humanize_claim_prose(payload.text)
+
+@app.get("/api/v1/claims/{claim_id}/humanized-narrative", response_model=HumanizedAdjudicationText)
+def get_humanized_claim_narrative_endpoint(claim_id: str):
+    """
+    Produces an authentic, plain-language clinical adjudication narrative for a specific claim,
+    free from AI slop, conversational pleasantries, and inflated significance.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    return generate_humanized_claim_narrative(claim_id, claim)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
