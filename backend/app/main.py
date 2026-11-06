@@ -72,7 +72,12 @@ from app.engine.prometheus_metrics import prometheus_engine, CONTENT_TYPE_LATEST
 from app.engine.rea_forensics import rea_engine
 from app.engine.icd10_service import icd10_service
 from app.engine.business_days import calculate_sla_status, add_business_days, count_business_days_between
-from app.engine.evidence_chain import build_claim_evidence_chain, EvidenceChainGraph
+from app.engine.evidence_chain import (
+    build_claim_evidence_chain,
+    EvidenceChainGraph,
+    build_academic_evidence_passport,
+    AcademicEvidencePassport,
+)
 
 # Enterprise Defensive Security Modules
 from app.security.security_headers import SecurityHeadersMiddleware
@@ -762,6 +767,20 @@ def get_claim_evidence_chain_endpoint(claim_id: str):
     claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
     triage = evaluate_claim_triage(claim)
     return build_claim_evidence_chain(claim, triage)
+
+@app.get("/api/v1/claims/{claim_id}/evidence-passport", response_model=AcademicEvidencePassport)
+def get_claim_evidence_passport_endpoint(claim_id: str):
+    """
+    Academic Evidence Passport Generator (inspired by academic-research-skills v3.24.2).
+    Generates a Material Passport with Stage 4.5 integrity verification, L3 claim faithfulness,
+    reproducibility lock (repro_lock), and regulatory/clinical citation triangulation.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    triage = evaluate_claim_triage(claim)
+    chain = build_claim_evidence_chain(claim, triage)
+    return build_academic_evidence_passport(claim, triage, chain)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
