@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { 
   AlertOctagon, CheckCircle2, AlertTriangle, FileText, 
   Download, Printer, Shield, Lock, ArrowLeft, RefreshCw, 
@@ -8,6 +10,8 @@ import {
   FileCheck, ShieldAlert, Gavel, Ban, Sparkles
 } from 'lucide-react';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
+
+gsap.registerPlugin(useGSAP);
 
 export default function DecisionConsole({ 
   caseData,
@@ -75,6 +79,49 @@ export default function DecisionConsole({
   const [successToast, setSuccessToast] = useState(false);
   const [isDraftingAiNotes, setIsDraftingAiNotes] = useState(false);
 
+  const consoleRef = useRef(null);
+  const modalRef = useRef(null);
+
+  // GSAP 60fps animation on action change
+  useGSAP(() => {
+    if (!consoleRef.current) return;
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+    tl.fromTo(
+      '.verdict-status-badge',
+      { scale: 0.92, autoAlpha: 0.5 },
+      { scale: 1, autoAlpha: 1, duration: 0.3 }
+    )
+    .fromTo(
+      '.verdict-crypto-seal',
+      { x: -6, autoAlpha: 0.6 },
+      { x: 0, autoAlpha: 1, duration: 0.25 },
+      '-=0.15'
+    )
+    .fromTo(
+      '.action-active-indicator',
+      { scale: 0.8, autoAlpha: 0 },
+      { scale: 1, autoAlpha: 1, duration: 0.25, ease: 'back.out(2)' },
+      '-=0.2'
+    );
+  }, { scope: consoleRef, dependencies: [verificatorAction] });
+
+  // GSAP 60fps animation when BAKB modal opens
+  useGSAP(() => {
+    if (!showPdfModal || !modalRef.current) return;
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+    tl.fromTo(
+      '.modal-content-panel',
+      { y: 16, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.25 }
+    )
+    .fromTo(
+      '.verdict-stamp-print',
+      { scale: 1.35, rotate: -12, autoAlpha: 0 },
+      { scale: 1, rotate: -4, autoAlpha: 1, duration: 0.4, ease: 'back.out(1.8)' },
+      '-=0.08'
+    );
+  }, { scope: modalRef, dependencies: [showPdfModal] });
+
   const handleDraftNotesWithAi = async () => {
     setIsDraftingAiNotes(true);
     try {
@@ -121,7 +168,7 @@ II. TEMUAN KECURANGAN MULTI-LAPIS (3-LAYER FORENSICS)
 3. Lapis 3 (Mobile JKN Telemetry):
    Verifikasi out-of-band ke peserta terdaftar membuktikan 8 dari 10 peserta menyangkal pernah hadir.
 
-III. PEMETAAN KERANGKA KERJA SIBER & FRAUD (ANTHROPIC CYBERSECURITY SKILLS)
+III. PEMETAAN KERANGKA KERJA SIBER & DETEKSI KECURANGAN JKN
 1. MITRE Fight Fraud Framework (F3 v1.1):
    - FA0001 (Positioning): F1005.001 (Unauthorized Patient Identity Seeding)
    - FA0002 (Monetization): F1018 (Unbundling & Split Claim Arbitrage) · F1025.003
@@ -163,7 +210,7 @@ Timestamp: ${new Date().toISOString()}`;
   };
 
   return (
-    <div className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
+    <div ref={consoleRef} className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
       {/* HEADER BANNER */}
       <div className={`w-full px-4 py-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
         isLight
@@ -332,7 +379,7 @@ Timestamp: ${new Date().toISOString()}`;
                       Tunda Berita Acara &amp; Minta Klarifikasi Faskes (SOP 10 Hari)
                     </span>
                     {verificatorAction === 'clarification' && (
-                      <span className="text-[9.5px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
@@ -372,7 +419,7 @@ Timestamp: ${new Date().toISOString()}`;
                       Jadwalkan Audit Faktual Lapangan (Tim VPK BPJS)
                     </span>
                     {verificatorAction === 'audit' && (
-                      <span className="text-[9.5px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
@@ -412,7 +459,7 @@ Timestamp: ${new Date().toISOString()}`;
                       Loloskan Klaim (Override Manual dengan Catatan Khusus)
                     </span>
                     {verificatorAction === 'override' && (
-                      <span className="text-[9.5px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
@@ -507,7 +554,7 @@ Timestamp: ${new Date().toISOString()}`;
 
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>TINDAKAN TERPILIH:</span>
-                <span className={`font-bold ${
+                <span className={`verdict-status-badge will-change-transform font-bold block ${
                   verificatorAction === 'clarification' ? 'text-rose-600' : verificatorAction === 'audit' ? 'text-amber-600' : isLight ? 'text-emerald-700' : 'text-emerald-400'
                 }`}>
                   {verificatorAction ? (verificatorAction === 'clarification' ? 'TUNDA BAKB & KLARIFIKASI FASKES' : verificatorAction === 'audit' ? 'AUDIT FAKTUAL LAPANGAN' : 'OVERRIDE LOLOSKAN') : 'MENUNGGU DISPOSISI'}
@@ -516,7 +563,7 @@ Timestamp: ${new Date().toISOString()}`;
 
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>HASH KRIPTOGRAFIS SHA-256:</span>
-                <span className={`${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[9px] break-all`}>
+                <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[9px] break-all`}>
                   9e8a7c2b512f43a91e0892cfa71290bb34102c98d7831fa281
                 </span>
               </div>
@@ -613,11 +660,12 @@ Timestamp: ${new Date().toISOString()}`;
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div 
+              ref={modalRef}
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.2 }}
-              className={`border w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] ${
+              className={`modal-content-panel will-change-transform border w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] ${
                 isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
               }`}
             >
@@ -730,7 +778,10 @@ Timestamp: ${new Date().toISOString()}`;
                     <p className={`font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Digital Seal: SHA-256 9e8a7c2b...f43a91e</p>
                     <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Tanggal: 22 Oktober 2026, 10:45 WIB</p>
                   </div>
-                  <div className="text-center w-48">
+                  <div className="text-center w-48 relative">
+                    <div className="verdict-stamp-print will-change-transform absolute -top-4 left-4 pointer-events-none px-2.5 py-1 rounded border-2 border-emerald-600 text-emerald-600 font-mono font-black text-[10px] uppercase tracking-wider bg-emerald-500/10 backdrop-blur-2xs">
+                      [SEALED · SAH]
+                    </div>
                     <p className={`mb-8 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Verifikator Klaim BPJS,</p>
                     <p className={`font-bold underline ${isLight ? 'text-slate-900' : 'text-white'}`}>dr. Siti Rahma, Sp.PK</p>
                     <p className={isLight ? 'text-slate-500' : 'text-white/50'}>NIP: 19880412 201402 2 001</p>
