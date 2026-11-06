@@ -111,3 +111,13 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - **Dynamic Formula Export**: All CSV exports must include active spreadsheet formulas (`=SUM()`, `=COUNTA()`) per `spreadsheet-formula-helper`.
 - **Integrity Sealing**: Enforce SHA-256 cryptographic verification for every claim item and batch manifest.
 - **Strict Guardrails**: Zero emojis and zero vendor leaks across all files, documentation, and user-facing copy.
+
+---
+
+## GreenSock GSAP Skills & 60fps Animation Standards (greensock/gsap-skills)
+
+- **Skills Source**: Repositories located at `/home/Khalaf-Dev/gsap-skills` and symlinked in `.github/skills/gsap-skills`.
+- **Lifecycle Integration**: Always use the `@gsap/react` `useGSAP` hook with explicit scoping (`{ scope: containerRef, dependencies: [...] }`) and top-level plugin registration (`gsap.registerPlugin(useGSAP)`).
+- **GPU Compositor Performance**: Animate strictly transform properties (`x`, `y`, `scale`, `rotation`) and `autoAlpha`. Never animate layout dimensions (`width`, `height`, `top`, `left`, `margin`, `padding`).
+- **Tactile Verifier Feedback**: Micro-interactions, status badges, and action buttons use snappy, choreographed timelines (`power2.out`, 180ms - 250ms) to deliver zero-lag feedback for adjudicators.
+- **Rollup Chunking**: Keep GSAP and `@gsap/react` isolated in a dedicated Vite bundle (`manualChunks: { gsap: ['gsap', '@gsap/react'] }`).

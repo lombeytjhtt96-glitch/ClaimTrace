@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { gsap } from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { 
   Clock, ShieldAlert, FileText, ChevronDown, ChevronUp, 
   ExternalLink, CheckCircle2, AlertTriangle, RefreshCw, Hash
 } from 'lucide-react';
+
+gsap.registerPlugin(useGSAP);
 
 export default function TemporalAlertCard({
   claimId = 'CLM-2026-8801',
@@ -11,6 +15,7 @@ export default function TemporalAlertCard({
   primaryDiagnosis = 'K92.2',
   isLight = false,
 }) {
+  const cardRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [intelligence, setIntelligence] = useState(null);
@@ -71,8 +76,31 @@ export default function TemporalAlertCard({
   const elevation = intelligence?.risk_elevation_factor || 1.0;
   const isHighRisk = elevation > 1.15;
 
+  useGSAP(() => {
+    if (!cardRef.current || !intelligence) return;
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+    tl.fromTo(
+      '.radar-icon-badge',
+      { scale: 0.88, autoAlpha: 0.5 },
+      { scale: 1, autoAlpha: 1, duration: 0.35 }
+    )
+    .fromTo(
+      '.radar-elevation-badge',
+      { x: 10, autoAlpha: 0 },
+      { x: 0, autoAlpha: 1, duration: 0.3 },
+      '-=0.15'
+    )
+    .fromTo(
+      '.radar-info-box',
+      { y: 8, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.35, stagger: 0.08 },
+      '-=0.1'
+    );
+  }, { scope: cardRef, dependencies: [intelligence?.claim_id, intelligence?.risk_elevation_factor] });
+
   return (
     <div
+      ref={cardRef}
       className={`rounded-2xl p-4 space-y-3.5 backdrop-blur-xl border transition-colors duration-200 ${
         isLight
           ? isHighRisk
@@ -87,7 +115,7 @@ export default function TemporalAlertCard({
       <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2.5 ${isLight ? 'border-amber-200/60' : 'border-white/10'}`}>
         <div className="flex items-center space-x-2.5">
           <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-white shadow-md ${
+            className={`radar-icon-badge will-change-transform w-8 h-8 rounded-xl flex items-center justify-center font-bold text-white shadow-md ${
               isHighRisk ? 'bg-amber-600' : 'bg-emerald-600'
             }`}
           >
@@ -117,7 +145,7 @@ export default function TemporalAlertCard({
         <div className="flex items-center gap-2">
           {/* Risk Multiplier Badge */}
           <div
-            className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 tabular-nums text-xs font-bold font-mono ${
+            className={`radar-elevation-badge will-change-transform px-2.5 py-1 rounded-xl border flex items-center gap-1.5 tabular-nums text-xs font-bold font-mono ${
               isHighRisk
                 ? isLight
                   ? 'bg-amber-100 text-amber-950 border-amber-300'
@@ -149,7 +177,39 @@ export default function TemporalAlertCard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
         {/* Active Circulars Box */}
         <div
-          className={`p-3 rounded-xl border space-y-1.5 md:col-span-1 ${
+          className={`radar-info-box will-change-transform p-3 rounded-xl border space-y-1.5 md:col-span-1 ${
+            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`text-[10px] font-mono font-bold uppercase ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>
+              Surat Edaran Aktif
+            </span>
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
+              {circularCount} Regulasi
+            </span>
+          </div>
+          {circularCount > 0 ? (
+            <div className="space-y-1 mt-1">
+              {intelligence.active_regulatory_circulars.map((c) => (
+                <div key={c.id} className="text-[11px] leading-tight font-medium">
+                  <div className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{c.id}</div>
+                  <div className={`text-[10px] line-clamp-2 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                    {c.title}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              Tidak ada surat edaran khusus dalam 30 hari untuk kode ini.
+            </p>
+          )}
+        </div>
+
+        {/* Adjudicator Guidance Box */}
+        <div
+          className={`radar-info-box will-change-transform p-3 rounded-xl border space-y-1 md:col-span-2 ${
             isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
           }`}
         >
