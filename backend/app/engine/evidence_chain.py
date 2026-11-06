@@ -192,6 +192,28 @@ class CdsEvaluationDossier(BaseModel):
     qualified_review_owner: str
     dossier_hash: str
 
+class ActionableReviewStep(BaseModel):
+    step_number: int
+    action: str
+    target_asset: str
+    estimated_minutes: int
+
+class CognitiveTriageBrief(BaseModel):
+    brief_id: str
+    spec_version: str = "0.4.1"
+    claim_id: str
+    nomor_sep: str
+    generated_at: str
+    lead_action: str
+    actionable_steps: List[ActionableReviewStep]
+    capped_key_findings: List[str]
+    concrete_next_step: str
+    matter_of_fact_verdict: str
+    total_estimated_review_minutes: int
+    tangents_suppressed: bool = True
+    no_preamble_enforced: bool = True
+    brief_hash: str
+
 def compute_sha256(data: str) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
@@ -803,5 +825,123 @@ def build_cds_evaluation_dossier(
         fairness_and_calibration_status="CALIBRATED_ZERO_DEMOGRAPHIC_DISPARITY",
         qualified_review_owner="Verifikator Klaim BPJS Kesehatan & Tim Pencegahan Kecurangan Faskes (Permenkes 26/2021)",
         dossier_hash=dossier_hash
+    )
+
+def build_cognitive_triage_brief(
+    claim: ClaimInput,
+    triage: Optional[TriageResult] = None,
+    chain: Optional[EvidenceChainGraph] = None
+) -> CognitiveTriageBrief:
+    """
+    Constructs an Action-First Cognitive Triage Brief inspired by ayghri/i-have-adhd (v0.4.1):
+    - Rule 1: Lead with the next action (no preamble)
+    - Rule 2: Number multi-step tasks (bounded action per step)
+    - Rule 3: End with one concrete next action
+    - Rule 4: Suppress tangents
+    - Rule 5: Restate state explicitly
+    - Rule 6: Specific minute estimates
+    - Rule 7: Make wins / savings visible
+    - Rule 8: Matter-of-fact tone for discrepancies
+    - Rule 9: Cap lists to 5 items
+    - Rule 10: No pleasantries or recaps
+    """
+    if triage is None:
+        triage = evaluate_claim_triage(claim)
+    if chain is None:
+        chain = build_claim_evidence_chain(claim, triage)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    nomor_sep = claim.fkl02_id_kunjungan or f"SEP-{claim.claim_id}"
+
+    score = triage.final_priority_score if triage else 0.0
+    if score >= 80.0:
+        verdict = "REJECT_ANOMALOUS"
+        lead_action = (
+            f"Tahan pembayaran klaim {claim.claim_id} ({claim.nama_faskes}) senilai Rp {claim.nilai_klaim_rp:,.0f} "
+            f"karena skor risiko fraud {score:.1f}/100 melampaui ambang batas keamanan."
+        )
+    elif score >= 50.0:
+        verdict = "CONDITIONAL_REVIEW"
+        lead_action = (
+            f"Klarifikasi berkas klaim {claim.claim_id} ({claim.nama_faskes}) untuk konfirmasi rincian tindakan "
+            f"INA-CBG {claim.ina_cbg_code}."
+        )
+    else:
+        verdict = "APPROVE_CLEAR"
+        lead_action = (
+            f"Teruskan klaim {claim.claim_id} ({claim.nama_faskes}) senilai Rp {claim.nilai_klaim_rp:,.0f} "
+            f"ke antrean settlement karena tidak ditemukan anomali signifikan."
+        )
+
+    # Numbered multi-step tasks (Rule 2) with specific minute estimates (Rule 6)
+    steps = [
+        ActionableReviewStep(
+            step_number=1,
+            action=f"Buka arsip elektronik {nomor_sep} di portal VClaim",
+            target_asset=f"SEP-{claim.claim_id}",
+            estimated_minutes=1
+        ),
+        ActionableReviewStep(
+            step_number=2,
+            action=f"Cocokkan diagnosa {claim.icd10_primary} dengan resume medis lembar CPPT",
+            target_asset="CPPT-EHR",
+            estimated_minutes=2
+        ),
+        ActionableReviewStep(
+            step_number=3,
+            action=f"Verifikasi kehadiran fisik DPJP {claim.dpjp_meta.nama_dpjp_alias} pada log RFID/SISDMK faskes",
+            target_asset="LOG-SISDMK",
+            estimated_minutes=2
+        ),
+        ActionableReviewStep(
+            step_number=4,
+            action=f"Bandingkan tarif klaim Rp {claim.nilai_klaim_rp:,.0f} dengan plafon tarif regional Permenkes 3/2023",
+            target_asset=f"CBG-{claim.ina_cbg_code}",
+            estimated_minutes=1
+        ),
+        ActionableReviewStep(
+            step_number=5,
+            action="Kirimkan penetapan akhir (Setuju / Tahan / Investigasi Khusus) pada modul adjudikasi",
+            target_asset="CLAIMTRACE-DECISION-CONSOLE",
+            estimated_minutes=1
+        )
+    ]
+
+    # Cap findings list to max 5 items (Rule 9)
+    raw_findings = [f.title for f in chain.findings]
+    if not raw_findings:
+        raw_findings = ["Kesesuaian tarif INA-CBG dan diagnosa primer tervalidasi."]
+    capped_findings = raw_findings[:5]
+
+    total_minutes = sum(s.estimated_minutes for s in steps)
+
+    # One concrete next action (Rule 3)
+    concrete_next = f"Buka berkas digital {nomor_sep} dan periksa paraf DPJP pada lembar pertama CPPT."
+
+    raw_payload = json.dumps({
+        "claim_id": claim.claim_id,
+        "lead_action": lead_action,
+        "steps": [s.model_dump() for s in steps],
+        "capped_findings": capped_findings,
+        "verdict": verdict
+    }, sort_keys=True)
+
+    brief_hash = compute_sha256(raw_payload)
+
+    return CognitiveTriageBrief(
+        brief_id=f"BRIEF-{claim.claim_id}",
+        spec_version="0.4.1",
+        claim_id=claim.claim_id,
+        nomor_sep=nomor_sep,
+        generated_at=now_iso,
+        lead_action=lead_action,
+        actionable_steps=steps,
+        capped_key_findings=capped_findings,
+        concrete_next_step=concrete_next,
+        matter_of_fact_verdict=verdict,
+        total_estimated_review_minutes=total_minutes,
+        tangents_suppressed=True,
+        no_preamble_enforced=True,
+        brief_hash=brief_hash
     )
 

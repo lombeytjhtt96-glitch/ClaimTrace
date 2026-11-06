@@ -49,6 +49,11 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - Every claim supports a Clinical Decision Support Evaluation Dossier (`CdsEvaluationDossier`) incorporating GRADE evidence profile evaluation (High/Moderate/Low/Very Low) and decision logic traceability.
   - ISO 14971 & ISO 13485 Risk Controls: Maintain risk control entries for SaMD hazards (false-positive delay, false-negative deficit, participant privacy exposure).
   - Draft Watermark: Unreviewed outputs carry explicit draft watermark declarations.
+- ADHD & Cognitive Clarity Adjudication (ayghri/i-have-adhd Standards):
+  - Every claim supports an action-first cognitive triage brief (`CognitiveTriageBrief`) leading directly with the decision (e.g. approve, hold, clarify).
+  - Number multi-step review tasks with explicit integer minute estimates; cap review steps and findings lists to maximum 5 items per group.
+  - Conclude every brief with exactly one concrete next action executable in under two minutes.
+  - Zero preamble, conversational pleasantries, or redundant recaps in audit summaries.
 
 ---
 

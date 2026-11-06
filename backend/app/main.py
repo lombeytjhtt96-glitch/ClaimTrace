@@ -81,6 +81,8 @@ from app.engine.evidence_chain import (
     ClaimAuditLedger,
     build_cds_evaluation_dossier,
     CdsEvaluationDossier,
+    build_cognitive_triage_brief,
+    CognitiveTriageBrief,
 )
 
 # Enterprise Defensive Security Modules
@@ -813,6 +815,20 @@ def get_claim_cds_evaluation_endpoint(claim_id: str):
     triage = evaluate_claim_triage(claim)
     chain = build_claim_evidence_chain(claim, triage)
     return build_cds_evaluation_dossier(claim, triage, chain)
+
+@app.get("/api/v1/claims/{claim_id}/cognitive-triage-brief", response_model=CognitiveTriageBrief)
+def get_claim_cognitive_triage_brief_endpoint(claim_id: str):
+    """
+    Action-First Cognitive Triage Brief (inspired by ayghri/i-have-adhd v0.4.1).
+    Optimized for high-clarity adjudication: leads with next action, numbers tasks with minute estimates,
+    caps findings lists to 5 items, suppresses tangents, and enforces matter-of-fact tone.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    triage = evaluate_claim_triage(claim)
+    chain = build_claim_evidence_chain(claim, triage)
+    return build_cognitive_triage_brief(claim, triage, chain)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
