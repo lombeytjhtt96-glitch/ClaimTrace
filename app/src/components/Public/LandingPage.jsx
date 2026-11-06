@@ -351,7 +351,7 @@ export default function LandingPage({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogin}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-full text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all duration-300 shadow-lg shadow-emerald-950/50 border border-emerald-400/30 flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Masuk Portal Verifikator</span>
@@ -414,9 +414,9 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-950' : 'text-white'
               }`}
             >
-              Satu Skor Prioritas, Tiga Lapis Bukti Faktual. <br />
+              Sistem Deteksi Fraud Klaim BPJS Kesehatan. <br />
               <span className={effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}>
-                Keputusan Mutlak Tetap di Tangan Verifikator.
+                Satu Skor Prioritas, Tiga Lapis Bukti Faktual.
               </span>
             </motion.h1>
 
@@ -1908,8 +1908,8 @@ export default function LandingPage({
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>PANDAWA WhatsApp Resmi</span>
-                      <span className={`font-mono ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>0811-0000-0165 (Simulasi PANDAWA)</span>
-                      <span className={`block text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp (08.00 - 15.00 WIB - Simulasi)</span>
+                      <span className={`font-mono ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>08118165165</span>
+                      <span className={`block text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp BPJS Kesehatan</span>
                     </div>
                   </motion.div>
 
@@ -1928,9 +1928,9 @@ export default function LandingPage({
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Alamat Kantor Operasional</span>
                       <span className={`block ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
-                        Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510 (Kantor Pusat Simulasi)
+                        Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510
                       </span>
-                      <span className={`text-[11px] block mt-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Kedeputian Bidang Pengawasan dan Pemeriksaan</span>
+                      <span className={`text-[11px] block mt-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Kedeputian Bidang Pengawasan dan Pemeriksaan BPJS Kesehatan</span>
                     </div>
                   </motion.div>
 
