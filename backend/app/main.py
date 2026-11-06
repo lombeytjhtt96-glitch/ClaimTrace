@@ -91,6 +91,13 @@ from app.engine.humanizer_engine import (
     humanize_claim_prose,
     generate_humanized_claim_narrative,
 )
+from app.engine.last30days_engine import (
+    TemporalRadarSummary,
+    TemporalIntelligenceBrief,
+    get_30day_temporal_radar,
+    generate_claim_30day_intelligence,
+    execute_last30days_cli,
+)
 
 # Enterprise Defensive Security Modules
 from app.security.security_headers import SecurityHeadersMiddleware
@@ -186,6 +193,11 @@ class ReaAnalyzeRequest(BaseModel):
 
 class HumanizeProseRequest(BaseModel):
     text: str
+
+class TemporalSearchRequest(BaseModel):
+    query: str
+    days: Optional[int] = 30
+    mock: Optional[bool] = True
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
@@ -859,6 +871,33 @@ def get_humanized_claim_narrative_endpoint(claim_id: str):
         raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
     claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
     return generate_humanized_claim_narrative(claim_id, claim)
+
+@app.get("/api/v1/radar/last30days", response_model=TemporalRadarSummary)
+def get_30day_radar_endpoint():
+    """
+    Returns the macro 30-day temporal radar for BPJS Kesehatan claims,
+    tracking active regulatory circulars (KPK, Kemenkes, BPJS) and emergent fraud typologies.
+    """
+    return get_30day_temporal_radar()
+
+@app.get("/api/v1/claims/{claim_id}/last30days-intelligence", response_model=TemporalIntelligenceBrief)
+def get_claim_30day_intelligence_endpoint(claim_id: str, mock: bool = True):
+    """
+    Produces a 30-day temporal intelligence brief for a specific claim,
+    cross-referencing diagnosis and INA-CBG codes with 30-day circulars and social consensus signals.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    return generate_claim_30day_intelligence(claim_id, claim, mock_search=mock)
+
+@app.post("/api/v1/radar/last30days/query")
+def query_30day_radar_endpoint(payload: TemporalSearchRequest):
+    """
+    Executes a temporal 30-day query across health topics and INA-CBG codes
+    using the mvanhorn/last30days-skill search and aggregation pipeline.
+    """
+    return execute_last30days_cli(payload.query, lookback_days=payload.days or 30, mock=payload.mock if payload.mock is not None else True)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(

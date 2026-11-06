@@ -64,6 +64,11 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - Strip all 26 Wikipedia signs of AI writing from clinical adjudication prose, dispute reports, and summary briefs.
   - Enforce removal of staged run-ups (§4), not-X-but-Y formulas (§1), dramatic closers (§2), forced triads (§6), decorative em-dashes (§8), buzzwords like "krusial/lanskap/merajut" (§12), and chatbot wrappers (§22).
   - Expose `/api/v1/claims/humanize-prose` and `/api/v1/claims/{claim_id}/humanized-narrative` returning `HumanizedAdjudicationText`.
+- Last30Days Temporal Intelligence & Regulatory Radar (mvanhorn/last30days-skill v3.31.0 Standards):
+  - Implement 30-day sliding window temporal radar for active regulatory circulars (KPK, Kemenkes, BPJS) and emergent fraud typologies.
+  - Dynamically compute claim risk elevation multipliers (1.10x - 1.35x) based on active 30-day field audit circulars and code matches.
+  - Support deterministic mock and offline fallback modes for CI/CD test stability.
+  - Expose `/api/v1/radar/last30days`, `/api/v1/claims/{claim_id}/last30days-intelligence`, and `/api/v1/radar/last30days/query` with SHA-256 tamper-evident integrity seals.
 
 ---
 
