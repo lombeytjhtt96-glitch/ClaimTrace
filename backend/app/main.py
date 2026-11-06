@@ -71,6 +71,7 @@ from app.engine.duckdb_analytics import duckdb_engine
 from app.engine.prometheus_metrics import prometheus_engine, CONTENT_TYPE_LATEST
 from app.engine.rea_forensics import rea_engine
 from app.engine.icd10_service import icd10_service
+from app.engine.business_days import calculate_sla_status, add_business_days, count_business_days_between
 
 # Enterprise Defensive Security Modules
 from app.security.security_headers import SecurityHeadersMiddleware
@@ -718,10 +719,34 @@ def get_claim_detail(claim_id: str):
     claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
     triage = evaluate_claim_triage(claim)
     claim_audit_entries = audit_logger.get_entries_for_claim(claim_id)
+    sla_info = calculate_sla_status(claim.tanggal_layanan, max_business_days=10)
     return {
         "claim": claim,
         "triage": triage,
-        "audit_trail": claim_audit_entries
+        "audit_trail": claim_audit_entries,
+        "sla_status": sla_info
+    }
+
+@app.get("/api/v1/claims/{claim_id}/sla")
+def get_claim_sla_endpoint(claim_id: str, reference_date: Optional[date] = None):
+    """
+    Statutory SLA Compliance Tracker (Perpres No. 82/2018 Pasal 74 & 76).
+    Calculates business days remaining excluding weekends and Indonesian National Holidays.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    sla_result = calculate_sla_status(
+        service_date=claim.tanggal_layanan,
+        max_business_days=10,
+        reference_date=reference_date
+    )
+    return {
+        "claim_id": claim_id,
+        "faskes_id": claim.faskes_id,
+        "nama_faskes": claim.nama_faskes,
+        "ina_cbg_code": claim.ina_cbg_code,
+        "statutory_sla": sla_result
     }
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")

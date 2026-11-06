@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from typing import Dict, Any, Optional, Set
 
 # Official Indonesian National Public Holidays (Hari Libur Nasional & Cuti Bersama 2026)
+# shortcut: static 2026 holiday set, upgrade to SKB 3 Menteri calendar parser when multi-year claim windows are ingested
 INDONESIAN_HOLIDAYS_2026: Set[date] = {
     date(2026, 1, 1),    # Tahun Baru 2026 Masehi
     date(2026, 1, 16),   # Isra Mi'raj Nabi Muhammad SAW

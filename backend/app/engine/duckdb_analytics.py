@@ -43,7 +43,7 @@ class DuckDbAnalyticsEngine:
         try:
             self.con = duckdb.connect(db_path)
         except Exception:
-            # Fallback to in-memory DuckDB when file lock is held by concurrent MCP server or worker process
+            # shortcut: in-memory DuckDB fallback on concurrent file lock, upgrade to DuckDB server or MotherDuck for multi-replica concurrency
             self.con = duckdb.connect(":memory:")
         self._init_schema_and_seed()
 

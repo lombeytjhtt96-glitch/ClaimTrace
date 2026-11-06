@@ -168,6 +168,7 @@ class ChromaSemanticEngine:
         try:
             self.client = chromadb.PersistentClient(path=persistent_path)
         except Exception:
+            # shortcut: in-memory Client fallback on persistence lock, upgrade to centralized vector store for multi-worker deployment
             self.client = chromadb.Client()
 
         # Get or create collection with cosine similarity metric

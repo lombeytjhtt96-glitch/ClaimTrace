@@ -175,6 +175,7 @@ def verify_geovelocity_feasibility(
         road_distance_km, est_duration_min = osrm_result
         source = "OSRM Live Routing API (OpenStreetMap Highway Graph)"
     else:
+        # shortcut: trans-java highway curvature fallback (1.26-1.35x), deploy self-hosted osrm-backend container when fully offline routing is required
         # Calibrated Indonesian Highway Network Factor:
         # Intercity toll/arterial curvature ratio: 1.28x Haversine, average toll speed 80 km/h
         if haversine_km < 5.0:
