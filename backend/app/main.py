@@ -22,6 +22,17 @@ from app.models.schemas import (
     TriageResult,
     VerifierDecisionRequest,
     AuditLogEntry,
+    YaraLRuleItem,
+    SecOpsCaseItem,
+    SecOpsCaseManifest,
+    DynamicYaraLCompileRequest,
+)
+from app.engine.google_secops_engine import (
+    PRECOMPILED_YARA_L_RULES,
+    validate_yara_l_syntax,
+    compile_dynamic_yara_l_rule,
+    generate_secops_cases,
+    generate_sovereignty_assessment_report,
 )
 from app.engine.scoring import evaluate_claim_triage, audit_logger
 from app.data.synthetic_seed import get_initial_claims
@@ -951,6 +962,80 @@ def get_faskes_dossier_summary_endpoint(faskes_id: str):
         if f.faskes_id.upper() == faskes_id.strip().upper():
             return f
     raise HTTPException(status_code=404, detail=f"Faskes dengan ID '{faskes_id}' tidak ditemukan dalam dossier aktif")
+
+# ============================================================================
+# Google SecOps Detection Engineering & SOAR Case Management (google/skills)
+# ============================================================================
+
+@app.get("/api/v1/secops/rules", response_model=List[YaraLRuleItem])
+def list_secops_rules_endpoint():
+    """
+    Returns pre-compiled YARA-L 2.0 detection rules targeting BPJS Kesehatan fraud typologies
+    per Google SecOps Detection Engineering specification.
+    """
+    return PRECOMPILED_YARA_L_RULES
+
+@app.get("/api/v1/secops/rules/{rule_id}")
+def get_secops_rule_endpoint(rule_id: str):
+    """
+    Retrieves a specific YARA-L 2.0 rule with syntax validation and test payload.
+    """
+    target = rule_id.strip().upper()
+    for r in PRECOMPILED_YARA_L_RULES:
+        if r["rule_id"].upper() == target or r["rule_name"].upper() == target:
+            val = validate_yara_l_syntax(r["rule_text"])
+            return {
+                **r,
+                "syntax_validation": val
+            }
+    raise HTTPException(status_code=404, detail=f"Aturan YARA-L dengan ID '{rule_id}' tidak ditemukan")
+
+@app.post("/api/v1/secops/rules/compile")
+def compile_secops_rule_endpoint(req: DynamicYaraLCompileRequest):
+    """
+    Dynamically compiles claim triage indicators into a validated YARA-L 2.0 detection rule.
+    """
+    return compile_dynamic_yara_l_rule(
+        rule_name=req.rule_name,
+        description=req.description,
+        severity=req.severity,
+        cbg_codes=req.cbg_codes,
+        threshold_count=req.threshold_count,
+        time_window_hours=req.time_window_hours
+    )
+
+@app.get("/api/v1/secops/cases", response_model=SecOpsCaseManifest)
+def list_secops_cases_endpoint(severity: Optional[str] = Query(None, description="Filter by severity: CRITICAL, HIGH, LOW")):
+    """
+    Lists Google SecOps SOAR Incident Cases for active claims with SLA tracking and SHA-256 seal.
+    """
+    claims_list = [c.model_dump() for c in SYNTHETIC_CLAIMS_DATABASE.values()]
+    manifest = generate_secops_cases(claims_list)
+    if severity:
+        sev_upper = severity.strip().upper()
+        manifest["cases"] = [c for c in manifest["cases"] if c["severity"] == sev_upper]
+    return manifest
+
+@app.get("/api/v1/secops/cases/{case_or_claim_id}")
+def get_secops_case_endpoint(case_or_claim_id: str):
+    """
+    Retrieves a specific SecOps SOAR case dossier by case ID or claim ID.
+    """
+    target = case_or_claim_id.strip().upper()
+    claims_list = [c.model_dump() for c in SYNTHETIC_CLAIMS_DATABASE.values()]
+    manifest = generate_secops_cases(claims_list)
+    for c in manifest["cases"]:
+        if c["case_id"].upper() == target or c["claim_id"].upper() == target:
+            return c
+    raise HTTPException(status_code=404, detail=f"Kasus SecOps dengan ID '{case_or_claim_id}' tidak ditemukan")
+
+@app.get("/api/v1/secops/sovereignty/assessment")
+def get_sovereignty_assessment_endpoint():
+    """
+    Returns healthcare data boundary compliance assessment per UU PDP No. 27/2022
+    and Google Cloud Assured Workloads sovereignty standards.
+    """
+    return generate_sovereignty_assessment_report()
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(

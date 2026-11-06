@@ -5,7 +5,7 @@ import {
   ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
   Search, Filter, Download, RefreshCw, Key, Hash, 
   Clock, User, ExternalLink, ChevronRight, FileText, Check, Sparkles, Layers,
-  Copy, FileDown
+  Copy, FileDown, Terminal, X, ShieldAlert
 } from 'lucide-react';
 
 const CLAIM_METADATA_MAP = {
@@ -252,6 +252,46 @@ export default function AuditLedger({ isLight: propIsLight }) {
       navigator.clipboard.writeText(text);
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
+  // Google SecOps Detection Engineering & SOAR State (google/skills)
+  const [showSecOpsModal, setShowSecOpsModal] = useState(false);
+  const [secopsTab, setSecopsTab] = useState('rules');
+  const [secopsRules, setSecopsRules] = useState([]);
+  const [selectedSecopsRule, setSelectedSecopsRule] = useState(null);
+  const [secopsCases, setSecopsCases] = useState(null);
+  const [secopsSovereignty, setSecopsSovereignty] = useState(null);
+  const [loadingSecops, setLoadingSecops] = useState(false);
+
+  const handleOpenSecOpsModal = async () => {
+    setShowSecOpsModal(true);
+    setLoadingSecops(true);
+    try {
+      const [rulesRes, casesRes, sovRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/v1/secops/rules`),
+        fetch(`${API_BASE_URL}/api/v1/secops/cases`),
+        fetch(`${API_BASE_URL}/api/v1/secops/sovereignty/assessment`)
+      ]);
+      if (rulesRes.ok) {
+        const rulesData = await rulesRes.json();
+        setSecopsRules(rulesData);
+        if (rulesData.length > 0 && !selectedSecopsRule) {
+          setSelectedSecopsRule(rulesData[0]);
+        }
+      }
+      if (casesRes.ok) {
+        const casesData = await casesRes.json();
+        setSecopsCases(casesData);
+      }
+      if (sovRes.ok) {
+        const sovData = await sovRes.json();
+        setSecopsSovereignty(sovData);
+      }
+    } catch (e) {
+      console.warn('SecOps fetch error:', e);
+    } finally {
+      setLoadingSecops(false);
     }
   };
 
@@ -506,6 +546,18 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               >
                 <FileDown className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Ekspor Dossier TGR (CSV)</span>
+              </button>
+              <button type="button" 
+                onClick={handleOpenSecOpsModal}
+                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
+                  isLight
+                    ? 'bg-sky-50 hover:bg-sky-100 text-sky-900 border-sky-300'
+                    : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40'
+                }`}
+                title="Buka Konsol Aturan Deteksi YARA-L 2.0 & Manajemen Kasus SOAR (google/skills)"
+              >
+                <Terminal className="w-3.5 h-3.5 text-sky-500" />
+                <span>Google SecOps &amp; SOAR</span>
               </button>
             </div>
           </div>
@@ -1039,6 +1091,298 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
         </div>
 
       </div>
+
+      {/* GOOGLE SECOPS DETECTION & SOAR MODAL */}
+      <AnimatePresence>
+        {showSecOpsModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className={`border w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[88vh] ${
+                isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
+              }`}
+            >
+              {/* Modal Header */}
+              <div className={`px-5 py-4 border-b flex items-center justify-between ${
+                isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#000c24] border-white/10'
+              }`}>
+                <div className="flex items-center space-x-2.5">
+                  <Terminal className="w-5 h-5 text-sky-500 shrink-0" />
+                  <div>
+                    <h3 className={`text-sm font-bold uppercase tracking-wide ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      Google SecOps Detection Engineering &amp; SOAR Console
+                    </h3>
+                    <p className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                      YARA-L 2.0 Rules Engine · SOAR Case Lifecycle · Kedaulatan Data UU PDP No. 27/2022
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSecOpsModal(false)}
+                  className={`p-1.5 rounded-lg cursor-pointer transition ${
+                    isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Tab Navigation */}
+              <div className={`px-5 pt-3 pb-2 border-b flex space-x-2 text-xs font-bold ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setSecopsTab('rules')}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
+                    secopsTab === 'rules'
+                      ? (isLight ? 'bg-sky-600 text-white shadow-xs' : 'bg-cyan-500 text-slate-950 shadow-xs')
+                      : (isLight ? 'text-slate-600 hover:bg-slate-200' : 'text-white/70 hover:bg-white/10')
+                  }`}
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>Aturan YARA-L 2.0 ({secopsRules.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSecopsTab('cases')}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
+                    secopsTab === 'cases'
+                      ? (isLight ? 'bg-sky-600 text-white shadow-xs' : 'bg-cyan-500 text-slate-950 shadow-xs')
+                      : (isLight ? 'text-slate-600 hover:bg-slate-200' : 'text-white/70 hover:bg-white/10')
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Kasus Insiden SOAR ({secopsCases?.total_cases || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSecopsTab('sovereignty')}
+                  className={`px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center space-x-1.5 ${
+                    secopsTab === 'sovereignty'
+                      ? (isLight ? 'bg-sky-600 text-white shadow-xs' : 'bg-cyan-500 text-slate-950 shadow-xs')
+                      : (isLight ? 'text-slate-600 hover:bg-slate-200' : 'text-white/70 hover:bg-white/10')
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Kedaulatan Data (UU PDP)</span>
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-5 overflow-y-auto space-y-4 flex-1 text-xs">
+                {loadingSecops ? (
+                  <div className="flex items-center justify-center py-16 space-x-2 text-slate-500">
+                    <RefreshCw className="w-5 h-5 animate-spin text-sky-500" />
+                    <span>Memuat telemetri SecOps...</span>
+                  </div>
+                ) : secopsTab === 'rules' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Rule List (5 cols) */}
+                    <div className="md:col-span-5 space-y-2">
+                      <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        Daftar Aturan Deteksi Aktif:
+                      </span>
+                      {secopsRules.map((rule) => {
+                        const isSelected = selectedSecopsRule?.rule_id === rule.rule_id;
+                        return (
+                          <div
+                            key={rule.rule_id}
+                            onClick={() => setSelectedSecopsRule(rule)}
+                            className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                              isSelected
+                                ? (isLight ? 'bg-sky-50 border-sky-400 ring-1 ring-sky-300' : 'bg-cyan-500/20 border-cyan-400')
+                                : (isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200' : 'bg-white/5 hover:bg-white/10 border-white/10')
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-bold text-[11px] text-sky-600 dark:text-cyan-400">
+                                {rule.rule_name}
+                              </span>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                rule.meta.severity === 'Critical' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              }`}>
+                                {rule.meta.severity}
+                              </span>
+                            </div>
+                            <p className={`text-[10.5px] mt-1 line-clamp-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                              {rule.meta.description}
+                            </p>
+                            <div className="flex items-center space-x-2 mt-2 text-[9px] font-mono text-slate-400">
+                              <span>MITRE: {rule.meta.mitre_attack_technique}</span>
+                              <span>·</span>
+                              <span>F3: {rule.meta.mitre_f3_tag}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Rule Viewer (7 cols) */}
+                    <div className="md:col-span-7 space-y-3">
+                      {selectedSecopsRule ? (
+                        <>
+                          <div className={`p-3 rounded-xl border space-y-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-white/10'}`}>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs">{selectedSecopsRule.target_jkn_modus}</span>
+                              <span className="font-mono text-[10px] text-emerald-500 font-bold">[SYNTAX: VALID]</span>
+                            </div>
+                            <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                              {selectedSecopsRule.meta.description}
+                            </p>
+                            <div className="font-mono text-[9.5px] text-slate-500">
+                              Dasar Hukum: {selectedSecopsRule.meta.regulatory_basis}
+                            </div>
+                          </div>
+                          <div>
+                            <span className={`text-[10px] font-bold uppercase block mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                              Sintaks YARA-L 2.0:
+                            </span>
+                            <pre className="font-mono text-[10px] p-3 rounded-xl bg-slate-950 text-emerald-300 border border-emerald-950 overflow-x-auto leading-relaxed max-h-[320px]">
+                              {selectedSecopsRule.rule_text}
+                            </pre>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-12 text-slate-500">Pilih aturan untuk melihat sintaks YARA-L</div>
+                      )}
+                    </div>
+                  </div>
+                ) : secopsTab === 'cases' ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[11px] font-bold ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+                        Total Kasus Terdaftar: {secopsCases?.total_cases || 0} ({secopsCases?.critical_cases || 0} Kritis · {secopsCases?.high_cases || 0} Tinggi)
+                      </span>
+                      <span className="font-mono text-[9px] text-slate-400">
+                        Tamper-Proof Seal: {secopsCases?.integrity_seal?.slice(0, 16)}...
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {secopsCases?.cases?.map((c) => (
+                        <div
+                          key={c.case_id}
+                          className={`p-3 rounded-xl border space-y-2 ${
+                            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <span className="font-mono text-xs font-bold text-sky-600 dark:text-cyan-400">
+                                {c.case_id}
+                              </span>
+                              <h4 className="font-bold text-xs mt-0.5">{c.hospital}</h4>
+                            </div>
+                            <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
+                              c.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            }`}>
+                              {c.severity}
+                            </span>
+                          </div>
+
+                          <div className={`text-[11px] grid grid-cols-2 gap-1.5 p-2 rounded-lg font-mono ${
+                            isLight ? 'bg-white border border-slate-200' : 'bg-black/30'
+                          }`}>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block">KODE / DIAGNOSIS:</span>
+                              <span className="font-bold">{c.cbg_code} · {c.primary_diagnosis}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block">TAGIHAN KLAIM:</span>
+                              <span className="font-bold text-rose-500">Rp {c.claim_amount_rp.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block">BATAS WAKTU SLA:</span>
+                              <span className={`font-bold ${c.is_sla_breached ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                {c.sla_deadline_iso} ({c.sla_remaining_business_days} hari)
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 block">TAHAP INVESTIGASI:</span>
+                              <span className="font-bold">{c.stage}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className={`text-slate-500 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                              Auditor: {c.assigned_investigator}
+                            </span>
+                            <span className="font-mono text-[9px] text-slate-400">
+                              Hash: {c.case_hash.slice(0, 10)}...
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-xl border space-y-1.5 ${
+                      isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm">Status Kedaulatan Data: {secopsSovereignty?.overall_compliance_status}</span>
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/20 font-bold">
+                          ZONA: {secopsSovereignty?.data_residency_region}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed">
+                        Sistem ClaimTrace JKN memenuhi seluruh parameter kedaulatan data kesehatan Indonesia dan prinsip Google Cloud Assured Workloads Sovereignty (Zero-PHI preservation).
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        Kontrol Kepatuhan yang Diaudit:
+                      </span>
+                      {secopsSovereignty?.controls?.map((ctrl) => (
+                        <div
+                          key={ctrl.control_id}
+                          className={`p-3 rounded-xl border flex items-start justify-between gap-3 ${
+                            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+                          }`}
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono font-bold text-[10px] text-sky-500">{ctrl.control_id}</span>
+                              <span className="font-bold text-xs">{ctrl.name}</span>
+                            </div>
+                            <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                              {ctrl.evidence}
+                            </p>
+                            <span className="text-[9.5px] font-mono text-slate-400 block">
+                              Standar: {ctrl.standard}
+                            </span>
+                          </div>
+                          <span className="text-[9px] px-2 py-0.5 rounded font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                            {ctrl.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-right font-mono text-[9px] text-slate-400 pt-2 border-t">
+                      Sovereign Cryptographic Seal: {secopsSovereignty?.sovereign_seal_sha256}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
+                isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#000c24] border-white/10 text-white/60'
+              }`}>
+                <span>Google SecOps Detection Engineering Engine v1.2.0</span>
+                <span>Standar Kepatuhan: UU PDP No. 27/2022 &amp; Perpres No. 82/2018</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
