@@ -10,6 +10,8 @@ from app.engine.evidence_chain import (
     AcademicEvidencePassport,
     build_claim_audit_ledger,
     ClaimAuditLedger,
+    build_cds_evaluation_dossier,
+    CdsEvaluationDossier,
 )
 
 client = TestClient(app)
@@ -198,5 +200,58 @@ def test_claim_audit_ledger_predicates_witness_integrity():
         for p in ledger.predicates:
             assert len(p.required_witness) > 0
             assert len(p.coverage) > 0
+
+
+def test_build_cds_evaluation_dossier_structure():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+
+    dossier = build_cds_evaluation_dossier(claim)
+    assert isinstance(dossier, CdsEvaluationDossier)
+    assert dossier.claim_id == claim.claim_id
+    assert dossier.dossier_id == f"CDS-DOSSIER-{claim.claim_id}"
+    assert dossier.cds_spec_version == "2.4"
+    assert dossier.reports_spec_version == "2.3"
+    assert "RESEARCH, AUDIT, AND DECISION-SUPPORT ARTIFACTS ONLY" in dossier.hard_safety_boundary
+    assert "DRAFT" in dossier.draft_watermark
+    assert len(dossier.grade_evidence_profile) >= 3
+    assert len(dossier.decision_logic_traceability) >= 3
+    assert len(dossier.iso_risk_controls) >= 3
+    for node in dossier.decision_logic_traceability:
+        assert node.human_in_the_loop_mandatory is True
+        assert len(node.clinical_standard) > 0
+    assert len(dossier.dossier_hash) == 64
+
+
+def test_cds_evaluation_api_endpoint_200():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    response = client.get(f"/api/v1/claims/{claim_id}/cds-evaluation")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["claim_id"] == claim_id
+    assert data["dossier_id"] == f"CDS-DOSSIER-{claim_id}"
+    assert data["cds_spec_version"] == "2.4"
+    assert "hard_safety_boundary" in data
+    assert "grade_evidence_profile" in data
+    assert "decision_logic_traceability" in data
+    assert "iso_risk_controls" in data
+    assert "dossier_hash" in data
+    assert len(data["dossier_hash"]) == 64
+
+
+def test_cds_evaluation_api_endpoint_404():
+    response = client.get("/api/v1/claims/NONEXISTENT-CDS-CLAIM/cds-evaluation")
+    assert response.status_code == 404
+    assert "tidak ditemukan" in response.json()["detail"]
+
+
+def test_cds_evaluation_iso_risk_traceability():
+    for cid, claim in list(SYNTHETIC_CLAIMS_DATABASE.items())[:10]:
+        dossier = build_cds_evaluation_dossier(claim)
+        assert len(dossier.iso_risk_controls) == 3
+        for ctrl in dossier.iso_risk_controls:
+            assert "ISO" in ctrl.standard_clause
+            assert ctrl.post_mitigation_risk in ("LOW", "ACCEPTABLE", "NEGLIGIBLE")
+
 
 
