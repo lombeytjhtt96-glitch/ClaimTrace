@@ -6,6 +6,7 @@
   html {
     color-scheme: light;
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
   body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -14,6 +15,18 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  /* Hallmark Data-Viz: Tabular numerals for financial and telemetry alignment */
+  .tabular-nums, table, th, td, [data-numeric="true"], .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Hallmark Reflex 26b: Tactile active affordance for actionable controls */
+  button:active:not(:disabled),
+  [role="button"]:active:not([aria-disabled="true"]) {
+    transform: translateY(1px);
   }
 
   /* Universal Font Family Consistency: 100% Inter across all elements without exception */
