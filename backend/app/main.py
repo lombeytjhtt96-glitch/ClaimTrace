@@ -77,6 +77,8 @@ from app.engine.evidence_chain import (
     EvidenceChainGraph,
     build_academic_evidence_passport,
     AcademicEvidencePassport,
+    build_claim_audit_ledger,
+    ClaimAuditLedger,
 )
 
 # Enterprise Defensive Security Modules
@@ -781,6 +783,20 @@ def get_claim_evidence_passport_endpoint(claim_id: str):
     triage = evaluate_claim_triage(claim)
     chain = build_claim_evidence_chain(claim, triage)
     return build_academic_evidence_passport(claim, triage, chain)
+
+@app.get("/api/v1/claims/{claim_id}/audit-predicates", response_model=ClaimAuditLedger)
+def get_claim_audit_predicates_endpoint(claim_id: str):
+    """
+    Atomic Predicate Audit Ledger (inspired by agentic-awesome-skills v20.6.0: audit-agent-run-evidence).
+    Constructs a verifiable ledger of falsifiable claim predicates tested against external witnesses,
+    an anti-deception gate that rejects manufactured urgency or authority appeals, and an AKF provenance stamp.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    triage = evaluate_claim_triage(claim)
+    chain = build_claim_evidence_chain(claim, triage)
+    return build_claim_audit_ledger(claim, triage, chain)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(

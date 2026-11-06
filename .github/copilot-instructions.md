@@ -38,6 +38,12 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - Academic & Evidentiary Integrity (ARS v3.24.2 Standards):
   - Every claim triage dossier supports an `AcademicEvidencePassport` with Stage 4.5 integrity verification, L3 claim-faithfulness, statutory citation anchors, and a cryptographic reproducibility lock (`repro_lock`).
   - Strict anti-sycophancy: Devil's Advocate concession threshold >= 4.0 before conceding against rebuttal or pushback.
+- Atomic Predicate Audit & Anti-Deception (AAS v20.6.0 Standards):
+  - Every claim fraud triage dossier supports an atomic predicate audit ledger (`ClaimAuditLedger`) via `audit-agent-run-evidence` specification.
+  - Every predicate statement must link directly to an external witness (SIMRS, SISDMK, BPJS VClaim, INA-CBG engine) with exact cryptographic evidence hashes.
+  - Anti-Deception Gate: Enforce strict rejection of manufactured urgency, VIP authority appeals, or pressure to bypass deterministic audit rules.
+  - Omission Bias Gate: Negative findings, discrepancies, and counterevidences must never be suppressed or omitted from final audit outputs.
+  - AKF Trust Metadata: Immutable provenance stamping (`AkfProvenanceStamp`) with cryptographic ledger hash and statutory compliance citations (Permenkes 26/2021, Permenkes 3/2023, UU 27/2022 PDP, ISO 27001).
 
 ---
 
