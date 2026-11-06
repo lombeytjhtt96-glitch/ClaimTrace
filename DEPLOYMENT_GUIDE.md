@@ -18,7 +18,7 @@ claimtrace-jkn/
 ├── app/                  # Frontend Web SPA (React 18 + Vite + TailwindCSS)
 │   ├── vercel.json       # Konfigurasi SPA rewrite untuk Vercel
 │   └── .env.example      # Template VITE_API_BASE_URL
-├── backend/              # Backend API & AI Engine (FastAPI + Python 3.11 + Google Gemini)
+├── backend/              # Backend API & AI Engine (FastAPI + Python 3.11 + ClaimTrace AI Engine)
 │   ├── requirements.txt  # Dependensi Python
 │   └── .env.example      # Template GEMINI_API_KEY
 └── docker-compose.yml    # Konfigurasi Docker lokal
