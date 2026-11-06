@@ -797,8 +797,17 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 {filteredBlocks.map((b) => (
                   <tr
                     key={b.index}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Pilih blok audit ledger nomor ${b.index}`}
                     onClick={() => setSelectedBlock(b)}
-                    className={`transition-colors duration-150 cursor-pointer ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedBlock(b);
+                      }
+                    }}
+                    className={`claim-row-lazy transition-colors duration-150 cursor-pointer ${
                       selectedBlock?.index === b.index 
                         ? (isLight ? 'bg-emerald-50/90 border-l-2 border-l-emerald-600 font-semibold' : 'bg-cyan-500/15 border-l-2 border-l-cyan-400 font-semibold')
                         : (isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5')
@@ -894,7 +903,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     <td className="py-3 px-3.5">
                       <span className={`block font-semibold text-[11px] ${isLight ? 'text-slate-900' : 'text-white/90'}`}>{b.claimId}</span>
                       {b.nominal > 0 ? (
-                        <span className={`text-[10.5px] font-bold block ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                        <span className={`text-[10.5px] font-bold block tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                           Rp {b.nominal.toLocaleString('id-ID')}
                         </span>
                       ) : (
@@ -1223,12 +1232,13 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 </div>
                 <button
                   type="button"
+                  aria-label="Tutup jendela SecOps"
                   onClick={() => setShowSecOpsModal(false)}
                   className={`p-1.5 rounded-lg cursor-pointer transition ${
                     isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
 
@@ -1514,12 +1524,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   </div>
                 </div>
                 <button
+                  type="button"
+                  aria-label="Tutup jendela resi keputusan"
                   onClick={() => setShowReceiptsModal(false)}
                   className={`p-1.5 rounded-lg transition hover:opacity-80 ${
                     isLight ? 'hover:bg-purple-200 text-purple-900' : 'hover:bg-white/10 text-white'
                   }`}
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 

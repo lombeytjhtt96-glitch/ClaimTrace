@@ -31,6 +31,27 @@ export default defineConfig({
             if (id.includes('gsap')) {
               return 'gsap';
             }
+            if (id.includes('framer-motion') || id.includes('motion')) {
+              return 'motion';
+            }
+          }
+          if (id.includes('src/components/Dashboard/')) {
+            if (
+              id.includes('GraphVisualizer') ||
+              id.includes('EmpiricalForensics') ||
+              id.includes('PostHealthkathonSuiteView') ||
+              id.includes('CommandCenterView') ||
+              id.includes('InsightsAnalyticsView') ||
+              id.includes('RetentionAnalyticsView') ||
+              id.includes('FaskesSurveillance') ||
+              id.includes('DpjpIntelligence') ||
+              id.includes('DatabaseViewerView')
+            ) {
+              return 'dashboard-views';
+            }
+          }
+          if (id.includes('src/components/MobileJKN/')) {
+            return 'mobile-jkn';
           }
         }
       }

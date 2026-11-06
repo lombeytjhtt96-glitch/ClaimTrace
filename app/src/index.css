@@ -1196,4 +1196,63 @@
   color: #94a3b8 !important;
 }
 
+/* ==========================================================================
+   VERCEL AGENT SKILLS: REACT VIEW TRANSITIONS & BEST PRACTICES
+   ========================================================================== */
+:root {
+  --vt-duration-exit: 150ms;
+  --vt-duration-enter: 200ms;
+  --vt-duration-move: 350ms;
+}
+
+@keyframes vt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vt-slide-y {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Native View Transitions classes */
+::view-transition-old(.fade-out) {
+  animation: var(--vt-duration-exit) cubic-bezier(0.4, 0, 1, 1) vt-fade reverse;
+}
+::view-transition-new(.fade-in) {
+  animation: var(--vt-duration-enter) cubic-bezier(0, 0, 0.2, 1) both vt-fade;
+}
+
+::view-transition-old(.slide-up-out) {
+  animation: var(--vt-duration-exit) cubic-bezier(0.4, 0, 1, 1) vt-slide-y reverse;
+}
+::view-transition-new(.slide-up-in) {
+  animation: var(--vt-duration-enter) cubic-bezier(0, 0, 0.2, 1) both vt-slide-y;
+}
+
+/* Accessibility: Web Design Guidelines - Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Vercel React Best Practices: rendering-content-visibility for deferred off-screen list rendering */
+.content-visibility-auto,
+[data-virtual-row="true"],
+.claim-row-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 48px;
+}
+
+
 
