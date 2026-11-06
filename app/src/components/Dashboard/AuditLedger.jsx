@@ -295,6 +295,96 @@ export default function AuditLedger({ isLight: propIsLight }) {
     }
   };
 
+  // Agent Decision Receipts & Human Gate State (ra-qm-team / engineering)
+  const [showReceiptsModal, setShowReceiptsModal] = useState(false);
+  const [receiptsTab, setReceiptsTab] = useState('receipts'); // 'receipts' | 'humangate' | 'manifest'
+  const [receiptsList, setReceiptsList] = useState([]);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [receiptsManifest, setReceiptsManifest] = useState(null);
+  const [loadingReceipts, setLoadingReceipts] = useState(false);
+  const [verifyingReceiptId, setVerifyingReceiptId] = useState(null);
+  const [receiptVerifyResult, setReceiptVerifyResult] = useState(null);
+  const [gateNip, setGateNip] = useState('');
+  const [gateName, setGateName] = useState('');
+  const [gateNotes, setGateNotes] = useState('');
+  const [gateActionStatus, setGateActionStatus] = useState(null);
+
+  const handleOpenReceiptsModal = async () => {
+    setShowReceiptsModal(true);
+    setLoadingReceipts(true);
+    setReceiptVerifyResult(null);
+    setGateActionStatus(null);
+    try {
+      const [listRes, manRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/v1/receipts`),
+        fetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`)
+      ]);
+      if (listRes.ok) {
+        const data = await listRes.json();
+        setReceiptsList(data);
+        if (data.length > 0 && !selectedReceipt) {
+          setSelectedReceipt(data[0]);
+        }
+      }
+      if (manRes.ok) {
+        const manData = await manRes.json();
+        setReceiptsManifest(manData);
+      }
+    } catch (e) {
+      console.warn('Decision Receipts fetch error:', e);
+    } finally {
+      setLoadingReceipts(false);
+    }
+  };
+
+  const handleVerifyReceiptOffline = async (receiptId) => {
+    setVerifyingReceiptId(receiptId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/receipts/${receiptId}/verify`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setReceiptVerifyResult(data);
+      }
+    } catch (e) {
+      console.warn('Verify receipt error:', e);
+    } finally {
+      setVerifyingReceiptId(null);
+    }
+  };
+
+  const handleSubmitHumanGateReview = async (approved) => {
+    if (!selectedReceipt) return;
+    if (!gateNip || gateNip.trim().length < 5) {
+      alert('Masukkan NIP verifikator BPJS resmi (minimal 5 karakter).');
+      return;
+    }
+    setGateActionStatus('PROCESSING');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/receipts/${selectedReceipt.receipt_id}/human-gate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verifikator_nip: gateNip.trim(),
+          verifikator_name: gateName.trim() || 'Verifikator Medis BPJS',
+          approved: approved,
+          blocker_notes: gateNotes.trim() || null
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSelectedReceipt(updated);
+        setReceiptsList(prev => prev.map(r => r.receipt_id === updated.receipt_id ? updated : r));
+        setGateActionStatus('SUCCESS');
+        const manRes = await fetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`);
+        if (manRes.ok) setReceiptsManifest(await manRes.json());
+      } else {
+        setGateActionStatus('ERROR');
+      }
+    } catch (e) {
+      setGateActionStatus('ERROR');
+    }
+  };
+
   // Fetch live logs from backend if available & chain seamlessly
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/v1/audit-logs`)
@@ -558,6 +648,18 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               >
                 <Terminal className="w-3.5 h-3.5 text-sky-500" />
                 <span>Google SecOps &amp; SOAR</span>
+              </button>
+              <button type="button" 
+                onClick={handleOpenReceiptsModal}
+                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
+                  isLight
+                    ? 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300'
+                    : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/40'
+                }`}
+                title="Buka Konsol Agent Decision Receipts & Human Gate (ra-qm-team / OpenAgentOntology)"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
+                <span>Decision Receipts &amp; Human Gate</span>
               </button>
             </div>
           </div>
@@ -1378,6 +1480,393 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               }`}>
                 <span>Google SecOps Detection Engineering Engine v1.2.0</span>
                 <span>Standar Kepatuhan: UU PDP No. 27/2022 &amp; Perpres No. 82/2018</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* DECISION RECEIPTS & HUMAN GATE MODAL (ra-qm-team / OpenAgentOntology) */}
+        {showReceiptsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className={`w-full max-w-5xl rounded-2xl border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ${
+                isLight ? 'bg-white border-purple-200' : 'bg-[#00091a] border-purple-500/40'
+              }`}
+            >
+              {/* Header */}
+              <div className={`px-6 py-4 border-b flex items-center justify-between ${
+                isLight ? 'bg-purple-50 border-purple-200' : 'bg-[#00102e] border-white/10'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className={`text-base font-bold ${isLight ? 'text-purple-950' : 'text-purple-100'}`}>
+                      Agent Decision Receipts &amp; Human Gate Console
+                    </h3>
+                    <p className={`text-xs ${isLight ? 'text-purple-700' : 'text-white/60'}`}>
+                      Spesifikasi OpenAgentOntology · ISO 27001 · Permenkes No. 26/2021 &amp; Perpres No. 82/2018
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReceiptsModal(false)}
+                  className={`p-1.5 rounded-lg transition hover:opacity-80 ${
+                    isLight ? 'hover:bg-purple-200 text-purple-900' : 'hover:bg-white/10 text-white'
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Tabs */}
+              <div className={`flex border-b text-xs font-semibold px-6 pt-3 space-x-4 ${
+                isLight ? 'border-purple-200 bg-purple-50/50' : 'border-white/10 bg-black/30'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setReceiptsTab('receipts')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    receiptsTab === 'receipts'
+                      ? 'border-purple-500 text-purple-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <FileCode className="w-3.5 h-3.5" />
+                  <span>Daftar Keputusan AI ({receiptsList.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiptsTab('humangate')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    receiptsTab === 'humangate'
+                      ? 'border-purple-500 text-purple-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Konsol Human Gate (NIP BPJS)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceiptsTab('manifest')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    receiptsTab === 'manifest'
+                      ? 'border-purple-500 text-purple-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Segel Batch Manifest &amp; ISO 27001</span>
+                </button>
+              </div>
+
+              {/* Body Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {loadingReceipts ? (
+                  <div className="py-16 text-center space-y-3">
+                    <RefreshCw className="w-8 h-8 mx-auto animate-spin text-purple-500" />
+                    <p className="text-xs font-mono text-slate-400">Memuat Decision Receipts &amp; Human Gate status...</p>
+                  </div>
+                ) : receiptsTab === 'receipts' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    {/* Left: Receipts List */}
+                    <div className="md:col-span-5 space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Pilih Receipt Keputusan:
+                      </div>
+                      {receiptsList.map((r) => {
+                        const isSelected = selectedReceipt?.receipt_id === r.receipt_id;
+                        const isVerified = r.manifest.human_gate_status === 'HUMAN_VERIFIED';
+                        const isPending = r.manifest.human_gate_status === 'PENDING_REVIEW';
+                        const isBlocked = r.manifest.human_gate_status === 'GATE_BLOCKED';
+
+                        return (
+                          <div
+                            key={r.receipt_id}
+                            onClick={() => {
+                              setSelectedReceipt(r);
+                              setReceiptVerifyResult(null);
+                            }}
+                            className={`p-3.5 rounded-xl border text-left cursor-pointer transition ${
+                              isSelected
+                                ? isLight ? 'bg-purple-50 border-purple-500' : 'bg-purple-950/40 border-purple-500'
+                                : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200' : 'bg-white/5 hover:bg-white/10 border-white/10'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-mono text-xs font-bold text-purple-400">{r.receipt_id}</span>
+                              <span className={`text-[9.5px] px-2 py-0.5 rounded font-bold uppercase ${
+                                r.manifest.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                                r.manifest.severity === 'HIGH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              }`}>
+                                {r.manifest.severity}
+                              </span>
+                            </div>
+                            <div className={`text-xs font-semibold truncate ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                              {r.manifest.target}
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40 dark:border-white/5 text-[10px]">
+                              <span className="font-mono text-slate-400">{r.manifest.operation}</span>
+                              <span className={`px-1.5 py-0.5 rounded font-bold ${
+                                isVerified ? 'bg-emerald-500/20 text-emerald-400' :
+                                isBlocked ? 'bg-rose-500/20 text-rose-400' :
+                                isPending ? 'bg-amber-500/20 text-amber-400' :
+                                'bg-sky-500/20 text-sky-400'
+                              }`}>
+                                {r.manifest.human_gate_status}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right: Receipt Dossier & Verification */}
+                    <div className="md:col-span-7 space-y-4">
+                      {selectedReceipt ? (
+                        <div className={`p-5 rounded-2xl border space-y-4 ${
+                          isLight ? 'bg-slate-50 border-purple-200' : 'bg-[#000e2b] border-white/10'
+                        }`}>
+                          <div className="flex items-center justify-between pb-3 border-b">
+                            <div>
+                              <h4 className="font-bold text-sm text-purple-400">{selectedReceipt.receipt_id}</h4>
+                              <span className="text-[10.5px] font-mono text-slate-400">
+                                Diterbitkan: {selectedReceipt.issued_at}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleVerifyReceiptOffline(selectedReceipt.receipt_id)}
+                              disabled={verifyingReceiptId === selectedReceipt.receipt_id}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>{verifyingReceiptId === selectedReceipt.receipt_id ? 'Memverifikasi...' : 'Verifikasi Segel (Offline)'}</span>
+                            </button>
+                          </div>
+
+                          {/* Manifest Table */}
+                          <div className="space-y-2 text-xs">
+                            <div className="grid grid-cols-3 gap-1">
+                              <span className="text-slate-400">Operasi:</span>
+                              <span className="col-span-2 font-mono font-bold text-sky-400">{selectedReceipt.manifest.operation}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              <span className="text-slate-400">Target Klaim:</span>
+                              <span className="col-span-2 font-semibold">{selectedReceipt.manifest.target}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              <span className="text-slate-400">Dasar Kebijakan:</span>
+                              <span className="col-span-2">{selectedReceipt.manifest.policy}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              <span className="text-slate-400">Taksiran Nilai TGR:</span>
+                              <span className="col-span-2 font-mono font-bold text-emerald-400">
+                                Rp {Number(selectedReceipt.manifest.tgr_recovery_amount_rp || 0).toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              <span className="text-slate-400">Human Gate:</span>
+                              <span className="col-span-2 font-bold">
+                                {selectedReceipt.manifest.human_gate_required ? 'Wajib Review Verifikator' : 'Otonom Disetujui'}
+                                {' '}({selectedReceipt.manifest.human_gate_status})
+                              </span>
+                            </div>
+                            {selectedReceipt.manifest.human_reviewer_nip && (
+                              <div className="grid grid-cols-3 gap-1">
+                                <span className="text-slate-400">Verifikator NIP:</span>
+                                <span className="col-span-2 font-mono text-purple-400">
+                                  {selectedReceipt.manifest.human_reviewer_nip} ({selectedReceipt.manifest.human_reviewer_name})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Cryptographic Hashes */}
+                          <div className="p-3 rounded-xl bg-black/40 font-mono text-[10px] space-y-1.5 border border-white/5">
+                            <div className="text-slate-400">Canonical Digest (SHA-256):</div>
+                            <div className="text-purple-300 break-all select-all">{selectedReceipt.canonical_digest_sha256}</div>
+                            <div className="text-slate-400 pt-1">Digital Seal (HMAC-SHA256):</div>
+                            <div className="text-emerald-300 break-all select-all">{selectedReceipt.digital_seal}</div>
+                          </div>
+
+                          {/* Verification Result Drawer */}
+                          {receiptVerifyResult && (
+                            <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                              receiptVerifyResult.tamper_free
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                            }`}>
+                              <div className="font-bold flex items-center space-x-1.5">
+                                {receiptVerifyResult.tamper_free ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
+                                <span>{receiptVerifyResult.tamper_free ? 'Segel Kriptografis Autentik & Anti-Tamper' : 'Peringatan: Manipulasi Terdeteksi'}</span>
+                              </div>
+                              <ul className="text-[11px] list-disc list-inside space-y-0.5">
+                                {receiptVerifyResult.reasons.map((r, i) => (
+                                  <li key={i}>{r}</li>
+                                ))}
+                              </ul>
+                              <div className="pt-1 text-[10px] font-mono">
+                                Status Eksekutabel: {receiptVerifyResult.is_executable ? 'DISETUJUI UNTUK EKSEKUSI TGR' : 'TERTAHAN OLEH HUMAN GATE'}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-20 text-center text-xs text-slate-400">
+                          Pilih salah satu decision receipt untuk memeriksa detail manifest.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : receiptsTab === 'humangate' ? (
+                  <div className="max-w-2xl mx-auto space-y-4">
+                    <div className={`p-4 rounded-xl border ${isLight ? 'bg-purple-50 border-purple-200' : 'bg-purple-950/20 border-purple-500/30'}`}>
+                      <h4 className="font-bold text-sm text-purple-400 mb-1">Human Gate Sign-Off Protocol</h4>
+                      <p className="text-xs text-slate-300">
+                        Berdasarkan <strong>Permenkes No. 26/2021 Pasal 74</strong>, seluruh klaim Jalur Merah atau Tuntutan Ganti Rugi (TGR) wajib ditinjau dan ditandatangani secara digital oleh Verifikator Medis BPJS Kesehatan ber-NIP resmi sebelum tindakan pemotongan atau penolakan diberlakukan.
+                      </p>
+                    </div>
+
+                    {selectedReceipt ? (
+                      <div className={`p-5 rounded-2xl border space-y-4 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#000e2b] border-white/10'}`}>
+                        <div className="pb-3 border-b">
+                          <span className="text-[10px] uppercase font-bold text-purple-400">Target Keputusan yang Sedang Ditinjau:</span>
+                          <h4 className="font-bold text-sm mt-0.5">{selectedReceipt.manifest.target}</h4>
+                          <span className="text-xs text-slate-400 font-mono">Receipt ID: {selectedReceipt.receipt_id}</span>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-semibold mb-1">NIP Verifikator BPJS Kesehatan (Wajib):</label>
+                            <input
+                              type="text"
+                              value={gateNip}
+                              onChange={(e) => setGateNip(e.target.value)}
+                              placeholder="Contoh: 198504122010121001"
+                              className={`w-full px-3 py-2 rounded-xl text-xs font-mono border ${
+                                isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-black/40 border-white/10 text-white'
+                              }`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold mb-1">Nama Lengkap Verifikator:</label>
+                            <input
+                              type="text"
+                              value={gateName}
+                              onChange={(e) => setGateName(e.target.value)}
+                              placeholder="Contoh: Dr. Budi Santoso, Sp.PK"
+                              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                                isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-black/40 border-white/10 text-white'
+                              }`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-semibold mb-1">Catatan Verifikator / Blocker (Opsional):</label>
+                            <textarea
+                              rows={2}
+                              value={gateNotes}
+                              onChange={(e) => setGateNotes(e.target.value)}
+                              placeholder="Tuliskan catatan verifikasi atau alasan keberatan jika ada..."
+                              className={`w-full px-3 py-2 rounded-xl text-xs border ${
+                                isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-black/40 border-white/10 text-white'
+                              }`}
+                            />
+                          </div>
+
+                          <div className="flex items-center space-x-3 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSubmitHumanGateReview(true)}
+                              className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-md"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Setujui &amp; Segel Kriptografis (Approved)</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSubmitHumanGateReview(false)}
+                              className="py-2.5 px-4 rounded-xl font-bold text-xs bg-rose-600/80 hover:bg-rose-600 text-white transition flex items-center justify-center space-x-1.5 cursor-pointer"
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              <span>Tolak / Catat Blocker</span>
+                            </button>
+                          </div>
+
+                          {gateActionStatus === 'SUCCESS' && (
+                            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                              Human Gate berhasil diselesaikan dan receipt telah disegel ulang secara kriptografis.
+                            </div>
+                          )}
+                          {gateActionStatus === 'ERROR' && (
+                            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
+                              Gagal memproses Human Gate. Pastikan NIP valid dan terdaftar.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-16 text-center text-xs text-slate-400">
+                        Pilih receipt di Tab 1 terlebih dahulu untuk memproses Human Gate review.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Manifest Tab */
+                  <div className="max-w-3xl mx-auto space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className={`p-4 rounded-xl border ${isLight ? 'bg-purple-50 border-purple-200' : 'bg-white/5 border-white/10'}`}>
+                        <span className="text-[10px] text-slate-400 block">Total Decision Receipts</span>
+                        <span className="text-xl font-bold font-mono text-purple-400 mt-0.5 block">
+                          {receiptsManifest?.total_receipts || 0}
+                        </span>
+                      </div>
+                      <div className={`p-4 rounded-xl border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-white/5 border-white/10'}`}>
+                        <span className="text-[10px] text-slate-400 block">Potensi TGR Terproteksi</span>
+                        <span className="text-xl font-bold font-mono text-emerald-400 mt-0.5 block">
+                          Rp {Number(receiptsManifest?.total_potential_tgr_rp || 0).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div className={`p-4 rounded-xl border ${isLight ? 'bg-amber-50 border-amber-200' : 'bg-white/5 border-white/10'}`}>
+                        <span className="text-[10px] text-slate-400 block">Human Gate Tervalidasi</span>
+                        <span className="text-xl font-bold font-mono text-amber-400 mt-0.5 block">
+                          {receiptsManifest?.verified_human_gate_count || 0} / {receiptsManifest?.total_receipts || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`p-5 rounded-xl border space-y-3 font-mono text-xs ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#000e2b] border-white/10'
+                    }`}>
+                      <div className="flex items-center justify-between pb-2 border-b">
+                        <span className="font-bold text-slate-400">Master Manifest Seal (SHA-256):</span>
+                        <span className="text-[10px] text-emerald-400">VERIFIED IMMUTABLE</span>
+                      </div>
+                      <div className="text-purple-300 break-all select-all text-[11px] bg-black/40 p-3 rounded-lg border border-white/5">
+                        {receiptsManifest?.master_manifest_seal_sha256}
+                      </div>
+                      <div className="text-[10.5px] text-slate-400 pt-1">
+                        Segel ini mengikat seluruh receipt keputusan menjadi satu rantai audit tunggal yang dapat diverifikasi secara offline tanpa ketergantungan pada server pihak ketiga.
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
+                isLight ? 'bg-purple-100 border-purple-200 text-purple-800' : 'bg-[#000c24] border-white/10 text-white/60'
+              }`}>
+                <span>OpenAgentOntology (OAO) &middot; ISO 27001 Record-Keeping</span>
+                <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>
           </div>

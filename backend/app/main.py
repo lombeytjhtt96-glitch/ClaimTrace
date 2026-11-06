@@ -26,6 +26,11 @@ from app.models.schemas import (
     SecOpsCaseItem,
     SecOpsCaseManifest,
     DynamicYaraLCompileRequest,
+    DecisionReceiptItem,
+    MintReceiptRequest,
+    HumanGateReviewRequest,
+    ReceiptVerificationResponse,
+    BatchReceiptsManifest,
 )
 from app.engine.google_secops_engine import (
     PRECOMPILED_YARA_L_RULES,
@@ -33,6 +38,15 @@ from app.engine.google_secops_engine import (
     compile_dynamic_yara_l_rule,
     generate_secops_cases,
     generate_sovereignty_assessment_report,
+)
+from app.engine.decision_receipts_engine import (
+    list_all_decision_receipts,
+    get_decision_receipt,
+    mint_decision_receipt,
+    verify_decision_receipt,
+    apply_human_gate_review,
+    compute_batch_receipts_manifest,
+    RECEIPTS_REGISTRY,
 )
 from app.engine.scoring import evaluate_claim_triage, audit_logger
 from app.data.synthetic_seed import get_initial_claims
@@ -1036,6 +1050,92 @@ def get_sovereignty_assessment_endpoint():
     and Google Cloud Assured Workloads sovereignty standards.
     """
     return generate_sovereignty_assessment_report()
+
+# ==============================================================================
+# AGENT DECISION RECEIPTS & HUMAN GATE ENDPOINTS (ra-qm-team / oao)
+# ==============================================================================
+
+@app.get("/api/v1/receipts", response_model=List[DecisionReceiptItem])
+def list_decision_receipts_endpoint(
+    severity: Optional[str] = Query(None, description="Filter by severity: CRITICAL, HIGH, MEDIUM, LOW"),
+    gate_status: Optional[str] = Query(None, description="Filter by human gate status: PENDING_REVIEW, HUMAN_VERIFIED, GATE_BLOCKED")
+):
+    """
+    Lists tamper-evident Agent Decision Receipts minted for consequential decisions (ISO 27001 / RA-QM).
+    """
+    return list_all_decision_receipts(severity=severity, gate_status=gate_status)
+
+@app.get("/api/v1/receipts/manifest/verify", response_model=BatchReceiptsManifest)
+def verify_batch_receipts_manifest_endpoint():
+    """
+    Computes and returns the overall batch receipts manifest with master SHA-256 seal.
+    """
+    return compute_batch_receipts_manifest()
+
+@app.get("/api/v1/receipts/{receipt_or_claim_id}", response_model=DecisionReceiptItem)
+def get_decision_receipt_endpoint(receipt_or_claim_id: str):
+    """
+    Retrieves a single Agent Decision Receipt by receipt ID or associated claim ID.
+    """
+    rcp = get_decision_receipt(receipt_or_claim_id)
+    if not rcp:
+        raise HTTPException(status_code=404, detail=f"Decision receipt '{receipt_or_claim_id}' tidak ditemukan")
+    return rcp
+
+@app.post("/api/v1/receipts/mint", response_model=DecisionReceiptItem)
+def mint_decision_receipt_endpoint(req: MintReceiptRequest):
+    """
+    Mints a new tamper-evident Agent Decision Receipt with SHA-256 canonical digest and digital seal.
+    """
+    try:
+        receipt = mint_decision_receipt(
+            agent_id=req.agent_id,
+            operation=req.operation,
+            target=req.target,
+            policy=req.policy,
+            decision_label=req.decision_label,
+            inputs=req.inputs,
+            severity=req.severity,
+            tgr_recovery_amount_rp=req.tgr_recovery_amount_rp,
+            claim_id=req.claim_id,
+            faskes_name=req.faskes_name
+        )
+        RECEIPTS_REGISTRY[receipt["receipt_id"]] = receipt
+        return receipt
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/v1/receipts/{receipt_id}/human-gate", response_model=DecisionReceiptItem)
+def submit_human_gate_review_endpoint(receipt_id: str, req: HumanGateReviewRequest):
+    """
+    Applies human gate sign-off or blocker resolution by an authorized BPJS Verifikator (with official NIP).
+    Enforces Permenkes No. 26/2021 Pasal 74.
+    """
+    rcp = get_decision_receipt(receipt_id)
+    if not rcp:
+        raise HTTPException(status_code=404, detail=f"Decision receipt '{receipt_id}' tidak ditemukan")
+    try:
+        updated_rcp = apply_human_gate_review(
+            receipt=rcp,
+            verifikator_nip=req.verifikator_nip,
+            verifikator_name=req.verifikator_name,
+            approved=req.approved,
+            blocker_notes=req.blocker_notes
+        )
+        RECEIPTS_REGISTRY[updated_rcp["receipt_id"]] = updated_rcp
+        return updated_rcp
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/v1/receipts/{receipt_id}/verify", response_model=ReceiptVerificationResponse)
+def verify_decision_receipt_endpoint(receipt_id: str):
+    """
+    Performs offline verification of the decision receipt from its canonical digest and digital seal.
+    """
+    rcp = get_decision_receipt(receipt_id)
+    if not rcp:
+        raise HTTPException(status_code=404, detail=f"Decision receipt '{receipt_id}' tidak ditemukan")
+    return verify_decision_receipt(rcp)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
