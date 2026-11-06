@@ -35,6 +35,9 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - Security Headers: Maintain OWASP Secure Headers (CSP, HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Cache-Control for sensitive paths).
 - Rate Limiting: Respect Token-Bucket and sliding window rate limiters. Always handle rate-limit exceptions gracefully.
 - Health & Observability: Maintain `/health`, `/healthz`, and `/metrics` (Prometheus) endpoints with zero sensitive data exposure.
+- Academic & Evidentiary Integrity (ARS v3.24.2 Standards):
+  - Every claim triage dossier supports an `AcademicEvidencePassport` with Stage 4.5 integrity verification, L3 claim-faithfulness, statutory citation anchors, and a cryptographic reproducibility lock (`repro_lock`).
+  - Strict anti-sycophancy: Devil's Advocate concession threshold >= 4.0 before conceding against rebuttal or pushback.
 
 ---
 
