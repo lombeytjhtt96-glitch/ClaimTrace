@@ -273,3 +273,42 @@ class BatchReceiptsManifest(BaseModel):
     verified_human_gate_count: int
     total_potential_tgr_rp: float
     receipts: List[DecisionReceiptItem]
+
+# ==============================================================================
+# CYBERSECURITY SKILLS & MITRE F3 FRAMEWORK SCHEMAS (mukul975/skills)
+# ==============================================================================
+
+class CybersecurityFrameworkItem(BaseModel):
+    framework: str = Field(description="MITRE_F3, MITRE_ATTACK, MITRE_D3FEND, NIST_CSF, MITRE_ATLAS, or NIST_AI_RMF")
+    technique_id: str
+    technique_name: str
+    tactic: str
+    description: str
+    defense_countermeasure: Optional[str] = None
+
+class ClaimCybersecurityMatrix(BaseModel):
+    claim_id: str
+    faskes_code: Optional[str] = None
+    fraud_typology: str
+    risk_level: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+    f3_positioning: List[CybersecurityFrameworkItem] = Field(default_factory=list)
+    f3_monetization: List[CybersecurityFrameworkItem] = Field(default_factory=list)
+    attack_ttps: List[CybersecurityFrameworkItem] = Field(default_factory=list)
+    d3fend_countermeasures: List[CybersecurityFrameworkItem] = Field(default_factory=list)
+    nist_csf_alignment: List[str] = Field(default_factory=list)
+    canonical_matrix_sha256: str
+    generated_at: str
+
+class EvaluateCybersecurityRequest(BaseModel):
+    claim_id: str
+    fraud_typology: Optional[str] = None
+    faskes_code: Optional[str] = None
+    indikator_anomali: List[str] = Field(default_factory=list)
+    nominal_klaim_rp: float = 0.0
+
+class FrameworkCatalogResponse(BaseModel):
+    total_skills_count: int
+    mapped_frameworks: Dict[str, int]
+    f3_skills_count: int
+    top_fraud_skills: List[Dict[str, Any]]
+

@@ -309,6 +309,43 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const [gateNotes, setGateNotes] = useState('');
   const [gateActionStatus, setGateActionStatus] = useState(null);
 
+  // Cybersecurity Frameworks Modal (mukul975/skills)
+  const [showCyberModal, setShowCyberModal] = useState(false);
+  const [cyberSummary, setCyberSummary] = useState(null);
+  const [claimMatrix, setClaimMatrix] = useState(null);
+  const [cyberTab, setCyberTab] = useState('matrix'); // 'matrix' | 'd3fend' | 'catalog'
+  const [loadingCyber, setLoadingCyber] = useState(false);
+  const [fraudCatalog, setFraudCatalog] = useState([]);
+
+  const handleOpenCyberModal = async () => {
+    setShowCyberModal(true);
+    setLoadingCyber(true);
+    try {
+      const [sumRes, catRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/v1/cybersecurity/frameworks/summary`),
+        fetch(`${API_BASE_URL}/api/v1/cybersecurity/skills/fraud-catalog?limit=50`)
+      ]);
+      if (sumRes.ok) {
+        const sumData = await sumRes.json();
+        setCyberSummary(sumData);
+      }
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setFraudCatalog(catData);
+      }
+      const targetClaimId = selectedBlock?.claimId || 'CLM-2026-08912';
+      const matRes = await fetch(`${API_BASE_URL}/api/v1/cybersecurity/claims/${targetClaimId}/matrix`);
+      if (matRes.ok) {
+        const matData = await matRes.json();
+        setClaimMatrix(matData);
+      }
+    } catch (e) {
+      console.warn('Cybersecurity modal fetch error:', e);
+    } finally {
+      setLoadingCyber(false);
+    }
+  };
+
   const handleOpenReceiptsModal = async () => {
     setShowReceiptsModal(true);
     setLoadingReceipts(true);
@@ -660,6 +697,18 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
                 <span>Decision Receipts &amp; Human Gate</span>
+              </button>
+              <button type="button" 
+                onClick={handleOpenCyberModal}
+                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
+                  isLight
+                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
+                }`}
+                title="Buka Matriks Taksonomi Keamanan Siber MITRE F3, ATT&CK & D3FEND"
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-500" />
+                <span>MITRE F3 &amp; D3FEND Matrix</span>
               </button>
             </div>
           </div>
@@ -1879,6 +1928,271 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               }`}>
                 <span>OpenAgentOntology (OAO) &middot; ISO 27001 Record-Keeping</span>
                 <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* CYBERSECURITY FRAMEWORKS & MITRE F3 MODAL (mukul975/skills) */}
+        {showCyberModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className={`w-full max-w-5xl rounded-2xl border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden ${
+                isLight ? 'bg-white border-amber-200' : 'bg-[#00091a] border-amber-500/40'
+              }`}
+            >
+              {/* Header */}
+              <div className={`px-6 py-4 border-b flex items-center justify-between ${
+                isLight ? 'bg-amber-50 border-amber-200' : 'bg-[#00102e] border-white/10'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <Shield className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className={`text-base font-bold ${isLight ? 'text-amber-950' : 'text-amber-100'}`}>
+                      Matriks Taksonomi Keamanan Siber MITRE F3, ATT&amp;CK &amp; D3FEND
+                    </h3>
+                    <p className={`text-xs ${isLight ? 'text-amber-800' : 'text-white/60'}`}>
+                      818 Cybersecurity Skills &middot; MITRE Fight Fraud Framework (F3 v1.1) &middot; MITRE D3FEND v1.4.0 &middot; NIST CSF 2.0
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Tutup jendela matriks keamanan siber"
+                  onClick={() => setShowCyberModal(false)}
+                  className={`p-1.5 rounded-lg transition hover:opacity-80 ${
+                    isLight ? 'hover:bg-amber-200 text-amber-900' : 'hover:bg-white/10 text-white'
+                  }`}
+                >
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              {/* Navigation Tabs */}
+              <div className={`flex border-b text-xs font-semibold px-6 pt-3 space-x-4 ${
+                isLight ? 'border-amber-200 bg-amber-50/50' : 'border-white/10 bg-black/30'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setCyberTab('matrix')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    cyberTab === 'matrix'
+                      ? 'border-amber-500 text-amber-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Matriks Fraud Klaim (MITRE F3)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCyberTab('d3fend')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    cyberTab === 'd3fend'
+                      ? 'border-amber-500 text-amber-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Mitigasi Bertahan (MITRE D3FEND)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCyberTab('catalog')}
+                  className={`pb-2.5 px-1 border-b-2 transition flex items-center space-x-1.5 cursor-pointer ${
+                    cyberTab === 'catalog'
+                      ? 'border-amber-500 text-amber-600 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Database className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Katalog 94 Skill F3 ({fraudCatalog.length})</span>
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-170px)] space-y-4">
+                {/* Global Metrics Bar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-amber-50 border-amber-200' : 'bg-white/5 border-white/10'}`}>
+                    <span className="text-[10px] text-slate-400 block">Total Cybersecurity Skills</span>
+                    <span className="text-lg font-bold font-mono text-amber-500 mt-0.5 block tabular-nums">
+                      {cyberSummary?.total_skills_count || 818}
+                    </span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50 border-rose-200' : 'bg-white/5 border-white/10'}`}>
+                    <span className="text-[10px] text-slate-400 block">MITRE F3 Fraud Skills</span>
+                    <span className="text-lg font-bold font-mono text-rose-400 mt-0.5 block tabular-nums">
+                      {cyberSummary?.f3_skills_count || 94}
+                    </span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-cyan-50 border-cyan-200' : 'bg-white/5 border-white/10'}`}>
+                    <span className="text-[10px] text-slate-400 block">MITRE D3FEND Defenses</span>
+                    <span className="text-lg font-bold font-mono text-cyan-400 mt-0.5 block tabular-nums">
+                      {cyberSummary?.mapped_frameworks?.MITRE_D3FEND_v1_4 || 139}
+                    </span>
+                  </div>
+                  <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-white/5 border-white/10'}`}>
+                    <span className="text-[10px] text-slate-400 block">NIST CSF 2.0 Controls</span>
+                    <span className="text-lg font-bold font-mono text-emerald-400 mt-0.5 block tabular-nums">
+                      {cyberSummary?.mapped_frameworks?.NIST_CSF_v2 || 805}
+                    </span>
+                  </div>
+                </div>
+
+                {loadingCyber ? (
+                  <div className="py-12 text-center text-xs text-slate-400">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-500" />
+                    <span>Memuat taksonomi keamanan siber MITRE F3 &amp; D3FEND...</span>
+                  </div>
+                ) : cyberTab === 'matrix' ? (
+                  /* Matrix Tab */
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-xl border flex items-center justify-between flex-wrap gap-2 ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+                    }`}>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Klaim Terpilih</span>
+                        <span className="text-sm font-bold font-mono text-amber-400">{claimMatrix?.claim_id || selectedBlock?.claimId || 'CLM-2026-08912'}</span>
+                        <span className="text-xs text-slate-400 block mt-0.5">Faskes: {claimMatrix?.faskes_code || selectedBlock?.faskes || 'RSUD Dr. Soetomo'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                          claimMatrix?.risk_level === 'CRITICAL'
+                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        }`}>
+                          Risk: {claimMatrix?.risk_level || 'CRITICAL'}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                          Tipologi: {claimMatrix?.fraud_typology || 'PHANTOM_BILLING'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* F3 Positioning */}
+                      <div className={`p-4 rounded-xl border space-y-3 ${
+                        isLight ? 'bg-amber-50/50 border-amber-200' : 'bg-[#001026] border-amber-500/30'
+                      }`}>
+                        <div className="flex items-center space-x-2 border-b pb-2">
+                          <Activity className="w-4 h-4 text-amber-400" />
+                          <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                            MITRE F3 Taktik Positioning (FA0001)
+                          </h4>
+                        </div>
+                        <div className="space-y-2">
+                          {(claimMatrix?.f3_positioning || []).map((t, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold font-mono text-amber-300">{t.technique_id}</span>
+                                <span className="text-[9.5px] uppercase font-bold text-slate-400">{t.tactic}</span>
+                              </div>
+                              <p className="text-[11px] font-semibold text-white/90">{t.technique_name}</p>
+                              <p className="text-[10.5px] text-slate-300">{t.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* F3 Monetization */}
+                      <div className={`p-4 rounded-xl border space-y-3 ${
+                        isLight ? 'bg-rose-50/50 border-rose-200' : 'bg-[#001026] border-rose-500/30'
+                      }`}>
+                        <div className="flex items-center space-x-2 border-b pb-2">
+                          <ShieldAlert className="w-4 h-4 text-rose-400" />
+                          <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider">
+                            MITRE F3 Taktik Monetization (FA0002)
+                          </h4>
+                        </div>
+                        <div className="space-y-2">
+                          {(claimMatrix?.f3_monetization || []).map((t, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold font-mono text-rose-300">{t.technique_id}</span>
+                                <span className="text-[9.5px] uppercase font-bold text-slate-400">{t.tactic}</span>
+                              </div>
+                              <p className="text-[11px] font-semibold text-white/90">{t.technique_name}</p>
+                              <p className="text-[10.5px] text-slate-300">{t.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Canonical Digest Seal */}
+                    <div className={`p-4 rounded-xl border font-mono text-xs space-y-1 ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-white/10'
+                    }`}>
+                      <div className="flex items-center justify-between text-slate-400 text-[10px]">
+                        <span>Segel Kriptografis Matriks Taksonomi (SHA-256):</span>
+                        <span className="text-emerald-400 font-bold">BITWISE CANONICAL</span>
+                      </div>
+                      <p className="text-[11px] text-amber-300 break-all select-all pt-1">
+                        {claimMatrix?.canonical_matrix_sha256}
+                      </p>
+                    </div>
+                  </div>
+                ) : cyberTab === 'd3fend' ? (
+                  /* D3FEND Tab */
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-400">
+                      Rekomendasi mitigasi bertahan berdasarkan ontologi MITRE D3FEND v1.4.0 untuk memblokir eksploitasi klaim BPJS Kesehatan:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {(claimMatrix?.d3fend_countermeasures || []).map((d, idx) => (
+                        <div key={idx} className={`p-4 rounded-xl border space-y-2 ${
+                          isLight ? 'bg-cyan-50/50 border-cyan-200' : 'bg-[#00122e] border-cyan-500/30'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold font-mono text-cyan-300">{d.technique_id}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 uppercase">
+                              {d.tactic}
+                            </span>
+                          </div>
+                          <h5 className="text-xs font-bold text-white">{d.technique_name}</h5>
+                          <p className="text-[11px] text-slate-300">{d.description}</p>
+                          <div className="pt-1 border-t border-white/5 text-[10.5px] text-cyan-300 font-medium">
+                            Tindakan: {d.defense_countermeasure}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  /* Catalog Tab */
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-400">
+                      Daftar 94 skill spesialis deteksi fraud keuangan siber dari repositori cybersecurity-skills:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {fraudCatalog.map((s, idx) => (
+                        <div key={idx} className={`p-3 rounded-xl border text-xs space-y-1 ${
+                          isLight ? 'bg-white border-slate-200' : 'bg-black/30 border-white/5'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-amber-300 font-mono text-[11px]">{s.name}</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">F3 Mapped</span>
+                          </div>
+                          <p className="text-[10.5px] text-slate-400 line-clamp-2">{s.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
+                isLight ? 'bg-amber-100 border-amber-200 text-amber-800' : 'bg-[#000c24] border-white/10 text-white/60'
+              }`}>
+                <span>MITRE Center for Threat-Informed Defense (CTID) &middot; F3 v1.1 STIX Bundle</span>
+                <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; ISO 27001</span>
               </div>
             </motion.div>
           </div>

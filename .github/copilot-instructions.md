@@ -164,3 +164,28 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - **View Transitions (`react-view-transitions`)**:
   - Implement native CSS view transitions (`@view-transition`, `::view-transition-old`, `::view-transition-new`) for lateral tab changes and state morphs with smooth, low-latency timing.
 
+---
+
+## Cybersecurity Skills & MITRE F3 / D3FEND Fraud Countermeasures (cybersecurity-skills)
+
+- **Skills Source**: Repositories located at global cybersecurity skills repository (818 production-grade cybersecurity skills across 34 domains) and symlinked in `.github/skills/cybersecurity-skills`.
+- **MITRE Fight Fraud Framework (F3 v1.1)**: Dual-phase fraud taxonomy mapping:
+  - Positioning (`FA0001`): Synthetic identity seeding (`F1005`), fake provider credential setup (`F1036`), and compromised verifier sessions.
+  - Monetization (`FA0002`): Unauthorized claim payout extraction (`F1025.003`), tariff delta inflation, and systemic unbundling.
+- **MITRE ATT&CK Alignment**: TTP identification for cyber-enabled fraud (`T1078` Valid Accounts, `T1565.001` Stored Data Manipulation, `T1657` Financial Theft).
+- **MITRE D3FEND v1.4.0 Defensive Countermeasures**:
+  - `D3-ARA`: User Account Lockdown on rogue verifier accounts.
+  - `D3-DA`: Cryptographic Data Authenticity verification on claim payloads.
+  - `D3-NTA`: Inbound Network Traffic Analysis for geovelocity anomalies.
+  - `D3-SVR`: Secondary Verification Review for high-risk ICD-10 upcoding.
+  - `D3-TR`: Bidirectional Transaction Reconciliation against hospital SIMRS ledgers.
+- **Evidentiary Integrity & Cryptographic Seal**:
+  - Deterministic SHA-256 canonical matrix digest (`canonical_matrix_sha256`) per claim evaluation for statutory admissibility under Permenkes RI No. 26/2021 and UU PDP No. 27/2022.
+- **REST Endpoints**:
+  - `GET /api/v1/cybersecurity/frameworks/summary`
+  - `GET /api/v1/cybersecurity/skills/fraud-catalog`
+  - `GET /api/v1/cybersecurity/claims/{claim_id}/matrix`
+  - `POST /api/v1/cybersecurity/claims/evaluate`
+- **Strict Guardrails**: Zero emojis and zero vendor leaks across all files, documentation, and user-facing copy.
+
+
