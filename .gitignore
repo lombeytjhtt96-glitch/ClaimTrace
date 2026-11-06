@@ -10,6 +10,7 @@ app/dist/
 __pycache__/
 backend/__pycache__/
 .pytest_cache/
+backend/.pytest_cache/
 
 # Environment and sensitive data
 .env
@@ -23,14 +24,10 @@ chroma_db/
 # System and logs
 .DS_Store
 *.log
-libapp.so
 /*.pptx
 /*.png
 
 # Local tooling & design artifacts
-extracted_assets/
-stitch_assets/
-screenshots/
 .agent/
 .agents/
 .claude/
@@ -44,8 +41,6 @@ AGENTS.md
 DESIGN.md
 */AGENTS.md
 */DESIGN.md
-enhance_ui_skills.py
-generate_pptx.py
 build_final_deck.py
 export_final_deck_to_pdf.py
 start_all.bat
@@ -65,6 +60,4 @@ PANDUAN_RECORDING_VIDEO_DEMO.md
 RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
 METADATA_SUBMISI_HEALTHKATHON.txt
 SUBMISSION_HEALTHKATHON_*
-videos/
-*/videos/
 app/scripts/record_*.js

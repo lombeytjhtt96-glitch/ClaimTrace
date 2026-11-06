@@ -26,7 +26,6 @@ export const CLAIMTRACE_MODEL_CHAIN = [
   'ClaimTrace AI Fast (Zero-PHI)',
   'ClaimTrace AI Local Engine',
 ];
-export const GEMINI_MODEL_CHAIN = CLAIMTRACE_MODEL_CHAIN;
 
 const STORAGE_KEY_TELEMETRY = 'claimtrace_jkn_ai_telemetry_v1';
 
@@ -253,7 +252,6 @@ export function setActiveClaimTraceModel(modelName) {
   saveAiTelemetryState(state);
   return state;
 }
-export const setActiveGeminiModel = setActiveClaimTraceModel;
 
 export function updateServerVaultStatus(patch) {
   const state = getAiTelemetryState();
@@ -382,8 +380,6 @@ export async function callClaimTraceGenerateContent({
     costUsd: 0,
   };
 }
-
-export const callGeminiGenerateContent = callClaimTraceGenerateContent;
 
 /**
  * Multi-Agent Orchestrator for Admin Chat Widget
@@ -609,7 +605,6 @@ export async function generateClaimTraceExecutiveReport(reportType = 'mingguan')
     durationMs: res.durationMs,
   };
 }
-export const generateGeminiExecutiveReport = generateClaimTraceExecutiveReport;
 
 /**
  * Generates real ClaimTrace AI Faskes Compliance Intervention Campaign for ExecutiveHub.jsx
@@ -652,4 +647,3 @@ export async function generateClaimTraceInterventionCampaign(iaSummary) {
       'Menargetkan 2 modus anomali tertinggi (Upcoding Diagnosis Level III & Phantom Billing Rawat Jalan) yang terdeteksi oleh Agen Analitik Wawasan (IA).',
   };
 }
-export const generateGeminiInterventionCampaign = generateClaimTraceInterventionCampaign;
