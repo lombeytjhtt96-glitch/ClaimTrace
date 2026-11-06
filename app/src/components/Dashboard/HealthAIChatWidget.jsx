@@ -394,15 +394,15 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
                         <span
-                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"
                           style={{ animationDelay: '0ms' }}
                         />
                         <span
-                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"
                           style={{ animationDelay: '150ms' }}
                         />
                         <span
-                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"
                           style={{ animationDelay: '300ms' }}
                         />
                       </div>

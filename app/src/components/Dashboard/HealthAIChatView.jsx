@@ -743,9 +743,9 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
                     : 'bg-[#00153A]/90 border-white/10 text-white'
                 }`}>
                   <div className="flex items-center space-x-2">
-                    <span className={`w-2 h-2 rounded-full animate-bounce ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
-                    <span className={`w-2 h-2 rounded-full animate-bounce [animation-delay:0.2s] ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
-                    <span className={`w-2 h-2 rounded-full animate-bounce [animation-delay:0.4s] ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
+                    <span className={`w-2 h-2 rounded-full animate-pulse ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
+                    <span className={`w-2 h-2 rounded-full animate-pulse [animation-delay:0.2s] ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
+                    <span className={`w-2 h-2 rounded-full animate-pulse [animation-delay:0.4s] ${isLight ? 'bg-emerald-600' : 'bg-cyan-400'}`} />
                     <span className={`text-xs font-semibold ml-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                       ClaimTrace AI Engine sedang mengkalkulasi fusi bukti 3 lapis...
                     </span>

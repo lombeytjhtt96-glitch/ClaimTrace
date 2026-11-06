@@ -415,7 +415,7 @@ export default function LandingPage({
               }`}
             >
               Satu Skor Prioritas, Tiga Lapis Bukti Faktual. <br />
-              <span className={effectiveIsLight ? 'text-emerald-700 bg-gradient-to-r from-emerald-700 via-teal-600 to-cyan-700 bg-clip-text text-transparent' : 'text-emerald-400 bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent'}>
+              <span className={effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}>
                 Keputusan Mutlak Tetap di Tangan Verifikator.
               </span>
             </motion.h1>

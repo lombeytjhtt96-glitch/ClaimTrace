@@ -356,12 +356,12 @@ export default function MarkdownRenderer({ content, isLight = false, isUser = fa
             return (
               <blockquote
                 key={bIdx}
-                className={`border-l-3 pl-3 py-1.5 my-2 text-xs italic rounded-r ${
+                className={`pl-3.5 py-1.5 my-2 text-xs italic rounded-lg ring-1 ring-inset ${
                   isUser
-                    ? 'border-white/50 bg-white/10 text-white'
+                    ? 'bg-white/10 text-white ring-white/30'
                     : isLight
-                    ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 font-medium'
-                    : 'border-emerald-400 bg-emerald-950/30 text-emerald-200'
+                    ? 'bg-emerald-50/80 text-emerald-950 font-medium ring-emerald-600/30'
+                    : 'bg-emerald-950/30 text-emerald-200 ring-emerald-400/30'
                 }`}
               >
                 {renderInlineMarkdown(block.text, isLight, isUser)}
