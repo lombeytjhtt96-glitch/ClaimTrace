@@ -54,6 +54,12 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - Number multi-step review tasks with explicit integer minute estimates; cap review steps and findings lists to maximum 5 items per group.
   - Conclude every brief with exactly one concrete next action executable in under two minutes.
   - Zero preamble, conversational pleasantries, or redundant recaps in audit summaries.
+- Cloudflare Security Audit Harness & Finding Taxonomy (cloudflare/security-audit-skill Standards):
+  - Every evaluated trust boundary supports the Cloudflare 6-phase harness workflow and strict 3-verdict taxonomy (`confirmed`, `needs_validation`, `rejected`).
+  - Prohibit severity or CVSS scores on `needs_validation` or `rejected` candidates.
+  - For `confirmed` vulnerabilities, calibrate severity strictly against demonstrated local impact.
+  - Adversarial Verification: Verification of candidate findings must be conducted independently from candidate hypothesis generation.
+  - Expose `/api/v1/security/audit-ledger` delivering `SecurityAuditCoverageLedger` with deterministic cryptographic audit hashes.
 
 ---
 

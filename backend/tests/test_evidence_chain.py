@@ -14,6 +14,9 @@ from app.engine.evidence_chain import (
     CdsEvaluationDossier,
     build_cognitive_triage_brief,
     CognitiveTriageBrief,
+    build_security_audit_dossier,
+    SecurityFindingRecord,
+    SecurityAuditImpact,
 )
 
 client = TestClient(app)
@@ -309,6 +312,75 @@ def test_cognitive_triage_brief_capped_rules_integrity():
         assert brief.tangents_suppressed is True
         assert brief.no_preamble_enforced is True
         assert brief.total_estimated_review_minutes == sum(s.estimated_minutes for s in brief.actionable_steps)
+
+
+def test_security_audit_dossier_structure():
+    dossier = build_security_audit_dossier()
+    assert dossier.ledger_id == "LEDGER-CLAIMTRACE-01"
+    assert dossier.cf_spec_version == "1.0.0"
+    assert dossier.audit_target == "ClaimTrace-JKN"
+    assert len(dossier.phases_completed) == 6
+    assert "1_Reconnaissance" in dossier.phases_completed
+    assert "6_Target_Neutral_Reporting" in dossier.phases_completed
+    assert dossier.total_units == 5
+    assert dossier.covered_units == 5
+    assert len(dossier.coverage_units) == 5
+    assert len(dossier.findings) == 5
+    assert len(dossier.audit_hash) == 64
+    assert dossier.adversarial_verifier_id == "cf-verifier-source-isolated-01"
+
+
+def test_security_audit_three_verdict_taxonomy_invariants():
+    # 1. Anti-pattern: rejected finding cannot have impact/severity
+    with pytest.raises(ValueError, match="anti-pattern"):
+        SecurityFindingRecord(
+            verdict="rejected",
+            fingerprint="cf-test-invalid-01",
+            title="Invalid",
+            description="Desc",
+            claimed_root_cause="Root",
+            reason="Refuted",
+            impact=SecurityAuditImpact(likelihood="low", impact="low", overall_severity="low")
+        )
+
+    # 2. Anti-pattern: needs_validation cannot have impact/severity
+    with pytest.raises(ValueError, match="anti-pattern"):
+        SecurityFindingRecord(
+            verdict="needs_validation",
+            fingerprint="cf-test-invalid-02",
+            title="Invalid",
+            description="Desc",
+            claimed_root_cause="Root",
+            blockers=["Missing config"],
+            validation_plan={"local": "test", "deployment": "test"},
+            impact=SecurityAuditImpact(likelihood="low", impact="low", overall_severity="low")
+        )
+
+    # 3. Missing reason on rejected finding
+    with pytest.raises(ValueError, match="rejected findings require reason"):
+        SecurityFindingRecord(
+            verdict="rejected",
+            fingerprint="cf-test-invalid-03",
+            title="Invalid",
+            description="Desc",
+            claimed_root_cause="Root"
+        )
+
+
+def test_security_audit_api_endpoint():
+    response = client.get("/api/v1/security/audit-ledger")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ledger_id"] == "LEDGER-CLAIMTRACE-01"
+    assert data["cf_spec_version"] == "1.0.0"
+    assert data["audit_target"] == "ClaimTrace-JKN"
+    assert len(data["findings"]) == 5
+    assert len(data["audit_hash"]) == 64
+    verdicts = {f["verdict"] for f in data["findings"]}
+    assert "confirmed" in verdicts
+    assert "needs_validation" in verdicts
+    assert "rejected" in verdicts
+
 
 
 

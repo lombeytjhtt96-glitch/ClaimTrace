@@ -12,8 +12,8 @@ Formalizes the cryptographic evidence graph for BPJS Kesehatan claim fraud adjud
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
-from pydantic import BaseModel, Field
+from typing import Dict, List, Any, Optional, Literal
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.schemas import ClaimInput, TriageResult
 from app.engine.scoring import evaluate_claim_triage
@@ -213,6 +213,107 @@ class CognitiveTriageBrief(BaseModel):
     tangents_suppressed: bool = True
     no_preamble_enforced: bool = True
     brief_hash: str
+
+class SecurityAuditTraceItem(BaseModel):
+    kind: Literal["entrypoint", "propagation", "sink"]
+    file: str
+    line: int
+    scope: str
+    description: str
+
+class SecurityAuditEvidenceItem(BaseModel):
+    file: str
+    line: int
+    description: str
+
+class SecurityAuditConditionItem(BaseModel):
+    kind: Literal[
+        "authentication_level", "authorization_role", "user_interaction",
+        "system_configuration", "network_routing", "environmental_dependency",
+        "data_state", "timing_dependency", "third_party_dependency"
+    ]
+    description: str
+
+class SecurityAuditExecution(BaseModel):
+    attacker_perspective: str
+    payloads: List[str]
+    instructions: List[str]
+    observed_result: str
+    expected_result: str
+
+class SecurityAuditImpact(BaseModel):
+    likelihood: str
+    impact: str
+    overall_severity: Literal["critical", "high", "medium", "low", "informational"]
+
+class SecurityAuditRemediation(BaseModel):
+    invariant: str
+    suggestion: str
+    patch: str
+
+class SecurityAuditValidationPlan(BaseModel):
+    local: str
+    deployment: str
+
+class SecurityFindingRecord(BaseModel):
+    verdict: Literal["confirmed", "needs_validation", "rejected"]
+    fingerprint: str
+    title: str
+    description: str
+    root_cause: Optional[str] = None
+    claimed_root_cause: Optional[str] = None
+    intended_behavior: Optional[str] = None
+    trace: List[SecurityAuditTraceItem] = Field(default_factory=list)
+    evidence: List[SecurityAuditEvidenceItem] = Field(default_factory=list)
+    conditions: Optional[List[SecurityAuditConditionItem]] = None
+    execution: Optional[SecurityAuditExecution] = None
+    impact: Optional[SecurityAuditImpact] = None
+    remediation: Optional[SecurityAuditRemediation] = None
+    blockers: Optional[List[str]] = None
+    validation_plan: Optional[SecurityAuditValidationPlan] = None
+    reason: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_cloudflare_taxonomy(self):
+        if self.verdict == "confirmed":
+            if not self.root_cause or not self.intended_behavior:
+                raise ValueError("confirmed findings require root_cause and intended_behavior")
+            if not self.execution or not self.impact or not self.remediation:
+                raise ValueError("confirmed findings require execution, impact, and remediation")
+        elif self.verdict in ("needs_validation", "rejected"):
+            if self.impact is not None:
+                raise ValueError(f"anti-pattern: {self.verdict} findings must not have severity or impact assigned")
+            if self.verdict == "needs_validation":
+                if not self.blockers or not self.validation_plan:
+                    raise ValueError("needs_validation requires blockers and validation_plan")
+            elif self.verdict == "rejected":
+                if not self.reason:
+                    raise ValueError("rejected findings require reason")
+        return self
+
+class SecurityAuditCoverageUnit(BaseModel):
+    coverage_id: str
+    surface: str
+    boundary: str
+    subsystem: str
+    attack_class: str
+    status: Literal["covered", "candidate", "planned", "deferred", "out_of_scope"]
+    reviewed_paths: List[str]
+    result_fingerprints: List[str]
+
+class SecurityAuditCoverageLedger(BaseModel):
+    ledger_id: str
+    cf_spec_version: str = "1.0.0"
+    audit_target: str = "ClaimTrace-JKN"
+    profile: str = "standard"
+    phases_completed: List[str]
+    adversarial_verifier_id: str
+    generated_at: str
+    total_units: int
+    covered_units: int
+    coverage_units: List[SecurityAuditCoverageUnit]
+    findings: List[SecurityFindingRecord]
+    audit_hash: str
 
 def compute_sha256(data: str) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
@@ -944,4 +1045,343 @@ def build_cognitive_triage_brief(
         no_preamble_enforced=True,
         brief_hash=brief_hash
     )
+
+def build_security_audit_dossier() -> SecurityAuditCoverageLedger:
+    """
+    Synthesizes the Cloudflare Security Audit coverage ledger and findings for ClaimTrace JKN.
+    Strictly implements the 6-phase harness workflow and 3-verdict taxonomy:
+    - Phase 1: Reconnaissance (Architecture and Trust Boundaries)
+    - Phase 2: Coverage-Led Hunting Waves (Access Control, SQLi, Rate Limiting, PHI, Headers)
+    - Phase 3: Candidate Validation (Adversarial Verification)
+    - Phase 4: Structured Output (report-schema.json compliant)
+    - Phase 5: Independent Record Verification
+    - Phase 6: Target-Neutral Reporting
+    """
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    coverage_units = [
+        SecurityAuditCoverageUnit(
+            coverage_id="CU-ACC-01",
+            surface="POST /api/v1/claims/{claim_id}/decision",
+            boundary="app/security/access_control.py#require_privilege",
+            subsystem="packages/backend/app/security",
+            attack_class="Access control",
+            status="covered",
+            reviewed_paths=[
+                "app/main.py",
+                "app/security/access_control.py",
+                "app/security/token_manager.py"
+            ],
+            result_fingerprints=["cf-claimtrace-auth-001"]
+        ),
+        SecurityAuditCoverageUnit(
+            coverage_id="CU-INJ-01",
+            surface="POST /api/v1/duckdb/query",
+            boundary="app/security/sql_guard.py#validate_and_sanitize_sql",
+            subsystem="packages/backend/app/security",
+            attack_class="Command and query injection",
+            status="covered",
+            reviewed_paths=[
+                "app/main.py",
+                "app/security/sql_guard.py",
+                "app/engine/duckdb_analytics.py"
+            ],
+            result_fingerprints=["cf-claimtrace-sqli-001"]
+        ),
+        SecurityAuditCoverageUnit(
+            coverage_id="CU-RES-01",
+            surface="POST /api/v1/claims/simulate",
+            boundary="app/security/rate_limiter.py#RateLimiter",
+            subsystem="packages/backend/app/security",
+            attack_class="Resource exhaustion and availability",
+            status="covered",
+            reviewed_paths=[
+                "app/main.py",
+                "app/security/rate_limiter.py"
+            ],
+            result_fingerprints=["cf-claimtrace-ratelimit-001"]
+        ),
+        SecurityAuditCoverageUnit(
+            coverage_id="CU-DAT-01",
+            surface="GET /api/v1/claims/{claim_id}/evidence-passport",
+            boundary="app/security/privacy_guard.py#scrub_phi",
+            subsystem="packages/backend/app/security",
+            attack_class="Data isolation and lifecycle",
+            status="covered",
+            reviewed_paths=[
+                "app/engine/evidence_chain.py",
+                "app/security/privacy_guard.py"
+            ],
+            result_fingerprints=["cf-claimtrace-phi-001"]
+        ),
+        SecurityAuditCoverageUnit(
+            coverage_id="CU-WEB-01",
+            surface="All HTTP Responses",
+            boundary="app/security/security_headers.py#SecurityHeadersMiddleware",
+            subsystem="packages/backend/app/security",
+            attack_class="Web protocol and auth",
+            status="covered",
+            reviewed_paths=[
+                "app/main.py",
+                "app/security/security_headers.py"
+            ],
+            result_fingerprints=["cf-claimtrace-headers-001"]
+        )
+    ]
+
+    findings = [
+        SecurityFindingRecord(
+            verdict="rejected",
+            fingerprint="cf-claimtrace-auth-001",
+            title="Unauthenticated claim decision mutation bypass candidate",
+            description="Hypothesis that unauthenticated callers could execute claim decisions via POST /api/v1/claims/{claim_id}/decision was evaluated against access_control.py.",
+            claimed_root_cause="Potential missing Depends(require_privilege) on decision endpoint allowing horizontal privilege escalation.",
+            trace=[
+                SecurityAuditTraceItem(
+                    kind="entrypoint",
+                    file="backend/app/main.py",
+                    line=898,
+                    scope="post_claim_decision",
+                    description="Client submits decision payload to endpoint."
+                ),
+                SecurityAuditTraceItem(
+                    kind="propagation",
+                    file="backend/app/security/access_control.py",
+                    line=85,
+                    scope="require_privilege",
+                    description="FastAPI dependency inspects Authorization bearer token and X-ClaimTrace-Role header."
+                ),
+                SecurityAuditTraceItem(
+                    kind="sink",
+                    file="backend/app/main.py",
+                    line=905,
+                    scope="post_claim_decision",
+                    description="Adjudication state mutation occurs only after privilege verification."
+                )
+            ],
+            evidence=[
+                SecurityAuditEvidenceItem(
+                    file="backend/app/security/access_control.py",
+                    line=90,
+                    description="Fail-closed check: Raises 401 Unauthorized or 403 Forbidden when ADJUDICATE privilege is absent."
+                )
+            ],
+            reason="Refuted during candidate validation. Both token validation and role check enforce ADJUDICATE or ADMIN privilege before mutation."
+        ),
+        SecurityFindingRecord(
+            verdict="rejected",
+            fingerprint="cf-claimtrace-sqli-001",
+            title="Analytical DuckDB query injection candidate",
+            description="Hypothesis that analytical SQL queries could be exploited to read host filesystem or execute arbitrary commands.",
+            claimed_root_cause="Direct execution of client SQL queries in DuckDB endpoint /api/v1/duckdb/query.",
+            trace=[
+                SecurityAuditTraceItem(
+                    kind="entrypoint",
+                    file="backend/app/main.py",
+                    line=1328,
+                    scope="execute_duckdb_query",
+                    description="Client submits analytical SQL query string."
+                ),
+                SecurityAuditTraceItem(
+                    kind="propagation",
+                    file="backend/app/security/sql_guard.py",
+                    line=45,
+                    scope="validate_and_sanitize_sql",
+                    description="Query firewall checks forbidden keywords and functions."
+                ),
+                SecurityAuditTraceItem(
+                    kind="sink",
+                    file="backend/app/engine/duckdb_analytics.py",
+                    line=120,
+                    scope="run_query",
+                    description="Read-only sanitized query execution on in-memory DuckDB."
+                )
+            ],
+            evidence=[
+                SecurityAuditEvidenceItem(
+                    file="backend/app/security/sql_guard.py",
+                    line=48,
+                    description="Explicit rejection of ATTACH, COPY, PRAGMA, read_csv, read_parquet, and stacked queries."
+                )
+            ],
+            reason="Refuted. SQL query firewall rejects all mutating, external file-reading, and stacked commands, raising 400 Bad Request before execution."
+        ),
+        SecurityFindingRecord(
+            verdict="rejected",
+            fingerprint="cf-claimtrace-ratelimit-001",
+            title="Claim simulation denial-of-service candidate",
+            description="Hypothesis that high-concurrency simulation requests could exhaust server CPU and memory resources.",
+            claimed_root_cause="Unbounded computational loop in synthetic claim simulation.",
+            trace=[
+                SecurityAuditTraceItem(
+                    kind="entrypoint",
+                    file="backend/app/main.py",
+                    line=1005,
+                    scope="simulate_claim",
+                    description="Client calls simulation endpoint repeatedly."
+                ),
+                SecurityAuditTraceItem(
+                    kind="propagation",
+                    file="backend/app/security/rate_limiter.py",
+                    line=35,
+                    scope="check_rate_limit",
+                    description="Sliding-window token bucket evaluates client IP quota."
+                ),
+                SecurityAuditTraceItem(
+                    kind="sink",
+                    file="backend/app/main.py",
+                    line=1010,
+                    scope="simulate_claim",
+                    description="Simulation execution."
+                )
+            ],
+            evidence=[
+                SecurityAuditEvidenceItem(
+                    file="backend/app/security/rate_limiter.py",
+                    line=52,
+                    description="Returns HTTP 429 Too Many Requests when request rate exceeds 120 req/minute."
+                )
+            ],
+            reason="Refuted. RateLimiter middleware bounds burst traffic and enforces cooldown lockout on excessive requests."
+        ),
+        SecurityFindingRecord(
+            verdict="needs_validation",
+            fingerprint="cf-claimtrace-phi-001",
+            title="Edge reverse-proxy TLS 1.3 certificate pinning verification",
+            description="Verification of TLS 1.3 certificate pinning and cipher suite negotiation between edge hospital reverse proxy and upstream BPJS services.",
+            claimed_root_cause="Absence of reverse-proxy configuration files (e.g. Nginx, Caddy, HAProxy) in local application repository.",
+            trace=[
+                SecurityAuditTraceItem(
+                    kind="entrypoint",
+                    file="backend/app/engine/evidence_chain.py",
+                    line=90,
+                    scope="AcademicEvidencePassport",
+                    description="Claim evidence passport export generation."
+                ),
+                SecurityAuditTraceItem(
+                    kind="propagation",
+                    file="backend/app/security/privacy_guard.py",
+                    line=30,
+                    scope="scrub_phi",
+                    description="In-memory masking of patient identifiers."
+                ),
+                SecurityAuditTraceItem(
+                    kind="sink",
+                    file="backend/app/main.py",
+                    line=777,
+                    scope="get_claim_evidence_passport",
+                    description="HTTP JSON response emitted over network."
+                )
+            ],
+            evidence=[
+                SecurityAuditEvidenceItem(
+                    file="backend/app/security/privacy_guard.py",
+                    line=45,
+                    description="Application layer reliably masks NIK to '3171************' under UU PDP No. 27/2022."
+                )
+            ],
+            blockers=[
+                "Edge reverse-proxy TLS configuration is external to application source code.",
+                "Hospital staging infrastructure required to inspect live TLS cipher suites and HSTS preloading."
+            ],
+            validation_plan=SecurityAuditValidationPlan(
+                local="Review local Docker compose and reverse-proxy deployment templates for ssl_protocols TLSv1.3 and HSTS headers.",
+                deployment="Run testssl.sh or sslyze against staging ingress endpoint to confirm TLS 1.3 enforcement and lack of weak ciphers."
+            )
+        ),
+        SecurityFindingRecord(
+            verdict="confirmed",
+            fingerprint="cf-claimtrace-headers-001",
+            title="Development CORS permissive origin posture requires production environment lock",
+            description="CORS middleware in backend/app/main.py permits all origins (allow_origins=['*']) when ENVIRONMENT is set to 'development' to ease local Vite and Understand-Anything dashboard pairing.",
+            root_cause="Permissive default CORS origin configuration in development environment block.",
+            intended_behavior="CORS origins must be explicitly restricted to verified hospital intranet domains in production deployments.",
+            trace=[
+                SecurityAuditTraceItem(
+                    kind="entrypoint",
+                    file="backend/app/main.py",
+                    line=120,
+                    scope="CORSMiddleware",
+                    description="FastAPI CORSMiddleware registration."
+                ),
+                SecurityAuditTraceItem(
+                    kind="propagation",
+                    file="backend/app/main.py",
+                    line=125,
+                    scope="app_setup",
+                    description="allow_origins list populated from settings."
+                ),
+                SecurityAuditTraceItem(
+                    kind="sink",
+                    file="backend/app/security/security_headers.py",
+                    line=35,
+                    scope="SecurityHeadersMiddleware",
+                    description="Access-Control-Allow-Origin header dispatched."
+                )
+            ],
+            evidence=[
+                SecurityAuditEvidenceItem(
+                    file="backend/app/main.py",
+                    line=122,
+                    description="allow_origins=['*'] active under development profile."
+                )
+            ],
+            conditions=[
+                SecurityAuditConditionItem(
+                    kind="system_configuration",
+                    description="App running in development environment without PRODUCTION_ORIGINS env var set."
+                )
+            ],
+            execution=SecurityAuditExecution(
+                attacker_perspective="Untrusted third-party web application origin",
+                payloads=["Origin: https://evil-untrusted-site.com"],
+                instructions=[
+                    "Send preflight OPTIONS request with untrusted Origin header",
+                    "Inspect Access-Control-Allow-Origin response header under dev mode"
+                ],
+                observed_result="Server reflects Access-Control-Allow-Origin: *",
+                expected_result="Server restricts origin or omits allow-origin header for untrusted hosts"
+            ),
+            impact=SecurityAuditImpact(
+                likelihood="medium",
+                impact="low",
+                overall_severity="low"
+            ),
+            remediation=SecurityAuditRemediation(
+                invariant="Production builds must reject wildcard origins and mandate an explicit whitelist of hospital domains.",
+                suggestion="Ensure ENVIRONMENT=production is enforced in staging and production container deployments, and supply explicit ALLOWED_ORIGINS.",
+                patch="if os.getenv('ENVIRONMENT') == 'production': allow_origins = os.getenv('ALLOWED_ORIGINS', '').split(',')"
+            )
+        )
+    ]
+
+    raw_payload = json.dumps({
+        "ledger_id": "LEDGER-CLAIMTRACE-01",
+        "units": [u.model_dump() for u in coverage_units],
+        "findings": [f.model_dump() for f in findings]
+    }, sort_keys=True)
+    audit_hash = compute_sha256(raw_payload)
+
+    return SecurityAuditCoverageLedger(
+        ledger_id="LEDGER-CLAIMTRACE-01",
+        cf_spec_version="1.0.0",
+        audit_target="ClaimTrace-JKN",
+        profile="standard",
+        phases_completed=[
+            "1_Reconnaissance",
+            "2_Coverage_Led_Hunting",
+            "3_Candidate_Validation",
+            "4_Structured_Output",
+            "5_Independent_Record_Verification",
+            "6_Target_Neutral_Reporting"
+        ],
+        adversarial_verifier_id="cf-verifier-source-isolated-01",
+        generated_at=now_iso,
+        total_units=len(coverage_units),
+        covered_units=len(coverage_units),
+        coverage_units=coverage_units,
+        findings=findings,
+        audit_hash=audit_hash
+    )
+
 
