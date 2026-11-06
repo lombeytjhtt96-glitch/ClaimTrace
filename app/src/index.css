@@ -64,6 +64,27 @@
     outline-offset: 2px !important;
   }
 
+  /* Emil Kowalski Mobile Native: Eliminate gray/blue tap highlight flash */
+  *, *::before, *::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Emil Kowalski Design Engineering: Remove 300ms tap delay & prevent accidental text selection on interactive controls */
+  button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary, select, a {
+    touch-action: manipulation;
+  }
+  button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Emil Kowalski Mobile Native: Prevent iOS automatic viewport zoom on form input focus */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
   /* UI/UX Pro Max: Consistent pointer affordance on all interactive triggers */
   button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary, select {
     cursor: pointer;

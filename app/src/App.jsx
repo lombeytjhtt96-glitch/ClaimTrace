@@ -1031,10 +1031,10 @@ export default function App() {
                   <AnimatePresence>
                     {alertsMenuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 6 }}
+                        initial={{ opacity: 0, scale: 0.96, y: 6 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 6 }}
-                        transition={{ duration: 0.14 }}
+                        exit={{ opacity: 0, scale: 0.96, y: 6 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                         className={`absolute right-0 mt-2.5 w-84 sm:w-[410px] origin-top-right border rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-xl ${
                           isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#00153A] border-white/10 text-white'
                         }`}
@@ -1185,10 +1185,10 @@ export default function App() {
                   <AnimatePresence>
                     {profileMenuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 6 }}
+                        initial={{ opacity: 0, scale: 0.96, y: 6 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 6 }}
-                        transition={{ duration: 0.14 }}
+                        exit={{ opacity: 0, scale: 0.96, y: 6 }}
+                        transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
                         className={`absolute right-0 mt-2.5 w-64 origin-top-right border rounded-2xl shadow-2xl focus:outline-none py-1.5 z-50 backdrop-blur-xl ${
                           isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#00153A] border-white/10 text-white'
                         }`}
@@ -1284,10 +1284,10 @@ export default function App() {
         {toastMessage && (
           <motion.div 
             key={toastMessage}
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: -16, scale: 0.96, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+            exit={{ opacity: 0, y: -12, scale: 0.96, x: "-50%" }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className={`fixed top-20 left-1/2 z-50 text-xs px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 backdrop-blur-xl border overflow-hidden ${
               isLight 
                 ? 'bg-white text-slate-900 border-emerald-500/40 shadow-slate-300/50' 
