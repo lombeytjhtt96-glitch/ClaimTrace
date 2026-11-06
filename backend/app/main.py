@@ -79,6 +79,8 @@ from app.engine.evidence_chain import (
     AcademicEvidencePassport,
     build_claim_audit_ledger,
     ClaimAuditLedger,
+    build_cds_evaluation_dossier,
+    CdsEvaluationDossier,
 )
 
 # Enterprise Defensive Security Modules
@@ -797,6 +799,20 @@ def get_claim_audit_predicates_endpoint(claim_id: str):
     triage = evaluate_claim_triage(claim)
     chain = build_claim_evidence_chain(claim, triage)
     return build_claim_audit_ledger(claim, triage, chain)
+
+@app.get("/api/v1/claims/{claim_id}/cds-evaluation", response_model=CdsEvaluationDossier)
+def get_claim_cds_evaluation_endpoint(claim_id: str):
+    """
+    Clinical Decision Support (CDS) Research & Evaluation Dossier (inspired by K-Dense-AI/scientific-agent-skills).
+    Enforces non-negotiable hard safety boundaries, GRADE evidence profile quality checks,
+    decision logic traceability, and ISO 14971 / ISO 13485 risk controls for SaMD.
+    """
+    if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+    triage = evaluate_claim_triage(claim)
+    chain = build_claim_evidence_chain(claim, triage)
+    return build_cds_evaluation_dossier(claim, triage, chain)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(

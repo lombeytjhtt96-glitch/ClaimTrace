@@ -44,6 +44,11 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - Anti-Deception Gate: Enforce strict rejection of manufactured urgency, VIP authority appeals, or pressure to bypass deterministic audit rules.
   - Omission Bias Gate: Negative findings, discrepancies, and counterevidences must never be suppressed or omitted from final audit outputs.
   - AKF Trust Metadata: Immutable provenance stamping (`AkfProvenanceStamp`) with cryptographic ledger hash and statutory compliance citations (Permenkes 26/2021, Permenkes 3/2023, UU 27/2022 PDP, ISO 27001).
+- Clinical Decision Support & ISO Standards Readiness (K-Dense-AI Standards):
+  - Strict Hard Safety Boundary: DSS outputs are research, audit, and decision-support artifacts only; automated denial, settlement, or treatment interference without licensed human sign-off is prohibited.
+  - Every claim supports a Clinical Decision Support Evaluation Dossier (`CdsEvaluationDossier`) incorporating GRADE evidence profile evaluation (High/Moderate/Low/Very Low) and decision logic traceability.
+  - ISO 14971 & ISO 13485 Risk Controls: Maintain risk control entries for SaMD hazards (false-positive delay, false-negative deficit, participant privacy exposure).
+  - Draft Watermark: Unreviewed outputs carry explicit draft watermark declarations.
 
 ---
 
