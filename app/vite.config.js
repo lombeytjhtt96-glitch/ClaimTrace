@@ -13,5 +13,26 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3-')) {
+              return 'charts';
+            }
+            if (id.includes('@xyflow')) {
+              return 'flow';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+          }
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1200
   }
 })
+
