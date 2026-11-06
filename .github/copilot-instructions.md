@@ -44,6 +44,10 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - Architecture: Component-driven architecture with clean separation between presentation and data hooks.
 - Performance & Bundling: Keep vendor chunks split into dedicated rollup bundles (`icons`, `flow`, `charts`, `index`). Use dynamic imports for heavy modal flows.
 - Styling: Use Tailwind CSS utility classes with structured semantic tokens (slate, emerald, amber, rose).
+- Anti-Slop & Hallmark Floor Standards:
+  - Strict Hallmark Floor compliance: zero horizontal overflow bleed (`overflow-x: clip`), no `transition: all`, never animate layout dimensions.
+  - Number & Currency Stability: Enforce tabular figures (`tabular-nums`) across all tables, financial amounts, timestamps, and metric counters.
+  - Tactile Affordances: Active button feedback (`transform: translateY(1px)` on `:active:not(:disabled)`).
 - Accessibility (WCAG 2.1 AA):
   - All interactive elements must provide visible focus indicators (`focus-visible:ring-2 focus-visible:ring-emerald-500`).
   - Buttons and actionable elements must provide explicit `cursor-pointer`.
