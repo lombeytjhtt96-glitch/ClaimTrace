@@ -8,6 +8,8 @@ from app.engine.evidence_chain import (
     EvidenceChainGraph,
     build_academic_evidence_passport,
     AcademicEvidencePassport,
+    build_claim_audit_ledger,
+    ClaimAuditLedger,
 )
 
 client = TestClient(app)
@@ -136,4 +138,65 @@ def test_academic_evidence_passport_api_endpoint_404():
     response = client.get("/api/v1/claims/NONEXISTENT-CLAIM/evidence-passport")
     assert response.status_code == 404
     assert "tidak ditemukan" in response.json()["detail"]
+
+
+def test_build_claim_audit_ledger_structure():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+
+    ledger = build_claim_audit_ledger(claim)
+    assert isinstance(ledger, ClaimAuditLedger)
+    assert ledger.claim_id == claim.claim_id
+    assert ledger.ledger_id == f"LEDGER-{claim.claim_id}"
+    assert ledger.aas_spec_version == "20.6.0"
+    assert len(ledger.predicates) == 4
+    for p in ledger.predicates:
+        assert p.claim_id == claim.claim_id
+        assert len(p.predicate) > 10
+        assert len(p.required_witness) > 5
+        assert p.verdict in ("PROVEN", "PARTIALLY_PROVEN", "CONTRADICTED", "NOT_PROVEN")
+        assert len(p.coverage) > 0
+
+    assert ledger.anti_deception.pressure_detected is False
+    assert ledger.anti_deception.authority_appeal_rejected is True
+    assert ledger.anti_deception.omission_bias_gate_passed is True
+    assert ledger.anti_deception.depth_enforcement_status == "PASSED"
+    assert ledger.anti_deception.integrity_procedure_verdict == "HONEST_AUDIT_VERIFIED"
+
+    assert ledger.provenance_stamp.agent_id == "ClaimTrace-DSS-PredicateAuditor"
+    assert ledger.provenance_stamp.spec_version == "20.6.0"
+    assert ledger.provenance_stamp.trust_score >= 0.90
+    assert len(ledger.provenance_stamp.compliance_frameworks) >= 3
+
+    assert len(ledger.ledger_hash) == 64
+
+
+def test_claim_audit_ledger_api_endpoint_200():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    response = client.get(f"/api/v1/claims/{claim_id}/audit-predicates")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["claim_id"] == claim_id
+    assert data["ledger_id"] == f"LEDGER-{claim_id}"
+    assert data["aas_spec_version"] == "20.6.0"
+    assert len(data["predicates"]) == 4
+    assert data["anti_deception"]["integrity_procedure_verdict"] == "HONEST_AUDIT_VERIFIED"
+    assert "ledger_hash" in data
+    assert len(data["ledger_hash"]) == 64
+
+
+def test_claim_audit_ledger_api_endpoint_404():
+    response = client.get("/api/v1/claims/NONEXISTENT-AAS-CLAIM/audit-predicates")
+    assert response.status_code == 404
+    assert "tidak ditemukan" in response.json()["detail"]
+
+
+def test_claim_audit_ledger_predicates_witness_integrity():
+    for cid, claim in list(SYNTHETIC_CLAIMS_DATABASE.items())[:10]:
+        ledger = build_claim_audit_ledger(claim)
+        assert ledger.proven_count + ledger.contradicted_count + ledger.gap_count == 4
+        for p in ledger.predicates:
+            assert len(p.required_witness) > 0
+            assert len(p.coverage) > 0
+
 
