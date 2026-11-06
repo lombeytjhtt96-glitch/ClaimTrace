@@ -100,3 +100,14 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - Backend: Run `python3 -m pytest tests/` from `backend/`. All unit and integration tests must pass before declaring work complete.
 - Frontend: Run `npm run build` from `app/` to ensure zero compilation or bundling errors.
 - Contract Drift: When modifying backend schemas in `backend/app/models/schemas.py`, immediately verify and update matching frontend consumers in `app/src/`.
+
+---
+
+## Awesome Codex Skills & Claim Dossier Standards
+
+- **Skills Source**: Repositories located at `/home/Khalaf-Dev/awesome-codex-skills` and symlinked in `.github/skills/awesome-codex-skills`.
+- **Claim Dossier Engine**: `backend/app/engine/claim_dossier_engine.py` generates standardized audit dossiers using the filename convention `YYYY-MM-DD_FASKES_SEP_CLAIMID_TYPOLOGY_STATUS.json`.
+- **Financial Liability Standards**: Compute cost recovery and 50% legal administrative sanctions per Permenkes RI No. 26 Tahun 2021 Pasal 74 across dispute lanes (MERAH, KUNING, HIJAU).
+- **Dynamic Formula Export**: All CSV exports must include active spreadsheet formulas (`=SUM()`, `=COUNTA()`) per `spreadsheet-formula-helper`.
+- **Integrity Sealing**: Enforce SHA-256 cryptographic verification for every claim item and batch manifest.
+- **Strict Guardrails**: Zero emojis and zero vendor leaks across all files, documentation, and user-facing copy.
