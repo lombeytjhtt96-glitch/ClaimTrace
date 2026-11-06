@@ -31,6 +31,10 @@ from app.models.schemas import (
     HumanGateReviewRequest,
     ReceiptVerificationResponse,
     BatchReceiptsManifest,
+    CybersecurityFrameworkItem,
+    ClaimCybersecurityMatrix,
+    EvaluateCybersecurityRequest,
+    FrameworkCatalogResponse,
 )
 from app.engine.google_secops_engine import (
     PRECOMPILED_YARA_L_RULES,
@@ -48,6 +52,7 @@ from app.engine.decision_receipts_engine import (
     compute_batch_receipts_manifest,
     RECEIPTS_REGISTRY,
 )
+from app.engine.cybersecurity_framework_engine import cybersecurity_engine
 from app.engine.scoring import evaluate_claim_triage, audit_logger
 from app.data.synthetic_seed import get_initial_claims
 
@@ -1136,6 +1141,65 @@ def verify_decision_receipt_endpoint(receipt_id: str):
     if not rcp:
         raise HTTPException(status_code=404, detail=f"Decision receipt '{receipt_id}' tidak ditemukan")
     return verify_decision_receipt(rcp)
+
+# ==============================================================================
+# CYBERSECURITY FRAMEWORKS & MITRE F3 ENDPOINTS (mukul975/skills)
+# ==============================================================================
+
+@app.get("/api/v1/cybersecurity/frameworks/summary", response_model=FrameworkCatalogResponse)
+def get_cybersecurity_frameworks_summary_endpoint():
+    """
+    Returns framework coverage statistics across the 818 cybersecurity skills:
+    MITRE F3 (Fight Fraud Framework), ATT&CK v19, D3FEND, NIST CSF 2.0, ATLAS, and AI RMF.
+    """
+    return cybersecurity_engine.get_framework_summary()
+
+@app.get("/api/v1/cybersecurity/skills/fraud-catalog")
+def list_fraud_skills_catalog_endpoint(
+    limit: int = Query(50, ge=1, le=100),
+    tactic: Optional[str] = Query(None, description="Optional tactic filter: positioning, monetization, initial-access")
+):
+    """
+    Returns the catalog of 94 MITRE F3 fraud-relevant cybersecurity skills.
+    """
+    return cybersecurity_engine.get_fraud_skills_catalog(limit=limit, tactic=tactic)
+
+@app.get("/api/v1/cybersecurity/claims/{claim_id}/matrix", response_model=ClaimCybersecurityMatrix)
+def get_claim_cybersecurity_matrix_endpoint(claim_id: str):
+    """
+    Retrieves the 6-framework cybersecurity & fraud taxonomy matrix for a given claim ID.
+    """
+    matched_claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    if matched_claim:
+        claim_payload = {
+            "claim_id": matched_claim.claim_id,
+            "faskes_code": matched_claim.nama_faskes or matched_claim.faskes_id or "FASKES-RSUD-JKN",
+            "indikator_anomali": [f"ICD10_{matched_claim.icd10_primary}"] if matched_claim.icd10_primary else ["UPCODING_SUSPECT"],
+            "nominal_klaim_rp": float(matched_claim.nilai_klaim_rp or 0.0)
+        }
+    else:
+        claim_payload = {
+            "claim_id": claim_id,
+            "faskes_code": "FASKES-RSUD-JKN",
+            "indikator_anomali": ["UPCODING_SEVERITY_LEVEL_3", "INCOMPLETE_RESUME_MEDIS"],
+            "nominal_klaim_rp": 45000000.0
+        }
+    return cybersecurity_engine.evaluate_claim_cybersecurity(claim_payload)
+
+@app.post("/api/v1/cybersecurity/claims/evaluate", response_model=ClaimCybersecurityMatrix)
+def evaluate_claim_cybersecurity_endpoint(req: EvaluateCybersecurityRequest):
+    """
+    Evaluates an arbitrary claim payload against MITRE F3, ATT&CK, and D3FEND taxonomy.
+    Computes a canonical SHA-256 seal for tamper-evident audit packages.
+    """
+    payload = {
+        "claim_id": req.claim_id,
+        "faskes_code": req.faskes_code or "FASKES-GENERIC",
+        "fraud_typology": req.fraud_typology,
+        "indikator_anomali": req.indikator_anomali,
+        "nominal_klaim_rp": req.nominal_klaim_rp
+    }
+    return cybersecurity_engine.evaluate_claim_cybersecurity(payload)
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
