@@ -369,6 +369,10 @@ export default function AuditLedger({ isLight: propIsLight }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportDossierCsv = () => {
+    window.open('/api/v1/dossier/export/csv', '_blank');
+  };
+
   const handleDownloadBahp = (baNo) => {
     if (!selectedBlock) return;
     const content = `BERITA ACARA HASIL PEMERIKSAAN (BAHP)
@@ -490,6 +494,18 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               >
                 <Download className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-cyan-400'}`} />
                 <span>Ekspor JSON (FHIR)</span>
+              </button>
+              <button type="button" 
+                onClick={handleExportDossierCsv}
+                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
+                  isLight
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
+                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
+                }`}
+                title="Ekspor Rekonsiliasi Tuntutan Ganti Rugi (Permenkes 26/2021) berformat CSV"
+              >
+                <FileDown className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Ekspor Dossier TGR (CSV)</span>
               </button>
             </div>
           </div>

@@ -98,6 +98,13 @@ from app.engine.last30days_engine import (
     generate_claim_30day_intelligence,
     execute_last30days_cli,
 )
+from app.engine.claim_dossier_engine import (
+    ClaimDossierManifest,
+    FaskesDossierSummary,
+    DossierClaimItem,
+    organize_claim_dossiers,
+    generate_dossier_csv_report,
+)
 
 # Enterprise Defensive Security Modules
 from app.security.security_headers import SecurityHeadersMiddleware
@@ -898,6 +905,52 @@ def query_30day_radar_endpoint(payload: TemporalSearchRequest):
     using the mvanhorn/last30days-skill search and aggregation pipeline.
     """
     return execute_last30days_cli(payload.query, lookback_days=payload.days or 30, mock=payload.mock if payload.mock is not None else True)
+
+@app.get("/api/v1/dossier/summary", response_model=ClaimDossierManifest)
+def get_claim_dossier_summary_endpoint():
+    """
+    Returns the organized audit dossier manifest for all claims in the active database,
+    normalizing filenames, computing TGR liabilities per Permenkes 26/2021, and generating SHA-256 seals.
+    """
+    return organize_claim_dossiers(SYNTHETIC_CLAIMS_DATABASE)
+
+@app.get("/api/v1/dossier/claims", response_model=List[DossierClaimItem])
+def list_dossier_claims_endpoint(lane: Optional[str] = Query(None, description="Filter by lane: HIJAU, KUNING, MERAH")):
+    """
+    Lists standardized claims dossier items with optional dispute lane filtering.
+    """
+    manifest = organize_claim_dossiers(SYNTHETIC_CLAIMS_DATABASE)
+    if lane:
+        lane_upper = lane.strip().upper()
+        return [c for c in manifest.claims if c.dispute_lane == lane_upper]
+    return manifest.claims
+
+@app.get("/api/v1/dossier/export/csv")
+def export_dossier_csv_endpoint():
+    """
+    Exports all organized claims into a CSV reconciliation sheet containing Excel/Google Sheets
+    formulas per awesome-codex-skills/spreadsheet-formula-helper.
+    """
+    manifest = organize_claim_dossiers(SYNTHETIC_CLAIMS_DATABASE)
+    csv_content = generate_dossier_csv_report(manifest)
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=claimtrace_dossier_{manifest.manifest_id}.csv"
+        }
+    )
+
+@app.get("/api/v1/dossier/faskes/{faskes_id}", response_model=FaskesDossierSummary)
+def get_faskes_dossier_summary_endpoint(faskes_id: str):
+    """
+    Returns aggregated audit metrics, overcharge liabilities, and administrative sanctions for a specific hospital.
+    """
+    manifest = organize_claim_dossiers(SYNTHETIC_CLAIMS_DATABASE)
+    for f in manifest.faskes_summaries:
+        if f.faskes_id.upper() == faskes_id.strip().upper():
+            return f
+    raise HTTPException(status_code=404, detail=f"Faskes dengan ID '{faskes_id}' tidak ditemukan dalam dossier aktif")
 
 @app.post("/api/v1/claims/{claim_id}/mobile-response")
 def simulate_mobile_jkn_response(
