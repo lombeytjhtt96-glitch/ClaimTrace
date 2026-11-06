@@ -121,3 +121,13 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - **GPU Compositor Performance**: Animate strictly transform properties (`x`, `y`, `scale`, `rotation`) and `autoAlpha`. Never animate layout dimensions (`width`, `height`, `top`, `left`, `margin`, `padding`).
 - **Tactile Verifier Feedback**: Micro-interactions, status badges, and action buttons use snappy, choreographed timelines (`power2.out`, 180ms - 250ms) to deliver zero-lag feedback for adjudicators.
 - **Rollup Chunking**: Keep GSAP and `@gsap/react` isolated in a dedicated Vite bundle (`manualChunks: { gsap: ['gsap', '@gsap/react'] }`).
+
+---
+
+## Google Skills & SecOps Detection Engineering Standards (google/skills)
+
+- **Skills Source**: Repositories located at `/home/Khalaf-Dev/google-skills` and symlinked in `.github/skills/google-skills`.
+- **YARA-L 2.0 Rules**: Pre-compiled and dynamic detection rules in `backend/app/engine/google_secops_engine.py` adhering to `secops-detection-engineering` syntax (`meta:`, `events:`, `condition:`, UDM variables).
+- **SOAR Incident Lifecycle**: Triage flagged claims into `SecOpsClaimCase` instances with 10-day Vedika statutory SLA tracking (Perpres 82/2018 Pasal 76 ayat 2).
+- **Data Sovereignty (UU PDP No. 27/2022)**: Ensure zero unencrypted PHI in security telemetry and strict data residency in the Indonesian sovereign region (`asia-southeast2` Jakarta).
+- **REST Endpoints**: Expose `/api/v1/secops/rules`, `/api/v1/secops/rules/compile`, `/api/v1/secops/cases`, and `/api/v1/secops/sovereignty/assessment` with SHA-256 tamper-evident integrity seals.

@@ -147,3 +147,64 @@ class AuditLogEntry(BaseModel):
     payload: Dict[str, Any]
     prev_hash: str
     current_hash: str
+
+
+# --- Google SecOps & Sovereign Boundary Schemas ---
+
+class YaraLRuleMetadata(BaseModel):
+    author: str
+    description: str
+    severity: str
+    priority: str
+    mitre_attack_technique: str
+    mitre_f3_tag: str
+    regulatory_basis: str
+    version: str
+
+class YaraLRuleItem(BaseModel):
+    rule_id: str
+    rule_name: str
+    target_jkn_modus: str
+    meta: YaraLRuleMetadata
+    rule_text: str
+    test_payload_udm: Dict[str, Any]
+
+class SecOpsCaseItem(BaseModel):
+    case_id: str
+    claim_id: str
+    title: str
+    severity: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+    priority: str
+    stage: str
+    status: str
+    hospital: str
+    cbg_code: str
+    primary_diagnosis: str
+    claim_amount_rp: float
+    assigned_investigator: str
+    recommended_action: str
+    sla_deadline_iso: str
+    sla_remaining_business_days: int
+    is_sla_breached: bool
+    mitre_f3_tags: List[str]
+    mitre_attack_tags: List[str]
+    mitre_d3fend_tags: List[str]
+    case_hash: str
+
+class SecOpsCaseManifest(BaseModel):
+    spec_version: str
+    total_cases: int
+    critical_cases: int
+    high_cases: int
+    open_cases: int
+    cases: List[SecOpsCaseItem]
+    integrity_seal: str
+    generated_at: str
+
+class DynamicYaraLCompileRequest(BaseModel):
+    rule_name: str
+    description: str
+    severity: Literal["Critical", "High", "Medium", "Low"] = "High"
+    cbg_codes: List[str] = Field(default_factory=list)
+    threshold_count: int = 15
+    time_window_hours: int = 24
