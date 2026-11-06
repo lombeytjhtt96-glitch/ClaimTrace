@@ -1901,7 +1901,7 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
 async def generate_gemini_content(req: GeminiGenerateRequest):
     """
     Dual-mode intelligence engine:
-    1. If GEMINI_API_KEY is configured in backend env, runs live Google Gemini LLM.
+    1. If upstream AI Studio API is configured in backend env, runs live intelligent reasoning.
     2. If GEMINI_API_KEY is not set or network is offline, seamlessly engages the
        on-premise ClaimTrace Deterministic & Semantic Intelligence Engine with 0 errors.
     """
@@ -2430,7 +2430,7 @@ def get_expanded_typology_cases(typology: Optional[str] = Query(None, descriptio
 async def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
     """
     Mengaudit kesesuaian koding diagnosis primer/sekunder INA-CBG terhadap tanda vital dan laboratorium
-    menggunakan Scikit-Learn IsolationForest + Google Gemini LLM Clinical Auditor.
+    menggunakan Scikit-Learn IsolationForest + ClaimTrace AI Clinical Auditor.
     """
     result = expansion_engine.audit_clinical_coding(
         claim_id=req.claim_id,
@@ -2491,7 +2491,7 @@ def get_frista_biometric_telemetry(claim_id: str = Query("CLM-2026-10-085", desc
 @app.post("/api/v1/expansion/frista-ai-audit")
 async def run_frista_quad_ai_audit(req: FristaAiAuditRequest):
     """
-    Menjalankan analisis forensik AI real-time (Google Gemini LLM + Quad-Triangulation 4 Lapis)
+    Menjalankan analisis forensik AI real-time (ClaimTrace AI Engine + Quad-Triangulation 4 Lapis)
     terhadap telemetri biometrik FRISTA, SATUSEHAT SDMK, dan Mobile JKN.
     """
     bio_data = expansion_engine.get_frista_biometric_verification(claim_id=req.claim_id)
@@ -2538,7 +2538,7 @@ async def run_frista_quad_ai_audit(req: FristaAiAuditRequest):
 @app.post("/api/v1/expansion/rag-regulatory")
 async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
     """
-    Menjalankan pencarian Retrieval-Augmented Generation (RAG) berbasis Vektor ChromaDB + Google Gemini LLM
+    Menjalankan pencarian Retrieval-Augmented Generation (RAG) berbasis Vektor ChromaDB + ClaimTrace AI Engine
     pada korpus regulasi JKN (Permenkes No. 16/2019, Permenkes No. 3/2023, Permenkes No. 26/2021, Perpres No. 82/2018, UU PDP No. 27/2022).
     """
     base_rag = expansion_engine.query_regulatory_rag(query=req.query, claim_id=req.claim_id)
