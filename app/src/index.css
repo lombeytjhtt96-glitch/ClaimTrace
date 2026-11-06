@@ -39,10 +39,21 @@
     font-weight: 600 !important;
   }
 
-  /* Accessibility & Baseline UI: Keyboard-first visible focus ring */
-  :focus-visible {
-    outline: 2px solid #008d4c;
-    outline-offset: 2px;
+  /* Accessibility & Baseline UI: Keyboard-first visible focus ring (UI/UX Pro Max) */
+  :focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid #059669 !important;
+    outline-offset: 2px !important;
+  }
+
+  /* UI/UX Pro Max: Consistent pointer affordance on all interactive triggers */
+  button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary, select {
+    cursor: pointer;
   }
 
   /* Baseline UI Typography: Tabular numbers for all numbers, tables, codes & currencies */
