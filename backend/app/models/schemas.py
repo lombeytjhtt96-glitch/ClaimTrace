@@ -208,3 +208,68 @@ class DynamicYaraLCompileRequest(BaseModel):
     cbg_codes: List[str] = Field(default_factory=list)
     threshold_count: int = 15
     time_window_hours: int = 24
+
+class ActionManifestSchema(BaseModel):
+    agent_id: str
+    operation: str
+    target: str
+    policy: str
+    inputs_hash: str
+    decision_label: str
+    severity: str
+    claim_id: Optional[str] = None
+    faskes_name: Optional[str] = None
+    tgr_recovery_amount_rp: float = 0.0
+    human_gate_required: bool = True
+    human_gate_status: str = "PENDING_REVIEW"
+    human_reviewer_nip: Optional[str] = None
+    human_reviewer_name: Optional[str] = None
+    blockers: List[str] = Field(default_factory=list)
+
+class DecisionReceiptItem(BaseModel):
+    receipt_id: str
+    spec_version: str = "1.0.0-oao-receipt"
+    issued_at: str
+    canonical_digest_sha256: str
+    digital_seal: str
+    verification_status: str
+    sovereign_boundary: str
+    verified_at: Optional[str] = None
+    manifest: ActionManifestSchema
+
+class MintReceiptRequest(BaseModel):
+    agent_id: str = "claimtrace-ai-dss-v1.2"
+    operation: str
+    target: str
+    policy: str = "Perpres No. 82/2018 Pasal 76 & Permenkes No. 26/2021 Pasal 74"
+    decision_label: str
+    inputs: Dict[str, Any]
+    severity: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"] = "HIGH"
+    tgr_recovery_amount_rp: float = 0.0
+    claim_id: Optional[str] = None
+    faskes_name: Optional[str] = None
+
+class HumanGateReviewRequest(BaseModel):
+    verifikator_nip: str
+    verifikator_name: str
+    approved: bool
+    blocker_notes: Optional[str] = None
+
+class ReceiptVerificationResponse(BaseModel):
+    receipt_id: str
+    tamper_free: bool
+    digest_matches: bool
+    seal_matches: bool
+    human_gate_cleared: bool
+    is_executable: bool
+    reasons: List[str]
+
+class BatchReceiptsManifest(BaseModel):
+    spec_version: str
+    generated_at: str
+    total_receipts: int
+    master_manifest_seal_sha256: str
+    pending_human_gate_count: int
+    verified_human_gate_count: int
+    total_potential_tgr_rp: float
+    receipts: List[DecisionReceiptItem]

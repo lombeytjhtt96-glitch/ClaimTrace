@@ -131,3 +131,14 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - **SOAR Incident Lifecycle**: Triage flagged claims into `SecOpsClaimCase` instances with 10-day Vedika statutory SLA tracking (Perpres 82/2018 Pasal 76 ayat 2).
 - **Data Sovereignty (UU PDP No. 27/2022)**: Ensure zero unencrypted PHI in security telemetry and strict data residency in the Indonesian sovereign region (`asia-southeast2` Jakarta).
 - **REST Endpoints**: Expose `/api/v1/secops/rules`, `/api/v1/secops/rules/compile`, `/api/v1/secops/cases`, and `/api/v1/secops/sovereignty/assessment` with SHA-256 tamper-evident integrity seals.
+
+---
+
+## RA-QM Decision Receipts & Human Gate Standards (OpenAgentOntology)
+
+- **Skills Source**: Repositories symlinked in `.github/skills/decision-receipts`.
+- **Agent Decision Receipts**: Codified in `backend/app/engine/decision_receipts_engine.py` following the OpenAgentOntology standard (`ra-qm-team/agent-decision-receipts`) for side-effecting, consequential, and later-provable decisions.
+- **Human Gate Review (`engineering/human-gate`)**: Enforce human-in-the-loop review on all Jalur Merah or TGR recovery decisions per Permenkes No. 26/2021. The gate strictly refuses sign-off without a valid BPJS Verifikator NIP and clears only when all blockers are resolved.
+- **Offline Verifiability**: Every receipt must be verifiable offline from its canonical SHA-256 digest and HMAC-SHA256 digital seal alone without reliance on an external database or network.
+- **Batch Manifest Sealing**: Master SHA-256 seal links all active decision receipts into an immutable, tamper-evident audit record.
+- **REST Endpoints**: Expose `/api/v1/receipts`, `/api/v1/receipts/{id}`, `/api/v1/receipts/mint`, `/api/v1/receipts/{id}/human-gate`, `/api/v1/receipts/{id}/verify`, and `/api/v1/receipts/manifest/verify`.
