@@ -12,6 +12,8 @@ from app.engine.evidence_chain import (
     ClaimAuditLedger,
     build_cds_evaluation_dossier,
     CdsEvaluationDossier,
+    build_cognitive_triage_brief,
+    CognitiveTriageBrief,
 )
 
 client = TestClient(app)
@@ -252,6 +254,62 @@ def test_cds_evaluation_iso_risk_traceability():
         for ctrl in dossier.iso_risk_controls:
             assert "ISO" in ctrl.standard_clause
             assert ctrl.post_mitigation_risk in ("LOW", "ACCEPTABLE", "NEGLIGIBLE")
+
+
+def test_build_cognitive_triage_brief_structure():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+
+    brief = build_cognitive_triage_brief(claim)
+    assert isinstance(brief, CognitiveTriageBrief)
+    assert brief.claim_id == claim.claim_id
+    assert brief.brief_id == f"BRIEF-{claim.claim_id}"
+    assert brief.spec_version == "0.4.1"
+    assert any(brief.lead_action.startswith(prefix) for prefix in ("Tahan", "Klarifikasi", "Teruskan"))
+    assert len(brief.actionable_steps) == 5
+    for idx, step in enumerate(brief.actionable_steps, start=1):
+        assert step.step_number == idx
+        assert step.estimated_minutes > 0
+        assert len(step.target_asset) > 0
+    assert len(brief.capped_key_findings) <= 5
+    assert len(brief.concrete_next_step) > 0
+    assert brief.matter_of_fact_verdict in ("REJECT_ANOMALOUS", "CONDITIONAL_REVIEW", "APPROVE_CLEAR")
+    assert brief.total_estimated_review_minutes >= 5
+    assert brief.tangents_suppressed is True
+    assert brief.no_preamble_enforced is True
+    assert len(brief.brief_hash) == 64
+
+
+def test_cognitive_triage_brief_api_endpoint_200():
+    claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
+    response = client.get(f"/api/v1/claims/{claim_id}/cognitive-triage-brief")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["claim_id"] == claim_id
+    assert data["brief_id"] == f"BRIEF-{claim_id}"
+    assert data["spec_version"] == "0.4.1"
+    assert "lead_action" in data
+    assert len(data["actionable_steps"]) == 5
+    assert len(data["capped_key_findings"]) <= 5
+    assert "concrete_next_step" in data
+    assert "brief_hash" in data
+    assert len(data["brief_hash"]) == 64
+
+
+def test_cognitive_triage_brief_api_endpoint_404():
+    response = client.get("/api/v1/claims/NONEXISTENT-ADHD-CLAIM/cognitive-triage-brief")
+    assert response.status_code == 404
+    assert "tidak ditemukan" in response.json()["detail"]
+
+
+def test_cognitive_triage_brief_capped_rules_integrity():
+    for cid, claim in list(SYNTHETIC_CLAIMS_DATABASE.items())[:10]:
+        brief = build_cognitive_triage_brief(claim)
+        assert len(brief.capped_key_findings) <= 5
+        assert brief.tangents_suppressed is True
+        assert brief.no_preamble_enforced is True
+        assert brief.total_estimated_review_minutes == sum(s.estimated_minutes for s in brief.actionable_steps)
+
 
 
 
