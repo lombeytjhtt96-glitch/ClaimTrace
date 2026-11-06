@@ -1,0 +1,349 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "claimtrace-jkn",
+    "languages": [
+      "javascript",
+      "markdown",
+      "python",
+      "shell",
+      "yaml"
+    ],
+    "frameworks": [
+      "FastAPI",
+      "React",
+      "Vite",
+      "TailwindCSS",
+      "Zustand",
+      "Pytest",
+      "Uvicorn"
+    ],
+    "description": "ClaimTrace JKN: Sistem Pendukung Keputusan Verifikator Klaim JKN Berbasis Triase Multi-Sinyal Independen",
+    "analyzedAt": "2026-11-06T10:53:27.378778+00:00",
+    "gitCommitHash": "fe1e3447c3c83daa9be4c4bc699b338ff6eec1e2"
+  },
+  "nodes": [
+    {
+      "id": "domain:claim-triage",
+      "type": "domain",
+      "name": "Verifikasi Klaim & Triase Multi-Sinyal",
+      "summary": "Domain inti pemrosesan klaim JKN secara otomatis melalui 4 dimensi independen (aturan hukum, statistik anomali, semantik rekam medis, dan investigasi agen).",
+      "tags": [
+        "core-domain",
+        "claim-triage",
+        "decision-support"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "ClaimRecord",
+          "TriageScore",
+          "SignalWeights",
+          "ValidationResult"
+        ],
+        "businessRules": [
+          "Klaim dengan restriksi Fornas wajib memiliki diagnosis sekunder yang kompatibel",
+          "Skor anomali > 0.70 secara otomatis dialihkan ke antrean investigasi mendalam",
+          "Kesesuaian RME dengan diagnosa primer wajib divalidasi sebelum persetujuan"
+        ],
+        "crossDomainInteractions": [
+          "Menyuplai bukti sinyal ke Domain Keputusan Verifikator HITL"
+        ]
+      }
+    },
+    {
+      "id": "flow:multi-signal-triage",
+      "type": "flow",
+      "name": "Alur Triase Quad-Sinyal Independen",
+      "summary": "Proses evaluasi klaim masuk mulai dari aturan deterministik hingga penalaran agen ReAct.",
+      "tags": [
+        "triage-flow",
+        "quad-triangulation"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "step:regulatory-rule-check",
+      "type": "step",
+      "name": "Validasi Deterministik BPJS & Fornas",
+      "summary": "Memeriksa kepatuhan tarif INA-CBG, restriksi obat Fornas, dan kelengkapan dokumen klaim.",
+      "tags": [
+        "rule-engine",
+        "fornas",
+        "icd10"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "step:statistical-anomaly-detection",
+      "type": "step",
+      "name": "Deteksi Anomali Statistik (Isolation Forest)",
+      "summary": "Menghitung skor keanehan biaya dan lama rawat terhadap distribusi riwayat klaim serupa.",
+      "tags": [
+        "machine-learning",
+        "isolation-forest",
+        "outlier"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "step:semantic-guideline-rag",
+      "type": "step",
+      "name": "Validasi Semantik Rekam Medis (ChromaDB RAG)",
+      "summary": "Memvalidasi konsistensi narasi resume medis terhadap panduan praktik klinis nasional.",
+      "tags": [
+        "semantic-search",
+        "rag",
+        "rme"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "step:forensic-react-investigation",
+      "type": "step",
+      "name": "Investigasi Forensik ReAct Berbasis Bukti",
+      "summary": "Menjalankan siklus Think-Act-Observe otonom untuk menyusun ringkasan pembuktian kecurangan.",
+      "tags": [
+        "react-agent",
+        "forensics",
+        "autonomous"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "domain:hitl-verification",
+      "type": "domain",
+      "name": "Konsol Verifikator HITL & Ledger Forensik",
+      "summary": "Pengambilan keputusan akhir oleh verifikator manusia dengan pencatatan audit tak terubahkan.",
+      "tags": [
+        "human-in-the-loop",
+        "audit-ledger",
+        "governance"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "AuditBlock",
+          "BAKBDocument",
+          "VerifikatorDecision",
+          "ChainState"
+        ],
+        "businessRules": [
+          "Setiap keputusan harus disegel dengan hash SHA-256 berantai",
+          "Persetujuan klaim risiko tinggi memerlukan otorisasi Verifikator Medis",
+          "Berita Acara Klarifikasi Bersama (BAKB) otomatis dicetak pada status pending"
+        ],
+        "crossDomainInteractions": [
+          "Mencatat seluruh rekam jejak audit untuk kepatuhan hukum"
+        ]
+      }
+    },
+    {
+      "id": "flow:verifikator-decision",
+      "type": "flow",
+      "name": "Alur Keputusan Verifikator & Penyegelan Bukti",
+      "summary": "Tahapan telaah berkas oleh verifikator hingga penyegelan blok audit permanen.",
+      "tags": [
+        "verifier-workflow",
+        "hitl-approval"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "step:triage-cockpit-review",
+      "type": "step",
+      "name": "Telaah Bukti pada Kokpit Triase",
+      "summary": "Verifikator memeriksa kartu sinyal, ringkasan RAG, dan indikator anomali.",
+      "tags": [
+        "ui-review",
+        "decision-console"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "step:dispute-and-adjudication",
+      "type": "step",
+      "name": "Ajudikasi & Pemberian Catatan Klinis",
+      "summary": "Verifikator memilih status Setuju, Tolak, atau Klarifikasi disertai argumen medis.",
+      "tags": [
+        "adjudication",
+        "clinical-notes"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "step:ledger-sealing-bakb",
+      "type": "step",
+      "name": "Penyegelan Ledger SHA-256 & Penerbitan BAKB",
+      "summary": "Sistem menghitung hash kriptografis dan menerbitkan dokumen BAKB berstandar audit.",
+      "tags": [
+        "sha256",
+        "cryptography",
+        "bakb"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "domain:provider-surveillance",
+      "type": "domain",
+      "name": "Surveilans Faskes & Integritas DPJP",
+      "summary": "Pemantauan komprehensif profil fasilitas kesehatan dan deteksi anomali mobilitas fisik dokter.",
+      "tags": [
+        "provider-monitoring",
+        "geovelocity",
+        "osrm"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entities": [
+          "DoctorSchedule",
+          "HospitalProfile",
+          "RoadRoute",
+          "VelocityRecord"
+        ],
+        "businessRules": [
+          "Kecepatan fisik DPJP antar-faskes > 80 km/jam pada jam sibuk memicu flag geovelocity",
+          "Tingkat readmisi faskes > 15% masuk dalam daftar pengawasan khusus"
+        ],
+        "crossDomainInteractions": [
+          "Memberikan sinyal risiko lokasi ke mesin triase"
+        ]
+      }
+    },
+    {
+      "id": "flow:dpjp-mobility-surveillance",
+      "type": "flow",
+      "name": "Pelacakan Kecepatan Fisik DPJP (Geovelocity)",
+      "summary": "Perhitungan jarak rute jalan raya OSRM dan validasi logis perpindahan dokter.",
+      "tags": [
+        "osrm-flow",
+        "geovelocity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "step:geovelocity-telemetry",
+      "type": "step",
+      "name": "Kalkulasi Kecepatan Fisik Realistis",
+      "summary": "Menghitung rasio jarak tempuh jalan raya terhadap selisih waktu tindakan medis.",
+      "tags": [
+        "telemetry",
+        "osrm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "step:phantom-billing-detection",
+      "type": "step",
+      "name": "Deteksi Klaim Fiktif (Phantom Billing)",
+      "summary": "Mengidentifikasi klaim tindakan di dua faskes berbeda pada waktu yang tumpang tindih.",
+      "tags": [
+        "fraud-detection",
+        "phantom-billing"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "domain:claim-triage",
+      "target": "flow:multi-signal-triage",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:hitl-verification",
+      "target": "flow:verifikator-decision",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:provider-surveillance",
+      "target": "flow:dpjp-mobility-surveillance",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:multi-signal-triage",
+      "target": "step:regulatory-rule-check",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "step:regulatory-rule-check",
+      "target": "step:statistical-anomaly-detection",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "step:statistical-anomaly-detection",
+      "target": "step:semantic-guideline-rag",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "step:semantic-guideline-rag",
+      "target": "step:forensic-react-investigation",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "flow:verifikator-decision",
+      "target": "step:triage-cockpit-review",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "step:triage-cockpit-review",
+      "target": "step:dispute-and-adjudication",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "step:dispute-and-adjudication",
+      "target": "step:ledger-sealing-bakb",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "flow:dpjp-mobility-surveillance",
+      "target": "step:geovelocity-telemetry",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "step:geovelocity-telemetry",
+      "target": "step:phantom-billing-detection",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "step:forensic-react-investigation",
+      "target": "step:triage-cockpit-review",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "step:phantom-billing-detection",
+      "target": "step:triage-cockpit-review",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ],
+  "layers": [],
+  "tour": []
+}

@@ -34,11 +34,16 @@ chroma_db/
 .codex/
 .cursor/
 design-skills/
+.ua/intermediate/
+.ua/.trash-*/
+.ua/tmp/
+.ua/diff-overlay.json
 docs/*
 !docs/agents/
 !docs/agents/*
 !docs/adr/
 !docs/adr/*
+!docs/UA_ONBOARDING.md
 
 # Internal documentation and generator scripts
 AGENTS.md
