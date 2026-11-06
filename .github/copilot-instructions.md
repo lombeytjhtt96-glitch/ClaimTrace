@@ -48,6 +48,10 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
   - Strict Hallmark Floor compliance: zero horizontal overflow bleed (`overflow-x: clip`), no `transition: all`, never animate layout dimensions.
   - Number & Currency Stability: Enforce tabular figures (`tabular-nums`) across all tables, financial amounts, timestamps, and metric counters.
   - Tactile Affordances: Active button feedback (`transform: translateY(1px)` on `:active:not(:disabled)`).
+- Motion Craft & Mobile Native (Emil Kowalski Standards):
+  - Enter animations: snappy ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`), subtle scale emergence (`scale(0.96)` to `scale(1)`), never scale from 0.
+  - Exit animations: snappier duration (60-70% of enter) with ease-in.
+  - Mobile touch polish: `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation` (no 300ms tap delay), `user-select: none` on interactive controls, min 16px input font size.
 - Accessibility (WCAG 2.1 AA):
   - All interactive elements must provide visible focus indicators (`focus-visible:ring-2 focus-visible:ring-emerald-500`).
   - Buttons and actionable elements must provide explicit `cursor-pointer`.
