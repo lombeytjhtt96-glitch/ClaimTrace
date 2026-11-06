@@ -62,6 +62,22 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
+## Agent skills
+
+### Issue tracker
+
+Local markdown in `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context (`GLOSSARY.md` and `docs/adr/`). See `docs/agents/domain.md`.
+
+---
+
 ## Project-Specific Guidelines (ClaimTrace JKN - Localhost Development)
 
 - **Strict Remote Freeze**: Keep all development strictly on local branch `dev-local` (`localhost:3000` and `localhost:8000`). Never run `git push` to `main` or `vercel deploy`.
