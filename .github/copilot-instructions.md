@@ -142,3 +142,25 @@ ClaimTrace JKN is an enterprise-grade Decision Support System (DSS) designed for
 - **Offline Verifiability**: Every receipt must be verifiable offline from its canonical SHA-256 digest and HMAC-SHA256 digital seal alone without reliance on an external database or network.
 - **Batch Manifest Sealing**: Master SHA-256 seal links all active decision receipts into an immutable, tamper-evident audit record.
 - **REST Endpoints**: Expose `/api/v1/receipts`, `/api/v1/receipts/{id}`, `/api/v1/receipts/mint`, `/api/v1/receipts/{id}/human-gate`, `/api/v1/receipts/{id}/verify`, and `/api/v1/receipts/manifest/verify`.
+
+---
+
+## Vercel Agent Skills: Frontend Performance, Guidelines & Composition (vercel-labs/agent-skills)
+
+- **Skills Source**: Repositories located at `/home/Khalaf-Dev/vercel-agent-skills` and symlinked in `.github/skills/vercel-agent-skills`.
+- **React Best Practices (`react-best-practices`)**:
+  - Eliminate Waterfalls: Parallelize independent async operations (`Promise.all()`), defer awaiting non-critical values, and start promises early.
+  - Bundle Size Optimization: Use dynamic imports (`React.lazy` with `Suspense`) for heavy views, avoid barrel file re-exports, and isolate heavy libraries (`motion`, `charts`, `flow`) in separate Vite chunks.
+  - Re-render Optimization: Hoist default non-primitive props, use functional `setState` for stable callbacks, derive state during render rather than in effects, and avoid subscribing to state only needed in callbacks.
+  - Rendering Performance: Use `content-visibility: auto; contain-intrinsic-size: 0 48px;` on long audit and claim table rows (`.claim-row-lazy`) to skip off-screen layout and paint calculations.
+- **Web Interface Guidelines (`web-design-guidelines`)**:
+  - Keyboard Navigation & Focus: Interactive table rows and cards must support `tabIndex={0}`, `role="button"`, and keyboard triggers (`Enter` / `Space`). Maintain visible focus rings (`:focus-visible` with 2px offset).
+  - Accessible Buttons: Icon-only buttons must provide an explicit, localized `aria-label` attribute and mark inner decorative SVG icons with `aria-hidden="true"`.
+  - Typography & Numeric Alignment: Financial figures, case IDs, hashes, and timestamps must use `font-variant-numeric: tabular-nums` (`.tabular-nums`) for perfect vertical grid alignment.
+  - Motion Reduction: All transitions and animations must honor `prefers-reduced-motion: reduce` by zeroing durations and disabling view transition pseudo-elements.
+- **React Composition Patterns (`composition-patterns`)**:
+  - Avoid boolean prop proliferation by structuring complex components as compound components with shared context.
+  - Use explicit variant components rather than boolean flags to govern distinct workflow modes.
+- **View Transitions (`react-view-transitions`)**:
+  - Implement native CSS view transitions (`@view-transition`, `::view-transition-old`, `::view-transition-new`) for lateral tab changes and state morphs with smooth, low-latency timing.
+
