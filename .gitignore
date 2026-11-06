@@ -47,7 +47,10 @@ docs/*
 
 # Internal documentation and generator scripts
 AGENTS.md
-DESIGN.md
+!DESIGN.md
+!PRODUCT.md
+.impeccable/*
+!.impeccable/config.json
 */AGENTS.md
 */DESIGN.md
 build_final_deck.py

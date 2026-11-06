@@ -630,7 +630,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     onClick={() => setSelectedBlock(b)}
                     className={`transition-colors duration-150 cursor-pointer ${
                       selectedBlock?.index === b.index 
-                        ? (isLight ? 'bg-emerald-50/90 border-l-4 border-l-emerald-600 font-semibold' : 'bg-cyan-500/15 border-l-4 border-l-cyan-400 font-semibold')
+                        ? (isLight ? 'bg-emerald-50/90 border-l-2 border-l-emerald-600 font-semibold' : 'bg-cyan-500/15 border-l-2 border-l-cyan-400 font-semibold')
                         : (isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5')
                     }`}
                   >

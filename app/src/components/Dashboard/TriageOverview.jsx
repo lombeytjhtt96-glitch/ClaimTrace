@@ -257,7 +257,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: 0.05 }}
           whileHover={{ y: -2 }}
-          className={`border-l-4 border-l-emerald-600 rounded-2xl p-4 border transition-all relative overflow-hidden group ${
+          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
@@ -284,7 +284,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: 0.1 }}
           whileHover={{ y: -2 }}
-          className={`border-l-4 border-l-amber-500 rounded-2xl p-4 border transition-all relative overflow-hidden group ${
+          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
@@ -311,7 +311,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: 0.15 }}
           whileHover={{ y: -2 }}
-          className={`border-l-4 border-l-rose-500 rounded-2xl p-4 border transition-all relative overflow-hidden group ${
+          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
@@ -537,10 +537,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   onClick={() => onSelectCase(c)}
                   className={`group cursor-pointer transition-colors duration-150 ${
                     c.lane === 'red' 
-                      ? (isLight ? 'bg-rose-50/50 hover:bg-rose-100/60 border-l-4 border-l-rose-500' : 'bg-rose-500/10 hover:bg-rose-500/20 border-l-4 border-l-rose-500')
+                      ? (isLight ? 'bg-rose-50/50 hover:bg-rose-100/60 border-l-2 border-l-rose-500' : 'bg-rose-500/10 hover:bg-rose-500/20 border-l-2 border-l-rose-500')
                       : c.lane === 'yellow'
-                      ? (isLight ? 'bg-amber-50/50 hover:bg-amber-100/60 border-l-4 border-l-amber-500' : 'bg-amber-500/10 hover:bg-amber-500/20 border-l-4 border-l-amber-500')
-                      : (isLight ? 'hover:bg-slate-50 border-l-4 border-l-emerald-600' : 'hover:bg-white/5 border-l-4 border-l-emerald-500')
+                      ? (isLight ? 'bg-amber-50/50 hover:bg-amber-100/60 border-l-2 border-l-amber-500' : 'bg-amber-500/10 hover:bg-amber-500/20 border-l-2 border-l-amber-500')
+                      : (isLight ? 'hover:bg-slate-50 border-l-2 border-l-emerald-600' : 'hover:bg-white/5 border-l-2 border-l-emerald-500')
                   }`}
                 >
                   <td className="py-3.5 px-4">
