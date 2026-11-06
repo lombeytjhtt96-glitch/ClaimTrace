@@ -28,7 +28,7 @@ def test_generate_claim_30day_intelligence_matched():
     # K92.2 matches Edaran Teknis BPJS Kes No. 33/2026
     claim_data = {
         "diagnosa_primer": "K92.2",
-        "kode_cbg": "Z-3-12-0",
+        "kode_cbg": "K-1-10-III",
         "hospital": "RSUD Dr. Soetomo",
         "biaya_riil": 15300000
     }
@@ -57,8 +57,8 @@ def test_api_get_30day_radar_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["spec_version"] == "3.31.0"
-    assert data["total_signals_tracked"] == 5
-    assert len(data["high_priority_alerts"]) == 5
+    assert data["total_signals_tracked"] == 7
+    assert len(data["high_priority_alerts"]) == 7
     assert len(data["radar_hash"]) == 64
 
 def test_api_get_claim_30day_intelligence_endpoint():
