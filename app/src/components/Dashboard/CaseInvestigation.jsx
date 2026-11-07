@@ -16,7 +16,6 @@ import {
   YAxis,
   Tooltip,
   Cell,
-  ReferenceLine,
   LabelList,
   CartesianGrid,
   AreaChart,
@@ -542,7 +541,6 @@ export default function CaseInvestigation({
                   </span>
                   <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono">
                     <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold">
-                      <span className="w-3 border-t-2 border-dashed border-sky-500 inline-block" />
                       Baseline: 10 berkas
                     </span>
                     <span className="text-slate-300 dark:text-white/20">·</span>
@@ -645,12 +643,6 @@ export default function CaseInvestigation({
                         content={<VolumeChartTooltip isLight={isLight} />}
                         cursor={false}
                       />
-                      <ReferenceLine
-                        y={10}
-                        stroke={isLight ? '#0284c7' : '#38bdf8'}
-                        strokeDasharray="4 4"
-                        strokeWidth={1.5}
-                      />
                       <Bar
                         dataKey="volume"
                         radius={[6, 6, 0, 0]}
@@ -715,12 +707,6 @@ export default function CaseInvestigation({
                       <Tooltip
                         content={<VolumeChartTooltip isLight={isLight} />}
                         cursor={false}
-                      />
-                      <ReferenceLine
-                        y={10}
-                        stroke={isLight ? '#0284c7' : '#38bdf8'}
-                        strokeDasharray="4 4"
-                        strokeWidth={1.5}
                       />
                       <Area
                         type="monotone"
