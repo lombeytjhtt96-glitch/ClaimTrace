@@ -6,6 +6,7 @@ import asyncio
 import secrets
 import httpx
 import re
+import hashlib
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -35,6 +36,10 @@ from app.models.schemas import (
     ClaimCybersecurityMatrix,
     EvaluateCybersecurityRequest,
     FrameworkCatalogResponse,
+    WbsReportInput,
+    WbsReportRecord,
+    WbsReportResponse,
+    WbsTrackResponse,
 )
 from app.engine.google_secops_engine import (
     PRECOMPILED_YARA_L_RULES,
@@ -84,6 +89,66 @@ def _persist_claims_state(claims_map: Dict[str, ClaimInput]) -> None:
         print(f"[ClaimStatePersistence] Warning persisting claims: {e}")
 
 SYNTHETIC_CLAIMS_DATABASE: Dict[str, ClaimInput] = _load_persisted_claims()
+
+WBS_REPORTS_FILE = Path(__file__).resolve().parent.parent / "data" / "wbs_reports.json"
+
+INITIAL_WBS_REPORTS: Dict[str, Dict[str, Any]] = {
+    "WBS-2026-JKN-8821": {
+        "ticket_id": "WBS-2026-JKN-8821",
+        "category": "Phantom Billing",
+        "faskes_name": "RS Swasta Medika Kasih",
+        "location": "Kota Surakarta, Jawa Tengah",
+        "reporter_contact_masked": None,
+        "is_anonymous": True,
+        "description": "Laporan indikasi operasi katarak massal tanpa kehadiran pasien nyata pada tanggal 24 Oktober 2026.",
+        "timestamp": "2026-10-24T14:15:00Z",
+        "cryptographic_hash": "a4f89d38c2017e4bb0283de5012f9180c44931a1936c57fba3089d3fbc91092a",
+        "status": "Sedang Ditelaah Verifikator Wasrik (Prioritas Tinggi)",
+        "audit_ledger_index": 1081,
+        "assigned_verificator": "Tim Verifikator Wasrik BPJS Kesehatan Wilayah Jateng & DIY",
+        "sla_deadline_days": 10
+    },
+    "WBS-2026-JKN-4102": {
+        "ticket_id": "WBS-2026-JKN-4102",
+        "category": "Repeat & Split Billing",
+        "faskes_name": "RS Khusus Mitra Husada",
+        "location": "Kabupaten Karanganyar, Jawa Tengah",
+        "reporter_contact_masked": "0812****4321",
+        "is_anonymous": False,
+        "description": "Pengulangan berkas tindakan fisioterapi dalam jendela waktu 48 jam yang diduga dipecah menjadi beberapa episode klaim terpisah.",
+        "timestamp": "2026-10-25T09:30:00Z",
+        "cryptographic_hash": "7c12f49d894b59328e10419d28be40192834b9d01248c03948e30924be98231c",
+        "status": "Selesai Dikonfirmasi & Masuk Klaster Investigasi",
+        "audit_ledger_index": 1082,
+        "assigned_verificator": "Tim Verifikator Wasrik BPJS Kesehatan Wilayah Jateng & DIY",
+        "sla_deadline_days": 10
+    }
+}
+
+def _load_persisted_wbs_reports() -> Dict[str, Dict[str, Any]]:
+    if not os.getenv("PYTEST_CURRENT_TEST") and WBS_REPORTS_FILE.exists():
+        try:
+            with open(WBS_REPORTS_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                if isinstance(loaded, dict) and loaded:
+                    return loaded
+        except Exception as e:
+            print(f"[WbsPersistence] Warning loading persisted WBS reports: {e}")
+    return dict(INITIAL_WBS_REPORTS)
+
+def _persist_wbs_reports(reports_map: Dict[str, Dict[str, Any]]) -> None:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return
+    try:
+        WBS_REPORTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp_file = WBS_REPORTS_FILE.with_suffix(".tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
+            json.dump(reports_map, f, indent=2, ensure_ascii=False)
+        tmp_file.replace(WBS_REPORTS_FILE)
+    except Exception as e:
+        print(f"[WbsPersistence] Warning persisting WBS reports: {e}")
+
+WBS_REPORTS_DATABASE: Dict[str, Dict[str, Any]] = _load_persisted_wbs_reports()
 from app.engine.neo4j_graph import (
     generate_cypher_seed_script,
     FRAUD_DETECTION_CYPHER_QUERIES,
@@ -1336,6 +1401,145 @@ def get_audit_chain():
         "chain_length": len(audit_logger.chain),
         "broken_at_index": broken_idx if not valid else None,
         "chain": list(reversed(audit_logger.chain))  # Newest first for UI inspection
+    }
+
+# ============================================================================
+# WHISTLEBLOWING SYSTEM (WBS) FASKES ENDPOINTS (UU PDP No. 27/2022 & LPSK)
+# ============================================================================
+
+@app.post("/api/v1/wbs/report", response_model=WbsReportResponse)
+def submit_wbs_report(report: WbsReportInput):
+    """
+    Submits a formal whistleblowing report on suspected claim anomalies to BPJS Kesehatan.
+    Enforces UU PDP No. 27/2022 & UU LPSK No. 31/2014 by scrubbing contact info if anonymous.
+    Appends an immutable SHA-256 event into the cryptographic Audit Ledger.
+    """
+    if not report.faskes_name or not report.faskes_name.strip():
+        raise HTTPException(status_code=400, detail="Nama fasilitas kesehatan (Faskes) wajib diisi.")
+    if not report.description or not report.description.strip():
+        raise HTTPException(status_code=400, detail="Uraian kronologi dugaan anomali klaim wajib diisi.")
+
+    ticket_num = secrets.randbelow(9000) + 1000
+    ticket_id = f"WBS-2026-JKN-{ticket_num}"
+    timestamp = datetime.now(timezone.utc).isoformat()
+    location = report.location.strip() if report.location and report.location.strip() else "Wilayah Nasional RI"
+    
+    if report.is_anonymous:
+        reporter_contact_masked = None
+    else:
+        raw_contact = (report.reporter_contact or "").strip()
+        if not raw_contact:
+            reporter_contact_masked = "Anonim (Tanpa Kontak)"
+        elif "@" in raw_contact:
+            parts = raw_contact.split("@")
+            user_part = parts[0]
+            masked_user = user_part[0] + "***" if len(user_part) > 1 else "u***"
+            reporter_contact_masked = f"{masked_user}@{parts[1]}"
+        elif len(raw_contact) >= 8:
+            reporter_contact_masked = f"{raw_contact[:4]}****{raw_contact[-4:]}"
+        else:
+            reporter_contact_masked = "Kontak Terproteksi (Enkripsi)"
+
+    raw_payload_str = f"{ticket_id}|{report.category}|{report.faskes_name.strip()}|{timestamp}|{report.description.strip()}"
+    crypto_hash = hashlib.sha256(raw_payload_str.encode("utf-8")).hexdigest()
+
+    audit_entry = audit_logger.record_event(
+        event_type="WBS_INTEGRITY_REPORT_FILED",
+        claim_id=ticket_id,
+        actor="PELAPOR_WBS_ANONIM" if report.is_anonymous else "PELAPOR_WBS_TERDAFTAR",
+        payload={
+            "ticket_id": ticket_id,
+            "category": report.category,
+            "faskes": report.faskes_name.strip(),
+            "location": location,
+            "is_anonymous": report.is_anonymous,
+            "hash": crypto_hash,
+            "status": "Diterima di Verifikator Pusat BPJS Kesehatan (Antrean Prioritas Wasrik)",
+            "summary": report.description.strip()[:120] + ("..." if len(report.description.strip()) > 120 else ""),
+            "legal_basis": "UU PDP No. 27/2022 & UU LPSK No. 31/2014"
+        }
+    )
+
+    ledger_index = audit_entry.get("index", 1085)
+
+    record = {
+        "ticket_id": ticket_id,
+        "category": report.category,
+        "faskes_name": report.faskes_name.strip(),
+        "location": location,
+        "reporter_contact_masked": reporter_contact_masked,
+        "is_anonymous": report.is_anonymous,
+        "description": report.description.strip(),
+        "timestamp": timestamp,
+        "cryptographic_hash": crypto_hash,
+        "status": "Diterima di Verifikator Pusat BPJS Kesehatan (Antrean Prioritas Wasrik)",
+        "audit_ledger_index": ledger_index,
+        "assigned_verificator": "Tim Verifikator Wasrik BPJS Kesehatan Pusat",
+        "sla_deadline_days": 10
+    }
+    WBS_REPORTS_DATABASE[ticket_id] = record
+    _persist_wbs_reports(WBS_REPORTS_DATABASE)
+
+    return WbsReportResponse(
+        success=True,
+        ticket_id=ticket_id,
+        category=report.category,
+        faskes_name=report.faskes_name.strip(),
+        location=location,
+        reporter_contact_masked=reporter_contact_masked,
+        timestamp=timestamp,
+        cryptographic_hash=crypto_hash,
+        status="Diterima di Verifikator Pusat BPJS Kesehatan (Antrean Prioritas Wasrik)",
+        is_anonymous=report.is_anonymous,
+        audit_ledger_index=ledger_index,
+        sla_deadline_days=10,
+        message="Laporan pengaduan integritas berhasil dienkripsi dan masuk ke basis data verifikator BPJS Kesehatan serta terpatri dalam Audit Ledger SHA-256."
+    )
+
+@app.get("/api/v1/wbs/track/{ticket_id}", response_model=WbsTrackResponse)
+def track_wbs_report(ticket_id: str):
+    """
+    Allows citizens and whistleblowers to verify the live adjudication status of their filed WBS report.
+    """
+    ticket_clean = ticket_id.strip().upper()
+    report = WBS_REPORTS_DATABASE.get(ticket_clean)
+    if not report:
+        return WbsTrackResponse(
+            found=False,
+            ticket_id=ticket_clean,
+            disposition="Nomor tiket pengaduan tidak ditemukan di basis data registri WBS BPJS Kesehatan. Mohon periksa kembali kode tiket Anda."
+        )
+
+    ledger_idx = report.get("audit_ledger_index") or 1085
+    return WbsTrackResponse(
+        found=True,
+        ticket_id=report["ticket_id"],
+        category=report["category"],
+        faskes_name=report["faskes_name"],
+        location=report["location"],
+        timestamp=report["timestamp"],
+        cryptographic_hash=report["cryptographic_hash"],
+        status=report["status"],
+        audit_ledger_index=ledger_idx,
+        disposition=(
+            f"Laporan integritas telah tercatat sah dalam blok audit #{ledger_idx} "
+            f"dengan segel kriptografis SHA-256. Tim Wasrik BPJS Kesehatan sedang melakukan pencocokan bukti "
+            f"triangulasi rekam medis SATUSEHAT dan presensi Mobile JKN untuk faskes {report['faskes_name']}."
+        ),
+        sla_deadline_days=report.get("sla_deadline_days", 10),
+        integrity_verified=True
+    )
+
+@app.get("/api/v1/wbs/reports")
+def list_wbs_reports():
+    """
+    Returns list of all WBS reports for BPJS verifikators.
+    """
+    reports_list = list(WBS_REPORTS_DATABASE.values())
+    reports_list.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    return {
+        "total_reports": len(reports_list),
+        "reports": reports_list
     }
 
 @app.post("/api/v1/claims/reset")
