@@ -312,3 +312,55 @@ class FrameworkCatalogResponse(BaseModel):
     f3_skills_count: int
     top_fraud_skills: List[Dict[str, Any]]
 
+class WbsReportInput(BaseModel):
+    category: str
+    faskes_name: str
+    location: Optional[str] = None
+    reporter_contact: Optional[str] = None
+    is_anonymous: bool = False
+    description: str
+
+class WbsReportRecord(BaseModel):
+    ticket_id: str
+    category: str
+    faskes_name: str
+    location: str
+    reporter_contact_masked: Optional[str] = None
+    is_anonymous: bool
+    description: str
+    timestamp: str
+    cryptographic_hash: str
+    status: str
+    audit_ledger_index: Optional[int] = None
+    assigned_verificator: str = "Verifikator Tim Anti-Fraud BPJS Pusat"
+    sla_deadline_days: int = 10
+
+class WbsReportResponse(BaseModel):
+    success: bool
+    ticket_id: str
+    category: str
+    faskes_name: str
+    location: str
+    reporter_contact_masked: Optional[str] = None
+    timestamp: str
+    cryptographic_hash: str
+    status: str
+    is_anonymous: bool
+    audit_ledger_index: Optional[int] = None
+    sla_deadline_days: int = 10
+    message: str
+
+class WbsTrackResponse(BaseModel):
+    found: bool
+    ticket_id: str
+    category: Optional[str] = None
+    faskes_name: Optional[str] = None
+    location: Optional[str] = None
+    timestamp: Optional[str] = None
+    cryptographic_hash: Optional[str] = None
+    status: Optional[str] = None
+    audit_ledger_index: Optional[int] = None
+    disposition: Optional[str] = None
+    sla_deadline_days: int = 10
+    integrity_verified: bool = True
+
