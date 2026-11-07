@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 import { 
   Bell, Search, Shield, ShieldCheck, AlertTriangle, CheckCircle, XCircle, 
   ChevronRight, ArrowRight, ArrowLeft, Activity, FileText, User, 
@@ -2510,6 +2511,9 @@ export default function App() {
         isLight={isLight}
       />
     )}
+
+    {/* VERCEL WEB ANALYTICS */}
+    <Analytics />
   </>
   );
 }
