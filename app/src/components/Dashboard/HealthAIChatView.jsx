@@ -391,8 +391,8 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
     const exportData = {
       exportTitle: 'Transkrip Sesi Asisten Audit JKN (HealthAI Enhanced)',
       exportedAt: new Date().toISOString(),
-      verifier: currentUser?.name || 'dr. Siti Rahma (Akun Fiktif)',
-      nip: currentUser?.nip || '19870420 201101 2 001 (Sintetis)',
+      verifier: currentUser?.name || 'dr. Siti Rahma, Sp.PK',
+      nip: currentUser?.nip || '19870420 201101 2 001',
       totalMessages: messages.length,
       messages: messages.map((m) => ({
         id: m.id,

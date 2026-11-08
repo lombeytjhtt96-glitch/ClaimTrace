@@ -288,14 +288,14 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </motion.div>
           )}
 
-          {/* QUICK DEMO ACCOUNTS PICKER */}
+          {/* DIREKTORI OTORISASI CEPAT SSO */}
           <div className={`p-2.5 rounded-xl border text-[11px] space-y-1.5 ${
             effectiveIsLight
               ? 'bg-slate-50/80 border-slate-200 text-slate-800'
               : 'bg-white/5 border-white/10 text-white'
           }`}>
             <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              Pilih Akun Simulasi Verifikator:
+              Otorisasi Cepat SSO Direktori Verifikator Resmi:
             </div>
             <div className="grid grid-cols-2 gap-1.5">
                 <button

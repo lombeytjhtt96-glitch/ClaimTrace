@@ -1434,7 +1434,7 @@ export default function LandingPage({
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Email Verifikator Medis</span>
-                      <span className={`font-mono text-[11px] ${effectiveIsLight ? 'text-slate-700' : 'text-white/70'}`}>pengawasan.klaim.simulasi@bpjs-kesehatan.go.id</span>
+                      <span className={`font-mono text-[11px] ${effectiveIsLight ? 'text-slate-700' : 'text-white/70'}`}>pengawasan.klaim@bpjs-kesehatan.go.id</span>
                     </div>
                   </motion.div>
                 </div>

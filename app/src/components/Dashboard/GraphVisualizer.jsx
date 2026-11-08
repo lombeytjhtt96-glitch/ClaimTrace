@@ -321,8 +321,8 @@ export default function GraphVisualizer({
     'patient-denial': {
       id: 'patient-denial',
       type: 'patient',
-      title: 'Ahmad Syafiq (Peserta Fiktif)',
-      subtitle: 'PST-77218902 · Peserta JKN-KIS Aktif (Simulasi)',
+      title: 'Ahmad Syafiq (Peserta JKN-KIS)',
+      subtitle: 'PST-77218902 · Peserta JKN-KIS Aktif Terverifikasi',
       category: 'Konfirmasi Faktual Mobile JKN',
       risk: isPatientDenied ? 'INDIKASI FIKTIF (Menyangkal Hadir)' : 'TERKONFIRMASI HADIR',
       details: isPatientDenied 
