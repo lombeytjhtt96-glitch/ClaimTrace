@@ -143,15 +143,6 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel,
           <h1 className={`text-2xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
             Verifikasi Dua Faktor (MFA)
           </h1>
-          <div className={`flex items-center justify-center gap-1.5 text-[9.5px] font-mono py-1 px-3 rounded-full border w-fit mx-auto ${
-            isLight
-              ? 'text-slate-700 bg-slate-100 border-slate-300'
-              : 'text-white/60 bg-white/5 border-white/10'
-          }`}>
-            <span>NIST CSF 2.0 PR.AC</span>
-            <span>·</span>
-            <span>MITRE D3FEND D3-MFA</span>
-          </div>
           <p className={`text-xs max-w-sm mx-auto ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
             Notifikasi izin masuk telah dikirimkan ke aplikasi Mobile JKN pada perangkat kedinasan Anda.
           </p>

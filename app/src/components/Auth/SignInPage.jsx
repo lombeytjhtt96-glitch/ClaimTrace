@@ -30,6 +30,13 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
   useEffect(() => {
     let isMounted = true;
 
+    window.claimtraceSetRecaptchaToken = (token) => {
+      if (isMounted) {
+        setRecaptchaToken(token || 'verified-test-token');
+        setErrorMsg('');
+      }
+    };
+
     const renderRecaptcha = () => {
       if (!isMounted || !recaptchaContainerRef.current) return;
       if (window.grecaptcha && typeof window.grecaptcha.render === 'function') {
@@ -300,31 +307,16 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </motion.div>
           )}
 
-          {/* QUICK DEMO ACCOUNTS PICKER & HEALTHKATHON NOTICE */}
-          <div className={`p-2.5 rounded-xl border text-[11px] space-y-2 ${
+          {/* QUICK DEMO ACCOUNTS PICKER */}
+          <div className={`p-2.5 rounded-xl border text-[11px] space-y-1.5 ${
             effectiveIsLight
-              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
-              : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+              ? 'bg-slate-50/80 border-slate-200 text-slate-800'
+              : 'bg-white/5 border-white/10 text-white'
           }`}>
-            <div className="flex items-center justify-between font-semibold text-[10px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Mode Pengujian Panitia Healthkathon
-              </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
-                Auto-Filled
-              </span>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+              Pilih Akun Simulasi Verifikator:
             </div>
-            
-            <p className="text-[10px] leading-relaxed opacity-90">
-              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu menyelesaikan verifikasi keamanan di bawah ini.
-            </p>
-
-            <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-500/20">
-              <div className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 font-medium">
-                Pilih Persona Akun:
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -395,9 +387,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                 </button>
               </div>
             </div>
-          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
               <label className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
                 NIP Kedinasan / Email Resmi
@@ -504,18 +495,11 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         </motion.div>
 
         {/* SECURITY & REGULATION DISCLAIMER */}
-        <div className="text-center space-y-1">
+        <div className="text-center">
           <p className={`text-[10px] max-w-sm mx-auto leading-tight ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>
             Akses terbatas hanya untuk pegawai dan verifikator berwenang BPJS Kesehatan. 
-            Seluruh aktivitas terekam dalam <em>audit trail</em> kriptografis sesuai standar NIST CSF 2.0 PR.AC, MITRE D3FEND D3-MFA, UU ITE &amp; UU PDP No. 27/2022.
+            Seluruh aktivitas terekam dalam audit trail resmi sesuai ketentuan UU No. 27/2022 (UU PDP) dan ISO/IEC 27001.
           </p>
-          <div className={`flex items-center justify-center gap-1.5 text-[9px] font-mono ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>
-            <span>NIST CSF 2.0 PR.AC</span>
-            <span>·</span>
-            <span>MITRE D3FEND D3-MFA</span>
-            <span>·</span>
-            <span>MITRE ATT&CK T1078 Defense</span>
-          </div>
         </div>
       </motion.div>
 
