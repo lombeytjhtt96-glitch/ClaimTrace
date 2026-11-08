@@ -1121,33 +1121,48 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4">
-            {activeSeverity !== null && severityData[activeSeverity] ? (
-              <>
-                <span 
-                  className="text-lg font-bold tabular-nums tracking-tight leading-none transition-all duration-200"
-                  style={{ color: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
-                >
-                  {severityData[activeSeverity].value.toLocaleString('id-ID')}
-                </span>
-                <span 
-                  className="text-[10px] font-bold uppercase tracking-wider text-center mt-1 transition-all duration-200"
-                  style={{ color: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
-                >
-                  Risiko {severityData[activeSeverity].name} ({totalClaimsCount > 0 ? ((severityData[activeSeverity].value / totalClaimsCount) * 100).toFixed(1).replace('.', ',') : 0}%)
-                </span>
-              </>
-            ) : (
-              <>
-                <span className={`text-lg font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {totalClaimsCount.toLocaleString('id-ID')}
-                </span>
-                <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  {timeRangeBadge}
-                </span>
-              </>
-            )}
+          {/* Donut Center Permanent Metric */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4 z-10">
+            <span className={`text-lg font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {totalClaimsCount.toLocaleString('id-ID')}
+            </span>
+            <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+              {timeRangeBadge}
+            </span>
           </div>
+
+          {/* Floating Tooltip Pill (Positioned outside the center hole) */}
+          {activeSeverity !== null && severityData[activeSeverity] && (
+            <div 
+              className={`absolute z-20 pointer-events-none transition-all duration-200 ease-out flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-lg backdrop-blur-md ${
+                activeSeverity === 0
+                  ? 'top-2 left-1/2 -translate-x-1/2'
+                  : activeSeverity === 1
+                  ? 'bottom-2 right-4'
+                  : activeSeverity === 2
+                  ? 'top-1/2 right-3 -translate-y-1/2'
+                  : 'top-3 right-4'
+              } ${
+                isLight 
+                  ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/80' 
+                  : 'bg-[#00153A]/95 border-white/20 text-white shadow-black/80'
+              }`}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
+              />
+              <span className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                {severityData[activeSeverity].name}:
+              </span>
+              <span 
+                className="text-xs font-bold font-mono"
+                style={{ color: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
+              >
+                {severityData[activeSeverity].value.toLocaleString('id-ID')} berkas
+              </span>
+            </div>
+          )}
         </div>
         <ul className={`mt-3 space-y-1 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
           {severityData.map((item, index) => {
