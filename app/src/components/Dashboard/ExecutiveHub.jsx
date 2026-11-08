@@ -1895,6 +1895,18 @@ export default function ExecutiveHub({
   const [campaignGenerated, setCampaignGenerated] = useState(null);
   const [timeRange, setTimeRange] = useState('all'); // 'all' (2015–Saat Ini) | 90 | 30 | 7
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Keyboard accessibility: dismiss modals with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (isReportModalOpen) setIsReportModalOpen(false);
+        if (isCampaignModalOpen) setIsCampaignModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isReportModalOpen, isCampaignModalOpen]);
   const [benchmarkData, setBenchmarkData] = useState({
     status: 'success',
     operational_since: '2014-01-01',
@@ -2883,14 +2895,18 @@ export default function ExecutiveHub({
       {/* Generate Report Modal */}
       <AnimatePresence>
         {isReportModalOpen && (
-          <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
-            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
-          }`}>
+          <div
+            onClick={() => setIsReportModalOpen(false)}
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
+              isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
+            }`}
+          >
             <motion.div
+              onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`rounded-2xl shadow-2xl border w-full max-w-lg overflow-hidden ${
+              className={`rounded-2xl shadow-2xl border w-full max-w-lg overflow-hidden cursor-default ${
                 isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
               }`}
             >
@@ -3006,14 +3022,18 @@ export default function ExecutiveHub({
       {/* Insights Campaign Modal */}
       <AnimatePresence>
         {isCampaignModalOpen && (
-          <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
-            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
-          }`}>
+          <div
+            onClick={() => setIsCampaignModalOpen(false)}
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
+              isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
+            }`}
+          >
             <motion.div
+              onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className={`rounded-2xl shadow-2xl border w-full max-w-2xl overflow-hidden ${
+              className={`rounded-2xl shadow-2xl border w-full max-w-2xl overflow-hidden cursor-default ${
                 isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
               }`}
             >
