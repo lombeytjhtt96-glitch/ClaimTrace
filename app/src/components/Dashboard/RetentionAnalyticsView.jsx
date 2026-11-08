@@ -305,7 +305,8 @@ function TrendChart({
               fillOpacity={1}
               fill="url(#retentionAreaGrad)"
               name="Verifikator Aktif"
-              activeDot={{ r: 5, fill: chartColor, stroke: isLight ? '#059669' : '#FFFFFF', strokeWidth: 2 }}
+              dot={false}
+              activeDot={false}
               isAnimationActive={false}
             />
           </AreaChart>
