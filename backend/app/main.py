@@ -319,6 +319,13 @@ class TemporalSearchRequest(BaseModel):
     days: Optional[int] = 30
     mock: Optional[bool] = True
 
+class InsightsQueryRequest(BaseModel):
+    query_type: Optional[str] = "high_risk_trends"
+    query_name: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    severity: Optional[str] = None
+
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
@@ -2022,11 +2029,45 @@ def call_duckdb_provider_fraud_profile(risk_level: Optional[str] = None):
     """
     return duckdb_engine.tool_provider_fraud_risk_profile(risk_level=risk_level)
 
+# ─── INSIGHTS ANALYTICS & PRIVACY (UU PDP No. 27/2022 & NIST PRIVACY FRAMEWORK) ───
+
+@app.get("/api/v1/insights/privacy-status")
+def get_insights_privacy_status():
+    """
+    Status perlindungan privasi data klaim real-time:
+    - K-Anonymity (k >= 5) UU PDP No. 27/2022
+    - Differential Privacy (epsilon-delta)
+    - Validasi persetujuan telemetri peserta Mobile JKN
+    """
+    return duckdb_engine.tool_insights_privacy_status()
+
+@app.post("/api/v1/insights/execute-query")
+def execute_insights_query(req: InsightsQueryRequest):
+    """
+    Eksekusi kueri analitik pengawasan klaim JKN terotorisasi (Allow-Listed)
+    langsung pada basis data DuckDB (1.699.219 klaim FKRTL & 1.967.670 diagnosis sekunder).
+    Menerapkan penegakan k-anonymity (k>=5) dan pelacakan anggaran differential privacy (epsilon).
+    """
+    target_q = req.query_type or req.query_name or "high_risk_trends"
+    return duckdb_engine.tool_insights_execute_query(
+        query_type=target_q,
+        start_date=req.start_date,
+        end_date=req.end_date,
+        severity=req.severity
+    )
+
+@app.get("/api/v1/insights/reports")
+def get_insights_reports():
+    """
+    Daftar laporan wawasan audit terbaru yang disintesis dari basis data transaksi terpadu
+    """
+    return duckdb_engine.tool_insights_reports()
+
 @app.get("/api/v1/system/national-scale-metrics")
 def get_national_scale_metrics():
     """
-    Mengembalikan data makro operasional longitudinal BPJS Kesehatan (2014 – Saat Ini):
-    - Beroperasi kontinu sejak 2014 hingga saat ini (Live Real-Time)
+    Mengembalikan data makro operasional transaksi BPJS Kesehatan:
+    - Beroperasi kontinu secara real-time (Live 24/7)
     - Sumber Data Empiris: 6.264.346 baris data transaksi terpadu
     - Volume FKRTL: 1.699.219 berkas klaim (4.643 berkas/hari, puncak 7.870/hari) dari 2.091 profil FKRTL di 496 Kab/Kota (38 Provinsi)
     - Master Kepesertaan: 2.590.751 peserta pada 1.065.281 keluarga
@@ -2035,7 +2076,7 @@ def get_national_scale_metrics():
     return {
         "status": "success",
         "scope": "Basis Data Transaksi Terpadu JKN",
-        "operational_since": "2014-01-01",
+        "operational_status": "ONLINE_CONTINUOUS_REALTIME",
         "operational_span": "Berjalan Kontinu Real-Time 24/7",
         "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
         "regulatory_basis": "Perpres No. 82 Tahun 2018 & Permenkes No. 26 Tahun 2021",
@@ -2064,8 +2105,8 @@ def get_national_scale_metrics():
             "total_anomaly_exposure_idr": 34663799076
         },
         "metrics": {
-            "cumulative_claims_since_2014": 1699219,
-            "cumulative_claims_since_2014_label": "1,70 Juta Berkas Terverifikasi",
+            "cumulative_claims_volume": 1699219,
+            "cumulative_claims_label": "1,70 Juta Berkas Terverifikasi",
             "annual_claims_volume": 1699219,
             "annual_claims_label": "1.699.219 Berkas Klaim FKRTL",
             "daily_claims_average": 4643,
@@ -2086,7 +2127,7 @@ def get_national_scale_metrics():
             "sla_10d_deadline_business_days": 10,
             "penalty_avoidance_rate_pct": 1.0,
             "estimated_fraud_leakage_mitigated_idr": 34663799076,
-            "cumulative_fraud_mitigated_since_2014_idr": 34663799076,
+            "cumulative_fraud_mitigated_idr": 34663799076,
             "estimated_fraud_leakage_label": "Rp 34,66 Miliar Anomali & Koreksi Tarif",
             "triage_distribution": {
                 "green_auto_approve_pct": 88.49,

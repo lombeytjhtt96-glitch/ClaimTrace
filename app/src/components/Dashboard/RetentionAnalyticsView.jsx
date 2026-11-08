@@ -54,10 +54,10 @@ const INITIAL_DAILY_ACTIVITY = [
   { date: '2026-09-25', activeUsers: 963, totalRequests: 3929 },
 ];
 
-// Data retensi kohort longitudinal 2014 – Saat Ini (v_bpjs_longitudinal_2015_2024)
+// Data retensi kohort longitudinal transaksi terpadu JKN
 const INITIAL_COHORTS = [
   {
-    cohort_date: '2014–2016 (Fondasi JKN)',
+    cohort_date: 'Kohort 1 (Fondasi JKN)',
     cohort_size: 1697452,
     claims_count: 1006927,
     retention: {
@@ -67,7 +67,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2017 (Kohort PSTV16)',
+    cohort_date: 'Kohort 2 (Pencatatan PSTV16)',
     cohort_size: 134966,
     claims_count: 98906,
     retention: {
@@ -77,7 +77,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2018 (Perpres 82/2018)',
+    cohort_date: 'Kohort 3 (Perpres 82/2018)',
     cohort_size: 139326,
     claims_count: 97093,
     retention: {
@@ -87,7 +87,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2019 (Kohort PSTV16)',
+    cohort_date: 'Kohort 4 (Standardisasi)',
     cohort_size: 121412,
     claims_count: 80408,
     retention: {
@@ -97,7 +97,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2020 (Kohort PSTV16)',
+    cohort_date: 'Kohort 5 (Pencegahan Pandemi)',
     cohort_size: 107804,
     claims_count: 80800,
     retention: {
@@ -107,7 +107,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2021 (Permenkes 26/2021)',
+    cohort_date: 'Kohort 6 (Permenkes 26/2021)',
     cohort_size: 104475,
     claims_count: 83188,
     retention: {
@@ -117,7 +117,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2022 (UU PDP 27/2022)',
+    cohort_date: 'Kohort 7 (UU PDP 27/2022)',
     cohort_size: 101865,
     claims_count: 87507,
     retention: {
@@ -127,7 +127,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2023 (Kohort PSTV16)',
+    cohort_date: 'Kohort 8 (Integrasi JKN)',
     cohort_size: 93951,
     claims_count: 93204,
     retention: {
@@ -137,7 +137,7 @@ const INITIAL_COHORTS = [
     },
   },
   {
-    cohort_date: '2024 – Saat Ini (Live)',
+    cohort_date: 'Kohort 9 (Terkini Kontinu)',
     cohort_size: 89500,
     claims_count: 71186,
     retention: {
@@ -563,7 +563,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         </div>
       </div>
 
-      {/* Tabel Bawah: Cohort Retention Longitudinal 2014-Saat Ini */}
+      {/* Tabel Bawah: Cohort Retention Longitudinal Transaksi Terpadu */}
       <div className={`rounded-2xl border p-6 ${
         isLight
           ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
@@ -595,7 +595,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
             <span className={`font-bold ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>Tolok Ukur SLA JKN:</span>
             <span><strong>D1 (H+1):</strong> Klaim Disetujui Penuh (Green Lane) • <strong>D7 (H+7):</strong> Rekonsiliasi Resume Medis &amp; BAKB • <strong>D30 (H+30):</strong> Tuntas SLA Perpres 82/2018</span>
           </div>
-          <span className={`text-[11px] font-semibold hidden sm:inline ${isLight ? 'text-emerald-700 font-bold' : 'text-[#FFCA40]'}`}>v_bpjs_longitudinal_2015_2024</span>
+          <span className={`text-[11px] font-semibold hidden sm:inline ${isLight ? 'text-emerald-700 font-bold' : 'text-[#FFCA40]'}`}>v_bpjs_longitudinal_terpadu</span>
         </div>
 
         <div className={`overflow-x-auto border rounded-lg ${isLight ? 'border-slate-200' : 'border-white/10'}`}>

@@ -92,8 +92,8 @@ const TABLE_METADATA = {
   },
   bpjs_kepesertaan_all: {
     category: 'bpjs_core',
-    title: 'Master Kepesertaan JKN 2015–2024 (2.590.751 Baris)',
-    description: 'Data demografi peserta BPJS Kesehatan terdaftar kohort 2015–2024, mencakup 2.590.751 profil peserta (1.065.281 keluarga) dengan bobot PSTV15.',
+    title: 'Master Kepesertaan JKN (2.590.751 Baris)',
+    description: 'Data demografi master peserta BPJS Kesehatan, mencakup 2.590.751 profil peserta (1.065.281 keluarga) dengan bobot PSTV15.',
     primary_key: 'PSTV01'
   },
   bpjs_diagnosissekunder_all: {
@@ -104,8 +104,8 @@ const TABLE_METADATA = {
   },
   v_bpjs_longitudinal_2015_2024: {
     category: 'analytical_view',
-    title: 'Kohort Longitudinal 2015–2024 (10 Kohort)',
-    description: 'View analitis penggabungan kohort kepesertaan (PSTV16 tahun 2015–2024) dengan klaim FKRTL dan bobot aktuaria PSTV15.',
+    title: 'Kohort Longitudinal Kepesertaan (10 Kohort)',
+    description: 'View analitis penggabungan kohort kepesertaan (PSTV16) dengan klaim FKRTL dan bobot aktuaria PSTV15.',
     primary_key: 'tahun_kohort'
   },
   bpjs_icd10_dxprimer: {
@@ -209,7 +209,7 @@ const PRESET_QUERIES = [
     sql: "SELECT CASE PSTV04 WHEN 1 THEN 'Kepala Keluarga' WHEN 2 THEN 'Istri/Pasangan' WHEN 3 THEN 'Anak' ELSE 'Lainnya' END as status_keluarga, COUNT(*) as jumlah_peserta FROM bpjs_kepesertaan_all GROUP BY 1 ORDER BY 2 DESC;"
   },
   {
-    name: 'Kohort Longitudinal 2015–2024 (PSTV16 & Klaim FKRTL)',
+    name: 'Kohort Longitudinal Terpadu (PSTV16 & Klaim FKRTL)',
     sql: 'SELECT * FROM v_bpjs_longitudinal_2015_2024 ORDER BY tahun_kohort ASC;'
   }
 ];
@@ -1399,7 +1399,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </div>
 
             <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Berikut adalah pemetaan integritas referensial antara tabel data mentah FKRTL 2024, Master Kepesertaan 2015-2024, Diagnosis Sekunder, dan Kamus ICD-10 resmi.
+              Berikut adalah pemetaan integritas referensial antara tabel data mentah FKRTL, Master Kepesertaan, Diagnosis Sekunder, dan Kamus ICD-10 resmi.
             </p>
 
             <div className="grid grid-cols-1 gap-3">
