@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../services/apiConfig';
 import { 
   Lock, User, Eye, EyeOff, ArrowRight, 
-  AlertCircle, ArrowLeft, ShieldCheck, Check
+  AlertCircle, ArrowLeft, ShieldCheck
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
@@ -18,46 +18,13 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       : true;
   const [identifier, setIdentifier] = useState('admin.fraud@bpjs-kesehatan.go.id');
   const [password, setPassword] = useState('Password123!');
-  const [recaptchaToken, setRecaptchaToken] = useState('bypass-healthkathon');
+  const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState(false);
   const recaptchaContainerRef = useRef(null);
   const recaptchaWidgetId = useRef(null);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleDirectBypass = () => {
-    const isSiti = identifier.includes('siti') || identifier.includes('1987');
-    const userToLogin = isSiti ? {
-      nip: "198704202011012001",
-      email: "siti.rahma@bpjs-kesehatan.go.id",
-      name: "dr. Siti Rahma, Sp.PK",
-      role: "Verifikator Medis Senior",
-      roleTitle: "Dokter Verifikator Medis",
-      unit: "Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan",
-      avatar: "SR",
-      isMfaVerified: true,
-      allowedRoles: ["VERIFIER", "MEDICAL_DOCTOR", "ANALYST", "BAKB_SIGNER"]
-    } : {
-      nip: "199208152015031002",
-      email: "admin.fraud@bpjs-kesehatan.go.id",
-      name: "Budi Santoso, S.Kom, M.TI",
-      role: "Analis Forensik Digital Anti-Fraud",
-      roleTitle: "Auditor Investigasi Klaim",
-      unit: "Kedeputian Bidang Pengawasan dan Pemeriksaan",
-      avatar: "BS",
-      isMfaVerified: true,
-      allowedRoles: ["FRAUD_INVESTIGATOR", "ANALYST", "SUPER_ADMIN", "BAKB_SIGNER"]
-    };
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('claimtrace_token', `token-bypass-${Date.now()}`);
-      localStorage.setItem('claimtrace_user', JSON.stringify(userToLogin));
-    }
-    if (onLoginSuccess) {
-      onLoginSuccess(userToLogin);
-    }
-  };
 
   // Inisialisasi Google reCAPTCHA v2 loader
   useEffect(() => {
@@ -154,8 +121,13 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
       return;
     }
 
-    // 2. Validasi Google reCAPTCHA Keamanan (Auto-fallback ke mode Healthkathon)
-    const effectiveToken = recaptchaToken || 'bypass-healthkathon';
+    // 2. Validasi Google reCAPTCHA Keamanan
+    if (!recaptchaToken && !recaptchaError) {
+      setErrorMsg('Harap selesaikan verifikasi Google reCAPTCHA ("Saya bukan robot") sebelum masuk.');
+      return;
+    }
+
+    const effectiveToken = recaptchaToken || 'local-verified';
 
     // 3. Verifikasi Data Login via Backend Auth API (FastAPI) & SSO Directory
     setIsSubmitting(true);
@@ -359,7 +331,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     setIdentifier('admin.fraud@bpjs-kesehatan.go.id');
                     setPassword('Password123!');
                     setErrorMsg('');
-                    setRecaptchaToken('bypass-healthkathon');
+                    setRecaptchaToken('');
                     if (window.grecaptcha && recaptchaWidgetId.current !== null) {
                       try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
                     }
@@ -393,7 +365,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     setIdentifier('siti.rahma@bpjs-kesehatan.go.id');
                     setPassword('Password123!');
                     setErrorMsg('');
-                    setRecaptchaToken('bypass-healthkathon');
+                    setRecaptchaToken('');
                     if (window.grecaptcha && recaptchaWidgetId.current !== null) {
                       try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
                     }
@@ -504,36 +476,12 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     className="min-h-[78px] flex items-center justify-center"
                   />
                 </div>
-                {recaptchaToken ? (
-                  <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>
-                      {recaptchaToken === 'bypass-healthkathon'
-                        ? 'Verifikasi anti-bot aktif (Mode Pengujian Healthkathon Otomatis)'
-                        : 'Google reCAPTCHA terverifikasi valid'}
-                    </span>
-                  </div>
-                ) : recaptchaError ? (
-                  <div className="text-center mt-1 space-y-1.5">
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                      Gagal memuat Google reCAPTCHA (periksa koneksi atau izin domain).
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRecaptchaToken('HK2026-TEST-TOKEN');
-                        setErrorMsg('');
-                      }}
-                      className={`px-3 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
-                        effectiveIsLight
-                          ? 'bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30'
-                      }`}
-                    >
-                      Bypass Verifikasi (Mode Pengujian Panitia)
-                    </button>
-                  </div>
-                ) : (
+                {recaptchaError && (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 text-center">
+                    Gagal memuat Google reCAPTCHA (periksa koneksi atau izin domain).
+                  </p>
+                )}
+                {!recaptchaToken && !recaptchaError && (
                   <p className={`text-[10px] mt-1 text-center ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     Centang kotak &quot;Saya bukan robot&quot; di atas untuk verifikasi anti-bot Google Cloud Fraud Defense
                   </p>
@@ -561,21 +509,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                 </>
               )}
             </motion.button>
-
-            <div className="pt-1.5 text-center">
-              <button
-                type="button"
-                onClick={handleDirectBypass}
-                className={`w-full py-2 px-3 rounded-xl border text-[11px] font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs ${
-                  effectiveIsLight
-                    ? 'bg-slate-100 hover:bg-emerald-50 border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-emerald-800'
-                    : 'bg-white/5 hover:bg-emerald-500/15 border-white/10 hover:border-emerald-500/30 text-white/80 hover:text-white'
-                }`}
-              >
-                <span>Masuk Langsung ke Cockpit (Bypass Pengujian)</span>
-                <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              </button>
-            </div>
           </form>
         </motion.div>
 
