@@ -17,6 +17,7 @@ import {
   Line,
   AreaChart,
   Area,
+  ComposedChart,
 } from 'recharts';
 import {
   ArrowUp,
@@ -1040,7 +1041,13 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={lifecycleData}>
+            <ComposedChart data={lifecycleData}>
+              <defs>
+                <linearGradient id="execLifecycleBlue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity={isLight ? 0.35 : 0.45} />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
               <XAxis dataKey="date" stroke={axisStroke} tickLine={false} tick={{ fontSize: 11 }} />
               <YAxis 
                 stroke={axisStroke} 
@@ -1050,13 +1057,15 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 tickFormatter={formatCompactTick}
               />
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
-              <Legend verticalAlign="bottom" height={32} iconType="plainline" wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
-              <Line
+              <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
+              <Area
                 type="monotone"
                 dataKey="opened"
                 stroke="#2563eb"
-                strokeWidth={caseMode === 'opened' ? 3.5 : caseMode === 'all' ? 2.5 : 1.5}
-                strokeOpacity={caseMode === 'closed' ? 0.35 : 1}
+                strokeWidth={caseMode === 'opened' ? 3.5 : caseMode === 'all' ? 2 : 1}
+                fill="url(#execLifecycleBlue)"
+                fillOpacity={caseMode === 'closed' ? 0.05 : 1}
+                strokeOpacity={caseMode === 'closed' ? 0.25 : 1}
                 dot={false}
                 activeDot={false}
                 isAnimationActive={false}
@@ -1073,7 +1082,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 isAnimationActive={false}
                 name="Berkas Selesai"
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </article>
