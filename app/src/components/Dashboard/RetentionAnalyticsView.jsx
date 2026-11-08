@@ -16,7 +16,6 @@ import {
   Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
@@ -273,16 +272,17 @@ function TrendChart({
                 <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255,255,255,0.05)'} vertical={false} />
             <XAxis
               dataKey="date"
               tickFormatter={formatDateLabel}
+              tickLine={false}
               tick={{ fill: isLight ? '#475569' : 'rgba(255,255,255,0.6)', fontSize: 11 }}
               axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
             />
             <YAxis
+              tickLine={false}
+              axisLine={false}
               tick={{ fill: isLight ? '#475569' : 'rgba(255,255,255,0.6)', fontSize: 11 }}
-              axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
             />
             <RechartsTooltip
               cursor={false}

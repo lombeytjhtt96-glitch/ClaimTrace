@@ -10,7 +10,6 @@ import {
   Cell,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   Legend,
 } from 'recharts';
@@ -313,12 +312,12 @@ function getChartForQueryType(queryName, data, isLight = false) {
   if (queryName.includes('trend')) {
     return (
       <LineChart data={data} margin={{ top: 10, right: 35, left: 10, bottom: 5 }}>
-        <CartesianGrid stroke={gridStroke} vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
+        <XAxis dataKey="name" tickLine={false} tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
         <YAxis
           yAxisId="left"
+          tickLine={false}
+          axisLine={false}
           tick={{ fontSize: 11, fill: isLight ? '#059669' : '#06b6d4' }}
-          axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
           tickFormatter={(v) => `${v} kss`}
         />
         {data[0]?.avg_risk !== undefined && (
@@ -326,8 +325,9 @@ function getChartForQueryType(queryName, data, isLight = false) {
             yAxisId="right"
             orientation="right"
             domain={[60, 100]}
+            tickLine={false}
+            axisLine={false}
             tick={{ fontSize: 11, fill: '#f43f5e' }}
-            axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
             tickFormatter={(v) => `${v}%`}
           />
         )}
@@ -339,7 +339,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
             name,
           ]}
         />
-        <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
+        <Legend iconType="plainline" wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
         <Line
           yAxisId="left"
           type="monotone"
@@ -391,9 +391,8 @@ function getChartForQueryType(queryName, data, isLight = false) {
   } else {
     return (
       <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-        <CartesianGrid stroke={gridStroke} vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
-        <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
+        <XAxis dataKey="name" tickLine={false} tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
+        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: tickFill }} />
         <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${val} berkas`, 'Jumlah Temuan']} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
         <Bar
