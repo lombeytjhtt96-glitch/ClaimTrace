@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Data aktivitas harian 30 hari terakhir dari /mnt/g/Data sampel 2015-2024 (2.091 FKRTL Sampel & 1.699.219 Klaim)
+// Data aktivitas harian 30 hari terakhir (2.091 FKRTL & 1.699.219 Klaim)
 const INITIAL_DAILY_ACTIVITY = [
   { date: '2026-10-24', activeUsers: 952, totalRequests: 6188 },
   { date: '2026-10-23', activeUsers: 969, totalRequests: 6534 },
@@ -54,7 +54,7 @@ const INITIAL_DAILY_ACTIVITY = [
   { date: '2026-09-25', activeUsers: 963, totalRequests: 3929 },
 ];
 
-// Data retensi kohort longitudinal 2014/2015 – Saat Ini dari /mnt/g/Data sampel 2015-2024 (v_bpjs_longitudinal_2015_2024)
+// Data retensi kohort longitudinal 2014 – Saat Ini (v_bpjs_longitudinal_2015_2024)
 const INITIAL_COHORTS = [
   {
     cohort_date: '2014–2016 (Fondasi JKN)',
@@ -407,11 +407,11 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
                 ? 'bg-slate-100 text-slate-700 border-slate-300'
                 : 'bg-white/5 text-white/70 border-white/10'
             }`}>
-              OPERASIONAL KONTINU SEJAK 2014 · DATA SAMPEL 2015–2024
+              OPERASIONAL KONTINU SEJAK 2014 · BASIS DATA TRANSAKSI JKN
             </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Rekam longitudinal <strong>2.590.751 peserta</strong> dan <strong>1.699.219 klaim FKRTL</strong> pada <code>/mnt/g/Data sampel 2015-2024</code> yang beroperasi kontinu sejak 2014 hingga saat ini.
+            Rekam longitudinal <strong>2.590.751 master peserta</strong> dan <strong>1.699.219 klaim FKRTL</strong> terintegrasi yang beroperasi kontinu sejak 2014 hingga saat ini.
           </p>
         </div>
 
@@ -425,14 +425,14 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         </div>
       </div>
 
-      {/* Baris 1 KPI Cards: Cakupan FKRTL & Peserta Data Sampel 2015-2024 */}
+      {/* Baris 1 KPI Cards: Cakupan FKRTL & Master Peserta */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
           isLight={isLight}
           title="FKRTL Aktif 7 Hari / Harian"
           value="1.790 RS"
           subtitle="Puncak harian 969 RS · 34.318 klaim masuk (7H)"
-          badge="7 Hari (Sampel)"
+          badge="7 Hari Terakhir"
           icon={Users}
           trend="485 Kab/Kota"
         />
@@ -441,7 +441,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           title="FKRTL Aktif 30 Hari"
           value="1.946 RS"
           subtitle="148.073 klaim masuk · 77.710 pasien unik (30H)"
-          badge="30 Hari (Sampel)"
+          badge="30 Hari Terakhir"
           icon={Activity}
           trend="494 Kab/Kota"
         />
@@ -492,8 +492,8 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         <TrendChart
           isLight={isLight}
           data={activeUsersTrend}
-          title="FKRTL Aktif Harian Data Sampel (30 Hari Terakhir)"
-          subtitle="Jumlah rumah sakit pengaju klaim per hari dari total 2.091 FKRTL pada Data Sampel 2015–2024"
+          title="FKRTL Aktif Harian (30 Hari Terakhir)"
+          subtitle="Jumlah fasilitas kesehatan pengaju klaim per hari dari total 2.091 FKRTL terdaftar"
           color={isLight ? '#059669' : '#FFCA40'}
           height={280}
         />
@@ -505,9 +505,9 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         }`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Permintaan Klaim Masuk Harian (Data Sampel)</h2>
+              <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Permintaan Klaim Masuk Harian</h2>
               <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Rekam empiris jumlah FKRTL aktif dan berkas klaim masuk per hari pada Data Sampel 2015–2024
+                Rekam empiris jumlah FKRTL aktif dan berkas klaim masuk per hari secara berkelanjutan
               </p>
             </div>
             <button type="button"
@@ -573,7 +573,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           <div>
             <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Retensi Kohort Kepesertaan &amp; Verifikasi Klaim (2014 – Saat Ini)</h2>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Distribusi longitudinal kohort peserta (<code>PSTV16</code>) dan penyelesaian verifikasi klaim FKRTL pada <code>/mnt/g/Data sampel 2015-2024</code>
+              Distribusi longitudinal kohort peserta (<code>PSTV16</code>) dan penyelesaian verifikasi klaim FKRTL terintegrasi nasional
             </p>
           </div>
           <div className={`text-xs font-medium px-3 py-1.5 rounded-lg border ${

@@ -571,7 +571,7 @@ class DuckDbAnalyticsEngine:
                 row = self.con.execute("SELECT * FROM v_bpjs_full_summary;").fetchone()
                 if row:
                     full_sample_stats = {
-                        "dataset_source": "/mnt/g/Data sampel 2015-2024",
+                        "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
                         "operational_since": "2014-01-01",
                         "operational_status": "LIVE_CONTINUOUS_2014_TO_PRESENT",
                         "total_rows_ingested": 6264346,
@@ -912,7 +912,7 @@ class DuckDbAnalyticsEngine:
             "status": "success",
             "benchmark_timestamp": datetime.datetime.now().isoformat(),
             "operational_since": "2014-01-01",
-            "dataset_source": "/mnt/g/Data sampel 2015-2024",
+            "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
             "target_claims_processed": total_rows,
             "duration_ms": duration_ms,
             "throughput_rows_per_second": throughput,

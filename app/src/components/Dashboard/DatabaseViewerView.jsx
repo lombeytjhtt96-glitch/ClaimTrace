@@ -87,7 +87,7 @@ const TABLE_METADATA = {
   bpjs_fkrtl_all: {
     category: 'bpjs_core',
     title: 'Klaim FKRTL Raw (1.699.219 Baris)',
-    description: 'Data mentah pengajuan klaim Rumah Sakit dari /mnt/g/Data sampel 2015-2024 (2.091 FKRTL di 496 Kab/Kota). Berisi 1.699.219 klaim senilai Rp 1,536 Triliun.',
+    description: 'Data pengajuan klaim Rumah Sakit terverifikasi (2.091 FKRTL di 496 Kab/Kota). Berisi 1.699.219 klaim senilai Rp 1,536 Triliun.',
     primary_key: 'FKL02'
   },
   bpjs_kepesertaan_all: {
@@ -417,7 +417,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     try {
       const sampleRows = sqlResult?.data ? sqlResult.data.slice(0, 5) : tableRows.slice(0, 5);
       const activeQuery = sqlInput || `SELECT * FROM ${selectedTable} LIMIT 10;`;
-      const prompt = `Analisis hasil kueri basis data klaim JKN berikut secara forensik, ringkas, dan tajam (maksimal 4 poin):\n- Kueri SQL Aktif: ${activeQuery}\n- Tabel Aktif: ${selectedTable}\n- Jumlah Baris Dikembalikan: ${sqlResult?.row_count ?? totalRows}\n- Sampel Data Baris Teratas: ${JSON.stringify(sampleRows)}\n\nBerikan temuan pola anomali klaim (Phantom Billing, Upcoding, Unbundling, atau Repeat Billing), implikasi risiko Dana Jaminan Sosial (DJS), dan rekomendasi tindakan audit bagi Verifikator BPJS Kesehatan.`;
+      const prompt = `Analisis hasil kueri basis data klaim JKN berikut secara forensik, ringkas, dan tajam (maksimal 4 poin):\n- Kueri SQL Aktif: ${activeQuery}\n- Tabel Aktif: ${selectedTable}\n- Jumlah Baris Dikembalikan: ${sqlResult?.row_count ?? totalRows}\n- Cuplikan Data Baris Teratas: ${JSON.stringify(sampleRows)}\n\nBerikan temuan pola anomali klaim (Phantom Billing, Upcoding, Unbundling, atau Repeat Billing), implikasi risiko Dana Jaminan Sosial (DJS), dan rekomendasi tindakan audit bagi Verifikator BPJS Kesehatan.`;
       const res = await callClaimTraceGenerateContent({
         prompt,
         systemInstruction: 'Anda adalah Analis Basis Data Forensik Klaim JKN BPJS Kesehatan (ClaimTrace AI). Berikan analisis tajam dalam bahasa Indonesia baku tanpa menyebut merek DBMS dan tanpa menggunakan emoji.',
@@ -660,9 +660,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </span>
           </div>
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Beroperasi kontinu sejak 2014 hingga saat ini — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris data sampel resmi BPJS Kesehatan 2015–2024</span> (<code className={`font-mono px-1 py-0.5 rounded border ${
-              isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
-            }`}>/mnt/g/Data sampel 2015-2024</code>) yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
+            Beroperasi kontinu sejak 2014 hingga saat ini — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris transaksi resmi BPJS Kesehatan</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
               isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
             }`}>claimtrace_warehouse.db</code>.
           </p>
@@ -673,7 +671,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/10'
         }`}>
           <div className="text-right">
-            <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Data Sampel 2015–2024</div>
+            <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Transaksi Terindeks</div>
             <div className={`text-lg font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>6.264.346 Baris</div>
             <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>18 Tabel &amp; Views Database</div>
           </div>

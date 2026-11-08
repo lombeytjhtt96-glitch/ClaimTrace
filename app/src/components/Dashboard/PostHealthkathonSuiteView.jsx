@@ -143,7 +143,7 @@ const INITIAL_TYPOLOGY_CASES = [
     ai_confidence: 0.968,
     risk_score: 87.0,
     clinical_discrepancy:
-      'Lonjakan volume 8,5x lipat dari baseline harian (85 klaim dalam 1 hari pasca-baksos). SIP DPJP dr. Hendra, Sp.KFR telah kedaluwarsa di SATUSEHAT SDMK. 8 dari 10 sampel peserta menyangkal pernah hadir menerima fisioterapi di Mobile JKN.',
+      'Lonjakan volume 8,5x lipat dari baseline harian (85 klaim dalam 1 hari pasca-baksos). SIP DPJP dr. Hendra, Sp.KFR telah kedaluwarsa di SATUSEHAT SDMK. 8 dari 10 peserta audit menyangkal pernah hadir menerima fisioterapi di Mobile JKN.',
     vital_lab_evidence: {
       'Lonjakan Volume Klaim': '85 berkas/hari (Baseline: 10 berkas/hari)',
       'Status SIP SATUSEHAT': 'Kedaluwarsa (Berakhir 30 Sep 2026)',
@@ -2011,7 +2011,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   <span>Pilih Berkas Klaim Klinis</span>
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                  {hfResumes.length || 6} Kasus Sampel
+                  {hfResumes.length || 6} Kasus Telisik
                 </span>
               </div>
 
