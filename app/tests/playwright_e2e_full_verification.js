@@ -25,7 +25,7 @@ async function runFullVerification() {
 
   // 1. Executive Hub Verification
   console.log('\n--- Scenario 1: Executive Hub & Operational Portfolio ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=executive', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=executive', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const pageContent = await page.content();
@@ -43,7 +43,7 @@ async function runFullVerification() {
 
   // 2. Queue Triage 3-Lane Verification
   console.log('\n--- Scenario 2: 3-Lane Priority Triage (Queue) ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=queue', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=queue', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const queueContent = await page.content();
@@ -55,7 +55,7 @@ async function runFullVerification() {
 
   // 2b. Quick Triage Module Verification
   console.log('\n--- Scenario 2b: Quick Triage Module ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=quick_triage', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=quick_triage', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const quickContent = await page.content();
@@ -64,7 +64,7 @@ async function runFullVerification() {
 
   // 3. Database Viewer (SQL DuckDB) Verification
   console.log('\n--- Scenario 3: Database Viewer & OLAP DuckDB Tables ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=database_viewer', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=database_viewer', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const dbContent = await page.content();
@@ -76,7 +76,7 @@ async function runFullVerification() {
 
   // 4. DPJP Intelligence & Impossible Travel Verification
   console.log('\n--- Scenario 4: DPJP Intelligence & SATUSEHAT SDMK Geovelocity ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=dpjp', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=dpjp', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const dpjpContent = await page.content();
@@ -88,7 +88,7 @@ async function runFullVerification() {
 
   // 5. Cryptographic Audit Ledger Verification
   console.log('\n--- Scenario 5: Immutable Cryptographic SHA-256 Audit Ledger ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=audit', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=audit', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const auditContent = await page.content();
@@ -100,7 +100,7 @@ async function runFullVerification() {
 
   // 6. Mobile Telemetry & Wasrik Offline / Geofence Verification
   console.log('\n--- Scenario 6: Mobile Telemetry & Mobile JKN Verification ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=mobile_telemetry', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=mobile_telemetry', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const mobileContent = await page.content();
@@ -123,7 +123,7 @@ async function runFullVerification() {
 
   // 8. Post-Healthkathon Suite View Verification
   console.log('\n--- Scenario 8: Post-Healthkathon AI Suite & Dispute Resolution ---');
-  await page.goto('http://localhost:3000?view=dashboard&tab=expansion_suite', { waitUntil: 'networkidle' });
+  await page.goto('http://localhost:3000?view=dashboard&tab=expansion_suite', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
 
   const postHkContent = await page.content();
