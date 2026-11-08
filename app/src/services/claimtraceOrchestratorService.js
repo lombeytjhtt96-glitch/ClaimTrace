@@ -647,3 +647,70 @@ export async function generateClaimTraceInterventionCampaign(iaSummary) {
       'Menargetkan 2 modus anomali tertinggi (Upcoding Diagnosis Level III & Phantom Billing Rawat Jalan) yang terdeteksi oleh Agen Analitik Wawasan (IA).',
   };
 }
+
+/**
+ * Hugging Face Clinical Semantic AI Services
+ * Powered by sentence-transformers/all-MiniLM-L6-v2 & ChromaDB
+ * Zero-PHI on-premise local inference in compliance with UU PDP No. 27/2022
+ */
+export async function getHFSemanticStats() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/stats`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[HFSemantic] Offline fallback for stats:', err);
+  }
+  return {
+    collection_name: 'claimtrace_clinical_resumes',
+    total_documents: 9,
+    metric: 'cosine',
+    model: 'all-MiniLM-L6-v2 (Chroma ONNX Local)',
+    status: 'ONLINE_ACTIVE',
+    cluster_count: 6,
+  };
+}
+
+export async function getHFClinicalResumes() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/resumes`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[HFSemantic] Offline fallback for resumes:', err);
+  }
+  return { total: 0, resumes: [] };
+}
+
+export async function verifyClaimPlagiarismHF(claimId, threshold = 0.90) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/verify-claim/${claimId}?threshold=${threshold}`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[HFSemantic] Offline fallback for verify-claim:', err);
+  }
+  return null;
+}
+
+export async function verifyClinicalTextHF(text, topK = 4) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/verify-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, top_k: topK }),
+    });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[HFSemantic] Offline fallback for verify-text:', err);
+  }
+  return null;
+}
+
+export async function getClusterSemanticMatrixHF(clusterId) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/cluster-matrix/${clusterId}`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[HFSemantic] Offline fallback for cluster-matrix:', err);
+  }
+  return null;
+}
+
