@@ -2106,15 +2106,14 @@ def get_national_scale_metrics():
 def get_national_telemetry_trends():
     """
     Mengembalikan data telemetri operasional 7 hari klaim BPJS Kesehatan
-    berdasarkan ekstraksi empiris /mnt/g/Data sampel 2015-2024 (18 Okt – 24 Okt)
-    beserta proyeksi bobot populasi nasional PSTV15.
+    berdasarkan ekstraksi empiris /mnt/g/Data sampel 2015-2024 (18 Okt – 24 Okt).
     """
     trends_data = [
         {
             "date": "2026-10-18",
             "day_name": "Jumat",
             "day_label": "Jumat, 18 Okt",
-            "active_hospitals": 3210,
+            "active_hospitals": 1250,
             "sample_active_fkrtl": 1250,
             "sample_kab_kota": 409,
             "active_hospitals_note": "1.250 FKRTL Sampel (409 Kab/Kota) · Penutupan Berkas Jumat",
@@ -2123,9 +2122,9 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 5368,
             "sample_claims_verified": 5359,
             "sample_claimed_idr": 4532944305,
-            "daily_claims_volume": 442735,
-            "daily_claims_volume_label": "442.735 berkas (5.368 sampel)",
-            "daily_claims_volume_note": "Volume Jumat Data Sampel 2015-2024",
+            "daily_claims_volume": 5368,
+            "daily_claims_volume_label": "5.368 berkas",
+            "daily_claims_volume_note": "Volume Jumat Data Sampel Resmi",
             "engine_latency_ms": 26.8,
             "engine_latency_note": "Throughput Optimal SIMD"
         },
@@ -2133,7 +2132,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-19",
             "day_name": "Sabtu",
             "day_label": "Sabtu, 19 Okt",
-            "active_hospitals": 2180,
+            "active_hospitals": 982,
             "sample_active_fkrtl": 982,
             "sample_kab_kota": 384,
             "active_hospitals_note": "982 FKRTL Sampel (384 Kab/Kota) · Layanan Sabtu & IGD",
@@ -2142,8 +2141,8 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 3395,
             "sample_claims_verified": 3392,
             "sample_claimed_idr": 2934966996,
-            "daily_claims_volume": 262810,
-            "daily_claims_volume_label": "262.810 berkas (3.395 sampel)",
+            "daily_claims_volume": 3395,
+            "daily_claims_volume_label": "3.395 berkas",
             "daily_claims_volume_note": "Aktivitas Faskes Akhir Pekan Sabtu",
             "engine_latency_ms": 21.4,
             "engine_latency_note": "Beban Akhir Pekan Terkendali"
@@ -2152,7 +2151,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-20",
             "day_name": "Minggu",
             "day_label": "Minggu, 20 Okt",
-            "active_hospitals": 1190,
+            "active_hospitals": 495,
             "sample_active_fkrtl": 495,
             "sample_kab_kota": 268,
             "active_hospitals_note": "495 FKRTL Sampel (268 Kab/Kota) · Layanan Darurat & Rawat Inap",
@@ -2161,8 +2160,8 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 764,
             "sample_claims_verified": 763,
             "sample_claimed_idr": 2289451636,
-            "daily_claims_volume": 56242,
-            "daily_claims_volume_label": "56.242 berkas (764 sampel)",
+            "daily_claims_volume": 764,
+            "daily_claims_volume_label": "764 berkas",
             "daily_claims_volume_note": "Admisi IGD & Rawat Inap Minggu",
             "engine_latency_ms": 16.2,
             "engine_latency_note": "Latensi Minimum Akhir Pekan"
@@ -2171,7 +2170,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-21",
             "day_name": "Senin",
             "day_label": "Senin, 21 Okt",
-            "active_hospitals": 3280,
+            "active_hospitals": 1336,
             "sample_active_fkrtl": 1336,
             "sample_kab_kota": 433,
             "active_hospitals_note": "1.336 FKRTL Sampel (433 Kab/Kota) · Puncak Pengajuan Awal Pekan",
@@ -2180,8 +2179,8 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 6783,
             "sample_claims_verified": 6777,
             "sample_claimed_idr": 5309612489,
-            "daily_claims_volume": 595768,
-            "daily_claims_volume_label": "595.768 berkas (6.783 sampel)",
+            "daily_claims_volume": 6783,
+            "daily_claims_volume_label": "6.783 berkas",
             "daily_claims_volume_note": "Puncak Beban Klaim Masuk Senin",
             "engine_latency_ms": 34.6,
             "engine_latency_note": "Vektor SIMD Beban Puncak"
@@ -2190,7 +2189,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-22",
             "day_name": "Selasa",
             "day_label": "Selasa, 22 Okt",
-            "active_hospitals": 3265,
+            "active_hospitals": 1300,
             "sample_active_fkrtl": 1300,
             "sample_kab_kota": 439,
             "active_hospitals_note": "1.300 FKRTL Sampel (439 Kab/Kota) · Seluruh Poli Rujukan Aktif",
@@ -2199,8 +2198,8 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 6078,
             "sample_claims_verified": 6070,
             "sample_claimed_idr": 5255507943,
-            "daily_claims_volume": 535752,
-            "daily_claims_volume_label": "535.752 berkas (6.078 sampel)",
+            "daily_claims_volume": 6078,
+            "daily_claims_volume_label": "6.078 berkas",
             "daily_claims_volume_note": "Volume Tinggi Hari Kerja Selasa",
             "engine_latency_ms": 31.8,
             "engine_latency_note": "Kecepatan Stabil DuckDB"
@@ -2209,7 +2208,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-23",
             "day_name": "Rabu",
             "day_label": "Rabu, 23 Okt",
-            "active_hospitals": 3258,
+            "active_hospitals": 1302,
             "sample_active_fkrtl": 1302,
             "sample_kab_kota": 425,
             "active_hospitals_note": "1.302 FKRTL Sampel (425 Kab/Kota) · Verifikasi Tengah Pekan",
@@ -2218,8 +2217,8 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 6072,
             "sample_claims_verified": 6065,
             "sample_claimed_idr": 4560856800,
-            "daily_claims_volume": 514255,
-            "daily_claims_volume_label": "514.255 berkas (6.072 sampel)",
+            "daily_claims_volume": 6072,
+            "daily_claims_volume_label": "6.072 berkas",
             "daily_claims_volume_note": "Rekonsiliasi FPK Tengah Pekan",
             "engine_latency_ms": 30.9,
             "engine_latency_note": "Eksekusi Kolumnar Pararel"
@@ -2228,7 +2227,7 @@ def get_national_telemetry_trends():
             "date": "2026-10-24",
             "day_name": "Kamis",
             "day_label": "Kamis, 24 Okt",
-            "active_hospitals": 3268,
+            "active_hospitals": 1323,
             "sample_active_fkrtl": 1323,
             "sample_kab_kota": 428,
             "active_hospitals_note": "1.323 FKRTL Sampel (428 Kab/Kota) · Pemrosesan Kontinu Aktif",
@@ -2237,9 +2236,9 @@ def get_national_telemetry_trends():
             "sample_claims_volume": 5858,
             "sample_claims_verified": 5853,
             "sample_claimed_idr": 4993458951,
-            "daily_claims_volume": 476697,
-            "daily_claims_volume_label": "476.697 berkas (5.858 sampel)",
-            "daily_claims_volume_note": " Kliring Harian Berjalan Real-Time",
+            "daily_claims_volume": 5858,
+            "daily_claims_volume_label": "5.858 berkas",
+            "daily_claims_volume_note": "Kliring Harian Berjalan Real-Time",
             "engine_latency_ms": 28.4,
             "engine_latency_note": "Throughput > 3,4 Juta/dtk"
         }
@@ -2248,8 +2247,8 @@ def get_national_telemetry_trends():
         "status": "success",
         "timeframe": "7 Hari Terakhir (Basis Data Transaksi Terpadu)",
         "operational_since": "2014-01-01",
-        "dataset_source": "Gudang Data Transaksi Terpadu BPJS Kesehatan",
-        "scope": "Transaksi Terpadu BPJS Kesehatan",
+        "dataset_source": "Data Sampel Resmi BPJS Kesehatan 2015–2024",
+        "scope": "Data Sampel Resmi BPJS Kesehatan (2.091 FKRTL)",
         "trends": trends_data
     }
 
