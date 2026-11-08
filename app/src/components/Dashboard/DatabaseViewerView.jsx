@@ -105,7 +105,7 @@ const TABLE_METADATA = {
   v_bpjs_longitudinal_2015_2024: {
     category: 'analytical_view',
     title: 'Kohort Longitudinal 2015–2024 (10 Kohort)',
-    description: 'View analitis penggabungan kohort kepesertaan (PSTV16 tahun 2015–2024) dengan klaim FKRTL dan bobot populasi nasional PSTV15.',
+    description: 'View analitis penggabungan kohort kepesertaan (PSTV16 tahun 2015–2024) dengan klaim FKRTL dan bobot aktuaria PSTV15.',
     primary_key: 'tahun_kohort'
   },
   bpjs_icd10_dxprimer: {

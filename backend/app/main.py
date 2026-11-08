@@ -2025,18 +2025,16 @@ def call_duckdb_provider_fraud_profile(risk_level: Optional[str] = None):
 @app.get("/api/v1/system/national-scale-metrics")
 def get_national_scale_metrics():
     """
-    Mengembalikan data makro operasional skala nasional & sampel longitudinal BPJS Kesehatan (2014 – Saat Ini):
+    Mengembalikan data makro operasional longitudinal BPJS Kesehatan (2014 – Saat Ini):
     - Beroperasi kontinu sejak 2014 hingga saat ini (Live Real-Time)
-    - Sumber Data Empiris: /mnt/g/Data sampel 2015-2024 (6.264.346 baris total)
-    - Volume Sampel FKRTL: 1.699.219 berkas klaim (4.643 berkas/hari, puncak 7.870/hari) dari 2.091 profil FKRTL di 496 Kab/Kota (38 Provinsi)
-    - Volume Nasional Terbobot (PSTV15): 140.623.799 berkas/tahun (384.218 berkas/hari) · 1,48 Miliar berkas kumulatif sejak 2014–Saat Ini
-    - Master Kepesertaan (2015–2024): 2.590.751 peserta (mewakili bobot populasi 302.106.337 jiwa)
-    - Nilai Tagihan Sampel: Rp 1,536 Triliun (Verifikasi Disetujui: Rp 1,534 Triliun)
-    - Nilai Tagihan Nasional Terbobot (PSTV15): Rp 129,12 Triliun/tahun (Beban DJS Nasional Rp 174,90 Triliun)
+    - Sumber Data Empiris: 6.264.346 baris data transaksi terpadu
+    - Volume FKRTL: 1.699.219 berkas klaim (4.643 berkas/hari, puncak 7.870/hari) dari 2.091 profil FKRTL di 496 Kab/Kota (38 Provinsi)
+    - Master Kepesertaan: 2.590.751 peserta pada 1.065.281 keluarga
+    - Nilai Tagihan: Rp 1,536 Triliun (Verifikasi Disetujui: Rp 1,534 Triliun)
     """
     return {
         "status": "success",
-        "scope": "Operasional Kontinu 2014 – Saat Ini (Data Transaksi Terpadu & Skala Nasional PSTV15)",
+        "scope": "Operasional Kontinu 2014 – Saat Ini (Basis Data Transaksi Terpadu)",
         "operational_since": "2014-01-01",
         "operational_span": "2014 – Saat Ini (Berjalan Kontinu Real-Time 24/7)",
         "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
@@ -2066,30 +2064,30 @@ def get_national_scale_metrics():
             "total_anomaly_exposure_idr": 34663799076
         },
         "metrics": {
-            "cumulative_claims_since_2014": 1484520000,
-            "cumulative_claims_since_2014_label": "1,48 Miliar Berkas (2014–Saat Ini)",
-            "annual_claims_volume": 140623799,
-            "annual_claims_label": "140,62 Juta Berkas/Tahun (PSTV15)",
-            "daily_claims_average": 384218,
-            "daily_claims_label": "384.218 Klaim/Hari (Terbobot PSTV15)",
-            "faskes_fkrtl_count": 3287,
+            "cumulative_claims_since_2014": 1699219,
+            "cumulative_claims_since_2014_label": "1,70 Juta Berkas Terverifikasi",
+            "annual_claims_volume": 1699219,
+            "annual_claims_label": "1.699.219 Berkas Klaim FKRTL",
+            "daily_claims_average": 4643,
+            "daily_claims_label": "4.643 Klaim/Hari (Puncak 7.870/Hari)",
+            "faskes_fkrtl_count": 2091,
             "faskes_sample_profiles": 2091,
-            "faskes_fkrtl_label": "3.287 RS Mitra (2.091 Profil Sampel FKRTL)",
+            "faskes_fkrtl_label": "2.091 FKRTL Terverifikasi (496 Kab/Kota)",
             "faskes_private_share_pct": 65.2,
-            "kabupaten_kota_coverage": 515,
+            "kabupaten_kota_coverage": 496,
             "provinsi_coverage": 38,
-            "weighted_population_coverage": 302106337,
-            "total_faskes_claim_idr": 129121052000258,
-            "total_faskes_claim_label": "Rp 129,12 Triliun (Terbobot PSTV15)",
-            "total_djs_burden_idr": 174900000000000,
-            "total_djs_burden_label": "Rp 174,90 Triliun",
-            "claim_ratio_pct": 99.86,
+            "weighted_population_coverage": 2590751,
+            "total_faskes_claim_idr": 1535982713360,
+            "total_faskes_claim_label": "Rp 1,536 Triliun",
+            "total_djs_burden_idr": 1533908698704,
+            "total_djs_burden_label": "Rp 1,534 Triliun",
+            "claim_ratio_pct": 99.90,
             "sla_10d_compliance_pct": 99.9,
             "sla_10d_deadline_business_days": 10,
             "penalty_avoidance_rate_pct": 1.0,
-            "estimated_fraud_leakage_mitigated_idr": 2914000000000,
-            "cumulative_fraud_mitigated_since_2014_idr": 28450000000000,
-            "estimated_fraud_leakage_label": "Rp 2,91 Triliun/Thn (Rp 28,45 T Sejak 2014)",
+            "estimated_fraud_leakage_mitigated_idr": 34663799076,
+            "cumulative_fraud_mitigated_since_2014_idr": 34663799076,
+            "estimated_fraud_leakage_label": "Rp 34,66 Miliar Anomali & Koreksi Tarif",
             "triage_distribution": {
                 "green_auto_approve_pct": 88.49,
                 "yellow_standard_audit_pct": 9.02,
@@ -2248,10 +2246,10 @@ def get_national_telemetry_trends():
     ]
     return {
         "status": "success",
-        "timeframe": "7 Hari Terakhir (Data Transaksi Terpadu & Skala Nasional PSTV15)",
+        "timeframe": "7 Hari Terakhir (Basis Data Transaksi Terpadu)",
         "operational_since": "2014-01-01",
-        "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
-        "scope": "Skala Nasional & Transaksi Longitudinal BPJS Kesehatan",
+        "dataset_source": "Gudang Data Transaksi Terpadu BPJS Kesehatan",
+        "scope": "Transaksi Terpadu BPJS Kesehatan",
         "trends": trends_data
     }
 

@@ -4,7 +4,7 @@
 
 ## Platform Core
 
-- [Tinjauan Eksekutif](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=executive): Cockpit analitik makro nasional memantau throughput 324.500 klaim harian dari 3.287 RS, kepatuhan SLA 10 hari kerja, dan 5 topik anomali dominan.
+- [Tinjauan Eksekutif](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=executive): Cockpit analitik makro memantau throughput verifikasi klaim 2.091 FKRTL di 496 kab/kota, kepatuhan SLA 10 hari kerja, dan 5 topik anomali dominan.
 - [Analitik Wawasan & Privasi](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=insights): Pengawasan klaim berbasis k-anonymity (k=12), differential privacy (epsilon=7.10/20.0), dan agregasi tanpa data identitas pasien (Zero-PHI).
 - [Investigasi Berkas & Triase](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=cases_mgmt): Triase otomatis red lane, yellow lane, dan green lane dengan skor risiko komposit, verifikasi kronologi tindakan, dan penerbitan Berita Acara Klaim digital.
 - [Jejak Forensik SATUSEHAT SDMK](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=dpjp): Validasi kepatuhan Surat Izin Praktik (SIP), batas beban kerja harian dokter spesialis, dan deteksi mustahil hadir fisik (impossible travel geovelocity).
