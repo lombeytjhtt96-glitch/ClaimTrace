@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Analytics } from '@vercel/analytics/react';
 import { 
@@ -14,20 +14,7 @@ import {
   Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon
 } from 'lucide-react';
 
-// Mobile JKN Screens
-import MoreMenuScreen from './components/MobileJKN/MoreMenuScreen';
-import AntreanScreen from './components/MobileJKN/AntreanScreen';
-import RiwayatPelayananScreen from './components/MobileJKN/RiwayatPelayananScreen';
-import TempatTidurScreen from './components/MobileJKN/TempatTidurScreen';
-import KonsultasiDokterScreen from './components/MobileJKN/KonsultasiDokterScreen';
-import UbahDataScreen from './components/MobileJKN/UbahDataScreen';
-import SkriningScreen from './components/MobileJKN/SkriningScreen';
-import PembayaranScreen from './components/MobileJKN/PembayaranScreen';
-import PengaduanScreen from './components/MobileJKN/PengaduanScreen';
-import BugarScreen from './components/MobileJKN/BugarScreen';
-import ObatScreen from './components/MobileJKN/ObatScreen';
-
-// Public & Auth Components
+// Public & Auth Components (Eager)
 import LandingPage from './components/Public/LandingPage';
 import SignInPage from './components/Auth/SignInPage';
 import MfaStepUpPage from './components/Auth/MfaStepUpPage';
@@ -35,33 +22,48 @@ import SignOutPage from './components/Auth/SignOutPage';
 import InstitutionalLegalModal from './components/Public/InstitutionalLegalModal';
 import CookieConsentBanner from './components/Public/CookieConsentBanner';
 
-// Forensic Cockpit Modules
+// Primary Cockpit Modules (Eager for instant load)
 import ExecutiveHub from './components/Dashboard/ExecutiveHub';
 import TriageOverview from './components/Dashboard/TriageOverview';
 import CaseInvestigation from './components/Dashboard/CaseInvestigation';
-import GraphVisualizer from './components/Dashboard/GraphVisualizer';
-import EmpiricalForensics from './components/Dashboard/EmpiricalForensics';
-import FaskesSurveillance from './components/Dashboard/FaskesSurveillance';
-import DpjpIntelligence from './components/Dashboard/DpjpIntelligence';
-import MobileTelemetry from './components/Dashboard/MobileTelemetry';
-import DecisionConsole from './components/Dashboard/DecisionConsole';
-import AuditLedger from './components/Dashboard/AuditLedger';
-import AgentCopilot from './components/Dashboard/AgentCopilot';
-import AdminProfileView from './components/Dashboard/AdminProfileView';
-import AdminSettingsView from './components/Dashboard/AdminSettingsView';
-import InsightsAnalyticsView from './components/Dashboard/InsightsAnalyticsView';
-import RetentionAnalyticsView from './components/Dashboard/RetentionAnalyticsView';
-import CasesManagementView from './components/Dashboard/CasesManagementView';
-import QuickTriageView from './components/Dashboard/QuickTriageView';
-import FlaggedSessionsView from './components/Dashboard/FlaggedSessionsView';
-import ClarificationScheduleView from './components/Dashboard/ClarificationScheduleView';
-import CommandCenterView from './components/Dashboard/CommandCenterView';
-import ConversationsView from './components/Dashboard/ConversationsView';
-import InterventionsView from './components/Dashboard/InterventionsView';
-import DatabaseViewerView from './components/Dashboard/DatabaseViewerView';
-import HealthAIChatView from './components/Dashboard/HealthAIChatView';
 import HealthAIChatWidget from './components/Dashboard/HealthAIChatWidget';
-import PostHealthkathonSuiteView from './components/Dashboard/PostHealthkathonSuiteView';
+
+// Mobile JKN Screens (Lazy-loaded on demand)
+const MoreMenuScreen = lazy(() => import('./components/MobileJKN/MoreMenuScreen'));
+const AntreanScreen = lazy(() => import('./components/MobileJKN/AntreanScreen'));
+const RiwayatPelayananScreen = lazy(() => import('./components/MobileJKN/RiwayatPelayananScreen'));
+const TempatTidurScreen = lazy(() => import('./components/MobileJKN/TempatTidurScreen'));
+const KonsultasiDokterScreen = lazy(() => import('./components/MobileJKN/KonsultasiDokterScreen'));
+const UbahDataScreen = lazy(() => import('./components/MobileJKN/UbahDataScreen'));
+const SkriningScreen = lazy(() => import('./components/MobileJKN/SkriningScreen'));
+const PembayaranScreen = lazy(() => import('./components/MobileJKN/PembayaranScreen'));
+const PengaduanScreen = lazy(() => import('./components/MobileJKN/PengaduanScreen'));
+const BugarScreen = lazy(() => import('./components/MobileJKN/BugarScreen'));
+const ObatScreen = lazy(() => import('./components/MobileJKN/ObatScreen'));
+
+// Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
+const GraphVisualizer = lazy(() => import('./components/Dashboard/GraphVisualizer'));
+const EmpiricalForensics = lazy(() => import('./components/Dashboard/EmpiricalForensics'));
+const FaskesSurveillance = lazy(() => import('./components/Dashboard/FaskesSurveillance'));
+const DpjpIntelligence = lazy(() => import('./components/Dashboard/DpjpIntelligence'));
+const MobileTelemetry = lazy(() => import('./components/Dashboard/MobileTelemetry'));
+const DecisionConsole = lazy(() => import('./components/Dashboard/DecisionConsole'));
+const AuditLedger = lazy(() => import('./components/Dashboard/AuditLedger'));
+const AgentCopilot = lazy(() => import('./components/Dashboard/AgentCopilot'));
+const AdminProfileView = lazy(() => import('./components/Dashboard/AdminProfileView'));
+const AdminSettingsView = lazy(() => import('./components/Dashboard/AdminSettingsView'));
+const InsightsAnalyticsView = lazy(() => import('./components/Dashboard/InsightsAnalyticsView'));
+const RetentionAnalyticsView = lazy(() => import('./components/Dashboard/RetentionAnalyticsView'));
+const CasesManagementView = lazy(() => import('./components/Dashboard/CasesManagementView'));
+const QuickTriageView = lazy(() => import('./components/Dashboard/QuickTriageView'));
+const FlaggedSessionsView = lazy(() => import('./components/Dashboard/FlaggedSessionsView'));
+const ClarificationScheduleView = lazy(() => import('./components/Dashboard/ClarificationScheduleView'));
+const CommandCenterView = lazy(() => import('./components/Dashboard/CommandCenterView'));
+const ConversationsView = lazy(() => import('./components/Dashboard/ConversationsView'));
+const InterventionsView = lazy(() => import('./components/Dashboard/InterventionsView'));
+const DatabaseViewerView = lazy(() => import('./components/Dashboard/DatabaseViewerView'));
+const HealthAIChatView = lazy(() => import('./components/Dashboard/HealthAIChatView'));
+const PostHealthkathonSuiteView = lazy(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
 
 export default function App() {
   // Read initial view & tab from URL params for instant navigation & deep-linking
@@ -1597,6 +1599,7 @@ export default function App() {
 
                     {/* ROUTING MULTI-LAYAR MOBILE JKN */}
                     <div className="flex-1 flex flex-col overflow-hidden">
+                      <Suspense fallback={<div className="p-6 text-center text-xs text-slate-500">Memuat layar Mobile JKN...</div>}>
                       {/* HOME */}
                       {currentScreen === 'home' && (
                         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5">
@@ -1809,6 +1812,7 @@ export default function App() {
                           </div>
                         </div>
                       )}
+                      </Suspense>
                     </div>
 
                     {/* BOTTOM NAV BAR */}
@@ -1961,6 +1965,7 @@ export default function App() {
                     transition={{ duration: 0.16, ease: "easeOut" }}
                     className="w-full space-y-4"
                   >
+                    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Memuat modul analitik...</div>}>
                     {dashboardTab === 'executive' && (
                       <ExecutiveHub 
                         isLight={isLight}
@@ -2421,6 +2426,7 @@ export default function App() {
                         isLight={isLight}
                       />
                     )}
+                    </Suspense>
                   </motion.div>
                 </AnimatePresence>
 
