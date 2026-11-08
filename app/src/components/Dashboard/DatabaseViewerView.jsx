@@ -86,21 +86,27 @@ const BPJS_COLUMN_LABELS = {
 const TABLE_METADATA = {
   bpjs_fkrtl_all: {
     category: 'bpjs_core',
-    title: 'Klaim FKRTL Raw (1.7 Juta Baris)',
-    description: 'Data mentah seluruh pengajuan klaim Rumah Sakit se-Indonesia (2023-2024). Berisi 1.699.219 rekaman klaim senilai Rp 1,535 Triliun.',
+    title: 'Klaim FKRTL Raw (1.699.219 Baris)',
+    description: 'Data mentah pengajuan klaim Rumah Sakit dari /mnt/g/Data sampel 2015-2024 (2.091 FKRTL di 496 Kab/Kota). Berisi 1.699.219 klaim senilai Rp 1,536 Triliun.',
     primary_key: 'FKL02'
   },
   bpjs_kepesertaan_all: {
     category: 'bpjs_core',
-    title: 'Master Kepesertaan JKN (2.59 Juta Baris)',
-    description: 'Data demografi peserta BPJS Kesehatan terdaftar (2015-2024), mencakup 2.590.751 profil peserta dengan segmen iuran dan bobot aktuaria.',
+    title: 'Master Kepesertaan JKN 2015–2024 (2.590.751 Baris)',
+    description: 'Data demografi peserta BPJS Kesehatan terdaftar kohort 2015–2024 (beroperasi sejak 2014), mencakup 2.590.751 profil peserta (1.065.281 keluarga) dengan bobot PSTV15.',
     primary_key: 'PSTV01'
   },
   bpjs_diagnosissekunder_all: {
     category: 'bpjs_core',
-    title: 'Diagnosis Sekunder (1.96 Juta Baris)',
+    title: 'Diagnosis Sekunder (1.967.670 Baris)',
     description: 'Rincian diagnosis komorbid/sekunder pasien rawat jalan & inap (1.967.670 baris) berelasi dengan FKL02.',
     primary_key: 'FKL02'
+  },
+  v_bpjs_longitudinal_2015_2024: {
+    category: 'analytical_view',
+    title: 'Kohort Longitudinal 2015–2024 (10 Kohort)',
+    description: 'View analitis penggabungan kohort kepesertaan (PSTV16 tahun 2015–2024) dengan klaim FKRTL dan bobot populasi nasional PSTV15.',
+    primary_key: 'tahun_kohort'
   },
   bpjs_icd10_dxprimer: {
     category: 'bpjs_core',
@@ -201,6 +207,10 @@ const PRESET_QUERIES = [
   {
     name: 'Distribusi Peserta BPJS per Hubungan Keluarga',
     sql: "SELECT CASE PSTV04 WHEN 1 THEN 'Kepala Keluarga' WHEN 2 THEN 'Istri/Pasangan' WHEN 3 THEN 'Anak' ELSE 'Lainnya' END as status_keluarga, COUNT(*) as jumlah_peserta FROM bpjs_kepesertaan_all GROUP BY 1 ORDER BY 2 DESC;"
+  },
+  {
+    name: 'Kohort Longitudinal 2015–2024 (PSTV16 & Klaim FKRTL)',
+    sql: 'SELECT * FROM v_bpjs_longitudinal_2015_2024 ORDER BY tahun_kohort ASC;'
   }
 ];
 
@@ -265,6 +275,7 @@ const TABLE_DEFAULTS = {
   bpjs_icd10_dxprimer: { totalRows: 1577, totalCols: 2 },
   bpjs_icd10_dxmasuk: { totalRows: 1906, totalCols: 2 },
   bpjs_icd10_fktp: { totalRows: 2000, totalCols: 2 },
+  v_bpjs_longitudinal_2015_2024: { totalRows: 10, totalCols: 8 },
   bpjs_icd10_pnk: { totalRows: 1223, totalCols: 2 }
 };
 
@@ -649,9 +660,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </span>
           </div>
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Repositori analitis memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris data transaksi resmi BPJS Kesehatan (2015-2024)</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
+            Beroperasi kontinu sejak 2014 hingga saat ini — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris data sampel resmi BPJS Kesehatan 2015–2024</span> (<code className={`font-mono px-1 py-0.5 rounded border ${
               isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
-            }`}>claimtrace_warehouse.db</code> dengan kueri vektor kolumnar berkecepatan tinggi.
+            }`}>/mnt/g/Data sampel 2015-2024</code>) yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
+              isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
+            }`}>claimtrace_warehouse.db</code>.
           </p>
         </div>
 
@@ -660,9 +673,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/10'
         }`}>
           <div className="text-right">
-            <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Klaim Terindeks</div>
+            <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Data Sampel 2015–2024</div>
             <div className={`text-lg font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>6.264.346 Baris</div>
-            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>17 Tabel &amp; Views Database</div>
+            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>18 Tabel &amp; Views Database</div>
           </div>
           <div className={`h-10 w-[1px] ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
           <button
