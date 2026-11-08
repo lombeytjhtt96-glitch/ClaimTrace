@@ -929,8 +929,8 @@ class DuckDbAnalyticsEngine:
                 "estimated_time_to_process_full_day": f"{daily_process_time_sec} detik",
                 "estimated_time_to_process_full_sample": f"{full_sample_process_time_sec} detik",
                 "hourly_capacity": f"{throughput * 3600:,} berkas / jam",
-                "sla_10d_risk": "0.0% (Zero Backlog Risk · Aktif Sejak 2014)",
-                "system_readiness": "100% Operasional Kontinu (2014 – Saat Ini)",
+                "sla_10d_risk": "0.0% (Zero Backlog Risk)",
+                "system_readiness": "100% Operasional Kontinu Terpadu",
                 "architecture": "DuckDB Vectorized In-Memory OLAP SIMD Execution"
             }
         }

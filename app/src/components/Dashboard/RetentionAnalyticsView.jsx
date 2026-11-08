@@ -400,18 +400,18 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
               isLight ? 'text-slate-900' : 'text-white'
             }`}>
               <Activity className={`w-6 h-6 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-              Analitik Retensi Kohort 2014–Saat Ini &amp; Aktivitas Pengawasan
+              Analitik Retensi Kohort &amp; Aktivitas Pengawasan
             </h1>
             <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
               isLight
                 ? 'bg-slate-100 text-slate-700 border-slate-300'
                 : 'bg-white/5 text-white/70 border-white/10'
             }`}>
-              OPERASIONAL KONTINU SEJAK 2014 · BASIS DATA TRANSAKSI JKN
+              BASIS DATA TRANSAKSI JKN · REKAM KEPESERTAAN
             </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Rekam longitudinal <strong>2.590.751 master peserta</strong> dan <strong>1.699.219 klaim FKRTL</strong> terintegrasi yang beroperasi kontinu sejak 2014 hingga saat ini.
+            Rekam longitudinal <strong>2.590.751 master peserta</strong> dan <strong>1.699.219 klaim FKRTL</strong> terintegrasi secara komprehensif.
           </p>
         </div>
 
@@ -421,7 +421,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
             : 'bg-white/5 border-white/10 text-white/70'
         }`}>
           <Calendar className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-          <span>Rentang Aktif: <strong className={isLight ? 'text-slate-900' : 'text-white'}>2014 – Saat Ini ({asOfDate})</strong></span>
+          <span>Status Sistem: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Aktif ({asOfDate})</strong></span>
         </div>
       </div>
 
@@ -447,10 +447,10 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         />
         <KpiCard
           isLight={isLight}
-          title="Total FKRTL & Peserta (2015–Kini)"
+          title="Total FKRTL & Peserta"
           value="2.091 RS"
           subtitle="2.590.751 peserta · 1.699.219 klaim FKRTL (496 Kab/Kota)"
-          badge="2015–Saat Ini"
+          badge="Total Lengkap"
           icon={Building2}
           trend="496 Kab/Kota (38 Provinsi)"
         />
@@ -480,7 +480,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           isLight={isLight}
           title="Kepatuhan SLA 10 HK (H+30)"
           value="98.61%"
-          subtitle="Bebas denda keterlambatan 1% Perpres 82/2018 sejak 2014"
+          subtitle="Bebas denda keterlambatan 1% Perpres 82/2018"
           badge="SLA Tuntas"
           icon={ShieldCheck}
           progressPercent={98.61}
@@ -571,7 +571,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
       }`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
           <div>
-            <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Retensi Kohort Kepesertaan &amp; Verifikasi Klaim (2014 – Saat Ini)</h2>
+            <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Retensi Kohort Kepesertaan &amp; Verifikasi Klaim</h2>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
               Distribusi longitudinal kohort peserta (<code>PSTV16</code>) dan penyelesaian verifikasi klaim FKRTL terintegrasi nasional
             </p>
@@ -592,7 +592,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
             : 'bg-blue-500/10 border-blue-500/20 text-blue-200'
         }`}>
           <div className="flex items-center gap-2">
-            <span className={`font-bold ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>Tolok Ukur SLA JKN (2014–Kini):</span>
+            <span className={`font-bold ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>Tolok Ukur SLA JKN:</span>
             <span><strong>D1 (H+1):</strong> Klaim Disetujui Penuh (Green Lane) • <strong>D7 (H+7):</strong> Rekonsiliasi Resume Medis &amp; BAKB • <strong>D30 (H+30):</strong> Tuntas SLA Perpres 82/2018</span>
           </div>
           <span className={`text-[11px] font-semibold hidden sm:inline ${isLight ? 'text-emerald-700 font-bold' : 'text-[#FFCA40]'}`}>v_bpjs_longitudinal_2015_2024</span>

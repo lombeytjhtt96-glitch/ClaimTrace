@@ -93,7 +93,7 @@ const TABLE_METADATA = {
   bpjs_kepesertaan_all: {
     category: 'bpjs_core',
     title: 'Master Kepesertaan JKN 2015–2024 (2.590.751 Baris)',
-    description: 'Data demografi peserta BPJS Kesehatan terdaftar kohort 2015–2024 (beroperasi sejak 2014), mencakup 2.590.751 profil peserta (1.065.281 keluarga) dengan bobot PSTV15.',
+    description: 'Data demografi peserta BPJS Kesehatan terdaftar kohort 2015–2024, mencakup 2.590.751 profil peserta (1.065.281 keluarga) dengan bobot PSTV15.',
     primary_key: 'PSTV01'
   },
   bpjs_diagnosissekunder_all: {
@@ -660,7 +660,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </span>
           </div>
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Beroperasi kontinu sejak 2014 hingga saat ini — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris transaksi resmi BPJS Kesehatan</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
+            Basis data analitis terpadu — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris transaksi resmi BPJS Kesehatan</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
               isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
             }`}>claimtrace_warehouse.db</code>.
           </p>

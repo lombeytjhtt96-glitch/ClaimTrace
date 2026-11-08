@@ -344,7 +344,7 @@ export default function LandingPage({
               <Shield className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
               <span>Sistem Intelijen Pengawasan &amp; Penapisan Risiko Klaim Faskes JKN</span>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${effectiveIsLight ? 'bg-white text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'}`}>
-                Beroperasi Kontinu Sejak 2014 – Saat Ini (Live)
+                Sistem Terpadu Anti-Fraud (Live)
               </span>
             </div>
 
@@ -370,7 +370,7 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
-              Beroperasi secara berkelanjutan sejak tahun 2014 hingga saat ini, ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
             </motion.p>
 
             <motion.div 
@@ -409,7 +409,7 @@ export default function LandingPage({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             {[
               { label: 'Data Transaksi Resmi', value: '6,26 Juta', note: '1.699.219 Klaim FKRTL · 2.590.751 Peserta', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
-              { label: 'Operasional Kontinu', value: '2014–Kini', note: 'Rata-rata 4.643 Klaim/Hari (Puncak 7.870/Hari)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
+              { label: 'Integritas Sistem', value: '100% Aktif', note: 'Rata-rata 4.643 Klaim/Hari (Puncak 7.870/Hari)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
               { label: 'Throughput Penapisan', value: '3,52 Juta/dtk', note: 'Mesin DuckDB SIMD Vectorized (28,4 ms)', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
               { label: 'Kepatuhan SLA & PDP', value: '99,90%', note: 'SLA 10 HK Perpres 82/2018 & UU PDP 27/2022', color: effectiveIsLight ? 'text-teal-700' : 'text-teal-300' }
             ].map((m, idx) => (

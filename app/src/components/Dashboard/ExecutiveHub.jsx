@@ -95,9 +95,9 @@ const INITIAL_OVERVIEW = {
   },
   insights: {
     ia_summary:
-      'ClaimTrace telah digunakan dan beroperasi secara kontinu sejak tahun 2014 hingga saat ini. Berdasarkan basis data transaksi terintegrasi (total 6.264.346 baris: 2.590.751 master peserta pada 1.065.281 keluarga, 1.699.219 klaim FKRTL, 1.967.670 diagnosis sekunder, dan 6.706 kode ICD-10), rata-rata permintaan klaim masuk adalah 4.643 berkas/hari (puncak 7.870 berkas/hari) dari 2.091 fasilitas kesehatan di 496 Kab/Kota (38 Provinsi). Nilai tagihan masuk mencapai Rp 1,536 Triliun dengan Rp 1,534 Triliun disetujui, koreksi tarif langsung Rp 2,07 Miliar (1.631 berkas), dan temuan klaim ganda hari sama Rp 32,59 Miliar (4.876 pasang / 9.555 berkas).',
+      'Berdasarkan basis data transaksi terintegrasi (total 6.264.346 baris: 2.590.751 master peserta pada 1.065.281 keluarga, 1.699.219 klaim FKRTL, 1.967.670 diagnosis sekunder, dan 6.706 kode ICD-10), rata-rata permintaan klaim masuk adalah 4.643 berkas/hari (puncak 7.870 berkas/hari) dari 2.091 fasilitas kesehatan di 496 Kab/Kota (38 Provinsi). Nilai tagihan masuk mencapai Rp 1,536 Triliun dengan Rp 1,534 Triliun disetujui, koreksi tarif langsung Rp 2,07 Miliar (1.631 berkas), dan temuan klaim ganda hari sama Rp 32,59 Miliar (4.876 pasang / 9.555 berkas).',
     report_generated_at: '2026-10-24T09:30:00Z',
-    report_period: 'Data Transaksi JKN & Operasional Kontinu 2014–Saat Ini',
+    report_period: 'Data Transaksi JKN & Basis Data Klaim Terverifikasi',
     llm_powered: true,
     patterns: [
       {
@@ -194,7 +194,7 @@ const INITIAL_OVERVIEW = {
       severity: 'medium',
       message:
         '148.890 berkas klaim prosedur rehabilitasi medik/fisioterapi rawat jalan dipantau terhadap batas frekuensi klinis Permenkes No. 26/2021.',
-      timestamp: 'Berjalan Sejak 2014',
+      timestamp: 'Sistem Aktif (Live)',
     },
   ],
 };
@@ -574,7 +574,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
   const openedPoints = trends?.cases_opened_trend ?? [];
   const latencyPoints = trends?.latency_trend ?? trends?.cases_closed_trend ?? [];
 
-  const timeRangeLabel = timeRange === 'all' ? '2015–Saat Ini' : `${timeRange} Hari`;
+  const timeRangeLabel = timeRange === 'all' ? 'Seluruh Data' : `${timeRange} Hari`;
 
   const dauLabel = timeRange === 'all' ? '2.091 FKRTL' : timeRange === 90 ? '2.011 FKRTL' : timeRange === 30 ? '1.946 FKRTL' : '1.790 FKRTL';
   const dauSub = timeRange === 'all'
@@ -583,7 +583,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
 
   const volumeLabel = timeRange === 'all' ? '1.699.219' : timeRange === 90 ? '432.690' : timeRange === 30 ? '148.073' : '34.318';
   const volumeSub = timeRange === 'all'
-    ? 'Rata-rata 4.643 klaim/hari · Puncak 7.870/hari (2015–Saat Ini)'
+    ? 'Rata-rata 4.643 klaim/hari · Puncak 7.870/hari'
     : `Permintaan klaim masuk terverifikasi (${timeRange} hari)`;
 
   const speedLabel = timeRange === 'all' ? '28,4 ms' : timeRange === 90 ? '24,6 ms' : timeRange === 30 ? '21,2 ms' : '19,7 ms';
@@ -684,14 +684,14 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Log Telemetri Operasional ({timeRangeLabel}) — Berjalan Kontinu Sejak 2014
+                  Log Telemetri Operasional ({timeRangeLabel}) — Real-Time Monitoring
                 </h4>
                 <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                   Diekstraksi langsung dari gudang data transaksi BPJS Kesehatan (6.264.346 baris) melalui engine analitik kolumnar DuckDB.
                 </p>
               </div>
               <span className="text-[10px] font-mono px-2 py-1 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
-                LIVE SEJAK 2014
+                SISTEM AKTIF (LIVE)
               </span>
             </div>
 
@@ -794,7 +794,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
 
   const gridStroke = isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255,255,255,0.08)';
   const axisStroke = isLight ? '#64748b' : 'rgba(255,255,255,0.5)';
-  const timeRangeBadge = timeRange === 'all' ? '2015–SAAT INI' : `AGREGASI ${timeRange} HARI`;
+  const timeRangeBadge = timeRange === 'all' ? 'TOTAL KLAIM' : `AGREGASI ${timeRange} HARI`;
 
   return (
     <section
@@ -811,7 +811,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
             <h3 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Tren Siklus Verifikasi Klaim</h3>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
               {timeRange === 'all'
-                ? 'Perbandingan permintaan klaim masuk vs klaim selesai diverifikasi berdasarkan kohort longitudinal 2015–Saat Ini (Aktif sejak 2014)'
+                ? 'Perbandingan permintaan klaim masuk vs klaim selesai diverifikasi pada basis data klaim FKRTL'
                 : `Perbandingan laju permintaan berkas masuk vs penyelesaian verifikasi klaim (${timeRange} hari terakhir)`}
             </p>
           </div>
@@ -1893,7 +1893,7 @@ export default function ExecutiveHub({
   const [useLLM, setUseLLM] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [campaignGenerated, setCampaignGenerated] = useState(null);
-  const [timeRange, setTimeRange] = useState('all'); // 'all' (2015–Saat Ini) | 90 | 30 | 7
+  const [timeRange, setTimeRange] = useState('all'); // 'all' (Seluruh Data) | 90 | 30 | 7
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Keyboard accessibility: dismiss modals with Escape key
@@ -1926,13 +1926,13 @@ export default function ExecutiveHub({
       investigation_red_pct: 2.49
     },
     national_readiness_verdict: {
-      operational_lifespan: 'Berjalan Kontinu Sejak 2014 – Saat Ini (Live 24/7)',
+      operational_lifespan: 'Aktif Real-Time (Live 24/7)',
       sample_2015_2024_volume: '1.699.219 klaim FKRTL (4.643/hari) · 2.590.751 peserta',
       national_daily_capacity_requirement: '4.643 klaim/hari (Puncak 7.870/hari)',
       estimated_time_to_process_full_day: '0.0013 detik per batch harian',
       hourly_capacity: '12,676,053,600 berkas / jam',
-      sla_10d_risk: '0.0% (Zero Backlog Risk Since 2014)',
-      system_readiness: '100% Final & Beroperasi Aktif Sejak 2014',
+      sla_10d_risk: '0.0% (Zero Backlog Risk)',
+      system_readiness: '100% Final & Beroperasi Penuh',
       architecture: 'DuckDB Vectorized In-Memory OLAP SIMD Execution'
     }
   });
@@ -2106,7 +2106,7 @@ export default function ExecutiveHub({
         ...base.insights,
         report_period:
           timeRange === 'all'
-            ? 'Portofolio Lengkap Transaksi Terpadu (Operasional Kontinu Sejak 2014 – Saat Ini)'
+            ? 'Portofolio Lengkap Transaksi Terpadu'
             : `Evaluasi Aktual Transaksi Terverifikasi (${timeRange} Hari Terakhir · ${
                 timeRange === 90 ? '2.011' : timeRange === 30 ? '1.946' : '1.790'
               } FKRTL)`,
@@ -2345,7 +2345,7 @@ export default function ExecutiveHub({
               Pusat Komando &amp; Analitik Eksekutif JKN
             </h1>
             <p className={`text-xs mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Operasional berkelanjutan sejak 2014 · Basis Data Transaksi Resmi (6.264.346 baris: 2.590.751 master peserta &amp; 1.699.219 klaim FKRTL)
+              Basis Data Transaksi Terpadu JKN (6.264.346 baris: 2.590.751 master peserta &amp; 1.699.219 klaim FKRTL)
             </p>
           </div>
         </div>
@@ -2356,7 +2356,7 @@ export default function ExecutiveHub({
             isLight ? 'bg-slate-100 border-slate-300' : 'border-white/10 bg-white/5'
           }`}>
             {[
-              { id: 'all', label: '2015–Saat Ini' },
+              { id: 'all', label: 'Semua' },
               { id: 90, label: '90 Hari' },
               { id: 30, label: '30 Hari' },
               { id: 7, label: '7 Hari' },
@@ -2427,18 +2427,18 @@ export default function ExecutiveHub({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className={`text-sm font-bold tracking-tight uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Mesin Verifikasi Kontinu 2014 – Saat Ini &amp; Stress Test Throughput DuckDB SIMD
+                  Mesin Verifikasi Berkelanjutan &amp; Stress Test Throughput DuckDB SIMD
                 </h3>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${
                   isLight
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                     : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                 }`}>
-                  OPERASIONAL SEJAK 2014 · LIVE 24/7
+                  SISTEM AKTIF · LIVE 24/7
                 </span>
               </div>
               <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Berjalan tanpa henti sejak 2014 memproses rata-rata <strong>4.643 klaim/hari</strong> pada transaksi terverifikasi (puncak 7.870/hari) dengan eksekusi vektor SIMD DuckDB tanpa antrean tertunda.
+                Memproses rata-rata <strong>4.643 klaim/hari</strong> pada transaksi terverifikasi (puncak 7.870/hari) dengan eksekusi vektor SIMD DuckDB tanpa antrean tertunda.
               </p>
             </div>
           </div>
@@ -2517,7 +2517,7 @@ export default function ExecutiveHub({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>
-              <strong>Rekam Jejak Operasional 2014 – Saat Ini:</strong> Seluruh <strong>6.264.346 baris</strong> transaksi terpadu (<code>2.590.751</code> master peserta &amp; <code>1.699.219</code> klaim FKRTL) terindeks aktif dan terus memproses klaim baru secara real-time.
+              <strong>Rekam Transaksi Terintegrasi:</strong> Seluruh <strong>6.264.346 baris</strong> transaksi terpadu (<code>2.590.751</code> master peserta &amp; <code>1.699.219</code> klaim FKRTL) terindeks aktif dan terus memproses klaim baru secara real-time.
             </span>
           </div>
           <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white/60 dark:bg-black/30 shrink-0">
@@ -2547,7 +2547,7 @@ export default function ExecutiveHub({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className={`text-sm font-bold tracking-tight uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Portofolio Data Transaksi Klaim BPJS Kesehatan (Operasional Sejak 2014 – Saat Ini)
+                    Portofolio Data Transaksi Klaim BPJS Kesehatan
                   </h2>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${
                     isLight
@@ -2632,7 +2632,7 @@ export default function ExecutiveHub({
               }`}
             >
               <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Cakupan Peserta 2015–2024</p>
+                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Cakupan Master Peserta</p>
                 <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               </div>
               <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>2.590.751 Peserta</p>
@@ -2679,7 +2679,7 @@ export default function ExecutiveHub({
           </div>
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span>Audit Posture: AKTIF SEJAK 2014 &amp; TERVALIDASI</span>
+            <span>Audit Posture: AKTIF &amp; TERVALIDASI</span>
           </div>
         </div>
 
@@ -2755,7 +2755,7 @@ export default function ExecutiveHub({
       <section aria-label="Indikator kinerja utama">
         <div className="mb-3 flex items-center justify-between">
           <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Ringkasan Eksekutif Data Transaksi JKN ({timeRange === 'all' ? '2014–Saat Ini' : `${timeRange} Hari Terakhir`})
+            Ringkasan Eksekutif Data Transaksi JKN ({timeRange === 'all' ? 'Seluruh Data' : `${timeRange} Hari Terakhir`})
           </h2>
           <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
             Basis Data Terpadu BPJS Kesehatan (2.590.751 Peserta · 2.091 FKRTL di 496 Kab/Kota)
@@ -2764,7 +2764,7 @@ export default function ExecutiveHub({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KPICard
             isLight={isLight}
-            title={`Permintaan Klaim Masuk (${timeRange === 'all' ? '2015–Kini' : `${timeRange}H`})`}
+            title={`Permintaan Klaim Masuk (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
             value={activeOverview.kpis.total_active_cases.toLocaleString('id-ID')}
             subtitle={
               timeRange === 'all'
@@ -2788,7 +2788,7 @@ export default function ExecutiveHub({
 
           <KPICard
             isLight={isLight}
-            title={`Peserta & Pasien Unik (${timeRange === 'all' ? '2015–2024' : `${timeRange}H`})`}
+            title={`Peserta & Pasien Unik (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
             value={timeRange === 'all' ? '2.590.751' : timeRange === 90 ? '131.175' : timeRange === 30 ? '77.710' : '28.740'}
             subtitle={
               timeRange === 'all'
@@ -2800,7 +2800,7 @@ export default function ExecutiveHub({
 
           <KPICard
             isLight={isLight}
-            title={`FKRTL Aktif (${timeRange === 'all' ? '2015–Kini' : `${timeRange}H`})`}
+            title={`FKRTL Aktif (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
             value={`${activeOverview.kpis.active_sessions.toLocaleString('id-ID')} RS`}
             subtitle={
               timeRange === 'all'
@@ -2819,7 +2819,7 @@ export default function ExecutiveHub({
             Analisis Tren Verifikasi &amp; Permintaan Masuk
           </h2>
           <p className={`text-xs font-semibold ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-            {timeRange === 'all' ? 'Operasional Kontinu 2014 – Saat Ini (Transaksi JKN)' : `${timeRange} hari terakhir`}
+            {timeRange === 'all' ? 'Basis Data Transaksi JKN' : `${timeRange} hari terakhir`}
           </p>
         </div>
 
