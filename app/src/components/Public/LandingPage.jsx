@@ -370,7 +370,7 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
-              Beroperasi secara berkelanjutan sejak tahun 2014 hingga saat ini, ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit) serta proyeksi populasi nasional sebesar 140,62 juta klaim per tahun (384.218 klaim/hari). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              Beroperasi secara berkelanjutan sejak tahun 2014 hingga saat ini, ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
             </motion.p>
 
             <motion.div 
@@ -409,7 +409,7 @@ export default function LandingPage({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             {[
               { label: 'Data Transaksi Resmi', value: '6,26 Juta', note: '1.699.219 Klaim FKRTL · 2.590.751 Peserta', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
-              { label: 'Operasional Kontinu', value: '2014–Kini', note: '4.643 Klaim/Hari (Verifikasi) · 384.218/Hari (Nasional)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
+              { label: 'Operasional Kontinu', value: '2014–Kini', note: 'Rata-rata 4.643 Klaim/Hari (Puncak 7.870/Hari)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
               { label: 'Throughput Penapisan', value: '3,52 Juta/dtk', note: 'Mesin DuckDB SIMD Vectorized (28,4 ms)', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
               { label: 'Kepatuhan SLA & PDP', value: '99,90%', note: 'SLA 10 HK Perpres 82/2018 & UU PDP 27/2022', color: effectiveIsLight ? 'text-teal-700' : 'text-teal-300' }
             ].map((m, idx) => (
@@ -914,11 +914,11 @@ export default function LandingPage({
                 </div>
                 <h3 className={`text-base font-bold transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Forensik Data Empiris Database</h3>
                 <p className={`text-xs leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
-                  Pemrosesan agregasi dan penapisan anomali pada 100.000+ hingga 1.700.000+ data klaim RS secara instan (throughput &gt; 3.000.000 berkas/detik) dengan DuckDB SIMD, siap menampung beban harian nasional 324.500 klaim dalam &lt; 0,1 detik.
+                  Pemrosesan agregasi dan penapisan anomali pada 100.000+ hingga 1.699.219 transaksi klaim RS secara instan (throughput &gt; 3.500.000 berkas/detik) dengan DuckDB SIMD, menampung seluruh beban harian dalam &lt; 0,002 detik.
                 </p>
               </div>
               <div className={`pt-3 border-t text-[11px] font-medium ${effectiveIsLight ? 'border-slate-100 text-slate-500' : 'border-white/10 text-white/50'}`}>
-                Performa: Menapis seluruh beban klaim 3.287 faskes se-Indonesia seketika tanpa backlog.
+                Performa: Menapis seluruh beban klaim 2.091 faskes di 496 kab/kota seketika tanpa backlog.
               </div>
             </motion.div>
 

@@ -452,7 +452,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           subtitle="2.590.751 peserta · 1.699.219 klaim FKRTL (496 Kab/Kota)"
           badge="2015–Saat Ini"
           icon={Building2}
-          trend="3.287 RS Nasional"
+          trend="496 Kab/Kota (38 Provinsi)"
         />
       </div>
 

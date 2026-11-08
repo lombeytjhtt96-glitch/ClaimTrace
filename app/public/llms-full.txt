@@ -4,7 +4,7 @@
 
 ## Ringkasan Eksekutif & Domain Operasional
 
-ClaimTrace dirancang khusus untuk memecahkan beban verifikasi klaim fasilitas kesehatan rujukan tingkat lanjutan (FKRTL) BPJS Kesehatan se-Indonesia yang mencapai rata-rata 324.500 berkas klaim harian dari 3.287 rumah sakit mitra dengan perputaran dana jaminan kesehatan nasional sekitar Rp158 triliun per tahun. Berdasarkan Peraturan Presiden No. 82 Tahun 2018 Pasal 76 ayat (1), BPJS Kesehatan wajib menyelesaikan verifikasi klaim dan melakukan pembayaran paling lambat 10 (sepuluh) hari kerja sejak berkas dinyatakan lengkap. Keterlambatan verifikasi manual berisiko menimbulkan penalti denda 1% per bulan kepada rumah sakit.
+ClaimTrace dirancang khusus untuk memecahkan beban verifikasi klaim fasilitas kesehatan rujukan tingkat lanjutan (FKRTL) BPJS Kesehatan yang mencakup jutaan transaksi berkas klaim dari 2.091 rumah sakit mitra di 496 kabupaten/kota (38 provinsi). Berdasarkan Peraturan Presiden No. 82 Tahun 2018 Pasal 76 ayat (1), BPJS Kesehatan wajib menyelesaikan verifikasi klaim dan melakukan pembayaran paling lambat 10 (sepuluh) hari kerja sejak berkas dinyatakan lengkap. Keterlambatan verifikasi manual berisiko menimbulkan penalti denda 1% per bulan kepada rumah sakit.
 
 ClaimTrace hadir sebagai instrumen pra-pembayaran (pre-payment audit) yang secara otomatis menyeleksi berkas klaim sebelum dana dicairkan, mencegah kebocoran anggaran negara (fraud prevention), dan menjamin akurasi koding INA-CBG tanpa melanggar hak privasi data medis pasien.
 

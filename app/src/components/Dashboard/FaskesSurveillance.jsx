@@ -247,10 +247,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 Total Faskes Terpantau
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                3.287 FKRTL (Nasional)
+                2.091 FKRTL Terpantau
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                514 Kab/Kota (8 Audit Prioritas)
+                496 Kab/Kota (8 Audit Prioritas)
               </div>
             </div>
 

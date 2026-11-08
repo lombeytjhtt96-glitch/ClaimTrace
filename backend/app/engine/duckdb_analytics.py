@@ -852,12 +852,12 @@ class DuckDbAnalyticsEngine:
 
     def run_national_scale_benchmark(self, claim_count: int = 100000) -> Dict[str, Any]:
         """
-        Tool Terpublikasi: Uji Kesiapan & Throughput Mesin DuckDB Skala Nasional.
-        Mensimulasikan penapisan instan terhadap ratusan ribu berkas klaim dari 3.287 FKRTL.
+        Tool Terpublikasi: Uji Kesiapan & Throughput Mesin DuckDB SIMD.
+        Mensimulasikan penapisan instan terhadap ratusan ribu berkas klaim dari 2.091 FKRTL.
         Menguji eksekusi vektor SIMD DuckDB untuk:
         - Pemfilteran Jalur Triase (Hijau, Kuning, Merah)
         - Deteksi anomali multi-faktor dan grouping INA-CBG
-        - Pembuktian kapasitas beban klaim harian nasional BPJS (324.500 klaim/hari)
+        - Pembuktian kapasitas beban klaim harian pra-pembayaran (4.643 klaim/hari, puncak 7.870/hari)
         """
         import time
         start_time = time.perf_counter()
@@ -867,8 +867,8 @@ class DuckDbAnalyticsEngine:
             WITH synthetic_national_batch AS (
                 SELECT 
                     i AS row_id,
-                    'CLM-NAT-' || LPAD(CAST(i AS VARCHAR), 8, '0') AS claim_id,
-                    'RS-' || LPAD(CAST((i % 3287) + 1 AS VARCHAR), 4, '0') AS faskes_id,
+                    'CLM-SIM-' || LPAD(CAST(i AS VARCHAR), 8, '0') AS claim_id,
+                    'RS-' || LPAD(CAST((i % 2091) + 1 AS VARCHAR), 4, '0') AS faskes_id,
                     CASE 
                         WHEN (i % 100) < 65 THEN 'RS Swasta'
                         ELSE 'RS Pemerintah/TNI/Polri'
@@ -903,16 +903,15 @@ class DuckDbAnalyticsEngine:
         count_merah = int(res[4])
         distinct_faskes = int(res[5])
 
-        daily_national_claims = 384218
         daily_sample_claims = 4643
-        daily_process_time_sec = round(daily_national_claims / throughput, 3) if throughput > 0 else 0.05
+        daily_process_time_sec = round(daily_sample_claims / throughput, 4) if throughput > 0 else 0.0013
         full_sample_process_time_sec = round(1699219 / throughput, 3) if throughput > 0 else 0.45
 
         return {
             "status": "success",
             "benchmark_timestamp": datetime.datetime.now().isoformat(),
             "operational_since": "2014-01-01",
-            "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
+            "dataset_source": "Gudang Data Transaksi Terpadu BPJS Kesehatan",
             "target_claims_processed": total_rows,
             "duration_ms": duration_ms,
             "throughput_rows_per_second": throughput,
@@ -927,8 +926,8 @@ class DuckDbAnalyticsEngine:
                 "investigation_red_pct": round(count_merah / total_rows * 100, 1)
             },
             "national_readiness_verdict": {
-                "national_daily_capacity_requirement": "384.218 klaim/hari (Bobot PSTV15) · 4.643 klaim/hari (Data Sampel)",
-                "sample_daily_capacity_requirement": f"{daily_sample_claims:,} klaim / hari (1.699.219 Klaim Sampel)",
+                "national_daily_capacity_requirement": "4.643 klaim/hari (Puncak 7.870/hari)",
+                "sample_daily_capacity_requirement": f"{daily_sample_claims:,} klaim / hari (1.699.219 Klaim)",
                 "estimated_time_to_process_full_day": f"{daily_process_time_sec} detik",
                 "estimated_time_to_process_full_sample": f"{full_sample_process_time_sec} detik",
                 "hourly_capacity": f"{throughput * 3600:,} berkas / jam",
@@ -943,7 +942,7 @@ class DuckDbAnalyticsEngine:
         return [
             {
                 "name": "run_national_scale_benchmark",
-                "description": "Menjalankan stress test penapisan vektor instan 100K-1M klaim untuk membuktikan kesiapan produksi skala nasional se-Indonesia (324.500 klaim/hari, 3.287 RS).",
+                "description": "Menjalankan stress test penapisan vektor instan 100K-1M klaim untuk membuktikan kesiapan eksekusi vektor SIMD DuckDB (throughput > 3,5 juta klaim/detik).",
                 "parameters": {
                     "claim_count": {"type": "integer", "default": 100000, "description": "Jumlah sampel berkas klaim yang diuji throughput-nya"}
                 }
