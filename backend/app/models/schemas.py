@@ -318,11 +318,11 @@ class FrameworkCatalogResponse(BaseModel):
 
 class WbsReportInput(BaseModel):
     category: str = Field(..., max_length=100)
-    faskes_name: str = Field(..., min_length=2, max_length=250)
+    faskes_name: str = Field(..., min_length=1, max_length=250)
     location: Optional[str] = Field(None, max_length=150)
     reporter_contact: Optional[str] = Field(None, max_length=120)
     is_anonymous: bool = False
-    description: str = Field(..., min_length=5, max_length=10000)
+    description: str = Field(..., min_length=1, max_length=10000)
 
 class WbsReportRecord(BaseModel):
     ticket_id: str
