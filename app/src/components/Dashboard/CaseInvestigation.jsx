@@ -17,7 +17,6 @@ import {
   Tooltip,
   Cell,
   LabelList,
-  CartesianGrid,
   AreaChart,
   Area,
 } from 'recharts';
@@ -617,10 +616,6 @@ export default function CaseInvestigation({
                           <stop offset="100%" stopColor="rgba(255,255,255,0.15)" stopOpacity={0.7} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid
-                        stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255, 255, 255, 0.05)'}
-                        vertical={false}
-                      />
                       <XAxis
                         dataKey="date"
                         stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
@@ -681,10 +676,6 @@ export default function CaseInvestigation({
                           <stop offset="100%" stopColor="#fb7185" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid
-                        stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255, 255, 255, 0.05)'}
-                        vertical={false}
-                      />
                       <XAxis
                         dataKey="date"
                         stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}

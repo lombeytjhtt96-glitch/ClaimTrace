@@ -12,7 +12,6 @@ import {
   LabelList,
   PieChart,
   Pie,
-  CartesianGrid,
   Legend,
   LineChart,
   Line,
@@ -985,15 +984,16 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lifecycleData}>
-              <CartesianGrid stroke={gridStroke} vertical={false} />
-              <XAxis dataKey="date" stroke={axisStroke} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="date" stroke={axisStroke} tickLine={false} tick={{ fontSize: 11 }} />
               <YAxis 
                 stroke={axisStroke} 
+                tickLine={false}
+                axisLine={false}
                 tick={{ fontSize: 11 }} 
                 tickFormatter={(val) => `${(val / 1000).toLocaleString('id-ID')}K`}
               />
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
-              <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
+              <Legend verticalAlign="bottom" height={32} iconType="plainline" wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
               <Line
                 type="monotone"
                 dataKey="opened"
@@ -1055,7 +1055,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<NumberTooltip isLight={isLight} />} />
+              <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -1112,10 +1112,11 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 80, top: 10, bottom: 10 }}>
-              <CartesianGrid stroke={gridStroke} vertical={false} />
               <XAxis 
                 type="number" 
                 stroke={axisStroke} 
+                tickLine={false}
+                axisLine={false}
                 tick={{ fontSize: 11 }} 
                 tickFormatter={(val) => `${(val / 1000).toLocaleString('id-ID')}K`}
               />
@@ -1123,6 +1124,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 dataKey="topic"
                 type="category"
                 stroke={axisStroke}
+                tickLine={false}
+                axisLine={false}
                 tick={{ fontSize: 11, fill: isLight ? '#1e293b' : '#f1f5f9', fontWeight: 500 }}
                 width={250}
               />

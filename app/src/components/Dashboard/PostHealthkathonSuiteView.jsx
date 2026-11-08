@@ -931,7 +931,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         </div>
 
         {/* 5 PILLAR NAVIGATION TABS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
+        <div role="tablist" aria-label="Navigasi 5 Pilar Pascakompetisi" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
           {[
             {
               id: 'typology',
@@ -969,9 +969,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             return (
               <button
                 key={tab.id}
+                role="tab"
+                id={`tab-${tab.id}`}
+                aria-selected={active}
+                aria-controls={`panel-${tab.id}`}
+                aria-label={tab.title}
                 type="button"
                 onClick={() => setActivePillar(tab.id)}
-                className={`text-left p-3 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
+                className={`text-left p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                   active
                     ? isLight
                       ? 'bg-emerald-600 text-white border-emerald-700 shadow-md'
@@ -1067,17 +1072,17 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     setBaActionType('TOLAK_KLAIM_ESKALASI_AUDIT_FORENSIK');
                   }
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-2 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-150 ease-out active:scale-[0.96] cursor-pointer flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                   isSel
                     ? isLight
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-emerald-500 text-slate-950 border-emerald-400'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                      : 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
                     : isLight
                       ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                       : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
                 }`}
               >
-                <span className="font-mono">{c.claim_id}</span>
+                <span className="font-mono tabular-nums">{c.claim_id}</span>
                 <span className="opacity-75">·</span>
                 <span>{c.hospital.split('(')[0].trim()}</span>
               </button>
@@ -1265,7 +1270,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               type="button"
               onClick={() => runCodingSimulator(true)}
               disabled={isAuditingCoding}
-              className="keep-white w-full py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              className="keep-white w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all duration-150 ease-out active:scale-[0.96] flex items-center justify-center gap-2 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <Cpu className="keep-white w-4 h-4 text-white" />
               <span className="keep-white text-white">
@@ -1451,7 +1456,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   type="button"
                   onClick={() => runFristaAiForensicAudit(selectedClaimId, fristaAiFocus)}
                   disabled={isAuditingFrista}
-                  className="keep-white px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer shrink-0"
+                  className="keep-white px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all duration-150 ease-out active:scale-[0.96] cursor-pointer shrink-0 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                   <span className="keep-white text-white">{isAuditingFrista ? 'Menganalisis...' : 'Analisis'}</span>
                 </button>
@@ -1591,7 +1596,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 type="button"
                 onClick={() => executeRagQuery(ragQuery, selectedClaimId)}
                 disabled={isQueryingRag}
-                className="keep-white w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                className="keep-white w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all duration-150 ease-out active:scale-[0.96] flex items-center justify-center gap-2 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
               >
                 <Search className="keep-white w-4 h-4 text-white" />
                 <span className="keep-white text-white">
@@ -1614,9 +1619,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   key={i}
                   type="button"
                   onClick={() => executeRagQuery(preset, selectedClaimId)}
-                  className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between gap-2 ${
+                  className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all duration-150 ease-out active:scale-[0.98] cursor-pointer flex items-center justify-between gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                     isLight
-                      ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-700'
+                      ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-700 shadow-2xs'
                       : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
                   }`}
                 >
@@ -1777,7 +1782,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="keep-white w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                  className="keep-white w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all duration-150 ease-out active:scale-[0.96] flex items-center justify-center gap-2 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                 >
                   <Printer className="keep-white w-4 h-4 text-white" />
                   <span className="keep-white text-white">Cetak / Ekspor PDF Berita Acara (Print)</span>
@@ -1786,9 +1791,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <button
                   type="button"
                   onClick={handleDownloadPrintableBeritaAcara}
-                  className={`w-full py-2.5 px-4 rounded-xl border font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`w-full py-2.5 px-4 rounded-xl border font-bold text-xs transition-all duration-150 ease-out active:scale-[0.96] flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                     isLight
-                      ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'
+                      ? 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 shadow-sm'
                       : 'bg-white/10 hover:bg-white/15 text-white border-white/20'
                   }`}
                 >
@@ -2060,8 +2065,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     <button
                       key={c.claim_id}
                       type="button"
+                      aria-pressed={isSelected}
+                      aria-label={`Pilih klaim ${c.claim_id} untuk audit Bi-Encoder Hugging Face`}
                       onClick={() => handleRunHfAudit(c.claim_id)}
-                      className={`w-full text-left p-3 rounded-xl border transition-all text-xs cursor-pointer ${
+                      className={`w-full text-left p-3 rounded-xl border text-xs cursor-pointer transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                         isSelected
                           ? isLight
                             ? 'bg-emerald-50 border-emerald-400 shadow-sm text-slate-900'
@@ -2072,8 +2079,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                       }`}
                     >
                       <div className="flex items-center justify-between font-mono text-[10px]">
-                        <span className="font-bold text-emerald-400">{c.claim_id}</span>
-                        <span className="opacity-60">{c.cluster_id || '-'}</span>
+                        <span className="font-bold text-emerald-400 tabular-nums">{c.claim_id}</span>
+                        <span className="opacity-60 tabular-nums">{c.cluster_id || '-'}</span>
                       </div>
                       <div className="font-semibold text-slate-200 mt-1 truncate">{c.patient_name}</div>
                       <div className="text-[10px] text-slate-400 truncate mt-0.5">{c.nama_faskes}</div>
@@ -2102,7 +2109,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   type="button"
                   onClick={() => handleRunHfAudit(selectedHfClaimId)}
                   disabled={isAuditingHf}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors"
+                  aria-label="Jalankan Audit Vektor Bi-Encoder Hugging Face"
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 shadow-sm"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isAuditingHf ? 'animate-spin' : ''}`} />
                   <span>{isAuditingHf ? 'Mengomputasi Vektor...' : 'Jalankan Audit Vektor'}</span>
@@ -2253,21 +2261,21 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   <button
                     type="button"
                     onClick={() => setHfCustomText('Pasien mengeluh nyeri punggung bawah (Low Back Pain) menjalar ke paha posterior dextra sejak 2 minggu. Pemeriksaan fisik: Lasegue (+), Patrick (-), Kontraktur otot paravertebral L4-L5 (+), refleks fisiologis normal. Tindakan: Fisioterapi komprehensif, Short Wave Diathermy (SWD) dan Lumbar Traction 93.39 serial 5 sesi.')}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-cyan-300 border border-white/10 cursor-pointer"
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-cyan-300 border border-white/10 cursor-pointer transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     Kloning Fisioterapi (100%)
                   </button>
                   <button
                     type="button"
                     onClick={() => setHfCustomText('Pasien baksos katarak penugasan resmi Dinkes Solo. Keluhan visus menurun 6/60, lensa keruh matur ODS. Operasi fakoemulsifikasi 13.41 + IOL lancar tanpa komplikasi.')}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-emerald-300 border border-white/10 cursor-pointer"
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-emerald-300 border border-white/10 cursor-pointer transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     Baksos Katarak Solo
                   </button>
                   <button
                     type="button"
                     onClick={() => setHfCustomText('Pasien mengeluh sesak napas akut sejak 6 jam SMRS dengan riwayat PPOK eksaserbasi akut. Terapi nebulisasi salbutamol dan oksigenasi kanul nasal.')}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     PPOK Akut Independen
                   </button>
@@ -2277,7 +2285,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   type="button"
                   onClick={handleTestHfCustomText}
                   disabled={isTestingHfCustom}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors"
+                  aria-label="Uji plagiarisme resume klinis dengan Hugging Face"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 shadow-sm"
                 >
                   <Cpu className={`w-3.5 h-3.5 ${isTestingHfCustom ? 'animate-spin' : ''}`} />
                   <span>{isTestingHfCustom ? 'Memproses...' : 'Uji dengan Hugging Face'}</span>
