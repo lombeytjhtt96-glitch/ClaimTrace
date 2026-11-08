@@ -300,10 +300,10 @@ export default function SecurityVerificationModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className={`relative overflow-hidden rounded-2xl border p-6 sm:p-7 max-w-md w-full shadow-2xl transition-colors duration-200 ${
+          className={`relative overflow-hidden rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl transition-colors duration-200 ${
             effectiveIsLight
-              ? 'bg-white border-slate-200 text-slate-900 shadow-2xl shadow-slate-300/40'
-              : 'bg-[#00153A] border-white/20 text-white shadow-2xl shadow-black/80'
+              ? 'bg-white text-slate-900 shadow-2xl shadow-slate-400/40'
+              : 'bg-[#00153A] text-white shadow-2xl shadow-black/90'
           }`}
         >
           {/* Pemilih Tahap Verifikasi Berlapis */}

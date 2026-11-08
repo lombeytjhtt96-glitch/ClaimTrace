@@ -286,10 +286,10 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         <motion.div 
           whileHover={{ y: -2 }}
           transition={{ duration: 0.3 }}
-          className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border p-5 sm:p-5.5 backdrop-blur-xl space-y-3 transition-colors duration-200 ${
+          className={`relative overflow-hidden rounded-2xl sm:rounded-3xl p-6 sm:p-7 backdrop-blur-xl space-y-3.5 transition-colors duration-200 shadow-2xl ${
             effectiveIsLight
-              ? 'border-slate-200 bg-white text-slate-900 shadow-2xl shadow-slate-300/40'
-              : 'border-white/10 bg-[#00153A]/85 text-white shadow-2xl shadow-[#00081c]/80'
+              ? 'bg-white text-slate-900 shadow-slate-300/40'
+              : 'bg-[#00153A]/90 text-white shadow-[#00081c]/80'
           }`}
         >
           {errorMsg && (
