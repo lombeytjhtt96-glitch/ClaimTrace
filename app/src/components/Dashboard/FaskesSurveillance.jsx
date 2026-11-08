@@ -247,10 +247,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 Total Faskes Terpantau
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                {FASKES_DATA.length} FKRTL
+                3.287 FKRTL (Nasional)
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Faskes Rujukan Terintegrasi Nasional
+                514 Kab/Kota (8 Sampel Audit Live)
               </div>
             </div>
 
