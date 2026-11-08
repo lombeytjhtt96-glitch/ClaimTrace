@@ -145,34 +145,6 @@ export default function RegionSelector({
           )}
         </select>
       </div>
-
-      {/* Selected Value Confirmation */}
-      {value && (
-        <div className={`p-2 rounded-lg border text-[11px] flex items-center justify-between transition ${
-          isLight 
-            ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' 
-            : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-        }`}>
-          <div className="flex items-center gap-1.5 overflow-hidden">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="font-semibold truncate">
-              {value}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              onChange('');
-              setSelectedProvince('');
-            }}
-            className={`text-[10px] underline font-bold shrink-0 ml-2 ${
-              isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
-            }`}
-          >
-            Reset
-          </button>
-        </div>
-      )}
     </div>
   );
 }
