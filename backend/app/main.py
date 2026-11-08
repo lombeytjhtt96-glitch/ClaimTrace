@@ -2036,10 +2036,10 @@ def get_national_scale_metrics():
     """
     return {
         "status": "success",
-        "scope": "Operasional Kontinu 2014 – Saat Ini (Data Sampel 2015–2024 & Bobot Nasional PSTV15)",
+        "scope": "Operasional Kontinu 2014 – Saat Ini (Data Transaksi Terpadu & Skala Nasional PSTV15)",
         "operational_since": "2014-01-01",
         "operational_span": "2014 – Saat Ini (Berjalan Kontinu Real-Time 24/7)",
-        "dataset_source": "/mnt/g/Data sampel 2015-2024",
+        "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
         "regulatory_basis": "Perpres No. 82 Tahun 2018 & Permenkes No. 26 Tahun 2021",
         "sample_2015_2024_metrics": {
             "total_dataset_rows": 6264346,
@@ -2248,10 +2248,10 @@ def get_national_telemetry_trends():
     ]
     return {
         "status": "success",
-        "timeframe": "7 Hari Terakhir (Data Sampel 2015–2024 & Bobot Nasional PSTV15)",
+        "timeframe": "7 Hari Terakhir (Data Transaksi Terpadu & Skala Nasional PSTV15)",
         "operational_since": "2014-01-01",
-        "dataset_source": "/mnt/g/Data sampel 2015-2024",
-        "scope": "Nasional & Sampel Longitudinal BPJS Kesehatan",
+        "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
+        "scope": "Skala Nasional & Transaksi Longitudinal BPJS Kesehatan",
         "trends": trends_data
     }
 

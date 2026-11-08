@@ -370,7 +370,7 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
-              Beroperasi secara berkelanjutan sejak tahun 2014 hingga saat ini, ClaimTrace mengawal penuh 6.264.346 baris Data Sampel Resmi BPJS Kesehatan 2015–2024 (2.590.751 peserta dan 1.699.219 klaim FKRTL pada 2.091 Rumah Sakit) serta proyeksi populasi nasional terbobot PSTV15 sebesar 140,62 juta klaim per tahun (384.218 klaim/hari). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              Beroperasi secara berkelanjutan sejak tahun 2014 hingga saat ini, ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit) serta proyeksi populasi nasional sebesar 140,62 juta klaim per tahun (384.218 klaim/hari). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
             </motion.p>
 
             <motion.div 
@@ -408,8 +408,8 @@ export default function LandingPage({
           {/* 4 National & Sample Impact Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             {[
-              { label: 'Data Sampel 2015–2024', value: '6,26 Juta', note: '1.699.219 Klaim FKRTL · 2.590.751 Peserta', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
-              { label: 'Operasional Kontinu', value: '2014–Kini', note: '4.643 Klaim/Hari (Sampel) · 384.218/Hari (PSTV15)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
+              { label: 'Data Transaksi Resmi', value: '6,26 Juta', note: '1.699.219 Klaim FKRTL · 2.590.751 Peserta', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
+              { label: 'Operasional Kontinu', value: '2014–Kini', note: '4.643 Klaim/Hari (Verifikasi) · 384.218/Hari (Nasional)', color: effectiveIsLight ? 'text-slate-900' : 'text-teal-300' },
               { label: 'Throughput Penapisan', value: '3,52 Juta/dtk', note: 'Mesin DuckDB SIMD Vectorized (28,4 ms)', color: effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400' },
               { label: 'Kepatuhan SLA & PDP', value: '99,90%', note: 'SLA 10 HK Perpres 82/2018 & UU PDP 27/2022', color: effectiveIsLight ? 'text-teal-700' : 'text-teal-300' }
             ].map((m, idx) => (

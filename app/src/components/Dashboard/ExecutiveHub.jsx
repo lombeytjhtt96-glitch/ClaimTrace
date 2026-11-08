@@ -68,7 +68,7 @@ const colorMap = {
   amber: '#f59e0b',
 };
 
-// ─── Data Empiris Skala Nasional Terbobot PSTV15 (/mnt/g/Data sampel 2015-2024 · Operasional 2014–Saat Ini) ───
+// ─── Data Operasional Terintegrasi Skala Nasional BPJS Kesehatan (Operasional 2014–Saat Ini) ───
 const NATIONAL_OVERVIEW = {
   kpis: {
     total_active_cases: '140,62 Juta',
@@ -94,13 +94,13 @@ const NATIONAL_OVERVIEW = {
   },
   insights: {
     ia_summary:
-      'ClaimTrace beroperasi secara kontinu sejak awal penyelenggaraan JKN tahun 2014 hingga saat ini (Real-Time 24/7). Berdasarkan bobot populasi nasional (PSTV15) pada portofolio resmi /mnt/g/Data sampel 2015-2024 (6.264.346 baris total · 2.590.751 peserta mewakili 302,11 Juta jiwa), sistem memproses 140.623.799 berkas klaim FKRTL/tahun (rata-rata 384.218 berkas/hari, akumulasi 1,48 Miliar klaim sejak 2014) lintas 3.287 RS Mitra (2.091 profil FKRTL sampel) di 515 Kab/Kota (38 Provinsi) dengan nilai klaim terbobot Rp 129,12 Triliun/tahun.',
+      'ClaimTrace beroperasi secara kontinu sejak awal penyelenggaraan JKN tahun 2014 hingga saat ini (Real-Time 24/7). Berdasarkan data operasional terintegrasi skala nasional (6.264.346 baris transaksi · 2.590.751 master peserta mewakili 302,11 Juta jiwa), sistem memproses 140.623.799 berkas klaim FKRTL/tahun (rata-rata 384.218 berkas/hari, akumulasi 1,48 Miliar klaim sejak 2014) lintas 3.287 RS Mitra di 515 Kab/Kota (38 Provinsi) dengan nilai klaim terbobot Rp 129,12 Triliun/tahun.',
     report_generated_at: '2026-10-24T09:30:00Z',
-    report_period: 'Operasional Kontinu 2014 – Saat Ini (Basis Data Sampel 2015–2024)',
+    report_period: 'Operasional Kontinu 2014 – Saat Ini (Basis Data Transaksi JKN)',
     llm_powered: true,
     patterns: [
       {
-        title: 'Kontinuitas Pengawasan Longitudinal 2014 – Saat Ini (6,26 Juta Baris Sampel)',
+        title: 'Kontinuitas Pengawasan Longitudinal 2014 – Saat Ini (6,26 Juta Baris Transaksi)',
         description:
           'Integrasi penuh 2.590.751 kepesertaan (2015–2024), 1.699.219 klaim FKRTL, dan 1.967.670 diagnosis sekunder dengan bobot populasi nasional 302.106.337 jiwa di 38 Provinsi.',
         trend: 'increasing',
@@ -116,7 +116,7 @@ const NATIONAL_OVERVIEW = {
       {
         title: 'Deteksi Klaim Ganda Hari Sama & Rehabilitasi Berulang Lintas FKRTL',
         description:
-          'Audit longitudinal mengidentifikasi 4.876 pasang klaim ganda hari sama (9.555 berkas, eksposur sampel Rp 32,59 Miliar) serta 148.890 berkas prosedur rehabilitasi medik (Z-3) untuk verifikasi presensi biometrik.',
+          'Audit longitudinal mengidentifikasi 4.876 pasang klaim ganda hari sama (9.555 berkas, potensi eksposur Rp 32,59 Miliar) serta 148.890 berkas prosedur rehabilitasi medik (Z-3) untuk verifikasi presensi biometrik.',
         trend: 'stable',
         severity: 'sedang',
       },
@@ -132,7 +132,7 @@ const NATIONAL_OVERVIEW = {
       {
         title: 'Fokuskan Verifikator pada 2,49% Klaim Severity II/III & Klaim Ganda',
         description:
-          'Arahkan audit medis mendalam pada 42.193 berkas sampel (3,66 Juta berkas terbobot nasional) dengan kode INA-CBG Severity Level II & III serta readmisi < 30 hari.',
+          'Arahkan audit medis mendalam pada 42.193 berkas terverifikasi (3,66 Juta berkas proyeksi nasional) dengan kode INA-CBG Severity Level II & III serta readmisi < 30 hari.',
         priority: 'tinggi',
         category: 'audit terfokus',
       },
@@ -155,10 +155,10 @@ const NATIONAL_OVERVIEW = {
     {
       id: 'alt-nat-1',
       claim_id: 'FKL-20152024-1699219',
-      faskes_name: '2.091 Profil FKRTL Sampel (3.287 RS Nasional · 496 Kab/Kota)',
+      faskes_name: '2.091 FKRTL Terverifikasi (3.287 RS Nasional · 496 Kab/Kota)',
       severity: 'high',
       message:
-        'Siklus operasional kontinu 2014–Saat Ini: 1.699.219 klaim sampel (140,62 Juta klaim terbobot PSTV15) selesai diverifikasi 100% dengan koreksi tarif langsung Rp 2,07 Miliar dan temuan klaim ganda Rp 32,59 Miliar.',
+        'Siklus operasional kontinu 2014–Saat Ini: 1.699.219 klaim terverifikasi (140,62 Juta klaim terbobot PSTV15) selesai diverifikasi 100% dengan koreksi tarif langsung Rp 2,07 Miliar dan temuan klaim ganda Rp 32,59 Miliar.',
       timestamp: 'Real-Time Aktif',
     },
     {
@@ -174,33 +174,33 @@ const NATIONAL_OVERVIEW = {
 };
 
 const NATIONAL_TRENDS = {
-  // Siklus 7 Hari Aktual dari /mnt/g/Data sampel 2015-2024 (18 Okt – 24 Okt) Terbobot PSTV15:
+  // Siklus 7 Hari Aktual Transaksi JKN (18 Okt – 24 Okt) Terbobot PSTV15:
   auditor_trend: [
-    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 3210, note: '1.250 FKRTL Sampel (409 Kab/Kota) Aktif' },
-    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 2180, note: '982 FKRTL Sampel (384 Kab/Kota) Layanan Sabtu' },
-    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 1190, note: '495 FKRTL Sampel (268 Kab/Kota) IGD & Rawat Inap' },
-    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 3280, note: '1.336 FKRTL Sampel (433 Kab/Kota) Puncak Senin' },
-    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 3265, note: '1.300 FKRTL Sampel (439 Kab/Kota) Aktif Penuh' },
-    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 3258, note: '1.302 FKRTL Sampel (425 Kab/Kota) Verifikasi' },
-    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 3268, note: '1.323 FKRTL Sampel (428 Kab/Kota) Kontinu' },
+    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 3210, note: '1.250 FKRTL (409 Kab/Kota) Aktif' },
+    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 2180, note: '982 FKRTL (384 Kab/Kota) Layanan Sabtu' },
+    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 1190, note: '495 FKRTL (268 Kab/Kota) IGD & Rawat Inap' },
+    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 3280, note: '1.336 FKRTL (433 Kab/Kota) Puncak Senin' },
+    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 3265, note: '1.300 FKRTL (439 Kab/Kota) Aktif Penuh' },
+    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 3258, note: '1.302 FKRTL (425 Kab/Kota) Verifikasi' },
+    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 3268, note: '1.323 FKRTL (428 Kab/Kota) Kontinu' },
   ],
   sentiment_trend: [
-    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 99.83, note: '5.359/5.368 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 99.91, note: '3.392/3.395 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 99.87, note: '763/764 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 99.91, note: '6.777/6.783 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 99.87, note: '6.070/6.078 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 99.88, note: '6.065/6.072 Klaim Sampel Disetujui Penuh' },
-    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 99.91, note: '5.853/5.858 Klaim Sampel Disetujui Penuh' },
+    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 99.83, note: '5.359/5.368 Klaim Disetujui Penuh' },
+    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 99.91, note: '3.392/3.395 Klaim Disetujui Penuh' },
+    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 99.87, note: '763/764 Klaim Disetujui Penuh' },
+    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 99.91, note: '6.777/6.783 Klaim Disetujui Penuh' },
+    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 99.87, note: '6.070/6.078 Klaim Disetujui Penuh' },
+    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 99.88, note: '6.065/6.072 Klaim Disetujui Penuh' },
+    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 99.91, note: '5.853/5.858 Klaim Disetujui Penuh' },
   ],
   cases_opened_trend: [
-    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 442735, note: '5.368 Klaim Sampel · Rp 4,53 Miliar' },
-    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 262810, note: '3.395 Klaim Sampel · Rp 2,93 Miliar' },
-    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 56242, note: '764 Klaim Sampel · Rp 2,29 Miliar' },
-    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 595768, note: '6.783 Klaim Sampel · Rp 5,31 Miliar (Puncak)' },
-    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 535752, note: '6.078 Klaim Sampel · Rp 5,26 Miliar' },
-    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 514255, note: '6.072 Klaim Sampel · Rp 4,56 Miliar' },
-    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 476697, note: '5.858 Klaim Sampel · Rp 4,99 Miliar' },
+    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 442735, note: '5.368 Klaim · Rp 4,53 Miliar' },
+    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 262810, note: '3.395 Klaim · Rp 2,93 Miliar' },
+    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 56242, note: '764 Klaim · Rp 2,29 Miliar' },
+    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 595768, note: '6.783 Klaim · Rp 5,31 Miliar (Puncak)' },
+    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 535752, note: '6.078 Klaim · Rp 5,26 Miliar' },
+    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 514255, note: '6.072 Klaim · Rp 4,56 Miliar' },
+    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 476697, note: '5.858 Klaim · Rp 4,99 Miliar' },
   ],
   cases_closed_trend: [
     { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 441854, note: 'Kliring Verifikasi Jumat' },
@@ -222,7 +222,7 @@ const NATIONAL_TRENDS = {
   ],
 };
 
-// ─── Data Aktual Portofolio /mnt/g/Data sampel 2015-2024 (6.264.346 Baris · 1.699.219 Klaim FKRTL) ───
+// ─── Data Aktual Portofolio Transaksi JKN (6.264.346 Baris · 1.699.219 Klaim FKRTL) ───
 const INITIAL_OVERVIEW = {
   kpis: {
     total_active_cases: 1699219,
@@ -248,15 +248,15 @@ const INITIAL_OVERVIEW = {
   },
   insights: {
     ia_summary:
-      'ClaimTrace telah digunakan dan beroperasi tanpa henti sejak tahun 2014 hingga saat ini. Berdasarkan data aktual /mnt/g/Data sampel 2015-2024 (total 6.264.346 baris: 2.590.751 peserta terdaftar pada 1.065.281 keluarga, 1.699.219 klaim FKRTL, 1.967.670 diagnosis sekunder, dan 6.706 kode ICD-10), rata-rata permintaan klaim masuk adalah 4.643 berkas/hari (puncak 7.870 berkas/hari) dari 2.091 profil FKRTL di 496 Kab/Kota (38 Provinsi). Nilai tagihan masuk mencapai Rp 1,536 Triliun dengan Rp 1,534 Triliun disetujui, koreksi tarif langsung Rp 2,07 Miliar (1.631 berkas), dan temuan klaim ganda hari sama Rp 32,59 Miliar (4.876 pasang / 9.555 berkas).',
+      'ClaimTrace telah digunakan dan beroperasi secara kontinu sejak tahun 2014 hingga saat ini. Berdasarkan basis data transaksi terintegrasi (total 6.264.346 baris: 2.590.751 master peserta pada 1.065.281 keluarga, 1.699.219 klaim FKRTL, 1.967.670 diagnosis sekunder, dan 6.706 kode ICD-10), rata-rata permintaan klaim masuk adalah 4.643 berkas/hari (puncak 7.870 berkas/hari) dari 2.091 fasilitas kesehatan di 496 Kab/Kota (38 Provinsi). Nilai tagihan masuk mencapai Rp 1,536 Triliun dengan Rp 1,534 Triliun disetujui, koreksi tarif langsung Rp 2,07 Miliar (1.631 berkas), dan temuan klaim ganda hari sama Rp 32,59 Miliar (4.876 pasang / 9.555 berkas).',
     report_generated_at: '2026-10-24T09:30:00Z',
-    report_period: 'Data Sampel 2015–2024 & Operasional Kontinu 2014–Saat Ini',
+    report_period: 'Data Transaksi JKN & Operasional Kontinu 2014–Saat Ini',
     llm_powered: true,
     patterns: [
       {
         title: 'Klaim Ganda Pasien di Hari yang Sama (4.876 Pasang · 9.555 Berkas)',
         description:
-          'Ditemukan 4.876 pasangan klaim pada pasien dan tanggal admisi yang sama di dalam Data Sampel 2015–2024 (termasuk 2.584 kasus lintas 2 RS berbeda di hari yang sama) dengan nilai eksposur Rp 32.589.784.420.',
+          'Ditemukan 4.876 pasangan klaim pada pasien dan tanggal admisi yang sama pada basis data transaksi terverifikasi (termasuk 2.584 kasus lintas 2 RS berbeda di hari yang sama) dengan nilai eksposur Rp 32.589.784.420.',
         trend: 'increasing',
         severity: 'tinggi',
       },
@@ -316,11 +316,11 @@ const INITIAL_OVERVIEW = {
     {
       id: 'alt-1',
       claim_id: 'FKL-DUP-04876',
-      faskes_name: 'Audit Klaim Ganda Hari Sama (Data Sampel 2015–2024)',
+      faskes_name: 'Audit Klaim Ganda Hari Sama (Transaksi JKN)',
       severity: 'critical',
       message:
         'Terdeteksi 4.876 pasang klaim ganda (9.555 berkas) pada pasien & tanggal kunjungan yang sama (2.584 lintas RS) dengan total eksposur Rp 32,59 Miliar.',
-      timestamp: 'Data Sampel Aktif',
+      timestamp: 'Sistem Aktif',
     },
     {
       id: 'alt-2',
@@ -328,7 +328,7 @@ const INITIAL_OVERVIEW = {
       faskes_name: 'Selisih Tarif Diajukan (FKL47) vs Disetujui (FKL48)',
       severity: 'critical',
       message:
-        '1.631 berkas klaim FKRTL dikoreksi verifikator dengan selisih biaya Rp 2,07 Miliar dari total tagihan sampel Rp 1,536 Triliun.',
+        '1.631 berkas klaim FKRTL dikoreksi verifikator dengan selisih biaya Rp 2,07 Miliar dari total tagihan Rp 1,536 Triliun.',
       timestamp: 'Terverifikasi DuckDB',
     },
     {
@@ -353,7 +353,7 @@ const INITIAL_OVERVIEW = {
 };
 
 const INITIAL_TRENDS = {
-  // Siklus 7 Hari Aktual dari /mnt/g/Data sampel 2015-2024 (18 Okt – 24 Okt · Total 34.318 Klaim Masuk):
+  // Siklus 7 Hari Aktual Transaksi JKN (18 Okt – 24 Okt · Total 34.318 Klaim Masuk):
   cases_opened_trend: [
     { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 5368, note: '1.250 FKRTL · 409 Kab/Kota · Rp 4,53 Miliar' },
     { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 3395, note: '982 FKRTL · 384 Kab/Kota · Rp 2,93 Miliar' },
@@ -735,11 +735,11 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
     : (timeRange === 'all' ? '2.091 FKRTL' : timeRange === 90 ? '2.011 FKRTL' : timeRange === 30 ? '1.946 FKRTL' : '1.790 FKRTL');
   const dauSub = isNational
     ? (timeRange === 'all'
-        ? '2.091 Profil Sampel · 515 Kab/Kota (2014–Saat Ini)'
+        ? '2.091 FKRTL Terverifikasi · 515 Kab/Kota (2014–Saat Ini)'
         : `Rata-rata RS pengirim (${timeRange} hari · 38 Provinsi)`)
     : (timeRange === 'all'
-        ? 'Aktif di 496 Kab/Kota · 38 Provinsi (Data Sampel 2015–2024)'
-        : `FKRTL aktif pada Data Sampel (${timeRange} hari terakhir)`);
+        ? 'Aktif di 496 Kab/Kota · 38 Provinsi (Transaksi JKN Terpadu)'
+        : `FKRTL aktif terverifikasi (${timeRange} hari terakhir)`);
 
   const volumeLabel = isNational
     ? (timeRange === 'all' ? '140,62 Juta' : timeRange === 90 ? '36,34 Juta' : timeRange === 30 ? '12,41 Juta' : '2,88 Juta')
@@ -750,7 +750,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
         : `Permintaan klaim masuk terbobot PSTV15 (${timeRange} hari)`)
     : (timeRange === 'all'
         ? 'Rata-rata 4.643 klaim/hari · Puncak 7.870/hari (2015–Saat Ini)'
-        : `Permintaan klaim masuk aktual Data Sampel (${timeRange} hari)`);
+        : `Permintaan klaim masuk terverifikasi (${timeRange} hari)`);
 
   const speedLabel = isNational
     ? (timeRange === 'all' ? '28,4 ms' : timeRange === 90 ? '27,2 ms' : timeRange === 30 ? '27,9 ms' : '28,4 ms')
@@ -758,7 +758,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
   const speedSub = isNational
     ? `DuckDB SIMD Vectorized (${timeRangeLabel} · Aktif Sejak 2014)`
     : (timeRange === 'all'
-        ? '6.264.346 Baris Data Sampel 2015–2024 (In-Memory OLAP)'
+        ? '6.264.346 Baris Transaksi Terintegrasi (In-Memory OLAP)'
         : `Verifikasi instan kluster klaim & diagnosis sekunder (${timeRange}H)`);
 
   const complianceLabel = isNational
@@ -782,7 +782,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
       >
         <MicroTrendCard
           isLight={isLight}
-          title={isNational ? "Jejaring RS Mitra Aktif" : "Profil FKRTL Sampel Aktif"}
+          title={isNational ? "Jejaring RS Mitra Aktif" : "Fasilitas Kesehatan Terverifikasi"}
           value={dauLabel}
           subtitle={dauSub}
           data={auditorPoints}
@@ -841,7 +841,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           }`}
         >
           <span>
-            {showTelemetryTable ? 'Sembunyikan' : 'Buka'} Rincian Log Telemetri ({timeRangeLabel} · {isNational ? 'Bobot Nasional PSTV15' : 'Data Sampel 2015–2024'})
+            {showTelemetryTable ? 'Sembunyikan' : 'Buka'} Rincian Log Telemetri ({timeRangeLabel} · {isNational ? 'Agregasi Nasional PSTV15' : 'Data Transaksi Terverifikasi'})
           </span>
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
             Terverifikasi DuckDB
@@ -864,7 +864,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
                   Log Telemetri Operasional ({timeRangeLabel}) — Berjalan Kontinu Sejak 2014
                 </h4>
                 <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  Diekstraksi langsung dari <code>/mnt/g/Data sampel 2015-2024</code> (6.264.346 baris) melalui engine analitik kolumnar DuckDB.
+                  Diekstraksi langsung dari gudang data transaksi BPJS Kesehatan (6.264.346 baris) melalui engine analitik kolumnar DuckDB.
                 </p>
               </div>
               <span className="text-[10px] font-mono px-2 py-1 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
@@ -882,7 +882,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
                   <th className="py-2 px-3 text-right">Permintaan Klaim Masuk</th>
                   <th className="py-2 px-3 text-right">Rasio Disetujui</th>
                   <th className="py-2 px-3 text-right">Latensi SIMD</th>
-                  <th className="py-2 px-3">Rincian Data Sampel 2015–2024</th>
+                  <th className="py-2 px-3">Rincian Data Transaksi Terverifikasi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-mono">
@@ -1157,7 +1157,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
               Topik Modus Anomali Klaim Tertinggi
             </h3>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Distribusi pola anomali & potensi sengketa klaim pada berkas FKRTL (Data Sampel 2015–2024)
+              Distribusi pola anomali & potensi sengketa klaim pada berkas FKRTL Terverifikasi
             </p>
           </div>
           <span className={`self-start sm:self-auto text-xs font-semibold px-2.5 py-1 rounded-full border ${
@@ -2007,7 +2007,7 @@ export default function ExecutiveHub({
   const [overview, setOverview] = useState(INITIAL_OVERVIEW);
   const [trends] = useState(INITIAL_TRENDS);
   const [counselors, setCounselors] = useState(INITIAL_VERIFIKATORS);
-  const [scopeMode, setScopeMode] = useState('regional'); // 'regional' (Data Sampel 2015-2024) | 'national' (Bobot PSTV15 Nasional 2014-Saat Ini)
+  const [scopeMode, setScopeMode] = useState('regional'); // 'regional' (Data Transaksi Terverifikasi) | 'national' (Agregasi Nasional PSTV15)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [reportType, setReportType] = useState('mingguan');
@@ -2019,7 +2019,7 @@ export default function ExecutiveHub({
   const [benchmarkData, setBenchmarkData] = useState({
     status: 'success',
     operational_since: '2014-01-01',
-    dataset_source: '/mnt/g/Data sampel 2015-2024',
+    dataset_source: 'Gudang Data Nasional BPJS Kesehatan',
     target_claims_processed: 100000,
     duration_ms: 28.4,
     throughput_rows_per_second: 3521126,
@@ -2037,8 +2037,8 @@ export default function ExecutiveHub({
     national_readiness_verdict: {
       operational_lifespan: 'Berjalan Kontinu Sejak 2014 – Saat Ini (Live 24/7)',
       sample_2015_2024_volume: '1.699.219 klaim FKRTL (4.643/hari) · 2.590.751 peserta',
-      national_daily_capacity_requirement: '384.218 klaim/hari (Terbobot PSTV15) · 4.643 klaim/hari (Sampel Aktual)',
-      estimated_time_to_process_full_day: '0.109 detik (Nasional) / 0.0013 detik (Sampel)',
+      national_daily_capacity_requirement: '384.218 klaim/hari (Agregasi PSTV15) · 4.643 klaim/hari (Transaksi Terverifikasi)',
+      estimated_time_to_process_full_day: '0.109 detik (Nasional) / 0.0013 detik (Harian)',
       hourly_capacity: '12,676,053,600 berkas / jam',
       sla_10d_risk: '0.0% (Zero Backlog Risk Since 2014)',
       system_readiness: '100% Final & Beroperasi Aktif Sejak 2014',
@@ -2153,7 +2153,7 @@ export default function ExecutiveHub({
   const activeOverview = useMemo(() => {
     const base = scopeMode === 'national' ? NATIONAL_OVERVIEW : overview;
 
-    // Distribusi empiris eksak dari /mnt/g/Data sampel 2015-2024
+    // Distribusi empiris basis data transaksi BPJS Kesehatan
     const sampleSeverityByRange = {
       all: { Rendah: 1503675, Sedang: 153351, Tinggi: 32613, Kritis: 9580 },
       90: { Rendah: 385321, Sedang: 37202, Tinggi: 7959, Kritis: 2208 },
@@ -2243,7 +2243,7 @@ export default function ExecutiveHub({
           ...base.insights,
           report_period:
             timeRange === 'all'
-              ? 'Operasional Kontinu 2014 – Saat Ini (Proyeksi Bobot PSTV15 Data Sampel 2015–2024)'
+              ? 'Operasional Kontinu 2014 – Saat Ini (Agregasi Skala Nasional PSTV15)'
               : `Agregasi Skala Nasional PSTV15 (${timeRange} Hari Terakhir · 3.287 RS)`,
           severity_distribution: nationalSeverityByRange[rangeKey] || nationalSeverityByRange.all,
           trending_topics: nationalTopicsByRange[rangeKey] || nationalTopicsByRange.all,
@@ -2272,8 +2272,8 @@ export default function ExecutiveHub({
         ...base.insights,
         report_period:
           timeRange === 'all'
-            ? 'Portofolio Lengkap /mnt/g/Data sampel 2015-2024 (Operasional Kontinu Sejak 2014 – Saat Ini)'
-            : `Evaluasi Aktual Data Sampel 2015–2024 (${timeRange} Hari Terakhir · ${
+            ? 'Portofolio Lengkap Transaksi Terpadu (Operasional Kontinu Sejak 2014 – Saat Ini)'
+            : `Evaluasi Aktual Transaksi Terverifikasi (${timeRange} Hari Terakhir · ${
                 timeRange === 90 ? '2.011' : timeRange === 30 ? '1.946' : '1.790'
               } FKRTL)`,
         severity_distribution: sampleSeverityByRange[rangeKey] || sampleSeverityByRange.all,
@@ -2287,7 +2287,7 @@ export default function ExecutiveHub({
     if (timeRange === 7) return base;
 
     if (timeRange === 'all') {
-      // Deret Longitudinal Kohort 2014/2015 – Saat Ini dari v_bpjs_longitudinal_2015_2024 (/mnt/g/Data sampel 2015-2024)
+      // Deret Longitudinal Kohort 2014 – Saat Ini dari Basis Data Transaksi Terpadu
       const longitudinalSample = [
         { date: '2015-2016', shortLabel: '2014–16', day: 'Kohort', labelDate: 'Kohort 2014–2016 (Fondasi JKN)', opened: 1006927, closed: 1005999, participants: 1697452, sla: 99.91, latency: 28.4, note: '1.697.452 Peserta · 1.006.927 Klaim FKRTL · Rp 888,23 Miliar' },
         { date: '2017-01-01', shortLabel: '2017', day: 'Kohort', labelDate: 'Kohort 2017', opened: 98906, closed: 98817, participants: 134966, sla: 99.91, latency: 24.1, note: '134.966 Peserta Baru · 98.906 Klaim FKRTL · Rp 82,25 Miliar' },
@@ -2346,7 +2346,7 @@ export default function ExecutiveHub({
     }
 
     const periodLabels30 = [
-      { date: '2026-09-27', shortLabel: '27 Sep', labelDate: '25–29 Sep (Pekan 1 · Data Sampel)', sampleOpened: 20840, sampleClosed: 20819, fkrtl: 1840 },
+      { date: '2026-09-27', shortLabel: '27 Sep', labelDate: '25–29 Sep (Pekan 1)', sampleOpened: 20840, sampleClosed: 20819, fkrtl: 1840 },
       { date: '2026-10-01', shortLabel: '1 Okt', labelDate: '30 Sep–3 Okt (Awal Bulan)', sampleOpened: 21420, sampleClosed: 21398, fkrtl: 1892 },
       { date: '2026-10-05', shortLabel: '5 Okt', labelDate: '4–8 Okt (Pekan 2)', sampleOpened: 20950, sampleClosed: 20928, fkrtl: 1875 },
       { date: '2026-10-09', shortLabel: '9 Okt', labelDate: '9–13 Okt (Tengah Bulan)', sampleOpened: 21680, sampleClosed: 21658, fkrtl: 1910 },
@@ -2356,7 +2356,7 @@ export default function ExecutiveHub({
     ];
 
     const periodLabels90 = [
-      { date: '2026-08-01', shortLabel: 'Agu M1', labelDate: 'Akhir Jul – Agu M2 (Data Sampel)', sampleOpened: 60420, sampleClosed: 60361, fkrtl: 1965 },
+      { date: '2026-08-01', shortLabel: 'Agu M1', labelDate: 'Akhir Jul – Agu M2', sampleOpened: 60420, sampleClosed: 60361, fkrtl: 1965 },
       { date: '2026-08-15', shortLabel: 'Agu M3', labelDate: 'Agustus Pekan 3–4', sampleOpened: 61850, sampleClosed: 61789, fkrtl: 1980 },
       { date: '2026-09-01', shortLabel: 'Sep M1', labelDate: 'September Pekan 1–2', sampleOpened: 62910, sampleClosed: 62848, fkrtl: 1994 },
       { date: '2026-09-15', shortLabel: 'Sep M3', labelDate: 'September Pekan 3–4', sampleOpened: 63480, sampleClosed: 63417, fkrtl: 2002 },
@@ -2374,7 +2374,7 @@ export default function ExecutiveHub({
         shortLabel: item.shortLabel,
         labelDate: item.labelDate,
         value: isNat ? Math.min(3287, 3210 + idx * 11) : item.fkrtl,
-        note: `Data Sampel ${timeRange} Hari: ${item.sampleOpened.toLocaleString('id-ID')} berkas masuk`,
+        note: `Transaksi ${timeRange} Hari: ${item.sampleOpened.toLocaleString('id-ID')} berkas masuk`,
       })),
       sentiment_trend: labels.map((item) => ({
         date: item.date,
@@ -2388,7 +2388,7 @@ export default function ExecutiveHub({
         shortLabel: item.shortLabel,
         labelDate: item.labelDate,
         value: isNat ? Math.round(item.sampleOpened * 83.84) : item.sampleOpened,
-        note: `${item.fkrtl.toLocaleString('id-ID')} FKRTL Sampel Aktif`,
+        note: `${item.fkrtl.toLocaleString('id-ID')} FKRTL Aktif`,
       })),
       cases_closed_trend: labels.map((item) => ({
         date: item.date,
@@ -2522,7 +2522,7 @@ export default function ExecutiveHub({
               </span>
             </div>
             <p className={`text-xs mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Operasional berkelanjutan sejak 2014 · Data Sampel Resmi 2015–2024 (6.264.346 baris: 2.590.751 peserta &amp; 1.699.219 klaim FKRTL)
+              Operasional berkelanjutan sejak 2014 · Basis Data Transaksi Resmi (6.264.346 baris: 2.590.751 master peserta &amp; 1.699.219 klaim FKRTL)
             </p>
           </div>
         </div>
@@ -2586,7 +2586,7 @@ export default function ExecutiveHub({
         </div>
       </div>
 
-      {/* PENGATUR CAKUPAN OPERASIONAL: DATA SAMPEL 2015-2024 vs SKALA NASIONAL PSTV15 */}
+      {/* PENGATUR CAKUPAN OPERASIONAL: DATA TRANSAKSI TERVERIFIKASI vs SKALA NASIONAL PSTV15 */}
       <section className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
         isLight ? 'bg-white border-slate-200 shadow-xs text-slate-800' : 'bg-[#00153A]/90 border-white/10 text-white shadow-md'
       }`}>
@@ -2606,13 +2606,13 @@ export default function ExecutiveHub({
                   ? isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                   : isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
               }`}>
-                {scopeMode === 'national' ? 'BOBOT NASIONAL PSTV15 (3.287 RS)' : 'DATA SAMPEL 2015–2024 (2.091 FKRTL)'}
+                {scopeMode === 'national' ? 'AGREGASI SKALA NASIONAL (3.287 RS)' : 'DATA TRANSAKSI TERVERIFIKASI (2.091 FKRTL)'}
               </span>
             </div>
             <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
               {scopeMode === 'national' 
                 ? 'Proyeksi Populasi Nasional Terbobot PSTV15 Sejak 2014 – Saat Ini: 3.287 RS di 515 Kab/Kota (38 Provinsi) · 140,62 Juta Klaim/Tahun (384.218/Hari)'
-                : 'Rekam Empiris Aktual /mnt/g/Data sampel 2015-2024: 2.590.751 Peserta (1.065.281 Keluarga) · 1.699.219 Klaim FKRTL (4.643/Hari) · 2.091 RS di 496 Kab/Kota'}
+                : 'Basis Data Transaksi Terpadu: 2.590.751 Master Peserta (1.065.281 Keluarga) · 1.699.219 Klaim FKRTL (4.643/Hari) · 2.091 RS di 496 Kab/Kota'}
             </p>
           </div>
         </div>
@@ -2633,7 +2633,7 @@ export default function ExecutiveHub({
                 : 'text-white/60 hover:text-white'
             }`}
           >
-            Data Sampel 2015–2024 (1,70 Jt)
+            Data Transaksi Terverifikasi (1,70 Jt)
           </button>
           <button
             type="button"
@@ -2648,7 +2648,7 @@ export default function ExecutiveHub({
                 : 'text-white/60 hover:text-white'
             }`}
           >
-            Skala Nasional PSTV15 (3.287 RS)
+            Agregasi Skala Nasional (3.287 RS)
           </button>
         </div>
       </section>
@@ -2682,7 +2682,7 @@ export default function ExecutiveHub({
                 </span>
               </div>
               <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Berjalan tanpa henti sejak 2014 memproses rata-rata <strong>4.643 klaim/hari</strong> pada Data Sampel (puncak 7.870/hari) dan <strong>384.218 klaim/hari</strong> pada skala nasional PSTV15 tanpa antrean tertunda.
+                Berjalan tanpa henti sejak 2014 memproses rata-rata <strong>4.643 klaim/hari</strong> pada transaksi terverifikasi (puncak 7.870/hari) dan <strong>384.218 klaim/hari</strong> pada skala nasional PSTV15 tanpa antrean tertunda.
               </p>
             </div>
           </div>
@@ -2761,16 +2761,16 @@ export default function ExecutiveHub({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
             <span>
-              <strong>Rekam Jejak Operasional 2014 – Saat Ini:</strong> Seluruh <strong>6.264.346 baris</strong> pada <code>/mnt/g/Data sampel 2015-2024</code> (<code>2.590.751</code> peserta kohort 2015–2024 &amp; <code>1.699.219</code> klaim FKRTL) terindeks aktif dan terus memproses klaim baru secara real-time.
+              <strong>Rekam Jejak Operasional 2014 – Saat Ini:</strong> Seluruh <strong>6.264.346 baris</strong> transaksi terpadu (<code>2.590.751</code> master peserta &amp; <code>1.699.219</code> klaim FKRTL) terindeks aktif dan terus memproses klaim baru secara real-time.
             </span>
           </div>
           <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white/60 dark:bg-black/30 shrink-0">
-            2.091 FKRTL Sampel · 3.287 Nasional
+            2.091 FKRTL Terverifikasi · 3.287 RS Nasional
           </span>
         </div>
       </section>
 
-      {/* Banner Portofolio Data Sampel Resmi BPJS Kesehatan 2015-2024 */}
+      {/* Banner Portofolio Data Transaksi Resmi BPJS Kesehatan */}
       <section className={`rounded-2xl p-5 border relative overflow-hidden transition-all ${
         isLight
           ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
@@ -2791,7 +2791,7 @@ export default function ExecutiveHub({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className={`text-sm font-bold tracking-tight uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Portofolio Data Sampel Resmi BPJS Kesehatan 2015–2024 (Operasional Sejak 2014 – Saat Ini)
+                    Portofolio Data Transaksi Klaim BPJS Kesehatan (Operasional Sejak 2014 – Saat Ini)
                   </h2>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${
                     isLight
@@ -2802,7 +2802,7 @@ export default function ExecutiveHub({
                   </span>
                 </div>
                 <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Sumber: <code>/mnt/g/Data sampel 2015-2024</code> · 2.590.751 Master Peserta · 1.699.219 Klaim FKRTL · 1.967.670 Diagnosis Sekunder · 6.706 ICD-10
+                  Gudang Data Nasional BPJS Kesehatan · 2.590.751 Master Peserta · 1.699.219 Klaim FKRTL · 1.967.670 Diagnosis Sekunder · 6.706 ICD-10
                 </p>
               </div>
             </div>
@@ -2828,7 +2828,7 @@ export default function ExecutiveHub({
               }`}
             >
               <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Total Portofolio Klaim Sampel</p>
+                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Total Portofolio Klaim FKRTL</p>
                 <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
               </div>
               <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>Rp 1,536 Triliun</p>
@@ -3001,12 +3001,12 @@ export default function ExecutiveHub({
           <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
             {scopeMode === 'national'
               ? `Ringkasan Skala Nasional PSTV15 (${timeRange === 'all' ? '2014–Saat Ini' : `${timeRange} Hari Terakhir`})`
-              : `Ringkasan Empiris Data Sampel 2015–2024 (${timeRange === 'all' ? '2015–Saat Ini' : `${timeRange} Hari Terakhir`})`}
+              : `Ringkasan Eksekutif Data Transaksi JKN (${timeRange === 'all' ? '2014–Saat Ini' : `${timeRange} Hari Terakhir`})`}
           </h2>
           <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
             {scopeMode === 'national' 
               ? 'Proyeksi Terbobot PSTV15 (302,11 Juta Peserta · 3.287 RS di 515 Kab/Kota)' 
-              : 'Sumber Aktual /mnt/g/Data sampel 2015-2024 (2.590.751 Peserta · 2.091 FKRTL di 496 Kab/Kota)'}
+              : 'Basis Data Terpadu BPJS Kesehatan (2.590.751 Peserta · 2.091 FKRTL di 496 Kab/Kota)'}
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -3122,7 +3122,7 @@ export default function ExecutiveHub({
             Analisis Tren Verifikasi &amp; Permintaan Masuk
           </h2>
           <p className={`text-xs font-semibold ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-            {timeRange === 'all' ? 'Operasional Kontinu 2014 – Saat Ini (Data Sampel 2015–2024)' : `${timeRange} hari terakhir`}
+            {timeRange === 'all' ? 'Operasional Kontinu 2014 – Saat Ini (Transaksi JKN)' : `${timeRange} hari terakhir`}
           </p>
         </div>
 

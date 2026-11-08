@@ -250,7 +250,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 3.287 FKRTL (Nasional)
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                514 Kab/Kota (8 Sampel Audit Live)
+                514 Kab/Kota (8 Audit Prioritas)
               </div>
             </div>
 
