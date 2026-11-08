@@ -61,7 +61,7 @@ const CustomHospitalCard = ({ data, selected }) => (
 
     <div className="mt-3 pt-2 border-t border-emerald-500/20 flex items-center justify-between">
       <span className="text-[10px] font-mono text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+        <span className="w-2 h-2 rounded-full bg-rose-500" />
         Audit Pra-Bayar Aktif
       </span>
       <span className="text-[9.5px] text-slate-400 dark:text-white/40 font-mono">ID: 0132R001</span>
@@ -669,7 +669,7 @@ MERGE (f)-[:BILLED_PROCEDURE {batch_id: 'BAK-2026-X-085', nominal: 15300000}]->(
           {/* Spatial Telemetry HUD (Top-Left) */}
           <div className="absolute top-3 left-3 bg-white/95 dark:bg-[#000c24]/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 text-[11px] font-mono space-y-1 z-20 shadow-md dark:shadow-xl pointer-events-none">
             <div className="flex items-center space-x-2 text-slate-900 dark:text-white font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>STATUS RELASI SINDIKAT</span>
             </div>
             <div className="text-slate-700 dark:text-white/60 space-y-0.5 text-[10px]">

@@ -273,7 +273,7 @@ function TrendChart({
                 <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255,255,255,0.08)'} vertical={false} />
+            <CartesianGrid stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255,255,255,0.05)'} vertical={false} />
             <XAxis
               dataKey="date"
               tickFormatter={formatDateLabel}

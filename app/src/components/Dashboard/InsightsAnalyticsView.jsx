@@ -313,7 +313,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
   if (queryName.includes('trend')) {
     return (
       <LineChart data={data} margin={{ top: 10, right: 35, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <CartesianGrid stroke={gridStroke} vertical={false} />
         <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
         <YAxis
           yAxisId="left"
@@ -391,7 +391,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
   } else {
     return (
       <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+        <CartesianGrid stroke={gridStroke} vertical={false} />
         <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
         <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
         <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${val} berkas`, 'Jumlah Temuan']} />

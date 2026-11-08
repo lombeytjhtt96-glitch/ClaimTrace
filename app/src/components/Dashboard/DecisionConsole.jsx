@@ -312,7 +312,7 @@ Timestamp: ${new Date().toISOString()}`;
                 isLight ? 'text-rose-700' : 'text-rose-300'
               }`}>SKOR FUSI KASUS</span>
               <span className={`text-2xl font-bold leading-none ${
-                isLight ? 'text-rose-600' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]'
+                isLight ? 'text-rose-600' : 'text-rose-400'
               }`}>{totalScore}</span>
               <span className={`text-[9.5px] block mt-0.5 font-bold ${
                 isLight ? 'text-rose-700' : 'text-rose-300/70'

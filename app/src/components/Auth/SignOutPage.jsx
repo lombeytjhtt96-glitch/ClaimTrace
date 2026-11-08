@@ -26,13 +26,6 @@ export default function SignOutPage({ user, onLoginAgain, onGoToLogin, onGoToLan
     <div className={`min-h-screen flex flex-col justify-center items-center p-4 relative font-inter overflow-y-auto transition-colors duration-300 ${
       isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
     }`}>
-      {/* Background glow */}
-      <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] blur-3xl rounded-full pointer-events-none transition-all ${
-        isLight
-          ? 'bg-gradient-to-tr from-emerald-100/70 via-teal-100/50 to-blue-100/60'
-          : 'bg-gradient-to-tr from-blue-900/30 via-[#001D58]/20 to-emerald-500/10'
-      }`} />
-
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}

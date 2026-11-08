@@ -330,42 +330,23 @@ export default function LandingPage({
       <section id="landing" className={`scroll-mt-24 relative pt-28 sm:pt-32 pb-16 px-4 lg:px-8 border-b overflow-hidden transition-colors duration-200 ${
         effectiveIsLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#000c24] border-white/10 text-white'
       }`}>
-        {/* Soft Ambient Radial Light with dynamic floating breathing animation */}
-        <motion.div 
-          animate={{
-            scale: [1, 1.12, 0.96, 1],
-            opacity: [0.35, 0.55, 0.38, 0.35],
-            y: [0, 15, -10, 0]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          className={`absolute -top-24 left-1/2 -translate-x-1/2 w-[950px] h-[360px] blur-3xl pointer-events-none transition-colors duration-300 ${
-            effectiveIsLight
-              ? 'bg-gradient-to-b from-emerald-100/60 via-teal-100/30 to-transparent'
-              : 'bg-gradient-to-b from-blue-900/30 via-[#001D58]/20 to-transparent'
-          }`} 
-        />
-        
         <div className="max-w-6xl mx-auto space-y-12 relative z-10">
           
           {/* Hero Headings & Subtitles */}
           <div className="text-center space-y-5 max-w-4xl mx-auto">
-            <motion.div 
-              initial={{ opacity: 1, y: 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.04 }}
-              transition={{ duration: 0.4 }}
+            <div 
               className={`inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs cursor-default border transition-colors ${
                 effectiveIsLight
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
               }`}
             >
-              <Shield className={`w-3.5 h-3.5 animate-pulse ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+              <Shield className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
               <span>Sistem Intelijen Pengawasan &amp; Penapisan Risiko Klaim Faskes JKN</span>
               <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${effectiveIsLight ? 'bg-white text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'}`}>
                 Deteksi Anomali Otomatis Berbasis AI
               </span>
-            </motion.div>
+            </div>
 
             <motion.h1 
               initial={{ opacity: 1, y: 0 }}

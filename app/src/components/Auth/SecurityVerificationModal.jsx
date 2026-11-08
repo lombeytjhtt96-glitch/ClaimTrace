@@ -412,7 +412,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyPin}
                 disabled={isVerifying || pin.join('').length < 6}
-                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -512,7 +512,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={isVerifying || otp.join('').length < 6}
-                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
               >
                 {isVerifying ? (
                   <span className="flex items-center justify-center gap-2">
@@ -634,7 +634,7 @@ export default function SecurityVerificationModal({
                 type="button"
                 onClick={handleConfirmSession}
                 disabled={isVerifying}
-                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold rounded-xl mb-3 disabled:opacity-50 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
+                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 shadow-xs transition-colors cursor-pointer"
               >
                 {isVerifying ? 'Mengaktifkan Sesi...' : 'Konfirmasi & Masuk Dasbor'}
               </button>

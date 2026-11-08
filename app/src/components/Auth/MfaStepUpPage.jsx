@@ -61,46 +61,6 @@ export default function MfaStepUpPage({ user, onSuccess, onMfaSuccess, onCancel,
     <div className={`flex-1 min-h-[calc(100vh-8rem)] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none transition-colors duration-300 ${
       isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
     }`}>
-      {/* Dynamic Ambient Background Light */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0">
-        <motion.div 
-          animate={{
-            scale: [1, 1.15, 0.95, 1],
-            opacity: isLight ? [0.4, 0.6, 0.45, 0.4] : [0.25, 0.45, 0.3, 0.25],
-            x: [0, 25, -20, 0],
-            y: [0, -20, 15, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl ${
-            isLight
-              ? 'bg-gradient-to-br from-emerald-100/70 via-teal-100/50 to-blue-100/60'
-              : 'bg-gradient-to-br from-blue-900/40 via-[#001D58]/30 to-emerald-500/10'
-          }`}
-        />
-        <motion.div 
-          animate={{
-            scale: [1, 1.2, 0.92, 1],
-            opacity: isLight ? [0.35, 0.55, 0.4, 0.35] : [0.2, 0.4, 0.25, 0.2],
-            x: [0, -25, 18, 0],
-            y: [0, 22, -16, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className={`absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full blur-3xl ${
-            isLight
-              ? 'bg-gradient-to-tl from-teal-100/60 via-emerald-100/40 to-cyan-100/50'
-              : 'bg-gradient-to-tl from-[#00153A] via-blue-900/20 to-emerald-500/10'
-          }`}
-        />
-      </div>
-
       {/* Back Button */}
       {onCancel && (
         <motion.button 

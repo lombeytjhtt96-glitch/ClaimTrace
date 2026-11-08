@@ -495,7 +495,7 @@ export default function CaseInvestigation({
         <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm hover:border-slate-300' : 'bg-[#00153A]/80 border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'} backdrop-blur-md border rounded-2xl p-4 space-y-3 transition-all duration-300`}>
           <div className={`flex items-center justify-between border-b pb-2 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
             <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <div>
                 <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Lapis 1 · Radar Pola Tagihan
@@ -618,8 +618,7 @@ export default function CaseInvestigation({
                         </linearGradient>
                       </defs>
                       <CartesianGrid
-                        stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
-                        strokeDasharray="3 3"
+                        stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255, 255, 255, 0.05)'}
                         vertical={false}
                       />
                       <XAxis
@@ -683,8 +682,7 @@ export default function CaseInvestigation({
                         </linearGradient>
                       </defs>
                       <CartesianGrid
-                        stroke={isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)'}
-                        strokeDasharray="3 3"
+                        stroke={isLight ? 'rgba(148, 163, 184, 0.15)' : 'rgba(255, 255, 255, 0.05)'}
                         vertical={false}
                       />
                       <XAxis
@@ -714,24 +712,10 @@ export default function CaseInvestigation({
                         type="monotone"
                         dataKey="volume"
                         stroke={isLight ? '#e11d48' : '#fb7185'}
-                        strokeWidth={2.5}
+                        strokeWidth={2}
                         fill={isLight ? 'url(#volumeAreaGradientLight)' : 'url(#volumeAreaGradientDark)'}
-                        dot={(props) => {
-                          const { cx, cy, index } = props;
-                          const item = volumeChartData[index];
-                          if (item?.isSpike) {
-                            return (
-                              <g key={`spike-dot-${index}`}>
-                                <circle cx={cx} cy={cy} r={6} fill="#e11d48" stroke="#ffffff" strokeWidth={2} />
-                                <rect x={cx - 14} y={cy - 20} width={28} height={15} rx={4} fill={isLight ? '#e11d48' : '#f43f5e'} />
-                                <text x={cx} y={cy - 9} fill="#ffffff" textAnchor="middle" fontSize={9.5} fontWeight={800} fontFamily="monospace">85</text>
-                              </g>
-                            );
-                          }
-                          return (
-                            <circle key={`dot-${index}`} cx={cx} cy={cy} r={3.5} fill={isLight ? '#0284c7' : '#38bdf8'} stroke="#ffffff" strokeWidth={1.5} />
-                          );
-                        }}
+                        dot={false}
+                        activeDot={false}
                         isAnimationActive={false}
                       />
                     </AreaChart>
@@ -775,7 +759,7 @@ export default function CaseInvestigation({
         <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm hover:border-slate-300' : 'bg-[#00153A]/80 border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'} backdrop-blur-md border rounded-2xl p-4 space-y-3 transition-all duration-300`}>
           <div className={`flex items-center justify-between border-b pb-2 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
             <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-cyan-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
               <div>
                 <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Lapis 2 · Validasi SDMK
@@ -882,7 +866,7 @@ export default function CaseInvestigation({
                   initial={{ width: 0 }}
                   animate={{ width: `${((currentCase.sampleCount - currentCase.deniedCount) / currentCase.sampleCount) * 100}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="bg-emerald-500 h-full shadow-[0_0_8px_rgba(16,185,129,0.6)]" 
+                  className="bg-emerald-500 h-full" 
                 />
               </div>
             </div>
