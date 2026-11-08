@@ -1100,24 +1100,20 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 nameKey="name"
                 innerRadius={64}
                 outerRadius={88}
-                activeIndex={activeSeverity ?? undefined}
                 onMouseEnter={(_, index) => setActiveSeverity(index)}
                 onMouseLeave={() => setActiveSeverity(null)}
                 paddingAngle={3}
                 isAnimationActive={false}
               >
-                {severityData.map((entry, index) => {
-                  const isCurrentActive = activeSeverity === index;
-                  return (
-                    <Cell
-                      key={`${entry.name}-${index}`}
-                      fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      stroke={isCurrentActive ? (isLight ? '#0f172a' : '#ffffff') : 'transparent'}
-                      strokeWidth={isCurrentActive ? 2 : 0}
-                      className="cursor-pointer transition-all duration-200"
-                    />
-                  );
-                })}
+                {severityData.map((entry, index) => (
+                  <Cell
+                    key={`${entry.name}-${index}`}
+                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    stroke="none"
+                    strokeWidth={0}
+                    className="cursor-pointer"
+                  />
+                ))}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
