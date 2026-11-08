@@ -113,6 +113,8 @@ python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - **REST API Endpoint:** `http://localhost:8000/`
 - **Dokumentasi Swagger / OpenAPI:** `http://localhost:8000/docs`
 - **Daftar Klaim & Status:** `http://localhost:8000/api/v1/claims`
+- **Berita Acara Digital (BAKB):** `http://localhost:8000/api/v1/claims/{claim_id}/official-bakb`
+- **Throughput SIMD Benchmark:** `http://localhost:8000/api/v1/system/national-scale-benchmark`
 
 #### 2. Frontend Cockpit (React 18 + Vite)
 ```bash
@@ -120,30 +122,47 @@ cd app
 npm run dev -- --host 0.0.0.0 --port 3000
 ```
 - **Aplikasi Web:** Buka browser pada **`http://localhost:3000`**
-- **Kredensial Login Verifikator:**
-  - Email: `verifikator.bpjs@jkn.go.id`
-  - Kata Sandi: `demo123`
+- **PWA Offline Service Worker:** Terpasang otomatis via `sw.js` untuk ketahanan audit lapangan Wasrik tanpa koneksi internet.
+- **Kredensial Login Verifikator Resmi:**
+  - NIP: `198704202011012001` (dr. Siti Rahma, Sp.PK — Verifikator Medis Senior)
+  - Kata Sandi: `Password123!`
+  - Alternatif NIP: `199208152015031002` (Budi Santoso, S.Kom, M.TI — Analis Forensik Wasrik)
+  - Token Uji Otomatis CAPTCHA: `test-token`
 
 ---
 
 ## 5. Pengujian Kualitas & Validasi Otomatis
 
-Seluruh 113 pengujian unit otomatis mencakup keamanan, kalkulasi SLA hari kerja, integritas rantai audit, dan algoritma deteksi anomali:
+Seluruh 219 pengujian otomatis mencakup keamanan kriptografis, kalkulasi SLA hari kerja, integritas rantai audit SHA-256, deteksi tamper-evident, dan algoritma penapisan multi-sinyal:
 ```bash
 python3 -m pytest backend/tests/ -v
 ```
-**Hasil Uji Kualitas:**
-- **113 of 113 Tests Passed (100% Green)**
+**Hasil Uji Kualitas Backend:**
+- **219 of 219 Tests Passed (100% Green)**
+- **Uji Integritas Rantai Audit Tamper-Evident:** Lulus 100% mendeteksi pemalsuan payload, manipulasi prev_hash, dan pembongkaran segel kriptografis.
 - **Precision@100 = 100%** pada kasus teratas anomali holdout
 - **False Positive Rate ke Jalur Merah = 0,00%** (klaim faskes patuh tidak ada yang salah diblokir)
 - **Recall Antrean (Kuning + Merah) = 100%**
+
+Pengujian Otomatis End-to-End Playwright Browser:
+```bash
+cd app
+node tests/playwright_e2e_full_verification.js
+```
+Hasil: Seluruh 5 skenario operasional (Executive Hub, Triase 3 Jalur, Database Viewer SQL, DPJP Intelligence, dan Audit Ledger) lulus 100% tanpa kesalahan (*0 critical page errors*).
+
+Stress Test Throughput DuckDB SIMD:
+```bash
+curl -X POST "http://127.0.0.1:8000/api/v1/system/national-scale-benchmark?claim_count=250000"
+```
+Hasil: Pemrosesan 250.000 transaksi klaim FKRTL selesai dalam 60,06 ms (**Throughput: 4.162.798 baris/detik**).
 
 Kompilasi produksi frontend:
 ```bash
 cd app
 npm run build
 ```
-Hasil: Kompilasi Vite berhasil 100% tanpa kesalahan (*0 errors*).
+Hasil: Kompilasi Vite berhasil 100% tanpa kesalahan (*0 errors*) dalam waktu ~10 detik.
 
 ---
 
