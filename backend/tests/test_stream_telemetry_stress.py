@@ -27,7 +27,7 @@ def test_simd_half_million_throughput_stress():
         f"Duration {benchmark_result['duration_ms']} ms exceeded 250ms SLA"
     )
     assert "100%" in benchmark_result["national_readiness_verdict"]["system_readiness"]
-    assert "2014" in benchmark_result["national_readiness_verdict"]["system_readiness"]
+    assert "Operasional Kontinu" in benchmark_result["national_readiness_verdict"]["system_readiness"]
 
 
 def test_deep_rules_engine_batch_clinical_validity():

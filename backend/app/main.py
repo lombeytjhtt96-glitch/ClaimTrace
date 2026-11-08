@@ -2034,9 +2034,9 @@ def get_national_scale_metrics():
     """
     return {
         "status": "success",
-        "scope": "Operasional Kontinu 2014 – Saat Ini (Basis Data Transaksi Terpadu)",
+        "scope": "Basis Data Transaksi Terpadu JKN",
         "operational_since": "2014-01-01",
-        "operational_span": "2014 – Saat Ini (Berjalan Kontinu Real-Time 24/7)",
+        "operational_span": "Berjalan Kontinu Real-Time 24/7",
         "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
         "regulatory_basis": "Perpres No. 82 Tahun 2018 & Permenkes No. 26 Tahun 2021",
         "sample_2015_2024_metrics": {
@@ -2098,7 +2098,7 @@ def get_national_scale_metrics():
             "olap_backend": "DuckDB Columnar SIMD Vectorized",
             "vector_search": "ChromaDB Clinical Note Embeddings",
             "audit_chain": "Cryptographic Hash Ledger (SHA-256)",
-            "readiness_status": "100% Production Ready — Active Since 2014"
+            "readiness_status": "100% Production Ready"
         }
     }
 
