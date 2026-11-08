@@ -493,14 +493,14 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
         </div>
 
         {/* 4 Tabs Bar: Dashboard, Review Queue, All Plans, User Progress */}
-        <div className={`flex items-center p-1 rounded-xl border shadow-sm ${
+        <div className={`flex flex-wrap sm:flex-nowrap items-center p-1 rounded-xl border shadow-sm shrink-0 ${
           isLight
             ? 'bg-slate-100 border-slate-300/80'
             : 'bg-[#00134A]/80 border-white/10 shadow-inner'
         }`}>
           <button type="button"
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'dashboard'
                 ? isLight
                   ? 'bg-emerald-700 text-white shadow-md'
@@ -510,13 +510,13 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   : 'text-white/60 hover:text-white'
             }`}
           >
-            <BarChart2 className="w-3.5 h-3.5" />
+            <BarChart2 className="w-3.5 h-3.5 shrink-0" />
             <span>Dasbor Intervensi</span>
           </button>
 
           <button type="button"
             onClick={() => setActiveTab('queue')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'queue'
                 ? isLight
                   ? 'bg-emerald-700 text-white shadow-md'
@@ -526,7 +526,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   : 'text-white/60 hover:text-white'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3.5 h-3.5 shrink-0" />
             <span>Antrean Telaah (HITL)</span>
             {queuePlans.length > 0 && (
               <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
@@ -545,7 +545,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
 
           <button type="button"
             onClick={() => setActiveTab('plans')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'plans'
                 ? isLight
                   ? 'bg-emerald-700 text-white shadow-md'
@@ -555,13 +555,13 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   : 'text-white/60 hover:text-white'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 shrink-0" />
             <span>Semua Rencana</span>
           </button>
 
           <button type="button"
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'users'
                 ? isLight
                   ? 'bg-emerald-700 text-white shadow-md'
@@ -571,7 +571,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   : 'text-white/60 hover:text-white'
             }`}
           >
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className="w-3.5 h-3.5 shrink-0" />
             <span>Progres FKRTL</span>
           </button>
         </div>

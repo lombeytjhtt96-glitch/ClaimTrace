@@ -533,33 +533,40 @@ export default function CaseInvestigation({
                 : 'bg-[#000d28]/70 border-white/10 shadow-inner'
             }`}>
               {/* Header: Title, Subtitle, Toggle & Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <span className={`text-[11px] font-bold block uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider whitespace-nowrap ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
                     Volume Harian vs Baseline
                   </span>
-                  <div className="flex items-center gap-2 mt-0.5 text-[10px] font-mono">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 whitespace-nowrap shrink-0 ${
+                    isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span>8.5x Lonjakan</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono whitespace-nowrap">
                     <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold">
                       Baseline: 10 berkas
                     </span>
                     <span className="text-slate-300 dark:text-white/20">·</span>
                     <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
                       14 Okt: 85 berkas
                     </span>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
                   {/* Mode Toggle: Batang vs Tren */}
-                  <div className={`p-0.5 rounded-lg border flex items-center text-[10px] font-semibold ${
+                  <div className={`p-0.5 rounded-lg border flex items-center text-[10px] font-semibold shrink-0 ${
                     isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/10 border-white/10'
                   }`}>
                     <button
                       type="button"
                       onClick={() => setVolumeViewType('bar')}
                       aria-label="Tampilkan visualisasi grafik batang volume klaim"
-                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
+                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                         volumeViewType === 'bar'
                           ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
                           : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
@@ -571,7 +578,7 @@ export default function CaseInvestigation({
                       type="button"
                       onClick={() => setVolumeViewType('area')}
                       aria-label="Tampilkan visualisasi grafik tren area volume klaim"
-                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
+                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                         volumeViewType === 'area'
                           ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
                           : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
@@ -580,13 +587,6 @@ export default function CaseInvestigation({
                       Tren Area
                     </button>
                   </div>
-
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                    isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                  }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                    <span>8.5x Lonjakan</span>
-                  </span>
                 </div>
               </div>
 

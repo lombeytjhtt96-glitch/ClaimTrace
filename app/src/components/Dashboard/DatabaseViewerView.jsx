@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -459,9 +459,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
         }
 
         // 2. Fetch Count
-        const countRes = await fetch(`${apiBase}/api/v1/duckdb/query`, {
+        const countRes = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ sql: `SELECT COUNT(*) as total FROM ${selectedTable};` })
         });
         if (countRes.ok) {
@@ -474,9 +476,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
         // 3. Fetch Rows with Pagination
         const offset = (page - 1) * pageSize;
         const querySql = `SELECT * FROM ${selectedTable} LIMIT ${pageSize} OFFSET ${offset};`;
-        const dataRes = await fetch(`${apiBase}/api/v1/duckdb/query`, {
+        const dataRes = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ sql: querySql })
         });
         if (dataRes.ok) {
@@ -527,9 +531,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     const apiBase = getApiBase();
 
     try {
-      const res = await fetch(`${apiBase}/api/v1/duckdb/query`, {
+      const res = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ sql: targetSql })
       });
 

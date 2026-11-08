@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Database, AlertOctagon, CheckCircle2, Clock, Search, Filter, 
@@ -321,9 +321,11 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
     setIsLoading(true);
     const start = performance.now();
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/duckdb/query`, {
+      const response = await authFetch(`${API_BASE_URL}/api/v1/duckdb/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ sql: targetSql })
       });
       if (response.ok) {
