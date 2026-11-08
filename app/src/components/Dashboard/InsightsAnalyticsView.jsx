@@ -475,6 +475,18 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   const [showAllReportsModal, setShowAllReportsModal] = useState(false);
   const [reportSearchQuery, setReportSearchQuery] = useState('');
 
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (selectedReportModal) setSelectedReportModal(null);
+        if (showAllReportsModal) setShowAllReportsModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedReportModal, showAllReportsModal]);
+
   const handleDownloadReport = (rep) => {
     if (!rep) return;
     const blob = new Blob([JSON.stringify(rep, null, 2)], { type: 'application/json' });
@@ -1170,9 +1182,12 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
       {/* Report Detail Modal (Comprehensive Audit Dossier) */}
       {selectedReportModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
-          isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
-        }`}>
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedReportModal(null); }}
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
+            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
+          }`}
+        >
           <div className={`rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl space-y-5 border max-h-[90vh] overflow-y-auto ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900'
@@ -1339,9 +1354,12 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
       {/* All Reports Archive Modal */}
       {showAllReportsModal && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
-          isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
-        }`}>
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAllReportsModal(false); }}
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
+            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
+          }`}
+        >
           <div className={`rounded-2xl max-w-3xl w-full p-6 sm:p-7 shadow-2xl space-y-4 border max-h-[90vh] overflow-y-auto ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900'
