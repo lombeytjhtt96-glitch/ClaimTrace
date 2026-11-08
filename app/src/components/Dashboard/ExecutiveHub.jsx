@@ -924,7 +924,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
 
 // ─── InteractiveMetricsCharts ──────────────────────────────────────
 function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all' }) {
-  const [activeSeverity, setActiveSeverity] = useState(0);
+  const [activeSeverity, setActiveSeverity] = useState(null);
   const [caseMode, setCaseMode] = useState('all');
 
   const severityData = useMemo(() => {
@@ -1100,44 +1100,82 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 nameKey="name"
                 innerRadius={64}
                 outerRadius={88}
-                activeIndex={activeSeverity}
+                activeIndex={activeSeverity ?? undefined}
                 onMouseEnter={(_, index) => setActiveSeverity(index)}
+                onMouseLeave={() => setActiveSeverity(null)}
                 paddingAngle={3}
                 isAnimationActive={false}
               >
-                {severityData.map((entry, index) => (
-                  <Cell
-                    key={`${entry.name}-${index}`}
-                    fill={PIE_COLORS[index % PIE_COLORS.length]}
-                  />
-                ))}
+                {severityData.map((entry, index) => {
+                  const isCurrentActive = activeSeverity === index;
+                  return (
+                    <Cell
+                      key={`${entry.name}-${index}`}
+                      fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      stroke={isCurrentActive ? (isLight ? '#0f172a' : '#ffffff') : 'transparent'}
+                      strokeWidth={isCurrentActive ? 2 : 0}
+                      className="cursor-pointer transition-all duration-200"
+                    />
+                  );
+                })}
               </Pie>
-              <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className={`text-lg font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {totalClaimsCount.toLocaleString('id-ID')}
-            </span>
-            <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              {timeRangeBadge}
-            </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4">
+            {activeSeverity !== null && severityData[activeSeverity] ? (
+              <>
+                <span 
+                  className="text-lg font-bold tabular-nums tracking-tight leading-none transition-all duration-200"
+                  style={{ color: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
+                >
+                  {severityData[activeSeverity].value.toLocaleString('id-ID')}
+                </span>
+                <span 
+                  className="text-[10px] font-bold uppercase tracking-wider text-center mt-1 transition-all duration-200"
+                  style={{ color: PIE_COLORS[activeSeverity % PIE_COLORS.length] }}
+                >
+                  Risiko {severityData[activeSeverity].name} ({totalClaimsCount > 0 ? ((severityData[activeSeverity].value / totalClaimsCount) * 100).toFixed(1).replace('.', ',') : 0}%)
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={`text-lg font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {totalClaimsCount.toLocaleString('id-ID')}
+                </span>
+                <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                  {timeRangeBadge}
+                </span>
+              </>
+            )}
           </div>
         </div>
-        <ul className={`mt-3 space-y-1.5 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+        <ul className={`mt-3 space-y-1 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
           {severityData.map((item, index) => {
             const percent = totalClaimsCount > 0 ? ((item.value / totalClaimsCount) * 100).toFixed(1).replace('.', ',') : '0';
+            const isCurrentActive = activeSeverity === index;
             return (
-              <li key={item.name} className="flex items-center justify-between">
+              <li 
+                key={item.name} 
+                onMouseEnter={() => setActiveSeverity(index)}
+                onMouseLeave={() => setActiveSeverity(null)}
+                className={`flex items-center justify-between px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+                  isCurrentActive 
+                    ? (isLight ? 'bg-slate-100 font-semibold' : 'bg-white/10 font-semibold') 
+                    : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                }`}
+              >
                 <span className={`inline-flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
                   <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                    className="h-2.5 w-2.5 rounded-full transition-transform duration-150"
+                    style={{ 
+                      backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
+                      transform: isCurrentActive ? 'scale(1.3)' : 'scale(1)'
+                    }}
                   />
                   Risiko {item.name}
                   <span className="text-[10px] font-semibold opacity-75">({percent}%)</span>
                 </span>
-                <span className={`font-semibold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                <span className={`font-mono ${isCurrentActive ? 'font-bold text-emerald-600' : 'font-semibold'} ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   {item.value.toLocaleString('id-ID')} berkas
                 </span>
               </li>
