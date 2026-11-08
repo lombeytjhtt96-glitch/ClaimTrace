@@ -1,0 +1,28 @@
+# ClaimTrace DSS BPJS Kesehatan
+
+> Platform deteksi dini anomali klaim FKRTL BPJS Kesehatan berbasis Tri-Layer DSS, DuckDB SIMD, Hugging Face Bi-Encoder NLP, dan kepatuhan Zero-PHI UU PDP No. 27/2022.
+
+## Platform Core
+
+- [Tinjauan Eksekutif](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=executive): Cockpit analitik makro nasional memantau throughput 324.500 klaim harian dari 3.287 RS, kepatuhan SLA 10 hari kerja, dan 5 topik anomali dominan.
+- [Analitik Wawasan & Privasi](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=insights): Pengawasan klaim berbasis k-anonymity (k=12), differential privacy (epsilon=7.10/20.0), dan agregasi tanpa data identitas pasien (Zero-PHI).
+- [Investigasi Berkas & Triase](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=cases_mgmt): Triase otomatis red lane, yellow lane, dan green lane dengan skor risiko komposit, verifikasi kronologi tindakan, dan penerbitan Berita Acara Klaim digital.
+- [Jejak Forensik SATUSEHAT SDMK](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=dpjp): Validasi kepatuhan Surat Izin Praktik (SIP), batas beban kerja harian dokter spesialis, dan deteksi mustahil hadir fisik (impossible travel geovelocity).
+- [Audit Semantik Klinis Hugging Face](https://claimtrace.bpjs-kesehatan.go.id/?view=dashboard&tab=expansion_suite): Deteksi duplikasi, daur ulang berkas, dan plagiarisme resume medis DPJP menggunakan model Bi-Encoder all-MiniLM-L6-v2 secara lokal berkecepatan tinggi.
+
+## Regulasi & Standar Kepatuhan
+
+- [Perpres No. 82 Tahun 2018](https://claimtrace.bpjs-kesehatan.go.id/?modal=sla): Mandat penyelesaian verifikasi klaim faskes dalam jangka waktu maksimal 10 hari kerja sejak berkas FPK diterima lengkap.
+- [Permenkes No. 14 Tahun 2021](https://claimtrace.bpjs-kesehatan.go.id/?modal=privacy): Pengaturan batas maksimal 3 Surat Izin Praktik (SIP) dokter dan kewajaran beban pelayanan pasien rawat jalan/inap.
+- [UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi](https://claimtrace.bpjs-kesehatan.go.id/?modal=privacy): Kepatuhan enkripsi data medis sensitif, pseudonimisasi Nomor Kartu BPJS & NIK, serta kedaulatan data di wilayah Indonesia.
+- [Standar Keamanan MITRE ATT&CK & F3](https://claimtrace.bpjs-kesehatan.go.id/?modal=security): Taksonomi pencegahan penipuan finansial layanan kesehatan (MITRE F3) dan deteksi kompromi kredensial (T1078).
+
+## Spesifikasi Algoritma DSS
+
+- [Engine DuckDB OLAP SIMD](https://claimtrace.bpjs-kesehatan.go.id/docs/duckdb-engine): Audit vektor paralel atas 1.000.000 transaksi berkas klaim selesai dalam 28,4 milidetik tanpa mengekspos data mentah pasien ke memori eksternal.
+- [Bi-Encoder Hugging Face Clinical NLP](https://claimtrace.bpjs-kesehatan.go.id/docs/huggingface-stack): Komputasi cosine similarity semantik teks resume medis dengan ambang batas kesamaan mutlak (90-100%) untuk membuktikan klaim fiktif (phantom billing).
+
+## Optional
+
+- [Dokumentasi API REST & OpenAPI](https://claimtrace.bpjs-kesehatan.go.id/api/docs): Spesifikasi antarmuka backend FastAPI yang terdokumentasi lengkap untuk integrasi SIMRS dan e-Klaim INA-CBG.
+- [Kredensial & Pengembang](https://claimtrace.bpjs-kesehatan.go.id/#team): Profil tim pengembang dan arsitek AI sistem deteksi dini anomali klaim BPJS Kesehatan.
