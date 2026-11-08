@@ -1,0 +1,302 @@
+{
+  "schema": "drawio-skill/diagram-ir/v1",
+  "metadata": {
+    "title": "ClaimTrace DSS Architecture - BPJS Kesehatan Anti-Fraud System",
+    "version": "2.4.0",
+    "author": "ClaimTrace Engineering Team",
+    "date": "2026-11-08"
+  },
+  "nodes": [
+    {
+      "id": "portal_fe",
+      "label": "BPJS Verifier Portal (React + Vite)",
+      "kind": "ui",
+      "properties": {
+        "tier": "client",
+        "technology": "React 18, Tailwind CSS, Lucide, Framer Motion",
+        "trust_boundary": "dmz",
+        "description": "Portal telaah verifikator klaim BPJS Kesehatan dengan visualisasi triase multi-sinyal."
+      },
+      "provenance": {"path": "app/src/App.jsx", "type": "frontend"}
+    },
+    {
+      "id": "mobile_jkn",
+      "label": "Mobile JKN Presensi Screen",
+      "kind": "mobile",
+      "properties": {
+        "tier": "client",
+        "technology": "Flutter / React Native",
+        "trust_boundary": "external",
+        "description": "Konfirmasi biner presensi peserta JKN sesuai UU PDP No. 27/2022 (Zero-PHI ke ponsel)."
+      },
+      "provenance": {"path": "app/src/components/MobileJKN/", "type": "frontend"}
+    },
+    {
+      "id": "landing_wbs",
+      "label": "Whistleblowing System (WBS) Faskes",
+      "kind": "web",
+      "properties": {
+        "tier": "client",
+        "technology": "React, Tailwind, UU PDP Pasal 34 Masking",
+        "trust_boundary": "public",
+        "description": "Kanal pengaduan publik dugaan anomali klaim faskes dengan perlindungan LPSK."
+      },
+      "provenance": {"path": "app/src/components/Public/LandingPage.jsx", "type": "frontend"}
+    },
+    {
+      "id": "api_gateway",
+      "label": "FastAPI Enterprise Gateway",
+      "kind": "gateway",
+      "properties": {
+        "tier": "api",
+        "technology": "FastAPI (Python 3.14), Uvicorn",
+        "trust_boundary": "ingress",
+        "description": "Gerbang API terpadu dengan header keamanan HSTS, CSP, X-Frame-Options DENY."
+      },
+      "provenance": {"path": "backend/app/main.py", "type": "backend"}
+    },
+    {
+      "id": "security_engine",
+      "label": "Access Control & Rate Limiter",
+      "kind": "security",
+      "properties": {
+        "tier": "security",
+        "technology": "Internet2 Grouper RBAC, HMAC-SHA256, Anti-Replay Idempotency",
+        "trust_boundary": "app",
+        "description": "Penegakan hak akses peran verifikator, mitigasi brute-force, dan limitasi kuota 15-200 req/min."
+      },
+      "provenance": {"path": "backend/app/security/access_control.py", "type": "security"}
+    },
+    {
+      "id": "triage_core",
+      "label": "Multi-Signal Triangulation Engine",
+      "kind": "service",
+      "properties": {
+        "tier": "core_engine",
+        "weights": "S1 (50% Radar DPJP), S2 (30% SATUSEHAT), S3 (20% Mobile JKN)",
+        "trust_boundary": "app",
+        "description": "Mesin fusi 3 lapis bukti deterministik dengan hard trigger kepatuhan SIP DPJP."
+      },
+      "provenance": {"path": "backend/app/engine/evidence_chain.py", "type": "core"}
+    },
+    {
+      "id": "ai_anomaly_detector",
+      "label": "AI Anomaly Detector",
+      "kind": "service",
+      "properties": {
+        "tier": "ai",
+        "models": "XGBoost & Random Forest Anomaly Classifiers",
+        "trust_boundary": "app",
+        "description": "Penapisan prediktif anomali Modus #6 Phantom Billing dan #11 Repeat Billing."
+      },
+      "provenance": {"path": "backend/app/engine/ai_anomaly_detector.py", "type": "ai"}
+    },
+    {
+      "id": "chromadb_semantic",
+      "label": "ChromaDB Semantic Vector DB",
+      "kind": "database",
+      "properties": {
+        "tier": "vector_db",
+        "technology": "ChromaDB, Semantic Embeddings",
+        "trust_boundary": "data",
+        "description": "Deteksi plagiarisme dan fabrikasi resume medis antar-pasien baksos fiktif."
+      },
+      "provenance": {"path": "backend/app/engine/chroma_semantic.py", "type": "data"}
+    },
+    {
+      "id": "duckdb_warehouse",
+      "label": "DuckDB OLAP Analytical Warehouse",
+      "kind": "database",
+      "properties": {
+        "tier": "olap",
+        "technology": "DuckDB Embedded OLAP, sql_guard.py Firewall",
+        "trust_boundary": "data",
+        "description": "Analitik 1,7 Juta data transaksi resmi BPJS dengan latensi sub-12ms dan SQL read-only guard."
+      },
+      "provenance": {"path": "backend/app/engine/duckdb_analytics.py", "type": "data"}
+    },
+    {
+      "id": "rea_graph",
+      "label": "REA Forensics Syndicate Graph",
+      "kind": "service",
+      "properties": {
+        "tier": "graph",
+        "methodology": "Resource-Event-Agent Economic Exchange Model",
+        "trust_boundary": "app",
+        "description": "Deteksi sindikat rujukan berulang dan kolusi rujukan sirkular faskes."
+      },
+      "provenance": {"path": "backend/app/engine/rea_forensics.py", "type": "graph"}
+    },
+    {
+      "id": "claims_state_db",
+      "label": "Claims Active State Store",
+      "kind": "database",
+      "properties": {
+        "tier": "state_db",
+        "technology": "JSON File Persistence & Atomic Replacement",
+        "trust_boundary": "data",
+        "description": "Penyimpanan persisten berkas klaim aktif, skor triase, dan rekapitulasi nasional."
+      },
+      "provenance": {"path": "backend/data/claims_state.json", "type": "data"}
+    },
+    {
+      "id": "audit_ledger",
+      "label": "SHA-256 Tamper-Evident Audit Ledger",
+      "kind": "database",
+      "properties": {
+        "tier": "audit",
+        "technology": "SHA-256 Hash Chain, JSONL Block Persistence",
+        "trust_boundary": "data",
+        "description": "Rantai blok audit kriptografis anti-repudiasi pencatat setiap telaah dan vonis verifikator."
+      },
+      "provenance": {"path": "backend/data/audit_ledger_chain.jsonl", "type": "audit"}
+    },
+    {
+      "id": "decision_receipts",
+      "label": "Human-in-the-Loop Decision Mint",
+      "kind": "service",
+      "properties": {
+        "tier": "governance",
+        "technology": "Decision Receipts, Offline Verifier Cryptography",
+        "trust_boundary": "app",
+        "description": "Pencetakan tanda terima putusan verifikator Wasrik BPJS dengan tanda tangan digital."
+      },
+      "provenance": {"path": "backend/app/engine/decision_receipts.py", "type": "governance"}
+    },
+    {
+      "id": "satusehat_fhir",
+      "label": "Kemenkes SATUSEHAT FHIR API",
+      "kind": "external_service",
+      "properties": {
+        "tier": "external",
+        "protocol": "HL7 FHIR R4 Standard",
+        "trust_boundary": "external",
+        "description": "Interoperabilitas data rekam medis nasional dan validasi kehadiran fisik pasien."
+      },
+      "provenance": {"path": "backend/app/engine/fhir_service.py", "type": "external"}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_portal_gw",
+      "source": "portal_fe",
+      "target": "api_gateway",
+      "label": "HTTPS REST / Bearer Token",
+      "kind": "sync",
+      "properties": {"protocol": "HTTPS", "port": 8000}
+    },
+    {
+      "id": "e_mobile_gw",
+      "source": "mobile_jkn",
+      "target": "api_gateway",
+      "label": "Konfirmasi Presensi Pasien",
+      "kind": "sync",
+      "properties": {"protocol": "HTTPS", "payload": "Binary (Ya/Tidak)"}
+    },
+    {
+      "id": "e_wbs_gw",
+      "source": "landing_wbs",
+      "target": "api_gateway",
+      "label": "Kirim Pengaduan & Lacak Tiket",
+      "kind": "sync",
+      "properties": {"endpoint": "/api/v1/wbs/report", "idempotency": "RFC Idempotency-Key"}
+    },
+    {
+      "id": "e_gw_sec",
+      "source": "api_gateway",
+      "target": "security_engine",
+      "label": "Validasi RBAC & Rate Limiting",
+      "kind": "sync",
+      "properties": {"standard": "Internet2 Grouper"}
+    },
+    {
+      "id": "e_sec_triage",
+      "source": "security_engine",
+      "target": "triage_core",
+      "label": "Delegasi Telaah Klaim Berwenang",
+      "kind": "sync",
+      "properties": {"role_check": "VERIFICATOR / ANALYST"}
+    },
+    {
+      "id": "e_triage_ai",
+      "source": "triage_core",
+      "target": "ai_anomaly_detector",
+      "label": "Ekstraksi Fitur & Skor Anomali",
+      "kind": "sync",
+      "properties": {"latency": "<15ms"}
+    },
+    {
+      "id": "e_triage_chroma",
+      "source": "triage_core",
+      "target": "chromadb_semantic",
+      "label": "Pencocokan Kemiripan Resume",
+      "kind": "sync",
+      "properties": {"similarity_metric": "cosine"}
+    },
+    {
+      "id": "e_triage_satusehat",
+      "source": "triage_core",
+      "target": "satusehat_fhir",
+      "label": "Pencocokan Encounter & Condition",
+      "kind": "sync",
+      "properties": {"standard": "FHIR R4"}
+    },
+    {
+      "id": "e_triage_duckdb",
+      "source": "triage_core",
+      "target": "duckdb_warehouse",
+      "label": "Kueri Baseline Klaster Faskes",
+      "kind": "sync",
+      "properties": {"firewall": "sql_guard.py"}
+    },
+    {
+      "id": "e_triage_rea",
+      "source": "triage_core",
+      "target": "rea_graph",
+      "label": "Audit Kolusi Sindikat Rujukan",
+      "kind": "sync",
+      "properties": {"detection": "circular_referrals"}
+    },
+    {
+      "id": "e_triage_state",
+      "source": "triage_core",
+      "target": "claims_state_db",
+      "label": "Penyimpanan Status Triase",
+      "kind": "sync",
+      "properties": {"format": "JSON"}
+    },
+    {
+      "id": "e_triage_ledger",
+      "source": "triage_core",
+      "target": "audit_ledger",
+      "label": "Blok AUTO_TRIAGE_SCORING",
+      "kind": "sync",
+      "properties": {"hash": "SHA-256"}
+    },
+    {
+      "id": "e_portal_dec",
+      "source": "portal_fe",
+      "target": "decision_receipts",
+      "label": "Vonis Verifikator (LOLOSKAN / AUDIT)",
+      "kind": "sync",
+      "properties": {"privilege": "ADJUDICATE"}
+    },
+    {
+      "id": "e_dec_ledger",
+      "source": "decision_receipts",
+      "target": "audit_ledger",
+      "label": "Blok HUMAN_VERIFIER_DECISION",
+      "kind": "sync",
+      "properties": {"actor": "NIP Verifikator"}
+    },
+    {
+      "id": "e_wbs_ledger",
+      "source": "api_gateway",
+      "target": "audit_ledger",
+      "label": "Blok WBS_INTEGRITY_REPORT_FILED",
+      "kind": "sync",
+      "properties": {"actor": "Pelapor WBS"}
+    }
+  ],
+  "views": []
+}
