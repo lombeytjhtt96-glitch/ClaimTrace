@@ -408,14 +408,15 @@ export default function LandingPage({
                 <button
                   type="button"
                   onClick={onToggleTheme}
+                  aria-label={effectiveIsLight ? 'Beralih ke Tema Gelap (Cosmic Obsidian)' : 'Beralih ke Tema Terang (Clinical White)'}
                   title={effectiveIsLight ? 'Beralih ke Tema Gelap (Cosmic Obsidian)' : 'Beralih ke Tema Terang (Clinical White)'}
-                  className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
+                  className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 ${
                     effectiveIsLight
                       ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 hover:text-slate-900 shadow-2xs'
                       : 'bg-white/10 border-white/15 text-white/80 hover:bg-white/15 hover:text-white'
                   }`}
                 >
-                  {effectiveIsLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-emerald-400" />}
+                  {effectiveIsLight ? <Moon className="size-4 text-slate-700" /> : <Sun className="size-4 text-emerald-400" />}
                 </button>
               )}
 
@@ -1479,15 +1480,15 @@ export default function LandingPage({
             >
               <div className={`space-y-1 border-b pb-4 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
                 <div className="flex items-center space-x-2">
-                  <ShieldCheck className={`w-5 h-5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                  <ShieldCheck className={`size-5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                   <span className={`text-xs font-bold uppercase tracking-wide ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                     Whistleblowing System (WBS) Faskes
                   </span>
                 </div>
-                <h3 className={`text-lg font-bold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
+                <h3 className={`text-lg font-bold text-balance ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                   Formulir Pengaduan Integritas Klaim JKN
                 </h3>
-                <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <p className={`text-xs text-pretty ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
                   Laporan Anda dilindungi asas kerahasiaan pelapor sesuai Undang-Undang Perlindungan Saksi dan Korban (LPSK) serta UU PDP No. 27 Tahun 2022.
                 </p>
               </div>
@@ -1499,7 +1500,7 @@ export default function LandingPage({
                 <button
                   type="button"
                   onClick={() => setWbsActiveTab('form')}
-                  className={`flex-1 py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`flex-1 py-2 px-3 rounded-lg transition-colors duration-150 flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                     wbsActiveTab === 'form'
                       ? effectiveIsLight 
                         ? 'bg-white text-emerald-800 font-bold shadow-xs border border-slate-200' 
@@ -1507,13 +1508,13 @@ export default function LandingPage({
                       : effectiveIsLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/70 hover:text-white'
                   }`}
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="size-3.5" />
                   <span>Kirim Laporan Baru</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setWbsActiveTab('track')}
-                  className={`flex-1 py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`flex-1 py-2 px-3 rounded-lg transition-colors duration-150 flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                     wbsActiveTab === 'track'
                       ? effectiveIsLight 
                         ? 'bg-white text-emerald-800 font-bold shadow-xs border border-slate-200' 
@@ -1521,7 +1522,7 @@ export default function LandingPage({
                       : effectiveIsLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/70 hover:text-white'
                   }`}
                 >
-                  <Search className="w-3.5 h-3.5" />
+                  <Search className="size-3.5" />
                   <span>Lacak Status Tiket WBS</span>
                 </button>
               </div>
@@ -1535,9 +1536,9 @@ export default function LandingPage({
                         <select 
                           value={formCategory} 
                           onChange={(e) => setFormCategory(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 ${
+                          className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
                           effectiveIsLight
-                            ? 'bg-slate-50 border-slate-300 text-slate-900'
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus-visible:bg-white'
                             : 'bg-[#000c24]/70 border-white/15 text-white'
                         }`}
                         >
@@ -1557,9 +1558,9 @@ export default function LandingPage({
                           placeholder="Contoh: RS Rujukan Nasional / Vertikal" 
                           value={formFaskes}
                           onChange={(e) => setFormFaskes(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 ${
+                          className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
                           effectiveIsLight
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white'
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus-visible:bg-white'
                             : 'bg-[#000c24]/70 border-white/15 text-white placeholder-white/30'
                         }`}
                         />
@@ -1574,9 +1575,9 @@ export default function LandingPage({
                           placeholder="Contoh: DKI Jakarta / Surabaya / Medan" 
                           value={formLocation}
                           onChange={(e) => setFormLocation(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 ${
+                          className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
                           effectiveIsLight
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white'
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus-visible:bg-white'
                             : 'bg-[#000c24]/70 border-white/15 text-white placeholder-white/30'
                         }`}
                         />
@@ -1592,9 +1593,9 @@ export default function LandingPage({
                           placeholder={formIsAnonymous ? 'Identitas Pelapor Dirahasiakan (Anonim Sesuai UU PDP)' : '0812xxxx atau email@domain.com'} 
                           value={formContact}
                           onChange={(e) => setFormContact(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 ${
+                          className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
                             effectiveIsLight
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 focus:bg-white'
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 disabled:bg-slate-100 disabled:text-slate-400 focus-visible:bg-white'
                               : 'bg-[#000c24]/70 border-white/15 text-white placeholder-white/30 disabled:bg-[#000c24]/40 disabled:text-white/40'
                           }`}
                         />
@@ -1607,7 +1608,7 @@ export default function LandingPage({
                         type="checkbox" 
                         checked={formIsAnonymous}
                         onChange={(e) => setFormIsAnonymous(e.target.checked)}
-                        className={`rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer ${
+                        className={`rounded text-emerald-600 focus-visible:ring-emerald-500 cursor-pointer ${
                           effectiveIsLight ? 'border-slate-300 bg-white' : 'border-white/20 bg-[#000c24]'
                         }`}
                       />
@@ -1626,29 +1627,30 @@ export default function LandingPage({
                         placeholder="Uraikan tanggal pelayanan, nama dokter terkait, atau bukti ketidaksesuaian tindakan yang Anda ketahui secara ringkas dan objektif..."
                         value={formDescription}
                         onChange={(e) => setFormDescription(e.target.value)}
-                        className={`w-full px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 ${
+                        className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
                           effectiveIsLight
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white'
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus-visible:bg-white'
                             : 'bg-[#000c24]/70 border-white/15 text-white placeholder-white/30'
                         }`}
                       />
                     </div>
 
                     <motion.button
-                      whileHover={{ scale: 1.01, boxShadow: "0 10px 20px -5px rgba(16, 185, 129, 0.3)" }}
+                      whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold text-xs flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer"
+                      className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50 border border-emerald-400/30 font-bold text-xs flex items-center justify-center space-x-2 transition-colors duration-150 disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                     >
                       {isSubmitting ? (
                         <span className="flex items-center space-x-2">
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           <span>Mengenkripsi & Mengirim ke Basis Data BPJS...</span>
                         </span>
                       ) : (
                         <>
-                          <Send className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                          <Send className="size-3.5 transition-transform group-hover:translate-x-1" />
                           <span>Kirim Laporan Resmi ke Verifikator Pusat BPJS Kesehatan</span>
                         </>
                       )}
@@ -1670,10 +1672,10 @@ export default function LandingPage({
                       <div className={`flex items-center space-x-2 font-bold ${
                         effectiveIsLight ? 'text-emerald-800' : 'text-emerald-400'
                       }`}>
-                        <CheckCircle2 className={`w-5 h-5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                        <CheckCircle2 className={`size-5 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                         <span className="text-sm">Laporan Berhasil Terkirim & Tercatat Sah</span>
                       </div>
-                      <span className={`font-mono text-[11px] px-2.5 py-0.5 rounded border font-bold shadow-xs ${
+                      <span className={`font-mono tabular-nums text-[11px] px-2.5 py-0.5 rounded border font-bold shadow-xs ${
                         effectiveIsLight
                           ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                           : 'bg-[#000c24] text-emerald-400 border-emerald-500/30'
@@ -1682,7 +1684,7 @@ export default function LandingPage({
                       </span>
                     </div>
 
-                    <p className={`leading-relaxed ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
+                    <p className={`leading-relaxed text-pretty ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                       Pengaduan Anda telah terdaftar dan disegel dalam rantai audit forensik Kantor Pusat BPJS Kesehatan serta tersimpan di basis data verifikator. Simpan nomor tiket ini untuk memantau status tindak lanjut audit.
                     </p>
 
@@ -1693,7 +1695,7 @@ export default function LandingPage({
                     }`}>
                       <div className="flex justify-between">
                         <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Status Registrasi:</span>
-                        <span className={`font-bold ${effectiveIsLight ? 'text-emerald-700 font-mono' : 'text-emerald-400 font-mono'}`}>{submissionReceipt.status}</span>
+                        <span className={`font-bold font-mono ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{submissionReceipt.status}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Faskes Terlapor:</span>
@@ -1705,15 +1707,15 @@ export default function LandingPage({
                       </div>
                       <div className="flex justify-between">
                         <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Waktu Registrasi:</span>
-                        <span className={effectiveIsLight ? 'text-slate-700 font-mono' : 'text-white/80'}>{submissionReceipt.timestamp}</span>
+                        <span className={`tabular-nums ${effectiveIsLight ? 'text-slate-700 font-mono' : 'text-white/80'}`}>{submissionReceipt.timestamp}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Blok Audit SHA-256:</span>
-                        <span className={`font-mono text-[10px] font-bold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>#{submissionReceipt.ledgerIndex || 1085}</span>
+                        <span className={`font-mono tabular-nums text-[10px] font-bold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>#{submissionReceipt.ledgerIndex || 1085}</span>
                       </div>
                       <div className={`flex justify-between border-t pt-1.5 ${effectiveIsLight ? 'border-slate-200' : 'border-white/10'}`}>
                         <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Integritas Hash:</span>
-                        <span className={`font-mono text-[10px] font-bold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{submissionReceipt.hash}</span>
+                        <span className={`font-mono tabular-nums text-[10px] font-bold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{submissionReceipt.hash}</span>
                       </div>
                     </div>
 
@@ -1721,42 +1723,48 @@ export default function LandingPage({
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.97 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={copyReceiptText}
-                        className={`px-3 py-1.5 rounded-lg border font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-xs ${
+                        aria-label="Salin nomor tiket dan bukti tanda terima pengaduan WBS"
+                        className={`px-3 py-1.5 rounded-lg border font-bold flex items-center space-x-1.5 transition-colors duration-150 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                           effectiveIsLight
                             ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700'
                             : 'bg-white/5 border-white/15 hover:bg-white/10 text-white'
                         }`}
                       >
-                        {copiedReceipt ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedReceipt ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
                         <span>{copiedReceipt ? 'Disalin' : 'Salin Bukti Tiket'}</span>
                       </motion.button>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.97 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => {
                           setTrackTicketInput(submissionReceipt.ticketId);
                           setWbsActiveTab('track');
                           handleTrackTicket(submissionReceipt.ticketId);
                         }}
-                        className={`px-3 py-1.5 rounded-lg border font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-xs ${
+                        aria-label="Lacak tiket laporan ini secara langsung"
+                        className={`px-3 py-1.5 rounded-lg border font-bold flex items-center space-x-1.5 transition-colors duration-150 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-1 ${
                           effectiveIsLight
                             ? 'bg-sky-50 border-sky-300 text-sky-800 hover:bg-sky-100'
                             : 'bg-sky-500/20 border-sky-500/40 text-sky-300 hover:bg-sky-500/30'
                         }`}
                       >
-                        <Search className="w-3.5 h-3.5" />
+                        <Search className="size-3.5" />
                         <span>Lacak Laporan Ini Secara Langsung</span>
                       </motion.button>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.97 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => {
                           setSubmissionReceipt(null);
                           setFormFaskes('');
                           setFormDescription('');
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-md border border-emerald-600 font-bold transition cursor-pointer shadow-xs"
+                        aria-label="Buat formulir laporan baru"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-md border border-emerald-600 font-bold transition-colors duration-150 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
                       >
                         Kirim Laporan Baru
                       </motion.button>
@@ -1779,24 +1787,26 @@ export default function LandingPage({
                         value={trackTicketInput}
                         onChange={(e) => setTrackTicketInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleTrackTicket(); }}
-                        className={`flex-1 px-3 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono text-xs transition ${
+                        className={`flex-1 px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 font-mono tabular-nums text-xs transition-colors duration-150 ${
                           effectiveIsLight
-                            ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                            ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus-visible:bg-white'
                             : 'bg-[#00153A] border-white/15 text-white placeholder-white/30'
                         }`}
                       />
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         type="button"
                         onClick={() => handleTrackTicket()}
                         disabled={isTracking || !trackTicketInput.trim()}
-                        className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-md"
+                        aria-label="Periksa status tiket laporan WBS"
+                        className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 transition-colors duration-150 disabled:opacity-50 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                       >
                         {isTracking ? (
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                          <Search className="w-3.5 h-3.5" />
+                          <Search className="size-3.5" />
                         )}
                         <span>Periksa Status</span>
                       </motion.button>
@@ -1808,7 +1818,8 @@ export default function LandingPage({
                       <button
                         type="button"
                         onClick={() => { setTrackTicketInput('WBS-2026-JKN-8821'); handleTrackTicket('WBS-2026-JKN-8821'); }}
-                        className={`px-2 py-0.5 rounded font-mono font-bold border transition cursor-pointer ${
+                        aria-label="Gunakan nomor tiket contoh WBS-2026-JKN-8821"
+                        className={`px-2 py-0.5 rounded font-mono tabular-nums font-bold border transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                           effectiveIsLight ? 'bg-white border-slate-300 text-emerald-800 hover:border-emerald-500' : 'bg-white/5 border-white/10 text-emerald-400 hover:border-emerald-400'
                         }`}
                       >
@@ -1817,7 +1828,8 @@ export default function LandingPage({
                       <button
                         type="button"
                         onClick={() => { setTrackTicketInput('WBS-2026-JKN-4102'); handleTrackTicket('WBS-2026-JKN-4102'); }}
-                        className={`px-2 py-0.5 rounded font-mono font-bold border transition cursor-pointer ${
+                        aria-label="Gunakan nomor tiket contoh WBS-2026-JKN-4102"
+                        className={`px-2 py-0.5 rounded font-mono tabular-nums font-bold border transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-1 ${
                           effectiveIsLight ? 'bg-white border-slate-300 text-cyan-800 hover:border-cyan-500' : 'bg-white/5 border-white/10 text-cyan-300 hover:border-cyan-400'
                         }`}
                       >
@@ -1827,7 +1839,7 @@ export default function LandingPage({
                   </div>
 
                   {trackError && (
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs text-pretty">
                       {trackError}
                     </div>
                   )}
@@ -1845,7 +1857,7 @@ export default function LandingPage({
                       {trackResult.found ? (
                         <>
                           <div className="flex items-center justify-between border-b pb-2">
-                            <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">
+                            <span className="font-mono tabular-nums font-bold text-sm text-emerald-700 dark:text-emerald-400">
                               {trackResult.ticket_id}
                             </span>
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300">
@@ -1868,7 +1880,7 @@ export default function LandingPage({
                             </div>
                             <div>
                               <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Blok Audit SHA-256:</span>
-                              <p className="font-mono font-bold text-emerald-700 dark:text-emerald-400">#{trackResult.audit_ledger_index}</p>
+                              <p className="font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">#{trackResult.audit_ledger_index}</p>
                             </div>
                           </div>
 
@@ -1876,16 +1888,16 @@ export default function LandingPage({
                             effectiveIsLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80'
                           }`}>
                             <span className="font-bold block text-slate-900 dark:text-white">Disposisi Tim Wasrik BPJS Kesehatan:</span>
-                            <p>{trackResult.disposition}</p>
+                            <p className="text-pretty">{trackResult.disposition}</p>
                           </div>
 
                           <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-white/10 text-[10px]">
-                            <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Batas Waktu SLA: <strong>10 Hari Kerja</strong></span>
+                            <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Batas Waktu SLA: <strong className="tabular-nums">10 Hari Kerja</strong></span>
                             <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">Terverifikasi Sah (UU PDP No. 27/2022)</span>
                           </div>
                         </>
                       ) : (
-                        <p className="text-xs">{trackResult.disposition}</p>
+                        <p className="text-xs text-pretty">{trackResult.disposition}</p>
                       )}
                     </motion.div>
                   )}
@@ -1926,14 +1938,14 @@ export default function LandingPage({
                       effectiveIsLight ? 'hover:bg-slate-100/70' : 'hover:bg-white/5'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
+                    <div className={`size-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
                       effectiveIsLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700 group-hover:bg-emerald-100' : 'bg-white/5 border-white/10 text-emerald-400 group-hover:bg-emerald-500/15'
                     }`}>
-                      <Phone className="w-4 h-4" />
+                      <Phone className="size-4" />
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>BPJS Care Center 165</span>
-                      <span className={effectiveIsLight ? 'text-slate-600' : 'text-white/60'}>Layanan bebas pulsa 24 jam / 7 hari untuk pengaduan & informasi.</span>
+                      <span className={`text-pretty ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>Layanan bebas pulsa 24 jam / 7 hari untuk pengaduan & informasi.</span>
                     </div>
                   </motion.div>
 
@@ -1944,15 +1956,15 @@ export default function LandingPage({
                       effectiveIsLight ? 'hover:bg-slate-100/70' : 'hover:bg-white/5'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
+                    <div className={`size-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
                       effectiveIsLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700 group-hover:bg-emerald-100' : 'bg-white/5 border-white/10 text-emerald-400 group-hover:bg-emerald-500/15'
                     }`}>
-                      <MessageSquare className="w-4 h-4" />
+                      <MessageSquare className="size-4" />
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>PANDAWA WhatsApp Resmi</span>
-                      <span className={`font-mono ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>08118165165</span>
-                      <span className={`block text-[11px] ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp BPJS Kesehatan</span>
+                      <span className={`font-mono tabular-nums ${effectiveIsLight ? 'text-slate-700' : 'text-white/60'}`}>08118165165</span>
+                      <span className={`block text-[11px] text-pretty ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Pelayanan Administrasi Melalui WhatsApp BPJS Kesehatan</span>
                     </div>
                   </motion.div>
 
@@ -1963,17 +1975,17 @@ export default function LandingPage({
                       effectiveIsLight ? 'hover:bg-slate-100/70' : 'hover:bg-white/5'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
+                    <div className={`size-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
                       effectiveIsLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700 group-hover:bg-emerald-100' : 'bg-white/5 border-white/10 text-emerald-400 group-hover:bg-emerald-500/15'
                     }`}>
-                      <MapPin className="w-4 h-4" />
+                      <MapPin className="size-4" />
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Alamat Kantor Operasional</span>
-                      <span className={`block ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
+                      <span className={`block text-pretty ${effectiveIsLight ? 'text-slate-600' : 'text-white/70'}`}>
                         Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510
                       </span>
-                      <span className={`text-[11px] block mt-0.5 ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Kedeputian Bidang Pengawasan dan Pemeriksaan BPJS Kesehatan</span>
+                      <span className={`text-[11px] block mt-0.5 text-pretty ${effectiveIsLight ? 'text-slate-500' : 'text-white/40'}`}>Kedeputian Bidang Pengawasan dan Pemeriksaan BPJS Kesehatan</span>
                     </div>
                   </motion.div>
 
@@ -1984,10 +1996,10 @@ export default function LandingPage({
                       effectiveIsLight ? 'hover:bg-slate-100/70' : 'hover:bg-white/5'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
+                    <div className={`size-8 rounded-lg border flex items-center justify-center shrink-0 group-hover:scale-110 transition-all ${
                       effectiveIsLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700 group-hover:bg-emerald-100' : 'bg-white/5 border-white/10 text-emerald-400 group-hover:bg-emerald-500/15'
                     }`}>
-                      <Mail className="w-4 h-4" />
+                      <Mail className="size-4" />
                     </div>
                     <div>
                       <span className={`font-bold block transition-colors ${effectiveIsLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'}`}>Email Verifikator Medis</span>
@@ -2014,7 +2026,7 @@ export default function LandingPage({
                   <span className={`text-xs font-bold uppercase tracking-wide ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                     Tanya Jawab Terpadu
                   </span>
-                  <h3 className={`text-base font-bold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
+                  <h3 className={`text-base font-bold text-balance ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
                     Pertanyaan Seputar Verifikasi Klaim
                   </h3>
                 </div>
@@ -2035,13 +2047,14 @@ export default function LandingPage({
                       >
                         <button type="button"
                           onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
-                          className={`w-full py-2.5 px-3.5 text-left font-bold flex items-center justify-between transition cursor-pointer ${
+                          aria-expanded={isOpen}
+                          className={`w-full py-2.5 px-3.5 text-left font-bold flex items-center justify-between transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                             effectiveIsLight ? 'text-slate-900 hover:bg-slate-100/60' : 'text-white hover:bg-white/5'
                           }`}
                         >
                           <span className="pr-2">{item.q}</span>
                           <ChevronDown 
-                            className={`w-4 h-4 text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} 
+                            className={`size-4 text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} 
                           />
                         </button>
                         <AnimatePresence>
@@ -2051,7 +2064,7 @@ export default function LandingPage({
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               transition={{ duration: 0.2 }}
-                              className={`px-3.5 pb-3 leading-relaxed border-t ${
+                              className={`px-3.5 pb-3 leading-relaxed border-t text-pretty ${
                                 effectiveIsLight ? 'border-slate-200 bg-white text-slate-600' : 'border-white/10 bg-white/5 text-white/70'
                               }`}
                             >
