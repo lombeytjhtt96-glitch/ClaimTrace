@@ -618,7 +618,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className={`${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'} fixed inset-0 h-[100dvh] max-h-screen flex flex-col font-inter overflow-hidden select-none z-40 transition-colors duration-200`}
+          className={`${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'} fixed inset-0 h-dvh max-h-dvh flex flex-col font-inter overflow-hidden select-none z-40 transition-colors duration-200`}
         >
           {/* Top Header Navbar */}
           <header className={`shrink-0 ${isLight ? 'bg-white/90 border-slate-200 text-slate-900 shadow-sm' : 'bg-[#000c24]/90 border-white/10 text-white shadow-xl'} backdrop-blur-xl border-b py-3 px-4 sm:px-6 lg:px-8 z-30 transition-colors duration-200`}>
@@ -813,7 +813,7 @@ export default function App() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className={`h-screen max-h-screen flex flex-col font-inter antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
+          className={`h-dvh max-h-dvh flex flex-col font-inter antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
             isLight
               ? 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-900 theme-light'
               : 'dark bg-gradient-to-b from-[#000c24] via-[#00153A] to-[#001D58] text-white theme-dark'

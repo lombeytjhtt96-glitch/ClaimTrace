@@ -559,7 +559,8 @@ export default function CaseInvestigation({
                     <button
                       type="button"
                       onClick={() => setVolumeViewType('bar')}
-                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                      aria-label="Tampilkan visualisasi grafik batang volume klaim"
+                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                         volumeViewType === 'bar'
                           ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
                           : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
@@ -570,7 +571,8 @@ export default function CaseInvestigation({
                     <button
                       type="button"
                       onClick={() => setVolumeViewType('area')}
-                      className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
+                      aria-label="Tampilkan visualisasi grafik tren area volume klaim"
+                      className={`px-2 py-0.5 rounded-md transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 ${
                         volumeViewType === 'area'
                           ? isLight ? 'bg-white text-slate-900 font-bold shadow-xs' : 'bg-[#00153A] text-white font-bold shadow-xs'
                           : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'
@@ -946,11 +948,12 @@ export default function CaseInvestigation({
             <button
               type="button"
               onClick={onOpenExpansionSuite}
-              className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition cursor-pointer shrink-0"
+              aria-label="Buka Suite Ekspansi 4 Pilar FRISTA, Upcoding, RAG, dan QR PDF"
+              className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-colors duration-150 cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="size-3.5" />
               <span>Buka Suite Ekspansi 4 Pilar (FRISTA · Upcoding · RAG · QR PDF)</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="size-3.5" />
             </button>
           )}
         </div>
