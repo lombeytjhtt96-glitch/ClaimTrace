@@ -59,24 +59,24 @@ export default function RegionSelector({
     : null;
 
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* 1. Dropdown Provinsi */}
-      <div className="space-y-1">
-        <label className={`text-xs font-semibold block ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+      <div className="space-y-1.5">
+        <label className={`font-bold block ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
           Provinsi
         </label>
         <select
           value={selectedProvince}
           onChange={handleProvinceChange}
           aria-label="Provinsi"
-          className={`w-full px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+          className={`w-full px-3 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 ${
             isLight
               ? 'bg-slate-50 border-slate-300 text-slate-800 hover:bg-white focus-visible:bg-white'
               : 'bg-[#000c24]/70 border-white/15 text-white hover:border-white/30'
           }`}
         >
           <option value="" className={isLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"}>
-            -- Semua Provinsi --
+            Semua Provinsi (Nasional)
           </option>
           {provinceList.map((p) => (
             <option 
@@ -91,8 +91,8 @@ export default function RegionSelector({
       </div>
 
       {/* 2. Dropdown Kabupaten / Kota */}
-      <div className="space-y-1">
-        <label htmlFor={id} className={`text-xs font-semibold block ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+      <div className="space-y-1.5">
+        <label htmlFor={id} className={`font-bold block ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
           Kabupaten / Kota
         </label>
         <select
@@ -100,7 +100,7 @@ export default function RegionSelector({
           value={value}
           onChange={handleCityChange}
           aria-label="Kabupaten atau Kota"
-          className={`w-full px-3 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
+          className={`w-full px-3 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 ${
             value
               ? isLight
                 ? 'bg-emerald-50/80 border-emerald-500 text-emerald-950 font-bold'
@@ -111,7 +111,7 @@ export default function RegionSelector({
           }`}
         >
           <option value="" className={isLight ? "bg-white text-slate-500" : "bg-[#00134A] text-white/50"}>
-            -- Pilih Kabupaten / Kota --
+            Pilih Kabupaten / Kota
           </option>
 
           {selectedProvince ? (

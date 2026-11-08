@@ -122,6 +122,21 @@ INITIAL_WBS_REPORTS: Dict[str, Dict[str, Any]] = {
         "audit_ledger_index": 1082,
         "assigned_verificator": "Tim Verifikator Wasrik BPJS Kesehatan Wilayah Jateng & DIY",
         "sla_deadline_days": 10
+    },
+    "WBS-2026-JKN-6588": {
+        "ticket_id": "WBS-2026-JKN-6588",
+        "category": "Phantom Billing",
+        "faskes_name": "rs",
+        "location": "Wilayah Nasional RI",
+        "reporter_contact_masked": "Anonim (Tanpa Kontak)",
+        "is_anonymous": True,
+        "description": "Laporan pengaduan integritas terverifikasi dan tercatat sah dalam Audit Ledger SHA-256.",
+        "timestamp": "2026-11-08T02:57:00Z",
+        "cryptographic_hash": "373dd96506b9e07f93a5368f023fd4f56f4d1e92c5780a184df20158a74ec819",
+        "status": "Diterima di Verifikator Pusat BPJS Kesehatan (Antrean Prioritas Wasrik)",
+        "audit_ledger_index": 1085,
+        "assigned_verificator": "Tim Verifikator Wasrik BPJS Kesehatan Pusat",
+        "sla_deadline_days": 10
     }
 }
 
@@ -240,6 +255,8 @@ app.add_middleware(RateLimiterMiddleware)
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3030",
+    "http://127.0.0.1:3030",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
@@ -257,8 +274,8 @@ if _env_origins:
         if _clean and _clean not in ALLOWED_ORIGINS:
             ALLOWED_ORIGINS.append(_clean)
 
-# Strict CORS: Disallow wildcard public hosting regex by default to prevent cross-tenant origin leakage
-_custom_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", None)
+# Allow local hosts and Vercel deployments
+_custom_origin_regex = os.environ.get("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$")
 
 app.add_middleware(
     CORSMiddleware,
