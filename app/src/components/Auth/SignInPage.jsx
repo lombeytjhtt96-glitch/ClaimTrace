@@ -465,12 +465,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                 <span>Verifikasi Keamanan (Google reCAPTCHA v2)</span>
               </label>
 
-              <div className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
-                effectiveIsLight
-                  ? 'bg-slate-50/80 border-slate-200'
-                  : 'bg-white/5 border-white/10'
-              }`}>
-                <div className="w-full flex justify-center overflow-x-auto py-1">
+              <div className="flex flex-col items-center justify-center py-0.5">
+                <div className="w-full flex justify-center overflow-x-auto">
                   <div 
                     ref={recaptchaContainerRef}
                     className="min-h-[78px] flex items-center justify-center"
