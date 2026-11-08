@@ -317,7 +317,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </div>
             
             <p className="text-[10px] leading-relaxed opacity-90">
-              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu menyelesaikan verifikasi Google reCAPTCHA v2 di bawah ini.
+              NIP Kedinasan / Email Resmi dan Kata Sandi telah diisi secara otomatis untuk memudahkan Dewan Juri dan Panitia Healthkathon BPJS Kesehatan dalam menguji sistem secara langsung. Anda hanya perlu menyelesaikan verifikasi keamanan di bawah ini.
             </p>
 
             <div className="pt-1 border-t border-emerald-200/60 dark:border-emerald-500/20">
@@ -456,13 +456,13 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               </div>
             </div>
 
-            {/* VERIFIKASI KEAMANAN (GOOGLE RECAPTCHA V2) */}
+            {/* VERIFIKASI KEAMANAN */}
             <div className="space-y-1.5">
               <label className={`text-xs font-semibold flex items-center space-x-1.5 ${
                 effectiveIsLight ? 'text-slate-700' : 'text-white/80'
               }`}>
                 <ShieldCheck className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                <span>Verifikasi Keamanan (Google reCAPTCHA v2)</span>
+                <span>Verifikasi Keamanan</span>
               </label>
 
               <div className="flex flex-col items-center justify-center py-0.5">
