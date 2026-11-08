@@ -52,6 +52,16 @@ export default function MobileTelemetry({
   const [syncNotice, setSyncNotice] = useState(null);
   const [showComplianceModal, setShowComplianceModal] = useState(false);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showComplianceModal) {
+        setShowComplianceModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showComplianceModal]);
+
   const handleSyncData = () => {
     setIsSyncing(true);
     setTimeout(() => {
@@ -893,7 +903,10 @@ export default function MobileTelemetry({
       {/* MODAL KEPATUHAN & SERTIFIKASI REGULASI */}
       <AnimatePresence>
         {showComplianceModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setShowComplianceModal(false); }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

@@ -422,6 +422,19 @@ export default function AuditLedger({ isLight: propIsLight }) {
     }
   };
 
+  // Handle Escape key to close any active modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showSecOpsModal) setShowSecOpsModal(false);
+        if (showReceiptsModal) setShowReceiptsModal(false);
+        if (showCyberModal) setShowCyberModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSecOpsModal, showReceiptsModal, showCyberModal]);
+
   // Fetch live logs from backend if available & chain seamlessly
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/v1/audit-logs`)
@@ -1255,7 +1268,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
       {/* GOOGLE SECOPS DETECTION & SOAR MODAL */}
       <AnimatePresence>
         {showSecOpsModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setShowSecOpsModal(false); }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1546,7 +1562,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
         {/* DECISION RECEIPTS & HUMAN GATE MODAL (ra-qm-team / OpenAgentOntology) */}
         {showReceiptsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1935,7 +1954,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
         {/* CYBERSECURITY FRAMEWORKS & MITRE F3 MODAL (mukul975/skills) */}
         {showCyberModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div 
+            onClick={(e) => { if (e.target === e.currentTarget) setShowCyberModal(false); }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

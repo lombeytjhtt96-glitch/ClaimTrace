@@ -198,6 +198,17 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
   const [bulkTagsToAdd, setBulkTagsToAdd] = useState([]);
   const [bulkActionMessage, setBulkActionMessage] = useState(null);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showBulkTagModal) {
+        setShowBulkTagModal(false);
+        setBulkTagsToAdd([]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showBulkTagModal]);
+
   const handleRefresh = () => {
     setLoading(true);
     setTimeout(() => setLoading(false), 350);
@@ -987,7 +998,15 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
 
       {/* Bulk Tag Modal */}
       {showBulkTagModal && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+        <div 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowBulkTagModal(false);
+              setBulkTagsToAdd([]);
+            }
+          }}
+          className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[100] p-4"
+        >
           <div className={`border rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900'

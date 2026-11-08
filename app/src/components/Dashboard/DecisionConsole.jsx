@@ -82,6 +82,21 @@ export default function DecisionConsole({
   const consoleRef = useRef(null);
   const modalRef = useRef(null);
 
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showPdfModal) {
+        setShowPdfModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPdfModal]);
+
+  const handlePrintDossier = () => {
+    window.print();
+  };
+
   // GSAP 60fps animation on action change
   useGSAP(() => {
     if (!consoleRef.current) return;
@@ -657,6 +672,9 @@ Timestamp: ${new Date().toISOString()}`;
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowPdfModal(false);
+            }}
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div 
@@ -801,7 +819,7 @@ Timestamp: ${new Date().toISOString()}`;
                   <motion.button
                     whileTap={{ scale: 0.96 }}
                     onClick={() => setShowPdfModal(false)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
                       isLight ? 'bg-slate-200 text-slate-800 hover:bg-slate-300' : 'bg-white/10 text-white hover:bg-white/15'
                     }`}
                   >
@@ -809,15 +827,27 @@ Timestamp: ${new Date().toISOString()}`;
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.96 }}
+                    onClick={handlePrintDossier}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 border cursor-pointer transition ${
+                      isLight 
+                        ? 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100' 
+                        : 'bg-white/5 border-white/20 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Cetak Lembar BAKB</span>
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     onClick={handleDownloadDossierPdf}
-                    className={`px-4 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer transition ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer transition ${
                       isLight 
                         ? 'bg-emerald-700 hover:bg-emerald-800 text-white' 
                         : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-md'
                     }`}
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Unduh Berkas Resmi (.txt/PDF)</span>
+                    <span>Unduh Berkas Resmi</span>
                   </motion.button>
                 </div>
               </div>
