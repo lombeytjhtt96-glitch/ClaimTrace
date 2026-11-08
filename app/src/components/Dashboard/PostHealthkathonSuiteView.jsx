@@ -25,7 +25,7 @@ import {
   DollarSign,
   Sliders
 } from 'lucide-react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import {
   callClaimTraceGenerateContent,
   getHFSemanticStats,
@@ -389,7 +389,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
   useEffect(() => {
     // Attempt to fetch live from local backend if running
-    fetch(`${API_BASE_URL}/api/v1/expansion/typologies`)
+    authFetch(`${API_BASE_URL}/api/v1/expansion/typologies`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.cases?.length) {
@@ -443,7 +443,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
     setIsAuditingCoding(true);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/v1/expansion/audit-coding`, {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/expansion/audit-coding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -553,7 +553,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     const focusQ = customQuestion !== undefined ? customQuestion : fristaAiFocus;
     setIsAuditingFrista(true);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/v1/expansion/frista-ai-audit`, {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/expansion/frista-ai-audit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claim_id: cid, custom_focus: focusQ || undefined })
@@ -593,7 +593,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     setIsQueryingRag(true);
 
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/v1/expansion/rag-regulatory`, {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/expansion/rag-regulatory`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: q, claim_id: targetClaimId })
@@ -641,7 +641,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
   const generateBeritaAcara = async (useAiNarrative = false) => {
     if (useAiNarrative) setIsDraftingBaAi(true);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/v1/expansion/berita-acara`, {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/expansion/berita-acara`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
