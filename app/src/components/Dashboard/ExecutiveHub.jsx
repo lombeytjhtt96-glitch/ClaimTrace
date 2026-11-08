@@ -985,7 +985,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lifecycleData}>
-              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke={gridStroke} vertical={false} />
               <XAxis dataKey="date" stroke={axisStroke} tick={{ fontSize: 11 }} />
               <YAxis 
                 stroke={axisStroke} 
@@ -1112,7 +1112,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 80, top: 10, bottom: 10 }}>
-              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke={gridStroke} vertical={false} />
               <XAxis 
                 type="number" 
                 stroke={axisStroke} 
@@ -1129,17 +1129,22 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Bar
                 dataKey="count"
-                radius={[0, 8, 8, 0]}
+                radius={[0, 6, 6, 0]}
                 isAnimationActive={false}
                 name="Temuan Berkas"
               >
                 {topicData.map((_, index) => {
-                  const barColorsLight = ['#e11d48', '#ea580c', '#d97706', '#0284c7', '#059669'];
-                  const barColorsDark = ['#f43f5e', '#fb923c', '#fbbf24', '#38bdf8', '#34d399'];
+                  // Unslop: One accent per chart. Lead finding gets BPJS Emerald accent, secondary findings sit in neutral ramp steps.
+                  const isLead = index === 0;
+                  const barFill = isLead
+                    ? (isLight ? '#008850' : '#10b981')
+                    : (isLight 
+                        ? (index === 1 ? '#475569' : index === 2 ? '#64748b' : '#94a3b8')
+                        : (index === 1 ? '#64748b' : index === 2 ? '#475569' : '#334155'));
                   return (
                     <Cell
                       key={`topic-cell-${index}`}
-                      fill={isLight ? barColorsLight[index % barColorsLight.length] : barColorsDark[index % barColorsDark.length]}
+                      fill={barFill}
                     />
                   );
                 })}
@@ -2387,12 +2392,9 @@ export default function ExecutiveHub({
       {/* Banner Portofolio Data Transaksi Klaim Resmi BPJS Kesehatan 2024 */}
       <section className={`rounded-2xl p-5 border relative overflow-hidden transition-all ${
         isLight
-          ? 'bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border-emerald-200 text-slate-900 shadow-sm'
-          : 'bg-gradient-to-r from-[#00134A] via-[#001D58] to-[#000c24] text-white shadow-xl shadow-[#00081c]/50 border-white/10'
+          ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
+          : 'bg-[#00153A] text-white shadow-xl border-white/10'
       }`}>
-        <div className={`absolute right-0 top-0 w-96 h-full blur-3xl pointer-events-none ${
-          isLight ? 'bg-emerald-400/10' : 'bg-[#FFCA40]/5'
-        }`} />
         <div className="relative z-10">
           <div className={`flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 border-b pb-3 ${
             isLight ? 'border-emerald-200' : 'border-white/10'
@@ -2511,7 +2513,7 @@ export default function ExecutiveHub({
             </div>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
             <span>Audit Posture: AKTIF &amp; TERVALIDASI</span>
           </div>
         </div>

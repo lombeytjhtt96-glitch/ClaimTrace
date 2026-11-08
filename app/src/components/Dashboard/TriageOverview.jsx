@@ -546,7 +546,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-2.5">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${
-                        c.lane === 'red' ? 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]' : c.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
+                        c.lane === 'red' ? 'bg-rose-500' : c.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
                       }`} />
                       <div className="min-w-0">
                         <div className={`font-bold transition truncate ${

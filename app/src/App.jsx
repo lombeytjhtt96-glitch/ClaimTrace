@@ -1050,7 +1050,7 @@ export default function App() {
                             </p>
                           </div>
                           <div className={`flex items-center gap-2 text-[11px] font-medium ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
                             <span>Langsung</span>
                           </div>
                         </div>
@@ -1431,7 +1431,7 @@ export default function App() {
                 {/* MOBILE JKN TOP ACTION BAR (CLOSE / DISMISS) */}
                 <div className="w-full max-w-[365px] flex items-center justify-between mb-2 px-1">
                   <div className="flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
                       isLight 
                         ? 'bg-amber-100 text-amber-800 border-amber-300' 

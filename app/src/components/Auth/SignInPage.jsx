@@ -234,38 +234,19 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     <div className={`flex-1 flex flex-col justify-center items-center px-4 py-1.5 sm:py-2 relative overflow-hidden select-none min-h-[calc(100vh-8rem)] transition-colors duration-200 ${
       effectiveIsLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'
     }`}>
-      {/* Soft Ambient Radial Light with breathing animation */}
       <motion.div 
-        animate={{ 
-          scale: [1, 1.12, 0.96, 1],
-          opacity: effectiveIsLight ? [0.35, 0.55, 0.4, 0.35] : [0.25, 0.45, 0.3, 0.25],
-          x: [0, 15, -15, 0],
-          y: [0, -10, 10, 0]
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[450px] blur-3xl rounded-full pointer-events-none transition-colors duration-300 ${
-          effectiveIsLight
-            ? 'bg-gradient-to-tr from-blue-200/50 via-amber-100/40 to-emerald-100/30'
-            : 'bg-gradient-to-tr from-blue-900/40 via-[#001D58]/30 to-emerald-500/10'
-        }`} 
-      />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 15, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
         className="w-full max-w-md space-y-2.5 relative z-10 my-auto"
       >
         {/* LOGO & HEADING */}
         <div className="text-center space-y-1">
-          <motion.div 
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0], transition: { duration: 0.3 } }}
-            className={`inline-flex p-2 rounded-2xl backdrop-blur-md border transition-all duration-300 mb-0.5 cursor-pointer ${
+          <div 
+            className={`inline-flex p-2 rounded-2xl border transition-colors mb-0.5 ${
               effectiveIsLight
-                ? 'bg-white border-slate-200 shadow-md shadow-slate-200/50 hover:border-emerald-500'
-                : 'bg-white/5 border-white/10 shadow-xl shadow-[#00081c]/50 hover:border-emerald-500/40'
+                ? 'bg-white border-slate-200 shadow-xs'
+                : 'bg-white/5 border-white/10'
             }`}
           >
             <img 
@@ -273,7 +254,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               className="h-8 w-auto object-contain" 
               src="/assets/images/bpjs_icon.png"
             />
-          </motion.div>
+          </div>
           <h1 className={`text-xl font-bold tracking-tight ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
             Portal Verifikator Klaim JKN
           </h1>
