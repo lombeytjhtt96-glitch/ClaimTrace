@@ -73,3 +73,15 @@ def test_audit_chain_cryptographic_integrity():
     # Check SHA-256 length of current_hash for all blocks in chain
     for block in chain:
         assert len(block.get("current_hash", "")) == 64
+
+def test_official_bakb_document_endpoint():
+    response = client.get("/api/v1/claims/CLM-2026-10-085/official-bakb")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["claim_id"] == "CLM-2026-10-085"
+    dossier = data["dossier"]
+    assert dossier["ba_number"].startswith("BA-VERIF")
+    assert len(dossier["cryptographic_seal"]["document_hash"]) == 64
+    assert "BPJS KESEHATAN KANTOR PUSAT" in data["html_printable"]
+    assert "BERITA ACARA HASIL UJI KELENGKAPAN BERKAS" in data["html_printable"]
