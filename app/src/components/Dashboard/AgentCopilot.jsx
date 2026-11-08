@@ -1589,7 +1589,7 @@ export default function AgentCopilot({
                               : isLight ? 'bg-slate-200 text-slate-700' : 'bg-white/10 text-white/70'
                           }`}
                         >
-                          {pill.count}
+                          {typeof pill.count === 'number' ? pill.count.toLocaleString('id-ID') : pill.count}
                         </span>
                       )}
                     </button>
