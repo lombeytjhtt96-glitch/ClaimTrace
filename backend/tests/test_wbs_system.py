@@ -82,3 +82,45 @@ def test_wbs_reports_list():
     assert "total_reports" in data
     assert data["total_reports"] >= 2
     assert isinstance(data["reports"], list)
+
+
+def test_wbs_report_idempotency_defense():
+    """Test idempotency key defense against race conditions / double submissions."""
+    payload = {
+        "category": "Phantom Billing",
+        "faskes_name": "RS Idempotent Test",
+        "location": "Semarang, Jawa Tengah",
+        "reporter_contact": "081999888777",
+        "is_anonymous": False,
+        "description": "Laporan pengujian idempotensi untuk mencegah race condition perbankan/klaim."
+    }
+    headers = {"Idempotency-Key": "req-wbs-test-unique-key-12345"}
+    
+    # First submission
+    resp1 = client.post("/api/v1/wbs/report", json=payload, headers=headers)
+    assert resp1.status_code == 200
+    data1 = resp1.json()
+
+    # Immediate replay with same idempotency key
+    resp2 = client.post("/api/v1/wbs/report", json=payload, headers=headers)
+    assert resp2.status_code == 200
+    data2 = resp2.json()
+
+    # Must return exact same ticket and hash without creating phantom duplicates
+    assert data1["ticket_id"] == data2["ticket_id"]
+    assert data1["cryptographic_hash"] == data2["cryptographic_hash"]
+    assert data1["audit_ledger_index"] == data2["audit_ledger_index"]
+
+
+def test_wbs_report_validation_constraints():
+    """Test payload validation constraints against payload bloat / DoS."""
+    # Description too short (< 5 chars)
+    payload_short = {
+        "category": "Phantom Billing",
+        "faskes_name": "RS Test",
+        "location": "Jakarta",
+        "is_anonymous": True,
+        "description": "abc"
+    }
+    resp_short = client.post("/api/v1/wbs/report", json=payload_short)
+    assert resp_short.status_code == 422  # Pydantic validation error
