@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import InstitutionalLegalModal from './InstitutionalLegalModal';
+import RegionSelector from './RegionSelector';
 import { API_BASE_URL } from '../../services/apiConfig';
 
 export default function LandingPage({
@@ -1569,17 +1570,20 @@ export default function LandingPage({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className={`font-bold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>Wilayah / Kabupaten-Kota</label>
-                        <input aria-label="Contoh: DKI Jakarta / Surabaya / Medan" 
-                          type="text" 
-                          placeholder="Contoh: DKI Jakarta / Surabaya / Medan" 
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="wbs-region-select" className={`font-bold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
+                            Wilayah / Kabupaten-Kota
+                          </label>
+                          <span className={`text-[10px] font-mono font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                            514 Wilayah se-Indonesia
+                          </span>
+                        </div>
+                        <RegionSelector
+                          id="wbs-region-select"
                           value={formLocation}
-                          onChange={(e) => setFormLocation(e.target.value)}
-                          className={`w-full px-3 py-2.5 rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 focus-visible:border-emerald-600 transition-colors duration-150 ${
-                          effectiveIsLight
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus-visible:bg-white'
-                            : 'bg-[#000c24]/70 border-white/15 text-white placeholder-white/30'
-                        }`}
+                          onChange={(val) => setFormLocation(val)}
+                          isLight={effectiveIsLight}
+                          placeholder="Pilih Kabupaten / Kota (514 Wilayah se-Indonesia)..."
                         />
                       </div>
 

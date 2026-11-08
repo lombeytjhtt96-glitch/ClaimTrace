@@ -17,7 +17,8 @@ backend/.pytest_cache/
 .env.local
 backend/.env
 backend/.env.local
-backend/data/
+backend/data/*
+!backend/data/indonesia_regions.json
 *.duckdb*
 chroma_db/
 
