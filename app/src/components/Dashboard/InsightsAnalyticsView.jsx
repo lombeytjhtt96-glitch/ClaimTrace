@@ -347,8 +347,8 @@ function getChartForQueryType(queryName, data, isLight = false) {
           stroke={isLight ? '#059669' : '#06b6d4'}
           strokeWidth={3}
           name="Jumlah Kasus Anomali"
-          dot={{ r: 4, fill: isLight ? '#059669' : '#06b6d4' }}
-          activeDot={{ r: 6 }}
+          dot={false}
+          activeDot={false}
           isAnimationActive={false}
         />
         {data[0]?.avg_risk && (
@@ -359,8 +359,8 @@ function getChartForQueryType(queryName, data, isLight = false) {
             stroke="#e11d48"
             strokeWidth={2.5}
             name="Rata-Rata Skor Risiko"
-            dot={{ r: 4, fill: '#e11d48' }}
-            activeDot={{ r: 6 }}
+            dot={false}
+            activeDot={false}
             isAnimationActive={false}
           />
         )}

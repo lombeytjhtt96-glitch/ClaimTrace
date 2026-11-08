@@ -688,7 +688,7 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 2 }}>
               <YAxis hide domain={[yMin, yMax]} />
-              <Tooltip content={<MiniTooltip isLight={isLight} unit={unit} />} cursor={{ stroke: colorMap[color], strokeWidth: 1, strokeDasharray: '3 3' }} />
+              <Tooltip content={<MiniTooltip isLight={isLight} unit={unit} />} cursor={false} />
               <Area
                 type="monotone"
                 dataKey="value"
@@ -696,8 +696,8 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
                 strokeWidth={2.5}
                 fill={colorMap[color]}
                 fillOpacity={isLight ? 0.22 : 0.18}
-                dot={{ r: 2.5, fill: colorMap[color], stroke: isLight ? '#ffffff' : '#00153A', strokeWidth: 1.5 }}
-                activeDot={{ r: 5, strokeWidth: 2, stroke: '#ffffff' }}
+                dot={false}
+                activeDot={false}
                 isAnimationActive={false}
               />
             </AreaChart>
@@ -1000,8 +1000,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 stroke="#2563eb"
                 strokeWidth={caseMode === 'opened' ? 3.5 : caseMode === 'all' ? 2.5 : 1.5}
                 strokeOpacity={caseMode === 'closed' ? 0.35 : 1}
-                dot={{ r: 3, fill: '#2563eb' }}
-                activeDot={{ r: 6 }}
+                dot={false}
+                activeDot={false}
                 isAnimationActive={false}
                 name="Berkas Masuk"
               />
@@ -1011,8 +1011,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 stroke="#059669"
                 strokeWidth={caseMode === 'closed' ? 3.5 : caseMode === 'all' ? 2.5 : 1.5}
                 strokeOpacity={caseMode === 'opened' ? 0.35 : 1}
-                dot={{ r: 3, fill: '#059669' }}
-                activeDot={{ r: 6 }}
+                dot={false}
+                activeDot={false}
                 isAnimationActive={false}
                 name="Berkas Selesai"
               />
