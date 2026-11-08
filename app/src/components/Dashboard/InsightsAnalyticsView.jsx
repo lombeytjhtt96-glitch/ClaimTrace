@@ -312,20 +312,36 @@ function getChartForQueryType(queryName, data, isLight = false) {
 
   if (queryName.includes('trend')) {
     return (
-      <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
+      <LineChart data={data} margin={{ top: 10, right: 35, left: 10, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
         <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
-        <YAxis tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
+        <YAxis
+          yAxisId="left"
+          tick={{ fontSize: 11, fill: isLight ? '#059669' : '#06b6d4' }}
+          axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
+          tickFormatter={(v) => `${v} kss`}
+        />
+        {data[0]?.avg_risk !== undefined && (
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            domain={[60, 100]}
+            tick={{ fontSize: 11, fill: '#f43f5e' }}
+            axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }}
+            tickFormatter={(v) => `${v}%`}
+          />
+        )}
         <Tooltip
           contentStyle={tooltipStyle}
           cursor={false}
           formatter={(value, name) => [
-            name === 'Rata-Rata Skor Risiko' ? `${value} / 100` : `${value} berkas`,
+            name === 'Rata-Rata Skor Risiko' ? `${value}%` : `${Number(value).toLocaleString('id-ID')} berkas anomali`,
             name,
           ]}
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
         <Line
+          yAxisId="left"
           type="monotone"
           dataKey="value"
           stroke={isLight ? '#059669' : '#06b6d4'}
@@ -337,6 +353,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
         />
         {data[0]?.avg_risk && (
           <Line
+            yAxisId="right"
             type="monotone"
             dataKey="avg_risk"
             stroke="#e11d48"

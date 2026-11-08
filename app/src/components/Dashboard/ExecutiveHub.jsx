@@ -144,10 +144,10 @@ const NATIONAL_OVERVIEW = {
       { topic: 'Kesesuaian Restriksi Fornas Obat Kronis', count: 18250 },
     ],
     severity_distribution: {
-      Rendah: 82400,
-      Sedang: 13800,
-      Tinggi: 2800,
-      Kritis: 1000,
+      Rendah: 267388,
+      Sedang: 44781,
+      Tinggi: 9086,
+      Kritis: 3245,
     },
   },
   alerts: [
@@ -443,16 +443,43 @@ const INITIAL_VERIFIKATORS = [
 // ─── Tooltips ──────────────────────────────────
 function NumberTooltip({ active, payload, label, isLight }) {
   if (!active || !payload?.length) return null;
+  const openedItem = payload.find(p => p.dataKey === 'opened');
+  const closedItem = payload.find(p => p.dataKey === 'closed');
+  const clearanceRate = openedItem && closedItem && openedItem.value > 0
+    ? ((closedItem.value / openedItem.value) * 100).toFixed(1).replace('.', ',')
+    : null;
+
   return (
-    <div className={`rounded-xl border px-3 py-2 text-xs shadow-xl ${
-      isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/10 text-white'
+    <div className={`rounded-xl border px-3.5 py-2.5 text-xs shadow-xl backdrop-blur-md transition-all z-50 ${
+      isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-300/60' : 'bg-[#00153A]/95 border-white/20 text-white shadow-black/80'
     }`}>
-      {label && <p className={`mb-1 font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{label}</p>}
-      {payload.map((item, index) => (
-        <p key={`${item.name ?? 'metric'}-${index}`} className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-          {item.name ?? 'Nilai'}: <span className={`font-mono ${isLight ? 'text-emerald-700 font-bold' : 'text-cyan-300'}`}>{Number(item.value).toFixed(1)}</span>
-        </p>
-      ))}
+      {label && <p className={`mb-1.5 font-bold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{label}</p>}
+      <div className="space-y-1">
+        {payload.map((item, index) => {
+          const isPercent = item.name?.includes('Skor') || item.name?.includes('SLA') || item.unit === '%';
+          const valStr = typeof item.value === 'number'
+            ? isPercent
+              ? `${item.value.toFixed(1).replace('.', ',')}%`
+              : `${item.value.toLocaleString('id-ID')} berkas`
+            : item.value;
+          return (
+            <p key={`${item.name ?? 'metric'}-${index}`} className="flex items-center justify-between gap-4 text-xs">
+              <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                {item.name ?? 'Nilai'}:
+              </span>
+              <span className={`font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                {valStr}
+              </span>
+            </p>
+          );
+        })}
+        {clearanceRate && (
+          <div className="pt-1.5 mt-1 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-4 text-[11px]">
+            <span className={isLight ? 'text-slate-500' : 'text-white/60'}>Kliring SLA:</span>
+            <span className="font-mono font-bold text-blue-600 dark:text-cyan-400">{clearanceRate}% Selesai</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -960,7 +987,11 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
             <LineChart data={lifecycleData}>
               <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" stroke={axisStroke} tick={{ fontSize: 11 }} />
-              <YAxis stroke={axisStroke} tick={{ fontSize: 11 }} />
+              <YAxis 
+                stroke={axisStroke} 
+                tick={{ fontSize: 11 }} 
+                tickFormatter={(val) => `${(val / 1000).toLocaleString('id-ID')}K`}
+              />
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
               <Line
@@ -997,10 +1028,10 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
       }`}>
         <div className="mb-2 flex items-center justify-between">
           <h3 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Proporsi Tingkat Risiko Klaim</h3>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            isLight ? 'bg-slate-100 text-slate-700' : 'bg-white/10 text-white/70'
+          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+            isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/70 border-white/15'
           }`}>
-            {totalClaimsCount} Total
+            {totalClaimsCount.toLocaleString('id-ID')} Berkas / Hari
           </span>
         </div>
         <div className="relative h-56 w-full flex items-center justify-center">
@@ -1029,26 +1060,32 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className={`text-2xl font-bold tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {totalClaimsCount}
+              {totalClaimsCount.toLocaleString('id-ID')}
             </span>
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Total Klaim
+            <span className={`text-[10px] font-bold uppercase tracking-wider text-center ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+              Klaim Harian Nasional
             </span>
           </div>
         </div>
         <ul className={`mt-3 space-y-1.5 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-          {severityData.map((item, index) => (
-            <li key={item.name} className="flex items-center justify-between">
-              <span className={`inline-flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                <span
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
-                />
-                Risiko {item.name}
-              </span>
-              <span className={`font-semibold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.value} berkas</span>
-            </li>
-          ))}
+          {severityData.map((item, index) => {
+            const percent = totalClaimsCount > 0 ? ((item.value / totalClaimsCount) * 100).toFixed(1).replace('.', ',') : '0';
+            return (
+              <li key={item.name} className="flex items-center justify-between">
+                <span className={`inline-flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                  />
+                  Risiko {item.name}
+                  <span className="text-[10px] font-semibold opacity-75">({percent}%)</span>
+                </span>
+                <span className={`font-semibold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {item.value.toLocaleString('id-ID')} berkas
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </article>
 
@@ -1069,14 +1106,19 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
           <span className={`self-start sm:self-auto text-xs font-semibold px-2.5 py-1 rounded-full border ${
             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
           }`}>
-            Total 160 Temuan
+            Total {topicData.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString('id-ID')} Berkas Terindikasi
           </span>
         </div>
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 65, top: 10, bottom: 10 }}>
+            <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 80, top: 10, bottom: 10 }}>
               <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
-              <XAxis type="number" stroke={axisStroke} tick={{ fontSize: 11 }} />
+              <XAxis 
+                type="number" 
+                stroke={axisStroke} 
+                tick={{ fontSize: 11 }} 
+                tickFormatter={(val) => `${(val / 1000).toLocaleString('id-ID')}K`}
+              />
               <YAxis
                 dataKey="topic"
                 type="category"
@@ -1104,7 +1146,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 <LabelList
                   dataKey="count"
                   position="right"
-                  formatter={(val) => `${val} berkas`}
+                  formatter={(val) => `${Number(val).toLocaleString('id-ID')} berkas`}
                   fill={isLight ? '#0f172a' : '#ffffff'}
                   fontSize={11}
                   fontWeight={700}
