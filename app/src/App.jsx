@@ -82,7 +82,12 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const v = params.get('view');
       if (v === 'health_ai') return 'health_ai_chat';
-      const t = params.get('tab');
+      const rawTab = params.get('tab');
+      const aliasMap = {
+        clarification_sched: 'appointments',
+        db_viewer: 'database_viewer',
+      };
+      const t = aliasMap[rawTab] || rawTab;
       if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
         return t;
       }
@@ -171,7 +176,12 @@ export default function App() {
         if (['landing', 'login', 'mfa', 'logout', 'dashboard'].includes(v)) {
           setAuthView(v);
         }
-        const t = params.get('tab');
+        const rawTab = params.get('tab');
+        const aliasMap = {
+          clarification_sched: 'appointments',
+          db_viewer: 'database_viewer',
+        };
+        const t = aliasMap[rawTab] || rawTab;
         if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
           setDashboardTab(t);
         }
@@ -239,7 +249,7 @@ export default function App() {
       group: 'Forensik Bukti 3 Lapis',
       items: [
         { id: 'investigation', label: 'Matriks 3 Lapis Bukti', icon: FileText, badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
-        { id: 'expansion_suite', label: 'Ekspansi 4 Pilar (Next-Gen)', icon: Layers, badge: '4 Lapis', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+        { id: 'expansion_suite', label: 'Ekspansi 5 Pilar (AI)', icon: Layers, badge: '5 Pilar', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
         { id: 'graph', label: 'Peta Sindikat Faskes', icon: GitBranch },
         { id: 'empirical', label: 'Forensik Data Empiris', icon: Database },
         { id: 'faskes', label: 'Surveilans Faskes (FRI)', icon: Building2 },
@@ -870,7 +880,7 @@ export default function App() {
                         DSS JKN
                       </span>
                     </div>
-                    <p className={`text-[10px] hidden lg:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    <p className={`text-[10px] hidden 2xl:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                       Pengawasan Pra-Pembayaran Klaim JKN
                     </p>
                   </div>
@@ -885,23 +895,23 @@ export default function App() {
                       setDashboardTab('queue');
                     }
                   }}
-                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-72 xl:w-80 relative ml-2 transition-colors ${
+                  className={`hidden xl:flex items-center border rounded-xl px-2.5 py-1.5 w-48 2xl:w-64 relative ml-1 transition-colors ${
                     isLight ? 'bg-slate-100/90 border-slate-300 text-slate-900' : 'bg-white/10 border-white/10 text-white'
                   }`}
                 >
-                  <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
+                  <Search className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                   <input
                     type="text"
-                    placeholder="Cari modul / no. SEP..."
+                    placeholder="Cari modul / SEP..."
                     value={headerSearch}
                     onChange={(e) => setHeaderSearch(e.target.value)}
-                    className={`bg-transparent border-none outline-none text-xs w-full pr-14 pl-1 focus:ring-0 ${
+                    className={`bg-transparent border-none outline-none text-xs w-full pr-12 pl-0.5 focus:ring-0 ${
                       isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/40'
                     }`}
                   />
                   <button
                     type="submit"
-                    className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1 text-[10.5px] font-bold border transition-colors cursor-pointer keep-white ${
+                    className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2 py-0.5 text-[10px] font-bold border transition-colors cursor-pointer keep-white ${
                       isLight 
                         ? 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-600 shadow-xs' 
                         : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/50 shadow-xs'
@@ -919,50 +929,52 @@ export default function App() {
                 <button
                   onClick={() => setViewMode('dashboard')}
                   aria-label="Beralih ke tampilan Cockpit layar penuh"
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
                     viewMode === 'dashboard' 
                       ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
                       : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
                   }`}
                 >
-                  <Monitor className="w-3.5 h-3.5" />
+                  <Monitor className="w-3.5 h-3.5 shrink-0" />
                   <span>Layar Penuh</span>
                 </button>
                 <button
                   onClick={() => setViewMode(viewMode === 'split' ? 'dashboard' : 'split')}
                   aria-label="Beralih ke tampilan Dual View Mobile JKN dan Cockpit"
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
                     viewMode === 'split' 
                       ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
                       : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
                   }`}
                   title={viewMode === 'split' ? "Tutup telemetri & kembali ke Layar Penuh" : "Buka telemetri Mobile JKN berdampingan dengan cockpit"}
                 >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>Dual View (Mobile &amp; Cockpit)</span>
+                  <Activity className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden 2xl:inline">Dual View (Mobile &amp; Cockpit)</span>
+                  <span className="2xl:hidden">Dual View</span>
                 </button>
                 <button
                   onClick={() => setViewMode(viewMode === 'mobile' ? 'dashboard' : 'mobile')}
                   aria-label="Beralih ke aplikasi Mobile JKN peserta"
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
                     viewMode === 'mobile' 
                       ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
                       : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
                   }`}
                   title={viewMode === 'mobile' ? "Kembali ke Dashboard Cockpit" : "Buka aplikasi Mobile JKN peserta"}
                 >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Mobile JKN Peserta</span>
+                  <Smartphone className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden 2xl:inline">Mobile JKN Peserta</span>
+                  <span className="hidden md:inline 2xl:hidden">Mobile JKN</span>
                 </button>
               </div>
 
               {/* Right: Session Timer, Theme Quick Toggle, Notification Bell Popover & User Profile Dropdown */}
-              <div className="flex items-center space-x-2.5 md:space-x-3 shrink-0">
+              <div className="flex items-center space-x-2 shrink-0">
                 {/* 6 Standar Siber & Anti-Fraud Pill (MITRE F3 · ATT&CK · NIST CSF 2.0) */}
                 <button
                   type="button"
                   onClick={() => openLegalModal('frameworks')}
-                  className={`hidden xl:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-[10.5px] font-mono shadow-xs transition cursor-pointer ${
+                  className={`hidden xl:flex items-center space-x-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-mono shadow-xs transition cursor-pointer whitespace-nowrap ${
                     isLight 
                       ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800' 
                       : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300 shadow-emerald-500/10'
@@ -971,12 +983,13 @@ export default function App() {
                   aria-label="Buka Kerangka Kerja Siber & Anti-Fraud MITRE F3, ATT&CK, NIST"
                 >
                   <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-                  <span className="font-bold">MITRE F3 · ATT&amp;CK · NIST CSF</span>
+                  <span className="font-bold hidden 2xl:inline">MITRE F3 · ATT&amp;CK · NIST</span>
+                  <span className="font-bold 2xl:hidden">MITRE F3 · NIST</span>
                 </button>
 
                 {/* Jam Resmi Server BPJS Kesehatan (WIB) */}
                 <div 
-                  className={`hidden lg:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono tabular-nums shadow-2xs select-none ${
+                  className={`hidden lg:flex items-center space-x-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-mono tabular-nums shadow-2xs select-none whitespace-nowrap ${
                     isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80'
                   }`}
                   title="Waktu Resmi Server Terpusat BPJS Kesehatan (WIB)"
@@ -1173,8 +1186,8 @@ export default function App() {
                         {currentUser.avatar && currentUser.avatar !== 'dS' ? currentUser.avatar : getInitials(currentUser.name)}
                       </span>
                     </div>
-                    <span className={`hidden md:inline-block ml-2 text-xs font-semibold ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
-                      {currentUser.name || 'dr. Siti Rahma (Akun Fiktif)'}
+                    <span className={`hidden md:inline-block ml-2 text-xs font-semibold max-w-[140px] 2xl:max-w-[200px] truncate ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
+                      {(currentUser.name || 'dr. Siti Rahma, Sp.PK').replace(' (Akun Fiktif)', '')}
                     </span>
                     <ChevronDown
                       className={`hidden md:inline-block ml-1 transition-transform duration-150 w-3.5 h-3.5 ${
@@ -1414,7 +1427,7 @@ export default function App() {
         </motion.aside>
 
         {/* WORKSPACE AREA */}
-        <main ref={mainContentRef} className={`flex-1 overflow-y-auto p-3 lg:p-4 backdrop-blur-xs min-h-0 transition-colors duration-200 ${
+        <main ref={mainContentRef} className={`flex-1 overflow-y-auto p-3 lg:p-4 pb-24 backdrop-blur-xs min-h-0 transition-colors duration-200 ${
           isLight ? 'bg-slate-100/70 text-slate-900' : 'bg-[#001030]/40 text-white'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${

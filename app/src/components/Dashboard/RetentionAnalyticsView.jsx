@@ -20,38 +20,38 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Data aktivitas harian 30 hari terakhir (Verifikator Medis BPJS & Tim Casemix FKRTL)
+// Data aktivitas harian 30 hari terakhir (Skala Nasional 3.287 FKRTL & Verifikator Medis BPJS Kesehatan)
 const INITIAL_DAILY_ACTIVITY = [
-  { date: '2026-10-24', activeUsers: 184, totalRequests: 1420 },
-  { date: '2026-10-23', activeUsers: 179, totalRequests: 1385 },
-  { date: '2026-10-22', activeUsers: 192, totalRequests: 1510 },
-  { date: '2026-10-21', activeUsers: 188, totalRequests: 1465 },
-  { date: '2026-10-20', activeUsers: 176, totalRequests: 1310 },
-  { date: '2026-10-19', activeUsers: 142, totalRequests: 980 },
-  { date: '2026-10-18', activeUsers: 138, totalRequests: 925 },
-  { date: '2026-10-17', activeUsers: 185, totalRequests: 1440 },
-  { date: '2026-10-16', activeUsers: 181, totalRequests: 1390 },
-  { date: '2026-10-15', activeUsers: 190, totalRequests: 1495 },
-  { date: '2026-10-14', activeUsers: 174, totalRequests: 1290 },
-  { date: '2026-10-13', activeUsers: 169, totalRequests: 1245 },
-  { date: '2026-10-12', activeUsers: 135, totalRequests: 890 },
-  { date: '2026-10-11', activeUsers: 131, totalRequests: 860 },
-  { date: '2026-10-10', activeUsers: 178, totalRequests: 1360 },
-  { date: '2026-10-09', activeUsers: 172, totalRequests: 1305 },
-  { date: '2026-10-08', activeUsers: 168, totalRequests: 1270 },
-  { date: '2026-10-07', activeUsers: 175, totalRequests: 1330 },
-  { date: '2026-10-06', activeUsers: 164, totalRequests: 1210 },
-  { date: '2026-10-05', activeUsers: 129, totalRequests: 840 },
-  { date: '2026-10-04', activeUsers: 124, totalRequests: 815 },
-  { date: '2026-10-03', activeUsers: 166, totalRequests: 1235 },
-  { date: '2026-10-02', activeUsers: 161, totalRequests: 1190 },
-  { date: '2026-10-01', activeUsers: 170, totalRequests: 1280 },
-  { date: '2026-09-30', activeUsers: 168, totalRequests: 1250 },
-  { date: '2026-09-29', activeUsers: 165, totalRequests: 1220 },
-  { date: '2026-09-28', activeUsers: 162, totalRequests: 1190 },
-  { date: '2026-09-27', activeUsers: 130, totalRequests: 850 },
-  { date: '2026-09-26', activeUsers: 126, totalRequests: 820 },
-  { date: '2026-09-25', activeUsers: 172, totalRequests: 1290 },
+  { date: '2026-10-24', activeUsers: 3245, totalRequests: 324500 },
+  { date: '2026-10-23', activeUsers: 3252, totalRequests: 326500 },
+  { date: '2026-10-22', activeUsers: 3260, totalRequests: 344200 },
+  { date: '2026-10-21', activeUsers: 3238, totalRequests: 296500 },
+  { date: '2026-10-20', activeUsers: 3210, totalRequests: 358400 },
+  { date: '2026-10-19', activeUsers: 3165, totalRequests: 318400 },
+  { date: '2026-10-18', activeUsers: 2980, totalRequests: 292000 },
+  { date: '2026-10-17', activeUsers: 3230, totalRequests: 329400 },
+  { date: '2026-10-16', activeUsers: 3248, totalRequests: 336800 },
+  { date: '2026-10-15', activeUsers: 3264, totalRequests: 351200 },
+  { date: '2026-10-14', activeUsers: 3222, totalRequests: 321500 },
+  { date: '2026-10-13', activeUsers: 3195, totalRequests: 316200 },
+  { date: '2026-10-12', activeUsers: 2965, totalRequests: 288500 },
+  { date: '2026-10-11', activeUsers: 2940, totalRequests: 284000 },
+  { date: '2026-10-10', activeUsers: 3218, totalRequests: 332400 },
+  { date: '2026-10-09', activeUsers: 3205, totalRequests: 324800 },
+  { date: '2026-10-08', activeUsers: 3198, totalRequests: 319600 },
+  { date: '2026-10-07', activeUsers: 3226, totalRequests: 335100 },
+  { date: '2026-10-06', activeUsers: 3184, totalRequests: 312900 },
+  { date: '2026-10-05', activeUsers: 2950, totalRequests: 286400 },
+  { date: '2026-10-04', activeUsers: 2925, totalRequests: 281200 },
+  { date: '2026-10-03', activeUsers: 3202, totalRequests: 323400 },
+  { date: '2026-10-02', activeUsers: 3190, totalRequests: 318200 },
+  { date: '2026-10-01', activeUsers: 3215, totalRequests: 328600 },
+  { date: '2026-09-30', activeUsers: 3208, totalRequests: 325400 },
+  { date: '2026-09-29', activeUsers: 3196, totalRequests: 320100 },
+  { date: '2026-09-28', activeUsers: 3180, totalRequests: 314500 },
+  { date: '2026-09-27', activeUsers: 2945, totalRequests: 285200 },
+  { date: '2026-09-26', activeUsers: 2918, totalRequests: 279800 },
+  { date: '2026-09-25', activeUsers: 3212, totalRequests: 326800 },
 ];
 
 // Data retensi kohort kepatuhan FKRTL & Verifikator Medis
@@ -148,7 +148,7 @@ function KpiCard({ title, value, subtitle, badge, isLight, icon: Icon, progressP
           }`}>{title}</div>
         </div>
         {badge && (
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${
             isLight
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
               : 'bg-[#FFCA40]/10 text-[#FFCA40] border-[#FFCA40]/30'
@@ -231,19 +231,19 @@ function TrendChart({
         ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
         : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50 backdrop-blur-xl'
     }`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col gap-2.5 mb-5">
         <div>
           <h3 className={`text-lg font-semibold flex items-center gap-2 ${
             isLight ? 'text-slate-900' : 'text-white'
           }`}>
-            <TrendingUp className={`w-5 h-5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+            <TrendingUp className={`w-5 h-5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
             {title}
           </h3>
           {subtitle && (
             <p className={`text-sm mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{subtitle}</p>
           )}
         </div>
-        <div className={`flex items-center gap-4 text-xs px-3 py-1.5 rounded-lg border ${
+        <div className={`inline-flex items-center gap-3 text-xs px-3 py-1.5 rounded-lg border self-start whitespace-nowrap ${
           isLight
             ? 'bg-slate-50 border-slate-200 text-slate-700'
             : 'bg-white/5 border-white/10 text-white/70'
@@ -254,7 +254,7 @@ function TrendChart({
           </div>
           <div>
             <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Rata-rata: </span>
-            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.avgValue.toFixed(1).replace('.', ',')}</span>
+            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{Math.round(stats.avgValue).toLocaleString('id-ID')}</span>
           </div>
           <div>
             <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Min: </span>
@@ -388,12 +388,12 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           </p>
         </div>
 
-        <div className={`flex items-center gap-2 text-xs px-3.5 py-2 rounded-lg border shadow-sm ${
+        <div className={`flex items-center gap-2 text-xs px-3.5 py-2 rounded-lg border shadow-sm shrink-0 whitespace-nowrap ${
           isLight
             ? 'bg-white border-slate-200 text-slate-700'
             : 'bg-white/5 border-white/10 text-white/70'
         }`}>
-          <Calendar className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+          <Calendar className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
           <span>Per Tanggal: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{asOfDate}</strong></span>
         </div>
       </div>
@@ -402,30 +402,30 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
           isLight={isLight}
-          title="DAU (Aktif Hari Ini)"
-          value="184"
-          subtitle="Verifikator Medis & Tim Casemix FKRTL aktif hari ini"
+          title="DAU (FKRTL Aktif Hari Ini)"
+          value="3.245 RS"
+          subtitle="FKRTL & Tim Verifikator Medis aktif hari ini"
           badge="Harian"
           icon={Users}
-          trend="+8.2%"
+          trend="+98,7% Partisipasi"
         />
         <KpiCard
           isLight={isLight}
           title="WAU (Aktif 7 Hari)"
-          value="412"
-          subtitle="Auditor & FKRTL unik aktif dalam 7 hari terakhir"
+          value="3.278 RS"
+          subtitle="FKRTL & Kantor Cabang aktif dalam 7 hari terakhir"
           badge="Mingguan"
           icon={Activity}
-          trend="+4.5%"
+          trend="+99,7% Cakupan"
         />
         <KpiCard
           isLight={isLight}
           title="MAU (Aktif 30 Hari)"
-          value="628"
-          subtitle="Total entitas pengawasan aktif dalam 30 hari terakhir"
-          badge="Bulanan"
+          value="3.287 RS"
+          subtitle="Total seluruh FKRTL mitra BPJS Kesehatan se-Indonesia"
+          badge="Nasional"
           icon={Building2}
-          trend="+12.1%"
+          trend="100% Terintegrasi"
         />
       </div>
 
@@ -514,18 +514,18 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
               <tbody className={`divide-y ${isLight ? 'divide-slate-200 bg-white' : 'divide-white/5'}`}>
                 {dailyActivity.slice(0, 14).map((row) => (
                   <tr key={row.date} className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}>
-                    <td className={`py-2.5 px-3 font-mono text-xs ${isLight ? 'text-slate-700 font-semibold' : 'text-white/90'}`}>{row.date}</td>
-                    <td className={`py-2.5 px-3 text-right font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{row.activeUsers}</td>
-                    <td className={`py-2.5 px-3 text-right ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{row.totalRequests.toLocaleString('id-ID')}</td>
+                    <td className={`py-2.5 px-3 font-mono text-xs whitespace-nowrap ${isLight ? 'text-slate-700 font-semibold' : 'text-white/90'}`}>{row.date}</td>
+                    <td className={`py-2.5 px-3 text-right font-semibold whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white'}`}>{row.activeUsers.toLocaleString('id-ID')} RS</td>
+                    <td className={`py-2.5 px-3 text-right whitespace-nowrap ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{row.totalRequests.toLocaleString('id-ID')} berkas</td>
                     <td className="py-2.5 px-3 text-right">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        row.totalRequests >= 1400
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                        row.totalRequests >= 340000
                           ? (isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
-                          : row.totalRequests < 1000
+                          : row.totalRequests < 295000
                           ? (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/60 border-white/10')
                           : (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                       }`}>
-                        {row.totalRequests >= 1400 ? 'Puncak Klaim' : row.totalRequests < 1000 ? 'Akhir Pekan' : 'Optimal'}
+                        {row.totalRequests >= 340000 ? 'Puncak Klaim' : row.totalRequests < 295000 ? 'Akhir Pekan' : 'Optimal'}
                       </span>
                     </td>
                   </tr>

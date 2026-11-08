@@ -179,7 +179,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       status: 'KLARIFIKASI KUNING',
       date: '13 Okt 2026',
       notes: 'Jadwal HD overlap dengan entri SIMRS pada hari yang sama di faskes primer.',
-      flags: ['DUPLICATE_TIME'],
+      flags: ['DUPLIKAT'],
     },
   ];
 
@@ -554,7 +554,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                         }`}>
                           {c.hospital}
                         </div>
-                        <div className={`flex items-center space-x-1.5 text-[10.5px] font-mono mt-0.5 truncate ${
+                        <div className={`flex flex-wrap items-center gap-1.5 text-[10.5px] font-mono mt-0.5 ${
                           isLight ? 'text-slate-500' : 'text-white/50'
                         }`}>
                           <span className="font-semibold">{c.id}</span>

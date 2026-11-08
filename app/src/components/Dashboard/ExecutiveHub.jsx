@@ -172,57 +172,55 @@ const NATIONAL_OVERVIEW = {
 };
 
 const NATIONAL_TRENDS = {
-  // 1. RS Pengirim FPK Aktif Harian (cyan) - Siklus Faskes Nasional:
-  // Menampilkan variasi operasional faskes nyata: IGD akhir pekan (1.120), lonjakan Senin (3.190), Rabu (3.280), hingga penutupan Jumat
+  // 1. RS Pengirim FPK Aktif Harian (cyan) - Siklus Faskes Nasional (3.245 RS aktif harian dari 3.287 RS):
   auditor_trend: [
-    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 1120, note: 'Layanan IGD & Rawat Inap Darurat' },
-    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 3190, note: 'Lonjakan Pengiriman Berkas Awal Pekan' },
-    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 3245, note: 'Seluruh RS Rujukan Kelas A/B/C Aktif' },
-    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 3280, note: 'Puncak Partisipasi Faskes Mitra' },
-    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 3268, note: 'Pengajuan Berkas Lanjutan Terjadwal' },
-    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 3210, note: 'Penyelesaian Berkas Sebelum Rekap Pekan' },
-    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 1840, note: 'Poli Spesialis Setengah Hari & IGD' },
+    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 2980, note: 'Layanan IGD & Rawat Inap Terjadwal' },
+    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 3165, note: 'Peningkatan Pengiriman Berkas Awal Pekan' },
+    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 3210, note: 'Seluruh RS Rujukan Kelas A/B/C Aktif' },
+    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 3238, note: 'Partisipasi Faskes Mitra Stabil' },
+    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 3260, note: 'Pengajuan Berkas Lanjutan Terjadwal' },
+    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 3252, note: 'Penyelesaian Berkas Sebelum Rekap Pekan' },
+    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 3245, note: 'Sinkronisasi Nasional 3.245 RS Aktif' },
   ],
-  // 2. Kepatuhan SLA 10 Hari Kerja (blue) - Domain proporsional [95, 100]:
+  // 2. Kepatuhan SLA 10 Hari Kerja (blue) - Domain proporsional [97.5, 99.5]:
   sentiment_trend: [
-    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 99.2, note: 'Beban Rendah, Antrean Cepat' },
-    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 98.4, note: 'Lonjakan Berkas Masuk Awal Pekan' },
-    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 98.9, note: 'Verifikasi Reguler Stabil' },
-    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 98.6, note: 'Triage Otomatis Berkas Kompleks' },
-    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 98.8, note: 'Kepatuhan SLA Terjaga Ketat' },
+    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 98.1, note: 'Beban Terkendali, Antrean Cepat' },
+    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 98.6, note: 'Penapisan Awal Pekan Otomatis' },
+    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 98.4, note: 'Verifikasi Reguler Stabil' },
+    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 98.9, note: 'Triage Otomatis Berkas Kompleks' },
+    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 98.7, note: 'Kepatuhan SLA Terjaga Ketat' },
     { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 99.1, note: 'Pembersihan Antrean Akhir Pekan' },
-    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 99.3, note: 'SLA Selesai Optimal' },
+    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 98.7, note: 'SLA Nasional Terjaga 98,7%' },
   ],
-  // 3. Volume Beban Klaim Harian Masuk Nasional (purple) - 84.500 s/d 382.400 berkas:
+  // 3. Volume Beban Klaim Harian Masuk Nasional (purple) - Rata-rata 324.500 berkas/hari:
   cases_opened_trend: [
-    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 84500, note: 'Pengajuan Minimal Akhir Pekan' },
-    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 382400, note: 'Puncak Penyerahan FPK Nasional' },
-    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 341200, note: 'Beban Normal Hari Kerja' },
-    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 356800, note: 'Rekonsiliasi Pertengahan Pekan' },
-    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 338900, note: 'Pemrosesan Rutin Nasional' },
-    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 310200, note: 'Penutupan Verifikasi Pekan' },
-    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 142000, note: 'Aktivitas Faskes Setengah Hari' },
+    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 292000, note: 'Antrean Batch FPK Elektronik Akhir Pekan' },
+    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 318400, note: 'Penyerahan FPK Awal Pekan Nasional' },
+    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 358400, note: 'Puncak Beban Hari Kerja Nasional' },
+    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 296500, note: 'Siklus Jeda Rekonsiliasi Tengah Pekan' },
+    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 344200, note: 'Gelombang Kedua Pengajuan FPK' },
+    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 326500, note: 'Pemrosesan Rutin Nasional' },
+    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 324500, note: 'Volume Harian Nasional 324.500 Berkas' },
   ],
   // 3b. Volume Klaim Selesai Diverifikasi (untuk grafik siklus verifikasi masuk vs keluar)
   cases_closed_trend: [
-    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 81200, note: 'Kliring Berkas Akhir Pekan' },
-    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 368500, note: 'Penyelesaian Batch Otomatis' },
-    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 338400, note: 'Verifikasi Lolos Triage Normal' },
-    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 351200, note: 'Kliring Tengah Pekan' },
-    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 335000, note: 'Penyelesaian Klaim Berjalan' },
-    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 308500, note: 'Kliring Akhir Pekan Berkas FPK' },
-    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 139800, note: 'Tutup Buku Operasional Mingguan' },
+    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 289400, note: 'Kliring Berkas Akhir Pekan' },
+    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 314800, note: 'Penyelesaian Batch Otomatis' },
+    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 352900, note: 'Verifikasi Lolos Triage Normal' },
+    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 293100, note: 'Kliring Tengah Pekan' },
+    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 339800, note: 'Penyelesaian Klaim Berjalan' },
+    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 322400, note: 'Kliring Akhir Pekan Berkas FPK' },
+    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 320800, note: 'Tutup Buku Operasional Harian' },
   ],
   // 4. Latensi Penapisan DuckDB SIMD Engine dalam Milidetik (green):
-  // Menampilkan waktu pemrosesan vectorized sesungguhnya (18,4 ms - 38,6 ms), BUKAN menduplikasi volume klaim!
   latency_trend: [
-    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 18.4, note: 'Throughput Ringan 3,82 Juta/dtk' },
-    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 38.6, note: 'Penapisan Batch Penuh 382K Berkas' },
-    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 32.1, note: 'Vektor SIMD Berjalan Penuh' },
-    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 34.5, note: 'Deteksi Anomali Multithreaded' },
-    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 31.8, note: 'Kecepatan Stabil DuckDB OLAP' },
-    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 28.4, note: 'Penurunan Beban Verifikasi' },
-    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 21.0, note: 'Latensi Minimal Akhir Pekan' },
+    { date: '2026-10-18', day: 'Min', labelDate: 'Minggu, 18 Okt', value: 24.2, note: 'Throughput Tinggi 3,82 Juta/dtk' },
+    { date: '2026-10-19', day: 'Sen', labelDate: 'Senin, 19 Okt', value: 29.5, note: 'Penapisan Batch Awal Pekan' },
+    { date: '2026-10-20', day: 'Sel', labelDate: 'Selasa, 20 Okt', value: 34.8, note: 'Vektor SIMD Beban Puncak 358K' },
+    { date: '2026-10-21', day: 'Rab', labelDate: 'Rabu, 21 Okt', value: 26.4, note: 'Deteksi Anomali Multithreaded' },
+    { date: '2026-10-22', day: 'Kam', labelDate: 'Kamis, 22 Okt', value: 32.6, note: 'Kecepatan Stabil DuckDB OLAP' },
+    { date: '2026-10-23', day: 'Jum', labelDate: 'Jumat, 23 Okt', value: 28.8, note: 'Optimasi Memori Kolumnar' },
+    { date: '2026-10-24', day: 'Sab', labelDate: 'Sabtu, 24 Okt', value: 28.4, note: 'Latensi Rata-rata 28,4 ms' },
   ],
 };
 
@@ -632,12 +630,12 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
       }`}
       aria-label={`${title} metric`}
     >
-      <div className={`mb-3 flex items-start justify-between ${!hasSparkline ? 'mb-0' : ''}`}>
-        <div className="space-y-0.5">
-          <p className={`text-xs font-semibold uppercase tracking-wider text-balance ${
+      <div className={`mb-3 flex items-start justify-between gap-2 ${!hasSparkline ? 'mb-0' : ''}`}>
+        <div className="space-y-0.5 min-w-0">
+          <p className={`text-[11px] font-bold uppercase tracking-wide leading-snug ${
             isLight ? 'text-slate-500' : 'text-white/50'
           }`}>{title}</p>
-          <p className={`text-2xl font-bold tabular-nums tracking-tight ${
+          <p className={`text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap ${
             isLight ? 'text-slate-900' : 'text-white'
           }`}>{value}</p>
           <p className={`text-[11px] leading-tight text-pretty ${
@@ -645,9 +643,9 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
           }`}>{subtitle}</p>
         </div>
         {hasSparkline ? (
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-end gap-1 shrink-0">
             <div
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold border ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold border whitespace-nowrap ${
                 direction === 'up'
                   ? isLight
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
@@ -661,12 +659,12 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
                   : 'bg-white/10 text-white/70 border-white/15'
               }`}
             >
-              {direction === 'up' && <ArrowUp className="h-3 w-3" />}
-              {direction === 'down' && <ArrowDown className="h-3 w-3" />}
+              {direction === 'up' && <ArrowUp className="h-3 w-3 shrink-0" />}
+              {direction === 'down' && <ArrowDown className="h-3 w-3 shrink-0" />}
               {direction === 'flat' ? 'Stabil' : `${delta.toFixed(1)}%`}
             </div>
             {statSummary && (
-              <span className={`text-[9.5px] font-mono font-medium ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+              <span className={`text-[9px] font-mono font-medium whitespace-nowrap ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
                 {statSummary}
               </span>
             )}
@@ -742,8 +740,8 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           subtitle={dauSub}
           data={auditorPoints}
           unit="RS"
-          customDomain={isNational ? [800, 3600] : undefined}
-          statSummary={isNational ? "Min 1.120 · Puncak 3.280" : undefined}
+          customDomain={isNational ? [2850, 3380] : undefined}
+          statSummary={isNational ? "Puncak 3.260 RS" : undefined}
           color="cyan"
         />
         <MicroTrendCard
@@ -753,8 +751,8 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           subtitle={complianceSub}
           data={sentimentPoints}
           unit="%"
-          customDomain={isNational ? [95, 100] : undefined}
-          statSummary={isNational ? "SLA 10 HK: 98,4% - 99,3%" : undefined}
+          customDomain={isNational ? [97.4, 99.6] : undefined}
+          statSummary={isNational ? "SLA 10 HK: 98,1% - 99,1%" : undefined}
           color="blue"
         />
         <MicroTrendCard
@@ -764,8 +762,8 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           subtitle={volumeSub}
           data={openedPoints}
           unit="berkas"
-          customDomain={isNational ? [60000, 420000] : undefined}
-          statSummary={isNational ? "Puncak 382.400 berkas" : undefined}
+          customDomain={isNational ? [260000, 380000] : undefined}
+          statSummary={isNational ? "Puncak 358.400 berkas" : undefined}
           color="purple"
         />
         <MicroTrendCard
@@ -775,7 +773,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           subtitle={speedSub}
           data={latencyPoints}
           unit={isNational ? "ms" : "berkas"}
-          customDomain={isNational ? [10, 45] : undefined}
+          customDomain={isNational ? [20, 38] : undefined}
           statSummary={isNational ? "Throughput > 3,4 Juta/dtk" : undefined}
           color="green"
         />
@@ -1026,12 +1024,12 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
           ? 'bg-white border-slate-200 text-slate-900'
           : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-2xl text-white'
       }`}>
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Proporsi Tingkat Risiko Klaim</h3>
-          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h3 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>Proporsi Tingkat Risiko Klaim</h3>
+          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${
             isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/70 border-white/15'
           }`}>
-            {totalClaimsCount.toLocaleString('id-ID')} Berkas / Hari
+            {totalClaimsCount.toLocaleString('id-ID')} Berkas
           </span>
         </div>
         <div className="relative h-56 w-full flex items-center justify-center">
@@ -1041,8 +1039,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 data={severityData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={50}
-                outerRadius={76}
+                innerRadius={64}
+                outerRadius={88}
                 activeIndex={activeSeverity}
                 onMouseEnter={(_, index) => setActiveSeverity(index)}
                 paddingAngle={3}
@@ -1059,11 +1057,11 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className={`text-2xl font-bold tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <span className={`text-xl font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
               {totalClaimsCount.toLocaleString('id-ID')}
             </span>
-            <span className={`text-[10px] font-bold uppercase tracking-wider text-center ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Klaim Harian Nasional
+            <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+              BERKAS / HARI
             </span>
           </div>
         </div>
@@ -1137,13 +1135,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight }) {
                 name="Temuan Berkas"
               >
                 {topicData.map((_, index) => {
-                  // Unslop: One accent per chart. Lead finding gets BPJS Emerald accent, secondary findings sit in neutral ramp steps.
-                  const isLead = index === 0;
-                  const barFill = isLead
-                    ? (isLight ? '#008850' : '#10b981')
-                    : (isLight 
-                        ? (index === 1 ? '#475569' : index === 2 ? '#64748b' : '#94a3b8')
-                        : (index === 1 ? '#64748b' : index === 2 ? '#475569' : '#334155'));
+                  const TOPIC_BAR_COLORS = ['#e11d48', '#ea580c', '#d97706', '#0284c7', '#059669'];
+                  const barFill = TOPIC_BAR_COLORS[index % TOPIC_BAR_COLORS.length];
                   return (
                     <Cell
                       key={`topic-cell-${index}`}

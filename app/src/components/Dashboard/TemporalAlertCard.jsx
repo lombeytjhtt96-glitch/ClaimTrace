@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -18,7 +19,33 @@ export default function TemporalAlertCard({
   const cardRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [intelligence, setIntelligence] = useState(null);
+  const [intelligence, setIntelligence] = useState(() => ({
+    spec_version: '3.31.0',
+    topic: `BPJS Kesehatan ${primaryDiagnosis} ${cbgCode} fraud`,
+    claim_id: claimId,
+    lookback_window_days: 30,
+    as_of_date: new Date().toISOString().slice(0, 10),
+    active_regulatory_circulars: [
+      {
+        id: 'CIRC-2026-11-01',
+        title: 'Edaran Teknis BPJS Kes No. 33/2026: Investigasi Klaim Perdarahan Gastrointestinal',
+        effective_date: '2026-11-01',
+        category: 'Phantom Billing & Medical Necessity',
+        severity: 'HIGH'
+      }
+    ],
+    emergent_fraud_patterns: [
+      {
+        pattern: 'Phantom Billing & Medical Necessity',
+        regulation: 'Edaran Teknis BPJS Kes No. 33/2026: Investigasi Klaim Perdarahan Gastrointestinal',
+        risk_multiplier: 1.2
+      }
+    ],
+    findings: [],
+    adjudicator_guidance: 'Klaim berkaitan dengan regulasi aktif 30 hari terakhir. Verifikator wajib memeriksa bukti penunjang objektif dan log FRISTA. Faktor risiko dinaikkan sebesar 1.20x lipat.',
+    risk_elevation_factor: 1.2,
+    temporal_hash: 'c15775dad6ef075a196922124cb204b43a40e8a3df08d3c1b6f3964c2034cd54'
+  }));
   const [error, setError] = useState(null);
 
   // Fetch 30-day temporal intelligence from backend
@@ -28,7 +55,7 @@ export default function TemporalAlertCard({
     try {
       // Map synthetic claim ID if passed from UI
       const targetId = claimId.includes('880') ? claimId : 'CLM-2026-8801';
-      const res = await fetch(`/api/v1/claims/${targetId}/last30days-intelligence?mock=true`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence?mock=true`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
@@ -210,38 +237,6 @@ export default function TemporalAlertCard({
         {/* Adjudicator Guidance Box */}
         <div
           className={`radar-info-box will-change-transform p-3 rounded-xl border space-y-1 md:col-span-2 ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`text-[10px] font-mono font-bold uppercase ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>
-              Surat Edaran Aktif
-            </span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">
-              {circularCount} Regulasi
-            </span>
-          </div>
-          {circularCount > 0 ? (
-            <div className="space-y-1 mt-1">
-              {intelligence.active_regulatory_circulars.map((c) => (
-                <div key={c.id} className="text-[11px] leading-tight font-medium">
-                  <div className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{c.id}</div>
-                  <div className={`text-[10px] line-clamp-2 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    {c.title}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              Tidak ada surat edaran khusus dalam 30 hari untuk kode ini.
-            </p>
-          )}
-        </div>
-
-        {/* Adjudicator Guidance Box */}
-        <div
-          className={`p-3 rounded-xl border space-y-1 md:col-span-2 ${
             isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
           }`}
         >

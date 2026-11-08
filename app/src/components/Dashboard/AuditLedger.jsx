@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
+  Shield, ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
   Search, Filter, Download, RefreshCw, Key, Hash, 
   Clock, User, ExternalLink, ChevronRight, FileText, Check, Sparkles, Layers,
   Copy, FileDown, Terminal, X, ShieldAlert
@@ -600,14 +600,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-2xl shadow-[#00081c]/50'
         }`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-center space-x-3">
-              <span className={`p-2 rounded-xl shadow-xs border ${
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start space-x-3">
+              <span className={`p-2 rounded-xl shadow-xs border shrink-0 mt-0.5 ${
                 isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
               }`}>
                 <ShieldCheck className={`w-5 h-5 ${isLight ? 'text-emerald-700' : 'text-cyan-400'}`} />
               </span>
-              <div>
+              <div className="min-w-0 flex-1">
                 <h1 className={`text-base font-bold tracking-tight flex flex-wrap items-center gap-2 ${
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
@@ -623,13 +623,13 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     MITRE D3FEND: D3-DS · NIST CSF 2.0: PR.DS-01 · ATT&CK: Anti-T1070
                   </span>
                 </h1>
-                <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                   Buku besar keputusan verifikator, pemicu verifikasi peserta, dan akses data medis yang dirangkai secara <em>hash-chaining</em> anti-rekayasa sesuai standar audit BPK, KPK, dan mitigasi anti-tampering.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap pt-1">
               <button type="button"
                 onClick={handleVerifyLedger}
                 disabled={isVerifying}

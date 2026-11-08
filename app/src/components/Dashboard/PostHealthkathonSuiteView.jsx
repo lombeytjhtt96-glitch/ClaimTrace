@@ -1000,9 +1000,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   <Icon className="w-4 h-4 stroke-[2.25]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold truncate">{tab.title}</div>
+                  <div className="text-[11.5px] font-bold leading-snug">{tab.title}</div>
                   <div
-                    className={`text-[10px] truncate mt-0.5 ${
+                    className={`text-[10px] leading-tight mt-0.5 ${
                       active ? (isLight ? 'text-emerald-50' : 'text-emerald-300') : isLight ? 'text-slate-500' : 'text-slate-400'
                     }`}
                   >

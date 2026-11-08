@@ -700,61 +700,76 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
         </div>
 
         {/* Advanced 5-Column Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           {/* Search */}
-          <div className="relative">
-            <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${
-              isLight ? 'text-slate-400' : 'text-white/40'
-            }`} />
-            <input aria-label="Cari FKRTL, DPJP, verifikator..."
-              type="text"
-              placeholder="Cari FKRTL, DPJP, verifikator..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-9 pr-4 py-2 rounded-xl text-sm border focus:outline-none transition ${
-                isLight
-                  ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-emerald-500'
-                  : 'bg-white/5 border-white/10 text-white placeholder-white/40 focus:border-[#FFCA40]/60'
-              }`}
-            />
+          <div>
+            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              Pencarian Cepat
+            </span>
+            <div className="relative">
+              <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${
+                isLight ? 'text-slate-400' : 'text-white/40'
+              }`} />
+              <input aria-label="Cari FKRTL, DPJP, verifikator..."
+                type="text"
+                placeholder="Cari FKRTL, DPJP, verif..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full pl-9 pr-4 py-2 rounded-xl text-sm border focus:outline-none transition ${
+                  isLight
+                    ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-emerald-500'
+                    : 'bg-white/5 border-white/10 text-white placeholder-white/40 focus:border-[#FFCA40]/60'
+                }`}
+              />
+            </div>
           </div>
 
           {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Filter berdasarkan status jadwal"
-            className={`px-4 py-2 rounded-xl font-semibold text-sm border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-200 text-slate-800 focus:border-emerald-500'
-                : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
-            }`}
-          >
-            <option value="all">Semua Status (All Statuses)</option>
-            <option value="scheduled">Terjadwal (Scheduled)</option>
-            <option value="completed">Selesai (Completed)</option>
-            <option value="cancelled">Dibatalkan (Cancelled)</option>
-            <option value="no_show">Tidak Hadir (No Show)</option>
-          </select>
+          <div>
+            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              Status Jadwal
+            </span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter berdasarkan status jadwal"
+              className={`w-full px-4 py-2 rounded-xl font-semibold text-sm border focus:outline-none cursor-pointer ${
+                isLight
+                  ? 'bg-white border-slate-200 text-slate-800 focus:border-emerald-500'
+                  : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
+              }`}
+            >
+              <option value="all">Semua Status (All Statuses)</option>
+              <option value="scheduled">Terjadwal (Scheduled)</option>
+              <option value="completed">Selesai (Completed)</option>
+              <option value="cancelled">Dibatalkan (Cancelled)</option>
+              <option value="no_show">Tidak Hadir (No Show)</option>
+            </select>
+          </div>
 
           {/* Appointment Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            aria-label="Filter berdasarkan jenis klarifikasi"
-            className={`px-4 py-2 rounded-xl font-semibold text-sm border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-200 text-slate-800 focus:border-emerald-500'
-                : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
-            }`}
-          >
-            <option value="all">Semua Jenis (All Types)</option>
-            {appointmentTypes.map((type) => (
-              <option key={type.id} value={type.id.toString()}>
-                {type.name}
-              </option>
-            ))}
-          </select>
+          <div>
+            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              Jenis Klarifikasi
+            </span>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              aria-label="Filter berdasarkan jenis klarifikasi"
+              className={`w-full px-4 py-2 rounded-xl font-semibold text-sm border focus:outline-none cursor-pointer ${
+                isLight
+                  ? 'bg-white border-slate-200 text-slate-800 focus:border-emerald-500'
+                  : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
+              }`}
+            >
+              <option value="all">Semua Jenis (All Types)</option>
+              {appointmentTypes.map((type) => (
+                <option key={type.id} value={type.id.toString()}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Date From */}
           <div className="relative">
