@@ -1274,7 +1274,7 @@ function OnDutyVerifikatorsPanel({ counselors, onManageCounselors, isLight }) {
                     </div>
                   </td>
                   <td className={`px-4 py-3 text-sm font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                    {counselor.total_patients} berkas
+                    {Number(counselor.total_patients || 0).toLocaleString('id-ID')} berkas
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
@@ -1292,7 +1292,7 @@ function OnDutyVerifikatorsPanel({ counselors, onManageCounselors, isLight }) {
                       <div className="flex items-center justify-between text-xs">
                         <span className={workload.textClass}>{workload.label}</span>
                         <span className={isLight ? 'text-slate-500' : 'text-white/60'}>
-                          {counselor.upcoming_appointments} antrean baru
+                          {Number(counselor.upcoming_appointments || 0).toLocaleString('id-ID')} antrean baru
                         </span>
                       </div>
                       <div className={`h-1.5 w-full rounded-full ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
@@ -1555,7 +1555,7 @@ function ClaimAnomalyOverviewCard({ trendingTopics, severityDistribution, isLigh
                       : isLight ? 'text-emerald-700' : 'text-emerald-400'
                   }`}
                 >
-                  {count}
+                  {Number(count || 0).toLocaleString('id-ID')}
                 </div>
                 <div className={`text-xs capitalize font-semibold mt-0.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>{level}</div>
               </div>
@@ -1617,7 +1617,7 @@ function ClaimAnomalyOverviewCard({ trendingTopics, severityDistribution, isLigh
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${style.dot}`} />
                   <span>{topic.topic}</span>
                   <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded-md border ${style.badge}`}>
-                    {topic.count} berkas
+                    {Number(topic.count || 0).toLocaleString('id-ID')} berkas
                   </span>
                 </span>
               );
