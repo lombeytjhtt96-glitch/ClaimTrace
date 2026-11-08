@@ -134,6 +134,9 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if path.startswith("/api/v1/auth"):
             limit, window = 20, 60
             key = f"auth:{client_ip}"
+        elif path.startswith("/api/v1/wbs"):
+            limit, window = 15, 60
+            key = f"wbs:{client_ip}"
         elif path.startswith("/api/v1/claimtrace-ai"):
             limit, window = 35, 60
             key = f"ai:{client_ip}"

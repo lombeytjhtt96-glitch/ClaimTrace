@@ -76,6 +76,10 @@ class ClaimInput(BaseModel):
     fkl31_tarif_cbg: Optional[int] = None
     fkl47_biaya_tagih: Optional[int] = None
     fkl48_biaya_verifikasi: Optional[int] = None
+    status_verifikasi: Optional[str] = None
+    catatan_verifikator: Optional[str] = None
+    tanggal_verifikasi: Optional[str] = None
+    adjudicated_by: Optional[str] = None
 
 class AIAnomalyFeatureDriver(BaseModel):
     feature_name: str
@@ -313,12 +317,12 @@ class FrameworkCatalogResponse(BaseModel):
     top_fraud_skills: List[Dict[str, Any]]
 
 class WbsReportInput(BaseModel):
-    category: str
-    faskes_name: str
-    location: Optional[str] = None
-    reporter_contact: Optional[str] = None
+    category: str = Field(..., max_length=100)
+    faskes_name: str = Field(..., min_length=2, max_length=250)
+    location: Optional[str] = Field(None, max_length=150)
+    reporter_contact: Optional[str] = Field(None, max_length=120)
     is_anonymous: bool = False
-    description: str
+    description: str = Field(..., min_length=5, max_length=10000)
 
 class WbsReportRecord(BaseModel):
     ticket_id: str

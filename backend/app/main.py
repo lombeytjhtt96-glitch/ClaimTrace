@@ -1362,6 +1362,11 @@ def record_verifier_decision(
     claim = SYNTHETIC_CLAIMS_DATABASE[claim_id]
     current_triage = evaluate_claim_triage(claim)
 
+    claim.status_verifikasi = req.decision
+    claim.catatan_verifikator = req.catatan_verifikator
+    claim.tanggal_verifikasi = datetime.now(timezone.utc).isoformat()
+    claim.adjudicated_by = subject.nip
+
     log_entry = audit_logger.record_event(
         event_type="HUMAN_VERIFIER_DECISION",
         claim_id=claim_id,
@@ -1407,13 +1412,22 @@ def get_audit_chain():
 # WHISTLEBLOWING SYSTEM (WBS) FASKES ENDPOINTS (UU PDP No. 27/2022 & LPSK)
 # ============================================================================
 
+WBS_IDEMPOTENCY_CACHE: Dict[str, WbsReportResponse] = {}
+
 @app.post("/api/v1/wbs/report", response_model=WbsReportResponse)
-def submit_wbs_report(report: WbsReportInput):
+def submit_wbs_report(
+    report: WbsReportInput,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")
+):
     """
     Submits a formal whistleblowing report on suspected claim anomalies to BPJS Kesehatan.
     Enforces UU PDP No. 27/2022 & UU LPSK No. 31/2014 by scrubbing contact info if anonymous.
     Appends an immutable SHA-256 event into the cryptographic Audit Ledger.
+    Defends against race conditions and duplicate submissions via RFC Idempotency-Key header.
     """
+    if idempotency_key and idempotency_key.strip() in WBS_IDEMPOTENCY_CACHE:
+        return WBS_IDEMPOTENCY_CACHE[idempotency_key.strip()]
+
     if not report.faskes_name or not report.faskes_name.strip():
         raise HTTPException(status_code=400, detail="Nama fasilitas kesehatan (Faskes) wajib diisi.")
     if not report.description or not report.description.strip():
@@ -1480,7 +1494,7 @@ def submit_wbs_report(report: WbsReportInput):
     WBS_REPORTS_DATABASE[ticket_id] = record
     _persist_wbs_reports(WBS_REPORTS_DATABASE)
 
-    return WbsReportResponse(
+    response_obj = WbsReportResponse(
         success=True,
         ticket_id=ticket_id,
         category=report.category,
@@ -1495,6 +1509,9 @@ def submit_wbs_report(report: WbsReportInput):
         sla_deadline_days=10,
         message="Laporan pengaduan integritas berhasil dienkripsi dan masuk ke basis data verifikator BPJS Kesehatan serta terpatri dalam Audit Ledger SHA-256."
     )
+    if idempotency_key and idempotency_key.strip():
+        WBS_IDEMPOTENCY_CACHE[idempotency_key.strip()] = response_obj
+    return response_obj
 
 @app.get("/api/v1/wbs/track/{ticket_id}", response_model=WbsTrackResponse)
 def track_wbs_report(ticket_id: str):
