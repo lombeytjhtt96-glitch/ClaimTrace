@@ -481,11 +481,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
                     Gagal memuat Google reCAPTCHA (periksa koneksi atau izin domain).
                   </p>
                 )}
-                {!recaptchaToken && !recaptchaError && (
-                  <p className={`text-[10px] mt-1 text-center ${effectiveIsLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                    Centang kotak &quot;Saya bukan robot&quot; di atas untuk verifikasi anti-bot Google Cloud Fraud Defense
-                  </p>
-                )}
               </div>
             </div>
 
