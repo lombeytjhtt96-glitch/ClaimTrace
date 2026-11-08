@@ -3669,6 +3669,92 @@ async def generate_official_berita_acara(
 
     return dossier
 
+@app.get("/api/v1/claims/{claim_id}/official-bakb")
+def get_official_bakb_document(claim_id: str):
+    """
+    Mengambil dokumen Berita Acara Kelengkapan Berkas (BAKB) digital resmi berstempel SHA-256
+    lengkap dengan format HTML siap cetak/pratinjau untuk audit eksternal BPK dan Wasrik BPJS Kesehatan.
+    """
+    dossier = expansion_engine.generate_berita_acara_dossier(
+        claim_id=claim_id,
+        verifier_name="dr. Siti Rahma, Sp.PK",
+        verifier_nip="198704202011012001",
+        action_type="TUNDA_BERITA_ACARA_KLARIFIKASI"
+    )
+    
+    cs = dossier["claim_summary"]
+    seal = dossier["cryptographic_seal"]
+    v = dossier["verifier"]
+    
+    html_printable = f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>BAKB BPJS Kesehatan - {dossier['ba_number']}</title>
+  <style>
+    body {{ font-family: 'Times New Roman', Times, serif; margin: 40px; color: #111; line-height: 1.5; }}
+    .header {{ text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 24px; }}
+    .header h2 {{ margin: 0; font-size: 16pt; letter-spacing: 1px; color: #0d5f38; }}
+    .header p {{ margin: 2px 0; font-size: 10pt; color: #333; }}
+    .title {{ text-align: center; font-weight: bold; font-size: 13pt; margin: 20px 0 6px 0; text-decoration: underline; }}
+    .doc-num {{ text-align: center; font-size: 10pt; font-family: monospace; margin-bottom: 24px; }}
+    table.data-table {{ width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 10pt; }}
+    table.data-table th, table.data-table td {{ border: 1px solid #777; padding: 6px 10px; text-align: left; }}
+    table.data-table th {{ background-color: #f0f4f2; }}
+    .verdict-box {{ background: #fff5f5; border: 1px solid #e53e3e; padding: 12px; border-radius: 4px; margin: 16px 0; font-size: 10pt; }}
+    .signature-area {{ display: flex; justify-content: space-between; margin-top: 48px; page-break-inside: avoid; }}
+    .seal-info {{ font-family: monospace; font-size: 8pt; color: #555; max-width: 320px; }}
+    .sign-box {{ text-align: center; width: 220px; }}
+    @media print {{ body {{ margin: 20mm; }} }}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>BPJS KESEHATAN KANTOR PUSAT</h2>
+    <p>Direktorat Jaminan Pelayanan Kesehatan &middot; Kedeputian Bidang Pengawasan dan Pemeriksaan FPK</p>
+    <p>Jl. Letjen Suprapto Kav. 20 No. 14, Cempaka Putih, Jakarta Pusat 10510</p>
+  </div>
+  <div class="title">BERITA ACARA HASIL UJI KELENGKAPAN BERKAS DAN KOREKSI TARIF KLAIM (BAKB)</div>
+  <div class="doc-num">Nomor: {dossier['ba_number']}</div>
+  <p>Pada hari ini, telah dilakukan evaluasi telaah pra-pembayaran terhadap pengajuan klaim fasilitas kesehatan rujukan tingkat lanjutan (FKRTL) dengan ringkasan sebagai berikut:</p>
+  <table class="data-table">
+    <tr><th width="30%">Fasilitas Kesehatan</th><td>{cs['hospital']} ({cs['hospital_class']})</td></tr>
+    <tr><th>Nomor SEP / Berkas</th><td><strong>{cs['sep_number']}</strong> (ID Internal: {cs['claim_id']})</td></tr>
+    <tr><th>Prosedur INA-CBG</th><td>{cs['ina_cbg_claimed']}</td></tr>
+    <tr><th>Diagnosa ICD-10</th><td>{cs['icd10_primary']}</td></tr>
+    <tr><th>Biaya Tagihan FKRTL (FKL47)</th><td>Rp {cs['claimed_tariff_rp']:,.0f}</td></tr>
+    <tr><th>Biaya Disetujui (FKL48)</th><td>Rp {cs['verified_tariff_rp']:,.0f}</td></tr>
+    <tr><th>Nilai Koreksi Tarif / DJS</th><td><strong style="color:#c53030">Rp {cs['potential_recovery_rp']:,.0f}</strong></td></tr>
+  </table>
+  <div class="verdict-box">
+    <strong>Ketetapan Verifikator:</strong> {dossier['action_taken']}<br>
+    <strong>Uraian Temuan:</strong> {cs['clinical_discrepancy']}<br>
+    <strong>Dasar Regulasi:</strong> {cs['regulation_ref']}
+  </div>
+  <div class="signature-area">
+    <div class="seal-info">
+      <strong>Segel Kriptografis (UU ITE No. 1/2024):</strong><br>
+      Algoritma: {seal['algorithm']}<br>
+      Hash SHA-256:<br>
+      <code>{seal['document_hash']}</code><br>
+      Waktu Penerbitan: {dossier['issued_at']}
+    </div>
+    <div class="sign-box">
+      <p>Pejabat Verifikator Medis,</p>
+      <br><br><br>
+      <p><strong><u>{v['name']}</u></strong><br>NIP. {v['nip']}</p>
+    </div>
+  </div>
+</body>
+</html>"""
+
+    return {
+        "status": "success",
+        "claim_id": claim_id,
+        "dossier": dossier,
+        "html_printable": html_printable
+    }
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
