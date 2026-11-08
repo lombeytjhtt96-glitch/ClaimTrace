@@ -30,7 +30,8 @@ chroma_db/
 # Local tooling & design artifacts
 .agent/
 .agents/
-.claude/
+.claude/*
+!.claude/skills/
 .codex/
 .cursor/
 design-skills/
