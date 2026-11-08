@@ -1,0 +1,39 @@
+# ClaimTrace BPJS Kesehatan - robots.txt
+# GEO-first AI Crawler Configuration & Search Engine Directives
+
+User-agent: *
+Allow: /
+Disallow: /api/v1/auth/
+Disallow: /private/
+Disallow: /internal/
+
+# Tier 1: AI Search Crawlers (OpenAI, Anthropic, Perplexity, Google AI, Apple)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Sitemap & LLMs Guidance
+Sitemap: https://claimtrace.bpjs-kesehatan.go.id/sitemap.xml
+# LLMs Machine-Readable Summary
+# llms.txt: https://claimtrace.bpjs-kesehatan.go.id/llms.txt
+# llms-full.txt: https://claimtrace.bpjs-kesehatan.go.id/llms-full.txt
