@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { INDONESIA_PROVINCES, ALL_KABUPATEN_KOTA, TOTAL_KABUPATEN_KOTA, TOTAL_PROVINSI } from '../../data/indonesiaRegions';
+import { INDONESIA_PROVINCES } from '../../data/indonesiaRegions';
 
 export default function RegionSelector({ 
   value, 
@@ -28,7 +28,7 @@ export default function RegionSelector({
     const prov = e.target.value;
     setSelectedProvince(prov);
     if (!prov) {
-      // Keep or reset
+      // keep
     } else {
       // If the currently selected city doesn't belong to the newly selected province, reset city
       if (value) {
@@ -60,20 +60,15 @@ export default function RegionSelector({
 
   return (
     <div className="space-y-2">
-      {/* 1. Filter Provinsi Dropdown */}
+      {/* 1. Dropdown Provinsi */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[11px]">
-          <span className={`font-semibold ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-            Langkah 1: Pilih Provinsi (Penyaring Otomatis)
-          </span>
-          <span className={`text-[10px] font-mono ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-            {TOTAL_PROVINSI} Provinsi
-          </span>
-        </div>
+        <label className={`text-xs font-semibold block ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+          Provinsi
+        </label>
         <select
           value={selectedProvince}
           onChange={handleProvinceChange}
-          aria-label="Pilih Provinsi untuk menyaring kabupaten atau kota"
+          aria-label="Provinsi"
           className={`w-full px-3 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
             isLight
               ? 'bg-slate-50 border-slate-300 text-slate-800 hover:bg-white focus-visible:bg-white'
@@ -81,7 +76,7 @@ export default function RegionSelector({
           }`}
         >
           <option value="" className={isLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"}>
-            -- Tampilkan Semua 38 Provinsi --
+            -- Semua Provinsi --
           </option>
           {provinceList.map((p) => (
             <option 
@@ -89,27 +84,22 @@ export default function RegionSelector({
               value={p}
               className={isLight ? "bg-white text-slate-900" : "bg-[#00134A] text-white"}
             >
-              Provinsi {p} ({INDONESIA_PROVINCES[p].length} Wilayah)
+              {p}
             </option>
           ))}
         </select>
       </div>
 
-      {/* 2. Pilih Kabupaten / Kota Dropdown */}
+      {/* 2. Dropdown Kabupaten / Kota */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[11px]">
-          <span className={`font-semibold ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-            Langkah 2: Pilih Kabupaten / Kota (Langsung Klik)
-          </span>
-          <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-            {selectedProvince ? `${currentCities.length} Pilihan di ${selectedProvince}` : `514 Wilayah se-Indonesia`}
-          </span>
-        </div>
+        <label htmlFor={id} className={`text-xs font-semibold block ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+          Kabupaten / Kota
+        </label>
         <select
           id={id}
           value={value}
           onChange={handleCityChange}
-          aria-label="Pilih Kabupaten atau Kota di Indonesia"
+          aria-label="Kabupaten atau Kota"
           className={`w-full px-3 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
             value
               ? isLight
@@ -121,12 +111,9 @@ export default function RegionSelector({
           }`}
         >
           <option value="" className={isLight ? "bg-white text-slate-500" : "bg-[#00134A] text-white/50"}>
-            {selectedProvince 
-              ? `-- Pilih Kabupaten / Kota di ${selectedProvince} --`
-              : `-- Pilih Kabupaten / Kota (514 Wilayah se-Indonesia) --`}
+            -- Pilih Kabupaten / Kota --
           </option>
 
-          {/* If a province is selected, list only its cities */}
           {selectedProvince ? (
             currentCities.map((city) => (
               <option 
@@ -138,11 +125,10 @@ export default function RegionSelector({
               </option>
             ))
           ) : (
-            /* Otherwise, list all 514 grouped by optgroup for all 38 provinces */
             Object.entries(INDONESIA_PROVINCES).map(([prov, cities]) => (
               <optgroup 
                 key={prov} 
-                label={`Provinsi ${prov} (${cities.length} Wilayah)`}
+                label={prov}
                 className={isLight ? "bg-slate-100 text-slate-900 font-bold" : "bg-[#000c24] text-emerald-400 font-bold"}
               >
                 {cities.map((city) => (
@@ -151,7 +137,7 @@ export default function RegionSelector({
                     value={`${city}, ${prov}`}
                     className={isLight ? "bg-white text-slate-900 font-normal" : "bg-[#00134A] text-white font-normal"}
                   >
-                    {city} ({prov})
+                    {city}
                   </option>
                 ))}
               </optgroup>
@@ -160,7 +146,7 @@ export default function RegionSelector({
         </select>
       </div>
 
-      {/* Selected Value Confirmation Badge */}
+      {/* Selected Value Confirmation */}
       {value && (
         <div className={`p-2 rounded-lg border text-[11px] flex items-center justify-between transition ${
           isLight 
@@ -170,7 +156,7 @@ export default function RegionSelector({
           <div className="flex items-center gap-1.5 overflow-hidden">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span className="font-semibold truncate">
-              Wilayah Terpilih: <strong>{value}</strong>
+              {value}
             </span>
           </div>
           <button

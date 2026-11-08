@@ -1570,20 +1570,14 @@ export default function LandingPage({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label htmlFor="wbs-region-select" className={`font-bold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
-                            Wilayah / Kabupaten-Kota
-                          </label>
-                          <span className={`text-[10px] font-mono font-semibold ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                            514 Wilayah se-Indonesia
-                          </span>
-                        </div>
+                        <label htmlFor="wbs-region-select" className={`font-bold block ${effectiveIsLight ? 'text-slate-700' : 'text-white/80'}`}>
+                          Wilayah / Kabupaten-Kota
+                        </label>
                         <RegionSelector
                           id="wbs-region-select"
                           value={formLocation}
                           onChange={(val) => setFormLocation(val)}
                           isLight={effectiveIsLight}
-                          placeholder="Pilih Kabupaten / Kota (514 Wilayah se-Indonesia)..."
                         />
                       </div>
 
