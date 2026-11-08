@@ -692,7 +692,7 @@ export default function App() {
                       isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
                     }`}
                   >
-                    <span>Pengaduan WBS</span>
+                    <span>Kontak Resmi</span>
                   </button>
 
                   <button
