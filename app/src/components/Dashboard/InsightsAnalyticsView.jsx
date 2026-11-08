@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   Search,
 } from 'lucide-react';
+import { API_BASE_URL } from '../../services/apiConfig';
 
 const CHART_COLORS = ['#059669', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
 
@@ -384,7 +385,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
             <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${val} berkas`, 'Volume']} />
+        <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${Number(val).toLocaleString('id-ID')} berkas`, 'Volume']} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
       </PieChart>
     );
@@ -392,8 +393,8 @@ function getChartForQueryType(queryName, data, isLight = false) {
     return (
       <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
         <XAxis dataKey="name" tickLine={false} tick={{ fontSize: 11, fill: tickFill }} axisLine={{ stroke: isLight ? '#cbd5e1' : 'rgba(255,255,255,0.1)' }} />
-        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: tickFill }} />
-        <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${val} berkas`, 'Jumlah Temuan']} />
+        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: tickFill }} tickFormatter={(v) => Number(v).toLocaleString('id-ID')} />
+        <Tooltip contentStyle={tooltipStyle} cursor={false} formatter={(val) => [`${Number(val).toLocaleString('id-ID')} berkas`, 'Jumlah Temuan']} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
         <Bar
           dataKey="value"
@@ -431,8 +432,8 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  // Privacy status state
-  const [status] = useState({
+  // Privacy status state (dynamically tracked from backend)
+  const [status, setStatus] = useState({
     k_value: 12,
     k_threshold: 5,
     epsilon_used: 7.1,
@@ -443,8 +444,8 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   // Query Selector state
   const [selectedQuery, setSelectedQuery] = useState('high_risk_trends');
-  const [startDate, setStartDate] = useState('2026-10-18');
-  const [endDate, setEndDate] = useState('2026-10-24');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [severity, setSeverity] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState({
@@ -456,11 +457,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
       'Agregasi Zero-PHI',
       'Sintesis AI Wawasan JKN (IA Agent)',
     ],
-    execution_time_ms: 342,
+    execution_time_ms: 56,
     summary: QUERY_RESULTS_MAP.high_risk_trends.summary,
     recommendations: QUERY_RESULTS_MAP.high_risk_trends.recommendations,
     result: {
-      total_records_anonymized: 158,
+      total_records_anonymized: 5415,
       k_anonymity_satisfied: true,
       data: QUERY_RESULTS_MAP.high_risk_trends.data,
     },
@@ -474,6 +475,76 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   const [selectedReportModal, setSelectedReportModal] = useState(null);
   const [showAllReportsModal, setShowAllReportsModal] = useState(false);
   const [reportSearchQuery, setReportSearchQuery] = useState('');
+
+  // Fetch real privacy status from live backend
+  const fetchPrivacyStatus = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/insights/privacy-status`);
+      if (res.ok) {
+        const data = await res.json();
+        setStatus({
+          k_value: data.k_value || 12,
+          k_threshold: data.k_threshold || 5,
+          epsilon_used: typeof data.epsilon_used === 'number' ? data.epsilon_used : 7.1,
+          epsilon_total: typeof data.epsilon_total === 'number' ? data.epsilon_total : 20.0,
+          consented_users: data.consented_users || 324,
+          total_users: data.total_users || 500,
+        });
+      }
+    } catch (err) {
+      console.warn('Gagal memuat status privasi backend', err);
+    }
+  };
+
+  // Fetch real synthesized audit reports from live backend
+  const fetchReports = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/insights/reports`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setReports(data);
+        }
+      }
+    } catch (err) {
+      console.warn('Gagal memuat laporan analitik backend', err);
+    }
+  };
+
+  // Execute live analytical query against backend DuckDB
+  const executeLiveQuery = async (queryType, sDate, eDate, sev) => {
+    const qName = queryType || selectedQuery;
+    if (!qName) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/insights/execute-query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query_type: qName,
+          start_date: sDate !== undefined ? sDate : startDate,
+          end_date: eDate !== undefined ? eDate : endDate,
+          severity: sev !== undefined ? sev : severity,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResult(data);
+        await fetchPrivacyStatus();
+      }
+    } catch (err) {
+      console.error('Gagal mengeksekusi kueri analitik DuckDB', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Run on mount
+  useEffect(() => {
+    fetchPrivacyStatus();
+    fetchReports();
+    executeLiveQuery('high_risk_trends', '', '', '');
+  }, []);
 
   // Close modals on Escape key
   useEffect(() => {
@@ -506,43 +577,23 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   const selectedQueryInfo = ALLOW_LISTED_QUERIES.find((q) => q.value === selectedQuery);
 
+  const handleQueryChange = (newQuery) => {
+    setSelectedQuery(newQuery);
+    executeLiveQuery(newQuery, startDate, endDate, severity);
+  };
+
   const handleExecute = () => {
-    if (!selectedQuery) return;
-    setLoading(true);
-    setTimeout(() => {
-      const template = QUERY_RESULTS_MAP[selectedQuery] || QUERY_RESULTS_MAP.default;
-      const queryObj = ALLOW_LISTED_QUERIES.find((q) => q.value === selectedQuery);
-      setResult({
-        query_name: selectedQuery,
-        query_label: queryObj?.label || selectedQuery,
-        execution_path: [
-          'Validasi Otorisasi Verifikator',
-          'Filter K-Anonymity (k≥5)',
-          'Agregasi Zero-PHI',
-          'Sintesis AI Wawasan JKN (IA Agent)',
-        ],
-        execution_time_ms: 342,
-        summary: template.summary,
-        recommendations: template.recommendations,
-        result: {
-          total_records_anonymized: 158,
-          k_anonymity_satisfied: true,
-          data: template.data,
-        },
-        privacy_metadata: {
-          k_value: 12,
-          epsilon_used: 0.35,
-          delta_used: 1e-5,
-        },
-      });
-      setLoading(false);
-    }, 450);
+    executeLiveQuery(selectedQuery, startDate, endDate, severity);
   };
 
   const handleExportCSV = () => {
-    if (!result) return;
-    const csvContent = JSON.stringify(result.result.data, null, 2);
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    if (!result?.result?.data) return;
+    const items = result.result.data;
+    if (!Array.isArray(items) || items.length === 0) return;
+    const header = Object.keys(items[0]).join(',');
+    const rows = items.map((row) => Object.values(row).join(','));
+    const csvContent = [header, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -628,7 +679,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   k = {status.k_value}
                 </p>
                 <p className={`text-xs mt-1 font-mono relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Ambang batas: k ≥ {status.k_threshold} klaim/kelompok (Terpenuhi: Margin +140%)
+                  Ambang batas: k ≥ {status.k_threshold} klaim/kelompok (Terpenuhi: Margin +{Math.max(0, Math.round(((status.k_value - status.k_threshold) / status.k_threshold) * 100))}%)
                 </p>
                 <div className={`mt-4 h-2 rounded-full overflow-hidden relative z-10 ${
                   isLight ? 'bg-slate-200' : 'bg-white/10'
@@ -765,7 +816,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 <select
                   id="query-select"
                   value={selectedQuery}
-                  onChange={(e) => setSelectedQuery(e.target.value)}
+                  onChange={(e) => handleQueryChange(e.target.value)}
                   className={`block w-full rounded-xl text-sm py-3 px-4 transition-all cursor-pointer border ${
                     isLight
                       ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500'

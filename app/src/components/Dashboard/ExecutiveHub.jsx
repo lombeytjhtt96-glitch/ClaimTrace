@@ -1909,7 +1909,7 @@ export default function ExecutiveHub({
   }, [isReportModalOpen, isCampaignModalOpen]);
   const [benchmarkData, setBenchmarkData] = useState({
     status: 'success',
-    operational_since: '2014-01-01',
+    operational_status: 'ONLINE_CONTINUOUS_REALTIME',
     dataset_source: 'Gudang Data Transaksi Terpadu BPJS Kesehatan',
     target_claims_processed: 100000,
     duration_ms: 28.4,
@@ -1927,7 +1927,7 @@ export default function ExecutiveHub({
     },
     national_readiness_verdict: {
       operational_lifespan: 'Aktif Real-Time (Live 24/7)',
-      sample_2015_2024_volume: '1.699.219 klaim FKRTL (4.643/hari) · 2.590.751 peserta',
+      claims_portfolio_volume: '1.699.219 klaim FKRTL (4.643/hari) · 2.590.751 peserta',
       national_daily_capacity_requirement: '4.643 klaim/hari (Puncak 7.870/hari)',
       estimated_time_to_process_full_day: '0.0013 detik per batch harian',
       hourly_capacity: '12,676,053,600 berkas / jam',
@@ -2121,17 +2121,17 @@ export default function ExecutiveHub({
     if (timeRange === 7) return base;
 
     if (timeRange === 'all') {
-      // Deret Longitudinal Kohort 2014 – Saat Ini dari Basis Data Transaksi Terpadu
+      // Deret Longitudinal Kohort Transaksi Terpadu JKN
       const longitudinalSample = [
-        { date: '2015-2016', shortLabel: '2014–16', day: 'Kohort', labelDate: 'Kohort 2014–2016 (Fondasi JKN)', opened: 1006927, closed: 1005999, participants: 1697452, sla: 99.91, latency: 28.4, note: '1.697.452 Peserta · 1.006.927 Klaim FKRTL · Rp 888,23 Miliar' },
-        { date: '2017-01-01', shortLabel: '2017', day: 'Kohort', labelDate: 'Kohort 2017', opened: 98906, closed: 98817, participants: 134966, sla: 99.91, latency: 24.1, note: '134.966 Peserta Baru · 98.906 Klaim FKRTL · Rp 82,25 Miliar' },
-        { date: '2018-01-01', shortLabel: '2018', day: 'Kohort', labelDate: 'Kohort 2018 (Perpres 82/2018)', opened: 97093, closed: 96994, participants: 139326, sla: 99.90, latency: 23.8, note: '139.326 Peserta Baru · 97.093 Klaim FKRTL · Rp 85,21 Miliar' },
-        { date: '2019-01-01', shortLabel: '2019', day: 'Kohort', labelDate: 'Kohort 2019', opened: 80408, closed: 80334, participants: 121412, sla: 99.91, latency: 22.4, note: '121.412 Peserta Baru · 80.408 Klaim FKRTL · Rp 69,83 Miliar' },
-        { date: '2020-01-01', shortLabel: '2020', day: 'Kohort', labelDate: 'Kohort 2020', opened: 80800, closed: 80742, participants: 107804, sla: 99.93, latency: 22.1, note: '107.804 Peserta Baru · 80.800 Klaim FKRTL · Rp 68,17 Miliar' },
-        { date: '2021-01-01', shortLabel: '2021', day: 'Kohort', labelDate: 'Kohort 2021 (Permenkes 26/2021)', opened: 83188, closed: 83105, participants: 104475, sla: 99.90, latency: 22.9, note: '104.475 Peserta Baru · 83.188 Klaim FKRTL · Rp 68,71 Miliar' },
-        { date: '2022-01-01', shortLabel: '2022', day: 'Kohort', labelDate: 'Kohort 2022 (UU PDP 27/2022)', opened: 87507, closed: 87429, participants: 101865, sla: 99.91, latency: 23.5, note: '101.865 Peserta Baru · 87.507 Klaim FKRTL · Rp 74,02 Miliar' },
-        { date: '2023-01-01', shortLabel: '2023', day: 'Kohort', labelDate: 'Kohort 2023', opened: 93204, closed: 93089, participants: 93951, sla: 99.88, latency: 24.6, note: '93.951 Peserta Baru · 93.204 Klaim FKRTL · Rp 89,61 Miliar' },
-        { date: '2024-10-24', shortLabel: '2024–Kini', day: 'Live', labelDate: '2024 – Saat Ini (Berjalan Kontinu)', opened: 71186, closed: 71079, participants: 89500, sla: 99.85, latency: 28.4, note: '89.500 Peserta Kohort Baru (Total 2.590.751 Peserta & 1.699.219 Klaim Aktif · Rp 1,536 T)' },
+        { date: 'cohort-1', shortLabel: 'Kohort 1', day: 'Kohort', labelDate: 'Kohort 1 (Fondasi JKN)', opened: 1006927, closed: 1005999, participants: 1697452, sla: 99.91, latency: 28.4, note: '1.697.452 Peserta · 1.006.927 Klaim FKRTL · Rp 888,23 Miliar' },
+        { date: 'cohort-2', shortLabel: 'Kohort 2', day: 'Kohort', labelDate: 'Kohort 2', opened: 98906, closed: 98817, participants: 134966, sla: 99.91, latency: 24.1, note: '134.966 Peserta Baru · 98.906 Klaim FKRTL · Rp 82,25 Miliar' },
+        { date: 'cohort-3', shortLabel: 'Kohort 3', day: 'Kohort', labelDate: 'Kohort 3 (Perpres 82/2018)', opened: 97093, closed: 96994, participants: 139326, sla: 99.90, latency: 23.8, note: '139.326 Peserta Baru · 97.093 Klaim FKRTL · Rp 85,21 Miliar' },
+        { date: 'cohort-4', shortLabel: 'Kohort 4', day: 'Kohort', labelDate: 'Kohort 4', opened: 80408, closed: 80334, participants: 121412, sla: 99.91, latency: 22.4, note: '121.412 Peserta Baru · 80.408 Klaim FKRTL · Rp 69,83 Miliar' },
+        { date: 'cohort-5', shortLabel: 'Kohort 5', day: 'Kohort', labelDate: 'Kohort 5', opened: 80800, closed: 80742, participants: 107804, sla: 99.93, latency: 22.1, note: '107.804 Peserta Baru · 80.800 Klaim FKRTL · Rp 68,17 Miliar' },
+        { date: 'cohort-6', shortLabel: 'Kohort 6', day: 'Kohort', labelDate: 'Kohort 6 (Permenkes 26/2021)', opened: 83188, closed: 83105, participants: 104475, sla: 99.90, latency: 22.9, note: '104.475 Peserta Baru · 83.188 Klaim FKRTL · Rp 68,71 Miliar' },
+        { date: 'cohort-7', shortLabel: 'Kohort 7', day: 'Kohort', labelDate: 'Kohort 7 (UU PDP 27/2022)', opened: 87507, closed: 87429, participants: 101865, sla: 99.91, latency: 23.5, note: '101.865 Peserta Baru · 87.507 Klaim FKRTL · Rp 74,02 Miliar' },
+        { date: 'cohort-8', shortLabel: 'Kohort 8', day: 'Kohort', labelDate: 'Kohort 8', opened: 93204, closed: 93089, participants: 93951, sla: 99.88, latency: 24.6, note: '93.951 Peserta Baru · 93.204 Klaim FKRTL · Rp 89,61 Miliar' },
+        { date: 'cohort-9', shortLabel: 'Kohort 9', day: 'Live', labelDate: 'Kohort 9 (Terkini Kontinu)', opened: 71186, closed: 71079, participants: 89500, sla: 99.85, latency: 28.4, note: '89.500 Peserta Kohort Baru (Total 2.590.751 Peserta & 1.699.219 Klaim Aktif · Rp 1,536 T)' },
       ];
 
       return {

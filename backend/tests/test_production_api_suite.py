@@ -23,7 +23,7 @@ def test_system_metrics_integrity():
     assert "2.091 FKRTL" in metrics["faskes_fkrtl_label"]
     assert metrics["kabupaten_kota_coverage"] == 496
     assert metrics["provinsi_coverage"] == 38
-    assert metrics["cumulative_claims_since_2014"] == 1699219
+    assert metrics["cumulative_claims_volume"] == 1699219
     assert metrics["annual_claims_volume"] == 1699219
     assert metrics["daily_claims_average"] == 4643
     
@@ -85,3 +85,43 @@ def test_official_bakb_document_endpoint():
     assert len(dossier["cryptographic_seal"]["document_hash"]) == 64
     assert "BPJS KESEHATAN KANTOR PUSAT" in data["html_printable"]
     assert "BERITA ACARA HASIL UJI KELENGKAPAN BERKAS" in data["html_printable"]
+
+def test_insights_privacy_status_endpoint():
+    response = client.get("/api/v1/insights/privacy-status")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["k_value"] >= 5
+    assert data["k_threshold"] == 5
+    assert "epsilon_used" in data
+    assert "epsilon_total" in data
+    assert data["consented_users"] > 0
+
+def test_insights_execute_live_query_endpoint():
+    payload = {
+        "query_type": "case_distribution",
+        "start_date": "",
+        "end_date": "",
+        "severity": ""
+    }
+    response = client.post("/api/v1/insights/execute-query", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["query_name"] == "case_distribution"
+    assert data["execution_time_ms"] > 0
+    assert len(data["summary"]) > 0
+    assert len(data["recommendations"]) > 0
+    assert data["result"]["k_anonymity_satisfied"] is True
+    assert data["result"]["total_records_anonymized"] == 1699219
+
+def test_insights_reports_endpoint():
+    response = client.get("/api/v1/insights/reports")
+    assert response.status_code == 200
+    reports = response.json()
+    assert isinstance(reports, list)
+    assert len(reports) >= 4
+    for r in reports:
+        assert "report_type" in r
+        assert "summary" in r
+        assert "assessment_count" in r
+        assert "high_risk_count" in r
+
