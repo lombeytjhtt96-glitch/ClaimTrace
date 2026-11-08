@@ -1,0 +1,9 @@
+{
+  "failed": "satusehat_fhir",
+  "impacted": [],
+  "paths": {
+    "satusehat_fhir": [
+      "satusehat_fhir"
+    ]
+  }
+}

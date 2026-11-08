@@ -43,6 +43,8 @@ docs/*
 !docs/agents/*
 !docs/adr/
 !docs/adr/*
+!docs/architecture/
+!docs/architecture/*
 !docs/UA_ONBOARDING.md
 
 # Internal documentation and generator scripts
