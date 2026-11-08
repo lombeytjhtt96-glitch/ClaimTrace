@@ -220,7 +220,7 @@ function TrendChart({
   const formatDateLabel = (dateStr) => {
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
     } catch {
       return dateStr;
     }
@@ -251,15 +251,15 @@ function TrendChart({
         }`}>
           <div>
             <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Maks: </span>
-            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.maxValue}</span>
+            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.maxValue.toLocaleString('id-ID')}</span>
           </div>
           <div>
             <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Rata-rata: </span>
-            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.avgValue.toFixed(1)}</span>
+            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.avgValue.toFixed(1).replace('.', ',')}</span>
           </div>
           <div>
             <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Min: </span>
-            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.minValue}</span>
+            <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{stats.minValue.toLocaleString('id-ID')}</span>
           </div>
         </div>
       </div>
@@ -295,7 +295,7 @@ function TrendChart({
                 fontSize: '12px',
               }}
               labelFormatter={(label) => `Tanggal: ${formatDateLabel(label)}`}
-              formatter={(value) => [`${value} verifikator & faskes`, 'Aktif Harian']}
+              formatter={(value) => [`${Number(value).toLocaleString('id-ID')} verifikator & faskes`, 'Aktif Harian']}
             />
             <Area
               type="monotone"
