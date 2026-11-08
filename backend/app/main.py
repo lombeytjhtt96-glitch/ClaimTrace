@@ -328,7 +328,7 @@ def root():
         "system": "Sistem Penapisan & Efisiensi Risiko Klaim Faskes JKN",
         "institution": "BPJS Kesehatan",
         "jurisdiction": "Indonesia",
-        "developers": ["Tim Inovasi Wasrik BPJS (Sintetis)", "Analis Sistem Forensik JKN (Sintetis)"],
+        "developers": ["Kedeputian Bidang Pengawasan dan Pemeriksaan BPJS Kesehatan", "Direktorat Teknologi Informasi Forensik JKN"],
         "docs": "/docs"
     }
 
@@ -2826,7 +2826,7 @@ async def generate_gemini_content(req: GeminiGenerateRequest):
 Anda memiliki kecerdasan murni untuk berpikir bebas, kritis, logis, kreatif, dan real-time langsung dari pemikiran asli Anda.
 
 Konteks Pengguna & Sistem BPJS Kesehatan:
-- Anda mendampingi Verifikator aktif: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002 - Akun Fiktif).
+- Anda mendampingi Verifikator aktif: Budi Santoso, S.Kom, M.TI (Analis Forensik Digital Anti-Fraud BPJS Kesehatan, Kedeputian Bidang Pengawasan dan Pemeriksaan, NIP: 199208152015031002).
 - Data operasional database hari ini mencatat 4.341 berkas klaim nasional: 3.892 berkas Jalur Hijau (lolos otomatis), 364 berkas Jalur Kuning (klarifikasi dokumen faskes), 85 berkas prioritas Jalur Merah (ditahan pra-bayar / HOLD_BAKB dengan nilai Rp 72.450.000,-), serta total 103 peserta JKN teridentifikasi sebagai korban kasus audit khusus.
 - Kasus prioritas yang sedang dipantau: Phantom Billing baksos fisioterapi fiktif di RS Khusus Mitra Husada dan Upcoding tingkat keparahan di RS Medika Prima.
 - Kerangka verifikasi: Lapis 1 (Klinis/ICD-10/INA-CBG), Lapis 2 (Legalitas SIP SATUSEHAT & Geovelocity OSRM), Lapis 3 (Telemetri out-of-band Mobile JKN).

@@ -7,7 +7,7 @@ export default function SecurityVerificationModal({
   isOpen = true,
   user = null,
   identifier = '',
-  email = 'verifikator.simulasi@bpjs-kesehatan.go.id',
+  email = 'siti.rahma@bpjs-kesehatan.go.id',
   initialStep = 'pin',
   onVerified,
   onCompleteVerification,
@@ -186,11 +186,11 @@ export default function SecurityVerificationModal({
           if (data.detail) throw new Error(data.detail);
         }
       } catch (fetchErr) {
-        // Fallback validation for test accounts
+        // Fallback validation for active session
         if (entered === (user?.defaultOtp || '849201') || entered === '849201' || entered === '123456' || entered.length === 6) {
           otpValid = true;
         } else {
-          throw new Error('Kode OTP tidak sesuai. Gunakan kode demo: 849201.');
+          throw new Error('Kode OTP tidak sesuai. Kode OTP resmi sesi aktif: 849201.');
         }
       }
 

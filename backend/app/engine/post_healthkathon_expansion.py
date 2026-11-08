@@ -206,7 +206,7 @@ class PostHealthkathonExpansionEngine:
                 "verified_tariff_rp": 0,
                 "potential_recovery_rp": 15300000,
                 "severity_claimed": "Rawat Jalan (Klaster 85 Berkas)",
-                "severity_verified": "Ditolak / Tunda Klarifikasi (Fiktif)",
+                "severity_verified": "Ditolak / Tunda Klarifikasi (Indikasi Klaim Fiktif)",
                 "ai_confidence": 0.968,
                 "risk_score": 87.0,
                 "clinical_discrepancy": (

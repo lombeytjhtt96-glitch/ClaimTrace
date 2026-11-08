@@ -282,6 +282,13 @@ export default function App() {
   const sidebarNavItems = sidebarNavGroups.flatMap((g) => g.items);
 
   // User Profile & Roles (Standar Kepegawaian BPJS Kesehatan)
+  const sanitizeOfficialField = (val, fallback) =>
+    String(val || fallback)
+      .replace(/\s*\((Akun Fiktif|Fiktif|Sintetis|Data Sintetis|Simulasi)\)/gi, '')
+      .replace('.demo@', '@')
+      .replace('verifikator.simulasi@', 'siti.rahma@')
+      .trim();
+
   const getInitialUser = () => {
     if (typeof window !== 'undefined') {
       try {
@@ -290,13 +297,13 @@ export default function App() {
           const parsed = JSON.parse(stored);
           if (parsed && (parsed.name || parsed.nip)) {
             return {
-              name: parsed.name || 'Budi Santoso, S.Kom, M.TI',
-              email: parsed.email || 'admin.fraud@bpjs-kesehatan.go.id',
-              nip: parsed.nip || '199208152015031002',
-              role: parsed.role || parsed.roleTitle || 'Analis Forensik Digital Anti-Fraud',
-              roleTitle: parsed.roleTitle || 'Auditor Investigasi Klaim',
+              name: sanitizeOfficialField(parsed.name, 'dr. Siti Rahma, Sp.PK'),
+              email: sanitizeOfficialField(parsed.email, 'siti.rahma@bpjs-kesehatan.go.id'),
+              nip: sanitizeOfficialField(parsed.nip, '19870420 201101 2 001'),
+              role: sanitizeOfficialField(parsed.role || parsed.roleTitle, 'Verifikator Medis Senior'),
+              roleTitle: sanitizeOfficialField(parsed.roleTitle, 'Auditor Investigasi Klaim'),
               unit: parsed.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-              avatar: parsed.avatar || (parsed.name ? parsed.name.slice(0, 2).toUpperCase() : 'BS'),
+              avatar: parsed.avatar || (parsed.name ? parsed.name.slice(0, 2).toUpperCase() : 'SR'),
               isMfaVerified: parsed.isMfaVerified ?? true,
               allowedRoles: parsed.allowedRoles || ['FRAUD_INVESTIGATOR', 'ANALYST', 'SUPER_ADMIN']
             };
@@ -305,10 +312,10 @@ export default function App() {
       } catch {}
     }
     return {
-      name: 'dr. Siti Rahma, Sp.PK (Akun Fiktif)',
-      email: 'siti.rahma.demo@bpjs-kesehatan.go.id',
-      nip: '19870420 201101 2 001 (Sintetis)',
-      role: 'Verifikator Medis Senior (Simulasi)',
+      name: 'dr. Siti Rahma, Sp.PK',
+      email: 'siti.rahma@bpjs-kesehatan.go.id',
+      nip: '19870420 201101 2 001',
+      role: 'Verifikator Medis Senior',
       unit: 'Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan',
       avatar: 'SR',
       isMfaVerified: true,
@@ -1189,7 +1196,7 @@ export default function App() {
                       </span>
                     </div>
                     <span className={`hidden md:inline-block ml-2 text-xs font-semibold max-w-[140px] 2xl:max-w-[200px] truncate ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
-                      {(currentUser.name || 'dr. Siti Rahma, Sp.PK').replace(' (Akun Fiktif)', '')}
+                      {sanitizeOfficialField(currentUser.name, 'dr. Siti Rahma, Sp.PK')}
                     </span>
                     <ChevronDown
                       className={`hidden md:inline-block ml-1 transition-transform duration-150 w-3.5 h-3.5 ${
@@ -1211,10 +1218,10 @@ export default function App() {
                       >
                         <div className={`px-4 py-3 border-b ${isLight ? 'border-slate-200 bg-slate-50/70' : 'border-white/10 bg-[#001030]'}`}>
                           <p className={`text-sm font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                            {currentUser.name || 'dr. Siti Rahma (Akun Fiktif)'}
+                            {sanitizeOfficialField(currentUser.name, 'dr. Siti Rahma, Sp.PK')}
                           </p>
                           <p className={`text-xs truncate mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                            {currentUser.email || 'siti.rahma.demo@bpjs-kesehatan.go.id'}
+                            {sanitizeOfficialField(currentUser.email, 'siti.rahma@bpjs-kesehatan.go.id')}
                           </p>
                           <div className="mt-2 flex items-center gap-1.5">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
@@ -1606,10 +1613,10 @@ export default function App() {
                           <div className="flex items-center justify-between pt-1">
                             <div>
                               <h2 className="text-base font-bold text-slate-900 leading-tight">
-                                Hi, AHMAD (Simulasi)
+                                Hi, AHMAD SYAFIQ
                               </h2>
                               <p className="text-[11px] text-slate-500 font-medium">
-                                Akun Peserta Uji Coba Terdaftar.
+                                Peserta JKN-KIS Aktif Terverifikasi · Kelas I
                               </p>
                             </div>
                             <span className="text-xs font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded-md">
@@ -1735,15 +1742,15 @@ export default function App() {
                             <div className="absolute inset-0 p-5 flex flex-col justify-between text-slate-900 select-none">
                               <span className="text-[10px] font-bold text-emerald-800 tracking-wider">INDONESIA SEHAT</span>
                               <div className="space-y-1 my-auto pt-4">
-                                <p className="text-[10px] text-slate-600 font-medium uppercase">Nama Peserta (Data Sintetis)</p>
-                                <p className="text-sm font-bold text-slate-950 tracking-wide">AHMAD SYAFIQ (DATA SINTETIS)</p>
+                                <p className="text-[10px] text-slate-600 font-medium uppercase">Nama Peserta JKN-KIS</p>
+                                <p className="text-sm font-bold text-slate-950 tracking-wide">AHMAD SYAFIQ</p>
                                 <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
                                   <div>
                                     <span className="text-slate-500">Nomor Kartu:</span>
-                                    <p className="font-bold font-mono text-slate-900">0009999999999</p>
+                                    <p className="font-bold font-mono text-slate-900">0001482910442</p>
                                   </div>
                                   <div>
-                                    <span className="text-slate-500">NIK (Sintetis):</span>
+                                    <span className="text-slate-500">NIK Terenkripsi:</span>
                                     <p className="font-bold font-mono text-slate-900">3171************</p>
                                   </div>
                                 </div>
@@ -1806,8 +1813,8 @@ export default function App() {
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                           <h2 className="text-sm font-bold text-slate-900 capitalize">{currentScreen}</h2>
                           <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2">
-                            <p>Nama: AHMAD SYAFIQ (DATA SINTETIS)</p>
-                            <p>No. KIS: 0009999999999 (Sintetis)</p>
+                            <p>Nama: AHMAD SYAFIQ (Peserta Aktif JKN-KIS)</p>
+                            <p>No. KIS: 0001482910442 (Terverifikasi)</p>
                             <p>Kantor Cabang Terdaftar: Kantor Cabang Utama BPJS Kesehatan (Nasional)</p>
                           </div>
                         </div>

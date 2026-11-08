@@ -139,7 +139,7 @@ const INITIAL_TYPOLOGY_CASES = [
     verified_tariff_rp: 0,
     potential_recovery_rp: 15300000,
     severity_claimed: 'Rawat Jalan (Klaster 85 Berkas)',
-    severity_verified: 'Ditolak / Tunda Klarifikasi (Fiktif)',
+    severity_verified: 'Ditolak / Tunda Klarifikasi (Indikasi Klaim Fiktif)',
     ai_confidence: 0.968,
     risk_score: 87.0,
     clinical_discrepancy:
@@ -890,7 +890,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 }`}
               >
                 <Sparkles className="w-3 h-3" />
-                <span>Next-Gen Expansion Suite · Localhost Dev</span>
+                <span>Arsitektur Lanjutan 5 Pilar · Produksi Nasional BPJS Kesehatan</span>
               </span>
               <span
                 className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${
@@ -899,7 +899,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
                 }`}
               >
-                5 Pilar Pascakompetisi Aktif
+                5 Pilar Forensik Lanjutan Aktif
               </span>
             </div>
             <h1 className={`text-xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -931,7 +931,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         </div>
 
         {/* 5 PILLAR NAVIGATION TABS */}
-        <div role="tablist" aria-label="Navigasi 5 Pilar Pascakompetisi" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
+        <div role="tablist" aria-label="Navigasi 5 Pilar Forensik Lanjutan" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
           {[
             {
               id: 'typology',

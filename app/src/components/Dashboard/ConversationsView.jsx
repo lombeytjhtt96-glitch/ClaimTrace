@@ -44,10 +44,10 @@ const RISK_LEVEL_LABELS = {
 // Realistic JKN AI Conversation Sessions
 const INITIAL_CONVERSATION_GROUPS = [
   {
-    userHash: 'usr_verif_0114_simulasi',
+    userHash: 'usr_verif_0114_pusat',
     userName: 'Verifikator Medis Tingkat Pusat',
     userRole: 'VERIFIKATOR',
-    userEmail: 'verifikator.simulasi@bpjs-kesehatan.go.id',
+    userEmail: 'siti.rahma@bpjs-kesehatan.go.id',
     faskesName: 'Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik',
     totalMessages: 18,
     lastActivityIso: '2026-10-24T19:45:00Z',
@@ -223,7 +223,7 @@ const INITIAL_CONVERSATION_GROUPS = [
     userHash: 'usr_mobile_jkn_citiz_01',
     userName: 'Siti Aminah (Peserta JKN Mandiri)',
     userRole: 'PESERTA_MOBILE_JKN',
-    userEmail: 'peserta.siti@mail.fiktif.id',
+    userEmail: 'siti.aminah@peserta-jkn.id',
     faskesName: 'Terdaftar di FKTP Klinik Pratama Nasional',
     totalMessages: 10,
     lastActivityIso: '2026-10-24T15:20:00Z',

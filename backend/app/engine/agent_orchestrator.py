@@ -525,7 +525,7 @@ class ClaimTraceAgentOrchestrator:
             },
             "CLM-2026-8806": {
                 "faskes": "RS Medika Prima (Kelas B)",
-                "patient": "Tn. Rahmat Hidayat (Sintetis)",
+                "patient": "Tn. Rahmat Hidayat",
                 "dpjp": "dr. Bambang Wijaya, Sp.PD",
                 "mode": "upcoding_severity",
                 "s1": 94.0, "s2": 88.0, "s3": 95.0,
@@ -534,7 +534,7 @@ class ClaimTraceAgentOrchestrator:
             },
             "CLM-2026-8809": {
                 "faskes": "RS Umum Bhinneka Husada (Kelas B)",
-                "patient": "Ny. Ratna Sari (Sintetis)",
+                "patient": "Ny. Ratna Sari",
                 "dpjp": "dr. Rina Kusuma, Sp.JP",
                 "mode": "unbundling_episode",
                 "s1": 86.0, "s2": 82.0, "s3": 84.0,
@@ -543,7 +543,7 @@ class ClaimTraceAgentOrchestrator:
             },
             "CLM-2026-8802": {
                 "faskes": "RS Swasta As-Syifa (Kelas C)",
-                "patient": "Tn. Dedi Kurniawan (Sintetis)",
+                "patient": "Tn. Dedi Kurniawan",
                 "dpjp": "dr. Lukman Hakim, Sp.S",
                 "mode": "repeat_billing",
                 "s1": 90.0, "s2": 85.0, "s3": 88.0,

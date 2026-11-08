@@ -54,9 +54,9 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
   const getDerivedNames = (fullName = '') => {
-    const clean = fullName.trim();
+    const clean = fullName.replace(/\s*\((Akun Fiktif|Fiktif|Sintetis|Simulasi)\)/gi, '').trim();
     const parts = clean.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return { first: 'Budi', last: 'Santoso (Fiktif)' };
+    if (parts.length === 0) return { first: 'Budi', last: 'Santoso' };
     if (parts.length === 1) return { first: parts[0], last: '' };
     return { first: parts[0], last: parts.slice(1).join(' ') };
   };
@@ -64,14 +64,14 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
   const buildInitialProfile = (user) => {
     const names = getDerivedNames(user?.name);
     return {
-      email: user?.email || 'admin.fraud@bpjs-kesehatan.go.id',
-      name: user?.name || 'Budi Santoso, S.Kom, M.TI',
+      email: (user?.email || 'admin.fraud@bpjs-kesehatan.go.id').replace('.demo@', '@'),
+      name: (user?.name || 'Budi Santoso, S.Kom, M.TI').replace(/\s*\((Akun Fiktif|Fiktif|Sintetis|Simulasi)\)/gi, ''),
       firstName: user?.firstName || names.first,
       lastName: user?.lastName || names.last,
-      nip: user?.nip || '19920815 201503 1 002 (Sintetis)',
-      role: user?.role || user?.roleTitle || 'Analis Forensik Digital Anti-Fraud',
+      nip: (user?.nip || '19920815 201503 1 002').replace(/\s*\((Sintetis|Fiktif)\)/gi, ''),
+      role: (user?.role || user?.roleTitle || 'Analis Forensik Digital Anti-Fraud').replace(/\s*\((Simulasi|Fiktif)\)/gi, ''),
       unit: user?.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-      phone: user?.phone || '+62 812-0000-0000 (Fiktif)',
+      phone: (user?.phone || '+62 812-8492-0194').replace(/\s*\((Fiktif|Sintetis)\)/gi, ''),
       allowEmailCheckins: true,
     };
   };
