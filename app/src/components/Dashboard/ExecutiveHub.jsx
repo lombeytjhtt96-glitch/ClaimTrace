@@ -1930,7 +1930,7 @@ export default function ExecutiveHub({
       claims_portfolio_volume: '1.699.219 klaim FKRTL (4.643/hari) · 2.590.751 peserta',
       national_daily_capacity_requirement: '4.643 klaim/hari (Puncak 7.870/hari)',
       estimated_time_to_process_full_day: '0.0013 detik per batch harian',
-      hourly_capacity: '12,676,053,600 berkas / jam',
+      hourly_capacity: '12.676.053.600 berkas / jam',
       sla_10d_risk: '0.0% (Zero Backlog Risk)',
       system_readiness: '100% Final & Beroperasi Penuh',
       architecture: 'DuckDB Vectorized In-Memory OLAP SIMD Execution'
