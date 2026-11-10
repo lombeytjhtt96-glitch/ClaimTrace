@@ -20,7 +20,6 @@ BACKEND_DIR = PROJECT_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.main import app
 from app.security.token_manager import create_access_token
 
 
@@ -41,6 +40,7 @@ def client() -> httpx.Client:
             return live_client
     except Exception:
         pass
+    from app.main import app
     return TestClient(app)
 
 
