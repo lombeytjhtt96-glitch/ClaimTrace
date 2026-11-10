@@ -48,6 +48,9 @@ docs/*
 !docs/architecture/
 !docs/architecture/*
 !docs/UA_ONBOARDING.md
+!docs/ENTERPRISE_ARCHITECTURE_DOSSIER.md
+!docs/SOP_VERIFIKATOR_MEDIS_BPJS.md
+!docs/GO_NO_GO_PRODUCTION_READINESS_REPORT.md
 
 # Internal documentation and generator scripts
 AGENTS.md
