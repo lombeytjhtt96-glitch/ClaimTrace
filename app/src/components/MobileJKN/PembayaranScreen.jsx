@@ -5,10 +5,10 @@ export default function PembayaranScreen({ onNavigate }) {
   const [copied, setCopied] = useState(false);
 
   const vaList = [
-    { bank: 'BCA Virtual Account', va: '88888 0001482910442', icon: '/assets/images/bca_icon.png' },
-    { bank: 'Bank Mandiri Virtual Account', va: '89888 0001482910442', icon: '/assets/images/bank_icon.png' },
-    { bank: 'BNI Virtual Account', va: '88888 0001482910442', icon: '/assets/images/bni_icon.png' },
-    { bank: 'BRI Virtual Account', va: '88888 0001482910442', icon: '/assets/images/bri_icon.png' },
+    { bank: 'BCA Virtual Account', va: '88888 00014****0442', copyValue: '88888000140442', icon: '/assets/images/bca_icon.png' },
+    { bank: 'Bank Mandiri Virtual Account', va: '89888 00014****0442', copyValue: '89888000140442', icon: '/assets/images/bank_icon.png' },
+    { bank: 'BNI Virtual Account', va: '88888 00014****0442', copyValue: '88888000140442', icon: '/assets/images/bni_icon.png' },
+    { bank: 'BRI Virtual Account', va: '88888 00014****0442', copyValue: '88888000140442', icon: '/assets/images/bri_icon.png' },
   ];
 
   const handleCopy = (va) => {
@@ -21,7 +21,7 @@ export default function PembayaranScreen({ onNavigate }) {
     <div className="flex-1 flex flex-col bg-[#F5F7FA] overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
-        <button type="button" onClick={() => onNavigate('home')} className="p-1 text-slate-700 hover:text-black rounded-lg">
+        <button type="button" onClick={() => onNavigate('home')} aria-label="Kembali ke beranda Mobile JKN" className="p-1 text-slate-700 hover:text-black rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
@@ -72,7 +72,8 @@ export default function PembayaranScreen({ onNavigate }) {
                   </div>
                 </div>
                 <button type="button"
-                  onClick={() => handleCopy(v.va)}
+                  onClick={() => handleCopy(v.copyValue || v.va)}
+                  aria-label={`Salin nomor ${v.bank}`}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                   title="Salin Nomor VA"
                 >

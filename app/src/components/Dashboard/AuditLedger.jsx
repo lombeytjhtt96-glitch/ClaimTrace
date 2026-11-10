@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
@@ -269,9 +269,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
     setLoadingSecops(true);
     try {
       const [rulesRes, casesRes, sovRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/secops/rules`),
-        fetch(`${API_BASE_URL}/api/v1/secops/cases`),
-        fetch(`${API_BASE_URL}/api/v1/secops/sovereignty/assessment`)
+        authFetch(`${API_BASE_URL}/api/v1/secops/rules`),
+        authFetch(`${API_BASE_URL}/api/v1/secops/cases`),
+        authFetch(`${API_BASE_URL}/api/v1/secops/sovereignty/assessment`)
       ]);
       if (rulesRes.ok) {
         const rulesData = await rulesRes.json();
@@ -322,8 +322,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
     setLoadingCyber(true);
     try {
       const [sumRes, catRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/cybersecurity/frameworks/summary`),
-        fetch(`${API_BASE_URL}/api/v1/cybersecurity/skills/fraud-catalog?limit=50`)
+        authFetch(`${API_BASE_URL}/api/v1/cybersecurity/frameworks/summary`),
+        authFetch(`${API_BASE_URL}/api/v1/cybersecurity/skills/fraud-catalog?limit=50`)
       ]);
       if (sumRes.ok) {
         const sumData = await sumRes.json();
@@ -334,7 +334,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
         setFraudCatalog(catData);
       }
       const targetClaimId = selectedBlock?.claimId || 'CLM-2026-08912';
-      const matRes = await fetch(`${API_BASE_URL}/api/v1/cybersecurity/claims/${targetClaimId}/matrix`);
+      const matRes = await authFetch(`${API_BASE_URL}/api/v1/cybersecurity/claims/${targetClaimId}/matrix`);
       if (matRes.ok) {
         const matData = await matRes.json();
         setClaimMatrix(matData);
@@ -353,8 +353,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
     setGateActionStatus(null);
     try {
       const [listRes, manRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/receipts`),
-        fetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`)
+        authFetch(`${API_BASE_URL}/api/v1/receipts`),
+        authFetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`)
       ]);
       if (listRes.ok) {
         const data = await listRes.json();
@@ -377,7 +377,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const handleVerifyReceiptOffline = async (receiptId) => {
     setVerifyingReceiptId(receiptId);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/receipts/${receiptId}/verify`, { method: 'POST' });
+      const res = await authFetch(`${API_BASE_URL}/api/v1/receipts/${receiptId}/verify`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setReceiptVerifyResult(data);
@@ -392,12 +392,12 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const handleSubmitHumanGateReview = async (approved) => {
     if (!selectedReceipt) return;
     if (!gateNip || gateNip.trim().length < 5) {
-      alert('Masukkan NIP verifikator BPJS resmi (minimal 5 karakter).');
+      setGateActionStatus('INVALID_NIP');
       return;
     }
     setGateActionStatus('PROCESSING');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/receipts/${selectedReceipt.receipt_id}/human-gate`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/receipts/${selectedReceipt.receipt_id}/human-gate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -412,7 +412,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
         setSelectedReceipt(updated);
         setReceiptsList(prev => prev.map(r => r.receipt_id === updated.receipt_id ? updated : r));
         setGateActionStatus('SUCCESS');
-        const manRes = await fetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`);
+        const manRes = await authFetch(`${API_BASE_URL}/api/v1/receipts/manifest/verify`);
         if (manRes.ok) setReceiptsManifest(await manRes.json());
       } else {
         setGateActionStatus('ERROR');
@@ -437,7 +437,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
 
   // Fetch live logs from backend if available & chain seamlessly
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/audit-logs`)
+    authFetch(`${API_BASE_URL}/api/v1/audit-logs`)
       .then(res => res.json())
       .then(data => {
         const rawChain = data?.chain || (Array.isArray(data) ? data : []);
@@ -497,7 +497,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const handleVerifyLedger = async () => {
     setIsVerifying(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/audit-logs`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/audit-logs`);
       const data = await res.json();
       const verified = Boolean(data?.integrity_verified);
       const chainLen = Number(data?.chain_length || blocks.length);
@@ -1896,12 +1896,17 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                           </div>
 
                           {gateActionStatus === 'SUCCESS' && (
-                            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+                            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
                               Human Gate berhasil diselesaikan dan receipt telah disegel ulang secara kriptografis.
                             </div>
                           )}
+                          {gateActionStatus === 'INVALID_NIP' && (
+                            <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                              Masukkan NIP verifikator BPJS resmi (minimal 5 karakter) sebelum melakukan pengesahan.
+                            </div>
+                          )}
                           {gateActionStatus === 'ERROR' && (
-                            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
+                            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-700 dark:text-rose-300 text-xs font-bold">
                               Gagal memproses Human Gate. Pastikan NIP valid dan terdaftar.
                             </div>
                           )}

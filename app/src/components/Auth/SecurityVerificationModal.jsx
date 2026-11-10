@@ -122,8 +122,9 @@ export default function SecurityVerificationModal({
     setError(null);
     try {
       let pinValid = false;
+      let res = null;
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-pin`, {
+        res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-pin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -131,20 +132,28 @@ export default function SecurityVerificationModal({
             pin: entered,
           }),
         });
+      } catch (_netErr) {
+        res = null;
+      }
+
+      if (res) {
         if (res.ok) {
           pinValid = true;
         } else {
           const data = await res.json().catch(() => ({}));
-          if (data.detail) throw new Error(data.detail);
+          throw new Error(data.detail || 'PIN Otorisasi 6 digit tidak valid.');
         }
-      } catch (fetchErr) {
-        // Fallback validation for test accounts
-        const correctPin = user?.pin || (user?.email?.includes('admin') || user?.nip?.includes('1992') ? '654321' : '123456');
-        if (entered === correctPin || entered === '654321' || entered === '123456') {
+      } else if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        // Explicit offline-only localhost dev fallback when backend daemon is unreachable
+        const isSiti = user?.email?.includes('siti') || user?.nip?.includes('1987') || (typeof identifier === 'string' && (identifier.includes('siti') || identifier.includes('1987')));
+        const expectedDevPin = isSiti ? '123456' : '654321';
+        if (entered === expectedDevPin) {
           pinValid = true;
         } else {
-          throw new Error('PIN Otorisasi 6 digit tidak valid. Gunakan 654321 untuk Admin atau 123456 untuk Verifikator.');
+          throw new Error('PIN Otorisasi 6 digit tidak valid.');
         }
+      } else {
+        throw new Error('Tidak dapat menghubungi server autentikasi BPJS Kesehatan.');
       }
 
       if (pinValid) {
@@ -170,8 +179,9 @@ export default function SecurityVerificationModal({
     setError(null);
     try {
       let otpValid = false;
+      let res = null;
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
+        res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -179,19 +189,25 @@ export default function SecurityVerificationModal({
             otp: entered,
           }),
         });
+      } catch (_netErr) {
+        res = null;
+      }
+
+      if (res) {
         if (res.ok) {
           otpValid = true;
         } else {
           const data = await res.json().catch(() => ({}));
-          if (data.detail) throw new Error(data.detail);
+          throw new Error(data.detail || 'Kode OTP Email tidak sesuai.');
         }
-      } catch (fetchErr) {
-        // Fallback validation for active session
-        if (entered === (user?.defaultOtp || '849201') || entered === '849201' || entered === '123456' || entered.length === 6) {
+      } else if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        if (entered === '849201') {
           otpValid = true;
         } else {
-          throw new Error('Kode OTP tidak sesuai. Kode OTP resmi sesi aktif: 849201.');
+          throw new Error('Kode OTP Email tidak sesuai atau telah kedaluwarsa.');
         }
+      } else {
+        throw new Error('Tidak dapat menghubungi server autentikasi BPJS Kesehatan.');
       }
 
       if (otpValid) {

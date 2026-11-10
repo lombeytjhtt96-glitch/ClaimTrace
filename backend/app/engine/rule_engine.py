@@ -223,6 +223,44 @@ class DeepClaimAuditEngine:
                 recommended_action="CLARIFICATION_DPJP_REQUIRED"
             ))
 
+        # ----------------------------------------------------------------------
+        # 10. Kaidah Morbiditas Utama ICD-10: Kode Gejala (Bab XVIII R00-R99) Rawat Inap Tarif Tinggi
+        # ----------------------------------------------------------------------
+        if diagnosis_primer.startswith("R") and len(diagnosis_primer) >= 3 and diagnosis_primer[1:3].isdigit() and tariff >= 5000000.0:
+            violations.append(RuleViolation(
+                rule_code="RUL-ICD10-SYMPTOM-PRIMARY",
+                rule_name="Kode Gejala (Bab XVIII ICD-10 R00-R99) sebagai Diagnosis Utama Rawat Inap",
+                severity="HIGH",
+                category="UPCODING",
+                description="Sesuai aturan morbiditas utama (Rule MB1-MB5 Permenkes 76/2016), kode gejala/tanda (R00-R99) tidak layak menjadi diagnosis utama klaim rawat inap bernilai tinggi jika etiologi definitif telah ditegakkan.",
+                legal_basis="Permenkes No. 76/2016 (Rule MB1-MB5 ICD-10 Kemenkes) & PMK No. 3/2023",
+                potential_saving_rupiah=tariff * 0.25,
+                recommended_action="CLARIFICATION_CODER_ETIOLOGY"
+            ))
+
+        # ----------------------------------------------------------------------
+        # 11. Upcoding Sepsis Dewasa (ICD-10 A41.9) Tanpa Kriteria SOFA / Biakan Darah
+        # ----------------------------------------------------------------------
+        secondary_codes = [str(c).upper() for c in claim_data.get("diagnosis_sekunder", [])]
+        if ("A41.9" in diagnosis_primer or any(c.startswith("A41") for c in secondary_codes)) and cbg_code != "P-8-09-III":
+            lacks_sepsis_proof = (
+                "tanpa kultur" in clinical_notes
+                or "leukosit normal" in clinical_notes
+                or "sofa = 0" in clinical_notes
+                or "isk ringan" in clinical_notes
+            )
+            if lacks_sepsis_proof:
+                violations.append(RuleViolation(
+                    rule_code="RUL-UPCODING-SEPSIS-A419",
+                    rule_name="Upcoding Kode Sepsis (A41.9) Tanpa Kriteria qSOFA / Kultur Positif",
+                    severity="CRITICAL",
+                    category="UPCODING",
+                    description="Diagnosis Sepsis (A41.9) dicatat pada pasien infeksi fokal tanpa bukti klinis disfungsi organ (qSOFA >= 2), vasopressor, atau konfirmasi kultur darah.",
+                    legal_basis="Permenkes No. 26/2021 Bab III & Konsensus Koding Sepsis INA-CBG Kemenkes",
+                    potential_saving_rupiah=tariff * 0.45,
+                    recommended_action="DOWNGRADE_TO_LOCALIZED_INFECTION"
+                ))
+
         total_potential_saving = sum(v.potential_saving_rupiah for v in violations)
         is_compliant = len(violations) == 0
 

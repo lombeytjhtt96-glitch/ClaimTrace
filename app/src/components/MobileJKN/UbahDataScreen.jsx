@@ -2,14 +2,28 @@ import React, { useState } from 'react';
 import { ChevronLeft, Hospital, User, Phone, Mail, MapPin, Check, ChevronRight } from 'lucide-react';
 
 export default function UbahDataScreen({ onNavigate }) {
-  const [faskes, setFaskes] = useState('KLINIK PRATAMA NASIONAL BPJS (0112U001)');
-  const [kelas, setKelas] = useState('Kelas 1');
-  const [phone, setPhone] = useState('0812-8492-0194');
-  const [email, setEmail] = useState('ahmad.syafiq@peserta-jkn.id');
+  const [faskes, setFaskes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').faskes || 'KLINIK PRATAMA NASIONAL BPJS (0112U001)'; } catch { return 'KLINIK PRATAMA NASIONAL BPJS (0112U001)'; }
+  });
+  const [kelas, setKelas] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').kelas || 'Kelas 1'; } catch { return 'Kelas 1'; }
+  });
+  const [phone, setPhone] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').phone || '0812-****-0194'; } catch { return '0812-****-0194'; }
+  });
+  const [email, setEmail] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').email || 'ahmad.syafiq@peserta-jkn.id'; } catch { return 'ahmad.syafiq@peserta-jkn.id'; }
+  });
+  const [address, setAddress] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').address || 'Jl. Merdeka Sejahtera No. 12, Gambir, Jakarta Pusat'; } catch { return 'Jl. Merdeka Sejahtera No. 12, Gambir, Jakarta Pusat'; }
+  });
   const [saved, setSaved] = useState(false);
 
   const handleSave = (e) => {
     e.preventDefault();
+    try {
+      localStorage.setItem('claimtrace_mobile_profile', JSON.stringify({ faskes, kelas, phone, email, address }));
+    } catch {}
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -18,7 +32,7 @@ export default function UbahDataScreen({ onNavigate }) {
     <div className="flex-1 flex flex-col bg-[#F5F7FA] overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
-        <button type="button" onClick={() => onNavigate('home')} className="p-1 text-slate-700 hover:text-black rounded-lg">
+        <button type="button" onClick={() => onNavigate('home')} aria-label="Kembali ke beranda Mobile JKN" className="p-1 text-slate-700 hover:text-black rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
@@ -119,8 +133,10 @@ export default function UbahDataScreen({ onNavigate }) {
               <label className="text-xs font-bold text-slate-900">Alamat Surat Domisili</label>
             </div>
             <textarea
-              defaultValue="Jl. Merdeka Sejahtera No. 12, Gambir, Jakarta Pusat"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               rows={2}
+              aria-label="Alamat Surat Domisili"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
             />
           </div>

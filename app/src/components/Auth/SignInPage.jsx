@@ -140,6 +140,7 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
     setIsSubmitting(true);
     try {
       let data = null;
+      let backendResponded = false;
       try {
         const payloadData = {
           identifier: identifier.trim(),
@@ -155,24 +156,24 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
           },
           body: JSON.stringify(payloadData)
         });
+        backendResponded = true;
 
         if (response.ok) {
           data = await response.json();
         } else {
           const errData = await response.json().catch(() => ({}));
-          if (errData.detail) {
-            setErrorMsg(errData.detail);
-            setIsSubmitting(false);
-            resetRecaptcha();
-            return;
-          }
+          setErrorMsg(errData.detail || 'Kredensial tidak valid: NIP/Email atau Kata Sandi salah.');
+          setIsSubmitting(false);
+          resetRecaptcha();
+          return;
         }
       } catch {
-        // Fallback to local authentication directory below
+        backendResponded = false;
       }
 
-      // If backend was unreachable or in offline mode, validate against official accounts directory
-      if (!data) {
+      // Offline sandbox fallback ONLY when backend daemon is genuinely unreachable on localhost
+      const isLocalhost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      if (!data && !backendResponded && isLocalhost) {
         const idClean = identifier.trim().toLowerCase();
         if ((idClean === '199208152015031002' || idClean === 'admin.fraud@bpjs-kesehatan.go.id') && password === 'Password123!') {
           data = {
@@ -186,8 +187,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               roleTitle: "Auditor Investigasi Klaim",
               unit: "Kedeputian Bidang Pengawasan dan Pemeriksaan",
               avatar: "BS",
-              pin: "654321",
-              defaultOtp: "849201",
               isMfaVerified: false,
               allowedRoles: ["FRAUD_INVESTIGATOR", "ANALYST", "SUPER_ADMIN", "BAKB_SIGNER"]
             }
@@ -204,8 +203,6 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               roleTitle: "Dokter Verifikator Medis",
               unit: "Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan",
               avatar: "SR",
-              pin: "123456",
-              defaultOtp: "849201",
               isMfaVerified: false,
               allowedRoles: ["VERIFICATOR_MEDIS", "TRIAGE_OFFICER", "BAKB_SIGNER"]
             }
@@ -213,6 +210,8 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
         } else {
           throw new Error('Kredensial tidak valid: NIP/Email atau Kata Sandi salah.');
         }
+      } else if (!data) {
+        throw new Error('Tidak dapat menghubungi server autentikasi BPJS Kesehatan.');
       }
 
       // Login Kredensial Tahap 1 Berhasil -> Buka Modal Verifikasi Keamanan Berlapis (PIN 6 Angka, OTP Email, Sesi Device)

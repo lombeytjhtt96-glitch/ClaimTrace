@@ -304,3 +304,66 @@ def test_security_posture_endpoint():
     assert "uu_pdp_27_2022" in data["standards"]
     assert len(data["active_controls"]) >= 7
     assert data["audit_ledger"]["cryptographic_integrity_valid"] is True
+
+# ----------------------------------------------------------------------
+# 9. Hardened SQL Firewall, Phone Redaction, Clinical Rules & OTP Store
+# ----------------------------------------------------------------------
+def test_sql_guard_blocks_comment_bypass_and_direct_file_scans():
+    bypass_comment = "SELECT * FROM read_parquet /*comment*/ ('/etc/passwd')"
+    assert not validate_sql_query(bypass_comment)[0]
+
+    direct_path = "SELECT * FROM '/etc/passwd'"
+    assert not validate_sql_query(direct_path)[0]
+
+    remote_scan = "SELECT * FROM 's3://private-bucket/claims.parquet'"
+    assert not validate_sql_query(remote_scan)[0]
+
+    secret_fn = "SELECT * FROM duckdb_secrets()"
+    assert not validate_sql_query(secret_fn)[0]
+
+def test_privacy_guard_masks_phone_numbers():
+    text = "Hubungi peserta di 081234567890 untuk verifikasi."
+    redacted, count = redact_text_phi(text)
+    assert count == 1
+    assert "0812****7890" in redacted
+    assert "081234567890" not in redacted
+
+    payload = sanitize_json_payload({"phone": "0812-3456-7890", "nik": "3374021405900001"})
+    assert payload["phone"] == "0812****7890"
+    assert payload["nik"] == "337402******0001"
+
+def test_sensitive_api_cache_headers_on_audit_and_operations():
+    audit_resp = client.get("/api/v1/audit-logs")
+    assert audit_resp.status_code == 200
+    assert "no-store" in audit_resp.headers.get("cache-control", "")
+
+def test_rules_engine_icd10_symptom_and_sepsis_a419():
+    res_symp = deep_rules_engine.audit_claim_clinical_validity({
+        "claim_id": "CLM-TEST-SYMPTOM",
+        "diagnosis_primer": "R50.9",
+        "tariff_rupiah": 8500000.0,
+    })
+    assert any(v["rule_code"] == "RUL-ICD10-SYMPTOM-PRIMARY" for v in res_symp["violations"])
+
+    res_sep = deep_rules_engine.audit_claim_clinical_validity({
+        "claim_id": "CLM-TEST-SEPSIS-A419",
+        "diagnosis_primer": "K29.7",
+        "diagnosis_sekunder": ["A41.9"],
+        "ina_cbg_code": "K-4-17-III",
+        "tariff_rupiah": 14850000.0,
+        "clinical_notes": "ISK ringan dengan leukosit normal dan tanpa kultur darah.",
+    })
+    assert any(v["rule_code"] == "RUL-UPCODING-SEPSIS-A419" for v in res_sep["violations"])
+
+def test_otp_challenge_store_and_invalid_otp_rejected():
+    res = client.post("/api/v1/auth/verify-pin", json={
+        "identifier": "198704202011012001",
+        "pin": "123456"
+    })
+    assert res.status_code == 200
+    bad_otp = client.post("/api/v1/auth/verify-otp", json={
+        "identifier": "198704202011012001",
+        "otp": "000000"
+    })
+    assert bad_otp.status_code == 401
+

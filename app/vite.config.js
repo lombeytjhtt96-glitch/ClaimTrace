@@ -19,8 +19,11 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('recharts') || id.includes('d3-')) {
-              return 'charts';
+            if (id.includes('recharts')) {
+              return 'charts-recharts';
+            }
+            if (id.includes('d3-')) {
+              return 'charts-d3';
             }
             if (id.includes('@xyflow')) {
               return 'flow';
@@ -35,28 +38,13 @@ export default defineConfig({
               return 'motion';
             }
           }
-          if (id.includes('src/components/Dashboard/')) {
-            if (
-              id.includes('GraphVisualizer') ||
-              id.includes('EmpiricalForensics') ||
-              id.includes('PostHealthkathonSuiteView') ||
-              id.includes('CommandCenterView') ||
-              id.includes('InsightsAnalyticsView') ||
-              id.includes('RetentionAnalyticsView') ||
-              id.includes('FaskesSurveillance') ||
-              id.includes('DpjpIntelligence') ||
-              id.includes('DatabaseViewerView')
-            ) {
-              return 'dashboard-views';
-            }
-          }
           if (id.includes('src/components/MobileJKN/')) {
             return 'mobile-jkn';
           }
         }
       }
     },
-    chunkSizeWarningLimit: 1200
+    chunkSizeWarningLimit: 500
   }
 })
 

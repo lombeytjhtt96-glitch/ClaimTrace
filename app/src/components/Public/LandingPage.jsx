@@ -1086,7 +1086,7 @@ export default function LandingPage({
                   Pusat Riset Rekayasa Sistem · TINEERENSE
                 </h3>
                 <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Divisi Riset Teknologi & Rekayasa Arsitektur Integritas Klaim Kesehatan — MAN 1 Surakarta
+                  Divisi Riset Teknologi & Rekayasa Arsitektur Integritas Klaim Kesehatan - MAN 1 Surakarta
                 </p>
               </div>
             </div>

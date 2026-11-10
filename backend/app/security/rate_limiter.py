@@ -144,7 +144,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             limit, window = 50, 60
             key = f"duckdb:{client_ip}"
         else:
-            limit, window = 200, 60
+            limit, window = 400, 60
             key = f"gen:{client_ip}"
 
         is_limited, remaining, retry_after = rate_limiter.is_rate_limited(key, limit, window)
