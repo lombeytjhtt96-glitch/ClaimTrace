@@ -29,7 +29,7 @@ import {
   CheckCircle2,
   Search,
 } from 'lucide-react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 
 const CHART_COLORS = ['#059669', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
 
@@ -265,7 +265,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   // Fetch real privacy status from live backend
   const fetchPrivacyStatus = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/insights/privacy-status`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/insights/privacy-status`);
       if (res.ok) {
         const data = await res.json();
         setStatus({
@@ -287,7 +287,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   // Fetch real synthesized audit reports from live backend
   const fetchReports = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/insights/reports`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/insights/reports`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -305,7 +305,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
     if (!qName) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/insights/execute-query`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/insights/execute-query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

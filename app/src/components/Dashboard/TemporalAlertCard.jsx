@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -55,7 +55,7 @@ export default function TemporalAlertCard({
     try {
       // Map synthetic claim ID if passed from UI
       const targetId = claimId.includes('880') ? claimId : 'CLM-2026-8801';
-      const res = await fetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }

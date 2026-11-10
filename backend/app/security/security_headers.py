@@ -59,9 +59,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 8. Server Signature Hardening (Hide Python/Uvicorn details)
         response.headers["Server"] = "ClaimTrace-EnterpriseGateway/2.4 (BPJS-Kesehatan-Wasrik)"
 
-        # 9. Sensitive API Cache Invalidation (Prevent caching of medical records and JWT tokens)
+        # 9. Sensitive API Cache Invalidation (Prevent caching of medical records, audit logs, and JWT tokens)
         path = request.url.path
-        if path.startswith("/api/v1/auth") or path.startswith("/api/v1/claims") or path.startswith("/api/v1/duckdb") or path.startswith("/api/v1/claimtrace-ai"):
+        if path.startswith("/api/v1/") and path != "/api/v1/health":
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private, max-age=0"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"

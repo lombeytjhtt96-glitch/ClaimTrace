@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ResponsiveContainer,
@@ -684,7 +684,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Log Telemetri Operasional ({timeRangeLabel}) — Real-Time Monitoring
+                  Log Telemetri Operasional ({timeRangeLabel}) - Real-Time Monitoring
                 </h4>
                 <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                   Diekstraksi langsung dari gudang data transaksi BPJS Kesehatan (6.264.346 baris) melalui engine analitik kolumnar DuckDB.
@@ -1948,7 +1948,7 @@ export default function ExecutiveHub({
       accentText: 'text-rose-600 dark:text-rose-400',
       hoverBorder: isLight ? 'hover:border-rose-400' : 'hover:border-rose-500/40',
       activeBorder: isLight ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/40' : 'border-rose-400 ring-2 ring-rose-400/20 bg-rose-500/10',
-      detailTitle: 'MITRE Fight Fraud Framework (F3 v1.1) — Healthcare Claims Fraud Taxonomy',
+      detailTitle: 'MITRE Fight Fraud Framework (F3 v1.1) - Healthcare Claims Fraud Taxonomy',
       controls: 'FA0001 (Phantom Billing), FA0002 (Upcoding INA-CBG Severity Level III), FA0007 (Unbundling Tagihan IGD/Rawat Inap), FA0014 (Collusive Provider-Patient Triangulation).',
       statusMetric: '94 Teknik Terpetakan Aktif · 100% Cakupan Aturan Penapisan Lapis 1-3',
       targetTab: 'empirical',
@@ -1962,7 +1962,7 @@ export default function ExecutiveHub({
       accentText: 'text-blue-600 dark:text-blue-400',
       hoverBorder: isLight ? 'hover:border-blue-400' : 'hover:border-blue-500/40',
       activeBorder: isLight ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/40' : 'border-blue-400 ring-2 ring-blue-400/20 bg-blue-500/10',
-      detailTitle: 'MITRE ATT&CK Enterprise v19.1 — Credential & Session Protection',
+      detailTitle: 'MITRE ATT&CK Enterprise v19.1 - Credential & Session Protection',
       controls: 'Deteksi penyalahgunaan kredensial koder Casemix FKRTL (T1078), pembajakan sesi JWT (T1550.004), serta proteksi brute-force endpoint VClaim & Antrean FPK.',
       statusMetric: '805 Aturan Deteksi Aktif · 0 Insiden Intrusi Kredensial',
       targetTab: 'audit',
@@ -1976,7 +1976,7 @@ export default function ExecutiveHub({
       accentText: 'text-emerald-600 dark:text-emerald-400',
       hoverBorder: isLight ? 'hover:border-emerald-400' : 'hover:border-emerald-500/40',
       activeBorder: isLight ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/40' : 'border-emerald-400 ring-2 ring-emerald-400/20 bg-emerald-500/10',
-      detailTitle: 'NIST Cybersecurity Framework (CSF) 2.0 — Govern, Identify, Protect, Detect, Respond, Recover',
+      detailTitle: 'NIST Cybersecurity Framework (CSF) 2.0 - Govern, Identify, Protect, Detect, Respond, Recover',
       controls: 'Continuous Monitoring (DE.CM) atas seluruh mutasi status klaim dan Incident Analysis (RS.AN) terikat rantai hash kriptografi SHA-256.',
       statusMetric: 'Maturity Level 4 (Adaptive) · Kepatuhan Verifikasi 99,90%',
       targetTab: 'audit',
@@ -1990,7 +1990,7 @@ export default function ExecutiveHub({
       accentText: 'text-purple-600 dark:text-purple-400',
       hoverBorder: isLight ? 'hover:border-purple-400' : 'hover:border-purple-500/40',
       activeBorder: isLight ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/40' : 'border-purple-400 ring-2 ring-purple-400/20 bg-purple-500/10',
-      detailTitle: 'MITRE ATLAS — Adversarial Threat Landscape for Artificial-Intelligence Systems',
+      detailTitle: 'MITRE ATLAS - Adversarial Threat Landscape for Artificial-Intelligence Systems',
       controls: 'Pertahanan terhadap manipulasi teks resume medis (AML.T0047 LLM Evasion) dan Prompt Injection pada ekstraktor klinis IndoBERT/MiniLM.',
       statusMetric: 'Sanitasi Input Klinis 100% · Guardrail Deterministik Aktif',
       targetTab: 'expansion_suite',
@@ -2004,7 +2004,7 @@ export default function ExecutiveHub({
       accentText: 'text-teal-600 dark:text-teal-400',
       hoverBorder: isLight ? 'hover:border-teal-400' : 'hover:border-teal-500/40',
       activeBorder: isLight ? 'border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/40' : 'border-teal-400 ring-2 ring-teal-400/20 bg-teal-500/10',
-      detailTitle: 'MITRE D3FEND — Knowledge Graph of Cybersecurity Countermeasures',
+      detailTitle: 'MITRE D3FEND - Knowledge Graph of Cybersecurity Countermeasures',
       controls: 'Penerapan Multi-Factor Authentication (D3-MFA) bagi Verifikator Medis, Data Spooling Protection (D3-DS), dan pembatasan kueri SQL read-only.',
       statusMetric: '270 Kontrol Defensif Aktif · Proteksi DuckDB Sandbox 100%',
       targetTab: 'database_viewer',
@@ -2033,7 +2033,7 @@ export default function ExecutiveHub({
   const handleRunNationalBenchmark = async () => {
     setIsBenchmarking(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/system/national-scale-benchmark?claim_count=100000`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/system/national-scale-benchmark?claim_count=100000`);
       if (res.ok) {
         const data = await res.json();
         setBenchmarkData(data);
@@ -2196,9 +2196,9 @@ export default function ExecutiveHub({
     const trendDays = activeRange === 'all' ? 7 : Number(activeRange);
     try {
       const [resMetrics, resTrends, resRet] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics${daysQuery}`),
-        fetch(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=${trendDays}`),
-        activeRange === 'all' ? fetch(`${API_BASE_URL}/api/v1/analytics/retention`) : Promise.resolve(null),
+        authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics${daysQuery}`),
+        authFetch(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=${trendDays}`),
+        activeRange === 'all' ? authFetch(`${API_BASE_URL}/api/v1/analytics/retention`) : Promise.resolve(null),
       ]);
       if (resMetrics && resMetrics.ok) {
         const metricsPayload = await resMetrics.json();

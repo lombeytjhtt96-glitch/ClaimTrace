@@ -38,11 +38,33 @@ export default function SkriningScreen({ onNavigate }) {
     }
   };
 
+  const isYes = (idx) => String(answers[idx] || '').toLowerCase() === 'ya';
+  const isNo = (idx) => String(answers[idx] || '').toLowerCase() === 'tidak';
+  const dmPoints = (isYes(0) ? 2 : 0) + (isYes(1) ? 1 : 0);
+  const htPoints = (isNo(2) ? 1 : 0) + (isYes(3) ? 2 : 0);
+  const ckdPoints = (dmPoints >= 2 ? 1 : 0) + (htPoints >= 2 ? 1 : 0) + (isYes(3) ? 1 : 0);
+  const classifyRisk = (pts) => (pts >= 2 ? 'Risiko Tinggi' : pts === 1 ? 'Risiko Sedang' : 'Risiko Rendah');
+  const dmRisk = classifyRisk(dmPoints);
+  const htRisk = classifyRisk(htPoints);
+  const ckdRisk = classifyRisk(ckdPoints);
+  const maxPts = Math.max(dmPoints, htPoints, ckdPoints);
+  const overallSummary = maxPts >= 2
+    ? 'Perlu Konsultasi FKTP'
+    : maxPts === 1
+    ? 'Risiko Kesehatan Sedang'
+    : 'Risiko Kesehatan Rendah';
+  const badgeStyle = (label) =>
+    label === 'Risiko Tinggi'
+      ? { box: 'bg-rose-50 border-rose-200', txt: 'text-rose-700' }
+      : label === 'Risiko Sedang'
+      ? { box: 'bg-amber-50 border-amber-200', txt: 'text-amber-700' }
+      : { box: 'bg-emerald-50 border-emerald-200', txt: 'text-emerald-700' };
+
   return (
     <div className="flex-1 flex flex-col bg-[#F5F7FA] overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
-        <button type="button" onClick={() => onNavigate('home')} className="p-1 text-slate-700 hover:text-black rounded-lg">
+        <button type="button" onClick={() => onNavigate('home')} aria-label="Kembali ke beranda Mobile JKN" className="p-1 text-slate-700 hover:text-black rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
@@ -60,7 +82,9 @@ export default function SkriningScreen({ onNavigate }) {
           /* HASIL SKRINING KESEHATAN */
           <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
+                maxPts >= 2 ? 'bg-rose-100 text-rose-600' : maxPts === 1 ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
+              }`}>
                 <ShieldCheck className="w-7 h-7" />
               </div>
 
@@ -69,7 +93,7 @@ export default function SkriningScreen({ onNavigate }) {
                   HASIL SKRINING TAHUN 2026
                 </span>
                 <h3 className="text-base font-bold text-slate-900 mt-1">
-                  Risiko Kesehatan Rendah
+                  {overallSummary}
                 </h3>
                 <p className="text-xs text-slate-500">
                   AHMAD SYAFIQ (PESERTA JKN-KIS · 28 TAHUN)
@@ -78,22 +102,25 @@ export default function SkriningScreen({ onNavigate }) {
 
               {/* Matrix Risiko */}
               <div className="space-y-2 pt-2 text-left text-xs">
-                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex justify-between items-center">
-                  <span className="font-semibold text-slate-800">Diabetes Melitus:</span>
-                  <span className="font-bold text-emerald-700">Risiko Rendah</span>
-                </div>
-                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex justify-between items-center">
-                  <span className="font-semibold text-slate-800">Hipertensi:</span>
-                  <span className="font-bold text-emerald-700">Risiko Rendah</span>
-                </div>
-                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex justify-between items-center">
-                  <span className="font-semibold text-slate-800">Penyakit Ginjal Kronis:</span>
-                  <span className="font-bold text-emerald-700">Risiko Rendah</span>
-                </div>
+                {[
+                  { name: 'Diabetes Melitus', label: dmRisk },
+                  { name: 'Hipertensi', label: htRisk },
+                  { name: 'Penyakit Ginjal Kronis', label: ckdRisk },
+                ].map((row) => {
+                  const st = badgeStyle(row.label);
+                  return (
+                    <div key={row.name} className={`${st.box} border p-2.5 rounded-xl flex justify-between items-center`}>
+                      <span className="font-semibold text-slate-800">{row.name}:</span>
+                      <span className={`font-bold ${st.txt}`}>{row.label}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <p className="text-[10px] text-slate-400 text-center leading-relaxed pt-2">
-                *) Hasil ini merupakan penapisan awal. Pertahankan pola hidup sehat, cukupi hidrasi, dan rutin berolahraga.
+                *) {maxPts >= 2
+                  ? 'Terdeteksi faktor risiko tinggi. Segera jadwalkan konsultasi dan pemeriksaan laboratorium lanjutan di FKTP terdaftar Anda.'
+                  : 'Hasil ini merupakan penapisan awal. Pertahankan pola hidup sehat, cukupi hidrasi, dan rutin berolahraga.'}
               </p>
 
               <button type="button"

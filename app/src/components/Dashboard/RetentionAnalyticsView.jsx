@@ -22,135 +22,9 @@ import {
 } from 'recharts';
 
 // Data aktivitas harian 30 hari terakhir (2.091 FKRTL & 1.699.219 Klaim)
-const INITIAL_DAILY_ACTIVITY = [
-  { date: '2026-10-24', activeUsers: 952, totalRequests: 6188 },
-  { date: '2026-10-23', activeUsers: 969, totalRequests: 6534 },
-  { date: '2026-10-22', activeUsers: 969, totalRequests: 6783 },
-  { date: '2026-10-21', activeUsers: 952, totalRequests: 6437 },
-  { date: '2026-10-20', activeUsers: 560, totalRequests: 1454 },
-  { date: '2026-10-19', activeUsers: 901, totalRequests: 4950 },
-  { date: '2026-10-18', activeUsers: 681, totalRequests: 1972 },
-  { date: '2026-10-17', activeUsers: 958, totalRequests: 6214 },
-  { date: '2026-10-16', activeUsers: 964, totalRequests: 6380 },
-  { date: '2026-10-15', activeUsers: 971, totalRequests: 6612 },
-  { date: '2026-10-14', activeUsers: 948, totalRequests: 6190 },
-  { date: '2026-10-13', activeUsers: 545, totalRequests: 1420 },
-  { date: '2026-10-12', activeUsers: 892, totalRequests: 4840 },
-  { date: '2026-10-11', activeUsers: 944, totalRequests: 5980 },
-  { date: '2026-10-10', activeUsers: 961, totalRequests: 6340 },
-  { date: '2026-10-09', activeUsers: 966, totalRequests: 6490 },
-  { date: '2026-10-08', activeUsers: 972, totalRequests: 6650 },
-  { date: '2026-10-07', activeUsers: 951, totalRequests: 6245 },
-  { date: '2026-10-06', activeUsers: 552, totalRequests: 1480 },
-  { date: '2026-10-05', activeUsers: 896, totalRequests: 4895 },
-  { date: '2026-10-04', activeUsers: 946, totalRequests: 6040 },
-  { date: '2026-10-03', activeUsers: 960, totalRequests: 6310 },
-  { date: '2026-10-02', activeUsers: 965, totalRequests: 6460 },
-  { date: '2026-10-01', activeUsers: 968, totalRequests: 6580 },
-  { date: '2026-09-30', activeUsers: 949, totalRequests: 6210 },
-  { date: '2026-09-29', activeUsers: 548, totalRequests: 1445 },
-  { date: '2026-09-28', activeUsers: 889, totalRequests: 4815 },
-  { date: '2026-09-27', activeUsers: 942, totalRequests: 5950 },
-  { date: '2026-09-26', activeUsers: 957, totalRequests: 6280 },
-  { date: '2026-09-25', activeUsers: 963, totalRequests: 3929 },
-];
-
 // Data retensi kohort longitudinal transaksi terpadu JKN
-const INITIAL_COHORTS = [
-  {
-    cohort_date: 'Kohort 1 (Fondasi JKN)',
-    cohort_size: 1697452,
-    claims_count: 1006927,
-    retention: {
-      1: { retained_users: 1005999, retention_rate: 0.9991 },
-      7: { retained_users: 998420, retention_rate: 0.9916 },
-      30: { retained_users: 989105, retention_rate: 0.9823 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 2 (Pencatatan PSTV16)',
-    cohort_size: 134966,
-    claims_count: 98906,
-    retention: {
-      1: { retained_users: 98817, retention_rate: 0.9991 },
-      7: { retained_users: 98112, retention_rate: 0.9920 },
-      30: { retained_users: 97405, retention_rate: 0.9848 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 3 (Perpres 82/2018)',
-    cohort_size: 139326,
-    claims_count: 97093,
-    retention: {
-      1: { retained_users: 96994, retention_rate: 0.9990 },
-      7: { retained_users: 96320, retention_rate: 0.9920 },
-      30: { retained_users: 95680, retention_rate: 0.9854 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 4 (Standardisasi)',
-    cohort_size: 121412,
-    claims_count: 80408,
-    retention: {
-      1: { retained_users: 80334, retention_rate: 0.9991 },
-      7: { retained_users: 79810, retention_rate: 0.9926 },
-      30: { retained_users: 79290, retention_rate: 0.9861 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 5 (Pencegahan Pandemi)',
-    cohort_size: 107804,
-    claims_count: 80800,
-    retention: {
-      1: { retained_users: 80742, retention_rate: 0.9993 },
-      7: { retained_users: 80250, retention_rate: 0.9932 },
-      30: { retained_users: 79760, retention_rate: 0.9871 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 6 (Permenkes 26/2021)',
-    cohort_size: 104475,
-    claims_count: 83188,
-    retention: {
-      1: { retained_users: 83105, retention_rate: 0.9990 },
-      7: { retained_users: 82610, retention_rate: 0.9931 },
-      30: { retained_users: 82140, retention_rate: 0.9874 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 7 (UU PDP 27/2022)',
-    cohort_size: 101865,
-    claims_count: 87507,
-    retention: {
-      1: { retained_users: 87429, retention_rate: 0.9991 },
-      7: { retained_users: 86950, retention_rate: 0.9936 },
-      30: { retained_users: 86490, retention_rate: 0.9884 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 8 (Integrasi JKN)',
-    cohort_size: 93951,
-    claims_count: 93204,
-    retention: {
-      1: { retained_users: 93089, retention_rate: 0.9988 },
-      7: { retained_users: 92640, retention_rate: 0.9939 },
-      30: { retained_users: 92190, retention_rate: 0.9891 },
-    },
-  },
-  {
-    cohort_date: 'Kohort 9 (Terkini Kontinu)',
-    cohort_size: 89500,
-    claims_count: 71186,
-    retention: {
-      1: { retained_users: 71079, retention_rate: 0.9985 },
-      7: { retained_users: 70780, retention_rate: 0.9943 },
-      30: { retained_users: 70510, retention_rate: 0.9905 },
-    },
-  },
-];
-
 function formatPercent(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  if (value === null || value === undefined || Number.isNaN(value)) return '-';
   return `${(value * 100).toFixed(1)}%`;
 }
 
@@ -696,7 +570,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
                             <span className={`text-xs ${isLight ? 'text-slate-500 font-medium' : 'text-white/40'}`}>({retained.toLocaleString('id-ID')})</span>
                           </div>
                         ) : (
-                          <span className={isLight ? 'text-slate-400' : 'text-white/40'}>—</span>
+                          <span className={isLight ? 'text-slate-400' : 'text-white/40'}>-</span>
                         )}
                       </td>
                     );

@@ -19,12 +19,16 @@ export const getApiBaseUrl = () => {
 export const API_BASE_URL = getApiBaseUrl();
 
 let pendingSessionPromise = null;
+let authBackoffUntil = 0;
 
 export const ensureSessionToken = async () => {
   if (typeof localStorage === 'undefined') return null;
   const existing = localStorage.getItem('claimtrace_token') || localStorage.getItem('bpjs_session_token');
   if (existing && !existing.startsWith('token-sec-')) {
     return existing;
+  }
+  if (Date.now() < authBackoffUntil) {
+    return null;
   }
   if (!pendingSessionPromise) {
     pendingSessionPromise = fetch(`${API_BASE_URL}/api/v1/auth/login`, {
@@ -37,7 +41,10 @@ export const ensureSessionToken = async () => {
       }),
     })
       .then(async (res) => {
-        if (!res.ok) return null;
+        if (!res.ok) {
+          authBackoffUntil = Date.now() + 10000;
+          return null;
+        }
         const data = await res.json();
         if (data?.token) {
           localStorage.setItem('claimtrace_token', data.token);
@@ -46,7 +53,10 @@ export const ensureSessionToken = async () => {
         }
         return null;
       })
-      .catch(() => null)
+      .catch(() => {
+        authBackoffUntil = Date.now() + 5000;
+        return null;
+      })
       .finally(() => {
         pendingSessionPromise = null;
       });

@@ -15,19 +15,21 @@ import {
   Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon
 } from 'lucide-react';
 
-// Public & Auth Components (Eager)
+// Public Components (Eager for immediate first paint on Landing)
 import LandingPage from './components/Public/LandingPage';
-import SignInPage from './components/Auth/SignInPage';
-import MfaStepUpPage from './components/Auth/MfaStepUpPage';
-import SignOutPage from './components/Auth/SignOutPage';
 import InstitutionalLegalModal from './components/Public/InstitutionalLegalModal';
 import CookieConsentBanner from './components/Public/CookieConsentBanner';
 
-// Primary Cockpit Modules (Eager for instant load)
-import ExecutiveHub from './components/Dashboard/ExecutiveHub';
-import TriageOverview from './components/Dashboard/TriageOverview';
-import CaseInvestigation from './components/Dashboard/CaseInvestigation';
-import HealthAIChatWidget from './components/Dashboard/HealthAIChatWidget';
+// Auth Components (Lazy-loaded on auth transition)
+const SignInPage = lazy(() => import('./components/Auth/SignInPage'));
+const MfaStepUpPage = lazy(() => import('./components/Auth/MfaStepUpPage'));
+const SignOutPage = lazy(() => import('./components/Auth/SignOutPage'));
+
+// Primary Cockpit Modules (Lazy-loaded for sub-second Landing LCP)
+const ExecutiveHub = lazy(() => import('./components/Dashboard/ExecutiveHub'));
+const TriageOverview = lazy(() => import('./components/Dashboard/TriageOverview'));
+const CaseInvestigation = lazy(() => import('./components/Dashboard/CaseInvestigation'));
+const HealthAIChatWidget = lazy(() => import('./components/Dashboard/HealthAIChatWidget'));
 
 // Mobile JKN Screens (Lazy-loaded on demand)
 const MoreMenuScreen = lazy(() => import('./components/MobileJKN/MoreMenuScreen'));
@@ -170,6 +172,16 @@ export default function App() {
     }
   }, [authView, dashboardTab, viewMode]);
 
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === 'Escape' && legalModalOpen) {
+        setLegalModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [legalModalOpen]);
+
   // Handle browser Back & Forward navigation buttons (popstate synchronization)
   useEffect(() => {
     const handlePopState = () => {
@@ -237,6 +249,7 @@ export default function App() {
   });
 
   useEffect(() => {
+    if (authView !== 'dashboard') return;
     let active = true;
     const refreshBadges = async () => {
       try {
@@ -251,7 +264,7 @@ export default function App() {
     };
     refreshBadges();
     return () => { active = false; };
-  }, [dashboardTab]);
+  }, [authView, dashboardTab]);
 
   // Navigasi Cockpit Sidebar Dikelompokkan Rapi
   const sidebarNavGroups = [
@@ -784,14 +797,16 @@ export default function App() {
 
             </div>
           </header>
-          <SignInPage 
-            initialOpenModal={authView === 'mfa'}
-            isLight={isLight}
-            onLoginSuccess={(user) => {
-              if (user) setCurrentUser(user);
-              setAuthView('dashboard');
-            }}
-          />
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center py-20 text-xs text-slate-500">Memuat gerbang autentikasi BPJS Kesehatan...</div>}>
+            <SignInPage 
+              initialOpenModal={authView === 'mfa'}
+              isLight={isLight}
+              onLoginSuccess={(user) => {
+                if (user) setCurrentUser(user);
+                setAuthView('dashboard');
+              }}
+            />
+          </Suspense>
 
           {/* Official Institutional Footer BPJS Kesehatan */}
           <footer className={`shrink-0 ${
@@ -840,13 +855,15 @@ export default function App() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <SignOutPage 
-            onLoginAgain={() => setAuthView('login')}
-            onGoToLogin={() => setAuthView('login')}
-            onGoToLanding={() => setAuthView('landing')}
-            user={currentUser}
-            isLight={isLight}
-          />
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-slate-500">Menutup sesi verifikator...</div>}>
+            <SignOutPage 
+              onLoginAgain={() => setAuthView('login')}
+              onGoToLogin={() => setAuthView('login')}
+              onGoToLanding={() => setAuthView('landing')}
+              user={currentUser}
+              isLight={isLight}
+            />
+          </Suspense>
         </motion.div>
       )}
 
@@ -1773,7 +1790,7 @@ export default function App() {
                                 <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
                                   <div>
                                     <span className="text-slate-500">Nomor Kartu:</span>
-                                    <p className="font-bold font-mono text-slate-900">0001482910442</p>
+                                    <p className="font-bold font-mono text-slate-900">00014*****442</p>
                                   </div>
                                   <div>
                                     <span className="text-slate-500">NIK Terenkripsi:</span>
@@ -1796,7 +1813,7 @@ export default function App() {
                       {currentScreen === 'notifikasi' && (
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                           <div className="flex items-center space-x-2 pb-2 border-b border-slate-200">
-                            <button onClick={() => navigateTo('home')} className="p-1 text-slate-600 hover:text-black">
+                            <button type="button" onClick={() => navigateTo('home')} aria-label="Kembali ke beranda Mobile JKN" className="p-1 text-slate-600 hover:text-black">
                               <ChevronLeft className="w-5 h-5" />
                             </button>
                             <h2 className="text-sm font-bold text-slate-900">Pusat Notifikasi</h2>
@@ -1840,7 +1857,7 @@ export default function App() {
                           <h2 className="text-sm font-bold text-slate-900 capitalize">{currentScreen}</h2>
                           <div className="bg-white p-4 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-2">
                             <p>Nama: AHMAD SYAFIQ (Peserta Aktif JKN-KIS)</p>
-                            <p>No. KIS: 0001482910442 (Terverifikasi)</p>
+                            <p>No. KIS: 00014*****442 (Terverifikasi)</p>
                             <p>Kantor Cabang Terdaftar: Kantor Cabang Utama BPJS Kesehatan (Nasional)</p>
                           </div>
                         </div>
@@ -2561,11 +2578,13 @@ export default function App() {
 
     {/* FLOATING ORCHESTRATOR ASISTEN AUDIT JKN (AI) WIDGET */}
     {authView === 'dashboard' && dashboardTab !== 'health_ai_chat' && (
-      <HealthAIChatWidget 
-        onOpenFullScreen={() => setDashboardTab('health_ai_chat')} 
-        onNavigateTab={(t) => setDashboardTab(t)} 
-        isLight={isLight}
-      />
+      <Suspense fallback={null}>
+        <HealthAIChatWidget 
+          onOpenFullScreen={() => setDashboardTab('health_ai_chat')} 
+          onNavigateTab={(t) => setDashboardTab(t)} 
+          isLight={isLight}
+        />
+      </Suspense>
     )}
 
     {/* VERCEL WEB ANALYTICS */}

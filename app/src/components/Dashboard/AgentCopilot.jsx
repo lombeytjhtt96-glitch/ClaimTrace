@@ -36,7 +36,7 @@ import {
   DollarSign,
   ChevronRight,
 } from 'lucide-react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import {
   getAiTelemetryState,
   saveAiTelemetryState,
@@ -532,7 +532,7 @@ export default function AgentCopilot({
   const fetchReActTrajectory = async (targetClaimId) => {
     const cid = targetClaimId || activeReActClaimId || 'CLM-2026-10-085';
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/agent/run`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/agent/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claim_id: cid, verifier_nip: '198704202011012001' }),
@@ -1126,7 +1126,7 @@ export default function AgentCopilot({
                   </span>
                 </div>
                 <div className={`font-bold mb-1 ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
-                  NODE ID: {selectedNodeObj.id.toUpperCase()} — {selectedNodeObj.label}
+                  NODE ID: {selectedNodeObj.id.toUpperCase()} - {selectedNodeObj.label}
                 </div>
                 <p className={`font-sans text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
                   {selectedNodeObj.description}
@@ -2313,7 +2313,7 @@ export default function AgentCopilot({
                     onClick={async () => {
                       setApprovalStatus('approved');
                       try {
-                        const res = await fetch(`${API_BASE_URL}/api/v1/agent/approve`, {
+                        const res = await authFetch(`${API_BASE_URL}/api/v1/agent/approve`, {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',

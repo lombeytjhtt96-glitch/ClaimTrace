@@ -383,7 +383,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     const apiBase = getApiBase();
     try {
       // 1. Fetch tables
-      const tRes = await fetch(`${apiBase}/api/v1/duckdb/tables`);
+      const tRes = await authFetch(`${apiBase}/api/v1/duckdb/tables`);
       if (tRes.ok) {
         const tJson = await tRes.json();
         if (tJson.tables && tJson.tables.length > 0) {
@@ -396,7 +396,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
       }
 
       // 2. Fetch DB info
-      const infoRes = await fetch(`${apiBase}/api/v1/duckdb/info`);
+      const infoRes = await authFetch(`${apiBase}/api/v1/duckdb/info`);
       if (infoRes.ok) {
         const infoJson = await infoRes.json();
         setDbStatus(infoJson);
@@ -457,7 +457,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
       const apiBase = getApiBase();
       try {
         // 1. Fetch Schema / Describe
-        const descRes = await fetch(`${apiBase}/api/v1/duckdb/describe/${selectedTable}`);
+        const descRes = await authFetch(`${apiBase}/api/v1/duckdb/describe/${selectedTable}`);
         if (descRes.ok) {
           const descJson = await descRes.json();
           if (isMounted && descJson.columns && descJson.columns.length > 0) {
@@ -632,7 +632,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
 
   return (
     <div className={`space-y-6 pb-28 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-      {/* Top Banner & Header — Cosmic Glassmorphism */}
+      {/* Top Banner & Header - Cosmic Glassmorphism */}
       <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative overflow-hidden rounded-2xl border p-6 shadow-xl backdrop-blur-xl group ${
         isLight
           ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
@@ -660,7 +660,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </span>
           </div>
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Basis data analitis terpadu — memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris transaksi resmi BPJS Kesehatan</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
+            Basis data analitis terpadu - memuat <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>6.264.346 baris transaksi resmi BPJS Kesehatan</span> yang tersimpan permanen dalam <code className={`font-mono px-1 py-0.5 rounded border ${
               isLight ? 'text-emerald-800 bg-slate-100 border-slate-200' : 'text-cyan-300 bg-white/10 border-white/10'
             }`}>claimtrace_warehouse.db</code>.
           </p>
@@ -966,7 +966,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             </div>
           </div>
 
-          {/* Raw Data Grid with Dynamic Columns & Types — Cosmic Grid */}
+          {/* Raw Data Grid with Dynamic Columns & Types - Cosmic Grid */}
           <div className={`rounded-2xl border shadow-xl overflow-hidden backdrop-blur-xl ${
             isLight
               ? 'border-slate-200 bg-white text-slate-900 shadow-slate-200/50'

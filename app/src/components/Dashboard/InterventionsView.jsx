@@ -36,154 +36,6 @@ import {
 } from 'lucide-react';
 
 // Realistic JKN / BPJS Kesehatan Intervention Plans
-const INITIAL_INTERVENTION_PLANS = [
-  {
-    id: 1,
-    faskes_code: '0114R005',
-    faskes_name: 'RS Khusus Mitra Husada',
-    pic_name: 'Siti Rahmawati, S.Kep., Ners',
-    pic_email: 'casemix.rahma@rskh-mitrahusada.co.id',
-    plan_title: 'Intervensi & Rekonsiliasi 85 Berkas Fisioterapi (Phantom Cluster)',
-    claim_id: 'CLM-2026-10-085',
-    risk_level: 'CRITICAL',
-    risk_score: 94,
-    status: 'pending_review',
-    total_steps: 4,
-    completed_steps: 1,
-    viewed_in_24h: true,
-    stale_days: 0,
-    created_at: '2026-10-24T18:00:00Z',
-    updated_at: '2026-10-24T19:30:00Z',
-    plan_steps: [
-      {
-        title: 'Penundaan Penandatanganan BAKB',
-        description: 'Tunda berita acara pembayaran 85 klaim fisioterapi sesuai Perpres 82/2018 Pasal 76.',
-        completed: true,
-      },
-      {
-        title: 'Pengunggahan SIP DPJP Terbarukan',
-        description: 'Faskes wajib mengunggah perpanjangan SIP dokter spesialis KFR pada portal SATUSEHAT.',
-        completed: false,
-      },
-      {
-        title: 'Klarifikasi Sangkalan Presensi 80% Pasien',
-        description: 'Faskes memberikan bukti absensi biometrik / rekam medis manual untuk pasien yang menyangkal hadir di Mobile JKN.',
-        completed: false,
-      },
-      {
-        title: 'Rekonsiliasi Bersama Tim Wasrik BPJS Kesehatan',
-        description: 'Sidang klarifikasi bersama Tim Pencegahan Kecurangan (PK-JKN) BPJS Kesehatan Pusat.',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 2,
-    faskes_code: '0114R001',
-    faskes_name: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-    pic_name: 'dr. Hendra Setiawan, Sp.A',
-    pic_email: 'hendra.setiawan@rscm.co.id',
-    plan_title: 'Klarifikasi Koding Sepsis Neonatal (P-8-09-III) Non-Kultur',
-    claim_id: 'CLM-2026-10-084',
-    risk_level: 'SEVERE',
-    risk_score: 82,
-    status: 'in_progress',
-    total_steps: 3,
-    completed_steps: 2,
-    viewed_in_24h: true,
-    stale_days: 1,
-    created_at: '2026-10-23T14:20:00Z',
-    updated_at: '2026-10-24T17:15:00Z',
-    plan_steps: [
-      {
-        title: 'Penerbitan Surat Klarifikasi BAKK',
-        description: 'Kirim draf ketidaksesuaian resume medis koding INA-CBG Sepsis Berat.',
-        completed: true,
-      },
-      {
-        title: 'Penyerahan Hasil Kultur Darah & CRP Serial',
-        description: 'Casemix RSUPN menyerahkan bukti lampiran pemeriksaan mikrobiologi bayi prematur.',
-        completed: true,
-      },
-      {
-        title: 'Penyesuaian Tarif Koding Menjadi P-8-09-I (Ringan)',
-        description: 'Koreksi klaim jika hasil kultur negatif dan klinis membaik tanpa syok sepsis.',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 3,
-    faskes_code: '0114R002',
-    faskes_name: 'RSUP Fatmawati Jakarta',
-    pic_name: 'Ahmad Faisal, S.Farm., Apt',
-    pic_email: 'faisal.apt@rs-fatmawati.go.id',
-    plan_title: 'Audit Restriksi Fornas Albumin Human 20% Pasca-Bedah',
-    claim_id: 'CLM-2026-10-082',
-    risk_level: 'MODERATE',
-    risk_score: 58,
-    status: 'completed',
-    total_steps: 3,
-    completed_steps: 3,
-    viewed_in_24h: false,
-    stale_days: 4,
-    created_at: '2026-10-20T09:00:00Z',
-    updated_at: '2026-10-22T16:00:00Z',
-    plan_steps: [
-      {
-        title: 'Pemeriksaan Hasil Lab Serum Albumin',
-        description: 'Faskes melampirkan hasil lab kadar albumin <2.5 g/dL sebelum pemberian infus.',
-        completed: true,
-      },
-      {
-        title: 'Verifikasi Peresepan DPJP Bedah',
-        description: 'Kesesuaian dosis maksimal 100 ml per hari sesuai Formularium Nasional.',
-        completed: true,
-      },
-      {
-        title: 'Persetujuan Klaim oleh Verifikator Medis',
-        description: 'Berkas dinyatakan lengkap dan lolos verifikasi pra-pembayaran.',
-        completed: true,
-      },
-    ],
-  },
-  {
-    id: 4,
-    faskes_code: '0114R004',
-    faskes_name: 'RSUP Dr. Sardjito Yogyakarta',
-    pic_name: 'Dewi Lestari, S.Tr.Kes',
-    pic_email: 'dewi.rekammedis@rs-sardjito.co.id',
-    plan_title: 'Penertiban Koding Unbundling Endoskopi Lambung',
-    claim_id: 'CLM-2026-10-079',
-    risk_level: 'SEVERE',
-    risk_score: 72,
-    status: 'pending_review',
-    total_steps: 3,
-    completed_steps: 0,
-    viewed_in_24h: false,
-    stale_days: 8,
-    created_at: '2026-10-15T11:00:00Z',
-    updated_at: '2026-10-16T10:00:00Z',
-    plan_steps: [
-      {
-        title: 'Konsolidasi Tagihan Biopsi dan Endoskopi',
-        description: 'Penyatuan klaim tindakan terpisah menjadi satu episode rawat jalan terpadu.',
-        completed: false,
-      },
-      {
-        title: 'Pemberitahuan Kepatuhan Koding Berita Acara 2020',
-        description: 'Penyuluhan staf koder rekam medis terkait regulasi anti-unbundling.',
-        completed: false,
-      },
-      {
-        title: 'Otorisasi Ulang oleh Wasrik BPJS Kesehatan',
-        description: 'Verifikasi kesepakatan nilai klaim revisi.',
-        completed: false,
-      },
-    ],
-  },
-];
-
 export default function InterventionsView({ onSelectCase, isLight: propIsLight }) {
   // Theme Detection Fallback
   const [domIsLight, setDomIsLight] = useState(false);
@@ -260,6 +112,9 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     const viewed24h = plans.filter((p) => p.viewed_in_24h).length;
     const stale7d = plans.filter((p) => p.stale_days >= 7).length;
     const abandonmentRate = totalPlans > 0 ? ((stale7d / totalPlans) * 100).toFixed(1) : '0.0';
+    const avgDaysVal = totalPlans > 0
+      ? (plans.reduce((acc, p) => acc + Math.max(1, Number(p.stale_days || 0) + Number(p.completed_steps || 0)), 0) / totalPlans).toFixed(1)
+      : '0.0';
 
     return {
       totalPlans,
@@ -269,7 +124,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
       avgCompletion,
       viewed24h,
       stale7d,
-      avgDaysToComplete: '3.4',
+      avgDaysToComplete: avgDaysVal,
       abandonmentRate,
     };
   }, [plans]);
