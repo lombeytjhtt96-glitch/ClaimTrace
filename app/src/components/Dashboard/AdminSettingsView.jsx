@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { 
   Settings, Check, X, RefreshCw, Eye, EyeOff, CheckCircle2,
   Sun, Moon, Monitor, Palette, Layers, Bot, Smartphone, 
@@ -914,14 +914,15 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
     setEditedValues({});
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!hasChanges) return;
     setIsSaving(true);
-    setTimeout(() => {
-      onSaveCategory(category.id, editedValues, category.title);
+    try {
+      await onSaveCategory(category.id, editedValues, category.title);
       setEditedValues({});
+    } finally {
       setIsSaving(false);
-    }, 400);
+    }
   };
 
   return (
@@ -1105,7 +1106,34 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
     );
   }, [currentTheme]);
 
-  const handleSaveCategory = (catId, editedValues, catTitle) => {
+  useEffect(() => {
+    let active = true;
+    const loadServerSettings = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/settings`);
+        if (res.ok && active) {
+          const data = await res.json();
+          const serverSettings = data?.settings;
+          if (serverSettings && typeof serverSettings === 'object') {
+            setCategories((prev) =>
+              prev.map((cat) => ({
+                ...cat,
+                settings: cat.settings.map((s) =>
+                  s.key in serverSettings ? { ...s, value: serverSettings[s.key] } : s
+                ),
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat konfigurasi sistem:', err);
+      }
+    };
+    loadServerSettings();
+    return () => { active = false; };
+  }, []);
+
+  const handleSaveCategory = async (catId, editedValues, catTitle) => {
     setCategories((prev) =>
       prev.map((cat) => {
         if (cat.id !== catId) return cat;
@@ -1127,7 +1155,21 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
       }
     }
 
-    setToast({ message: `${catTitle} berhasil disimpan!`, type: 'success' });
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: catId, updates: editedValues }),
+      });
+      if (res.ok) {
+        setToast({ message: `${catTitle} tersimpan ke server & disegel audit SHA-256!`, type: 'success' });
+      } else {
+        setToast({ message: `${catTitle} tersimpan lokal (server mengembalikan status ${res.status}).`, type: 'error' });
+      }
+    } catch (err) {
+      console.error('Gagal menyimpan konfigurasi ke server:', err);
+      setToast({ message: `Gagal menyimpan ${catTitle}: ${err.message}`, type: 'error' });
+    }
     setTimeout(() => setToast(null), 3500);
   };
 

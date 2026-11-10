@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
@@ -200,7 +201,84 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     }
   ];
 
-  const filteredFaskes = FASKES_DATA.filter((f) => {
+  const [liveFaskes, setLiveFaskes] = useState([]);
+  const [nationalSummary, setNationalSummary] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadFaskesIntelligence = async () => {
+      try {
+        const [provRes, claimsRes, natRes] = await Promise.all([
+          authFetch(`${API_BASE_URL}/api/v1/analytics/provider-risk`),
+          authFetch(`${API_BASE_URL}/api/v1/claims`),
+          authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics`),
+        ]);
+        const claimsByFaskes = {};
+        if (claimsRes.ok) {
+          const claimsRaw = await claimsRes.json();
+          (Array.isArray(claimsRaw) ? claimsRaw : []).forEach((item) => {
+            const c = item?.claim;
+            const t = item?.triage;
+            if (c?.faskes_id) claimsByFaskes[c.faskes_id] = { claim: c, triage: t };
+          });
+        }
+        if (provRes.ok && active) {
+          const provData = await provRes.json();
+          const providers = Array.isArray(provData.providers) ? provData.providers : [];
+          const mapped = providers.map((p) => {
+            const linked = claimsByFaskes[p.faskes_id];
+            const c = linked?.claim || {};
+            const t = linked?.triage || {};
+            const triageScore = Number(t.final_priority_score ?? p.rata_skor_prioritas_klaim ?? p.skor_risiko_perilaku_faskes ?? 0);
+            const friScore = Number(triageScore > p.skor_risiko_perilaku_faskes ? triageScore : p.skor_risiko_perilaku_faskes).toFixed(1);
+            const numericFri = Number(friScore);
+            const riskLevel = numericFri >= 70
+              ? 'TINGGI / KRITIS (MERAH)'
+              : numericFri >= 40
+              ? 'SEDANG (KUNING)'
+              : 'RENDAH (HIJAU)';
+            const isExpired = c.dpjp_meta?.sip_status === 'EXPIRED';
+            const spikeRatio = c.episode_meta?.rasio_lonjakan_baseline
+              ? `${Number(c.episode_meta.rasio_lonjakan_baseline).toFixed(1)}x`
+              : `${Number(p.rasio_klaim_per_pasien || 1).toFixed(1)}x`;
+            return {
+              id: p.faskes_id,
+              linkedClaimId: c.claim_id || 'CLM-2026-8801',
+              name: p.nama_faskes,
+              type: `${c.fkl08_jenis_faskes || 'Rumah Sakit'} Kelas ${p.kelas_rs || c.kelas_rs || 'B'}`,
+              city: p.nama_faskes.includes('Bandung') ? 'Bandung' : p.nama_faskes.includes('Surabaya') ? 'Surabaya' : p.nama_faskes.includes('Yogyakarta') ? 'Yogyakarta' : 'Jabodetabek',
+              province: 'Indonesia',
+              director: c.dpjp_meta?.nama_dpjp_alias ? `PIC Medis: ${c.dpjp_meta.nama_dpjp_alias}` : 'Komite Medik FKRTL',
+              friScore: numericFri,
+              riskLevel,
+              totalClaimsMonth: Number(p.total_klaim || 0),
+              totalRupiahMonth: `Rp ${Number(p.total_biaya_tagih_rp || 0).toLocaleString('id-ID')}`,
+              anomalyCount: Number(p.jumlah_klaim_merah || p.total_klaim_repeat_billing || 0),
+              spikeRatio,
+              primaryFinding: t.ringkasan_bukti_audit || `Skor perilaku faskes ${p.skor_risiko_perilaku_faskes}/100 (${p.kategori_risiko_faskes}).`,
+              fristaStatus: isExpired ? 'ANOMALI HARD-TRIGGER' : numericFri >= 40 ? 'KLARIFIKASI AKTIF' : 'AKTIF TERVERIFIKASI',
+              historyAudit: t.rekomendasi_sop || `Pemantauan DuckDB real-time atas ${p.total_klaim} berkas klaim & ${p.total_dpjp_unik} DPJP unik.`,
+            };
+          });
+          setLiveFaskes(mapped);
+        }
+        if (natRes.ok && active) {
+          const nat = await natRes.json();
+          setNationalSummary(nat?.portfolio_metrics || null);
+        }
+      } catch (err) {
+        console.error('Gagal memuat data pengawasan faskes:', err);
+      }
+    };
+    loadFaskesIntelligence();
+    return () => { active = false; };
+  }, []);
+
+  const criticalFaskesList = liveFaskes.filter(f => f.friScore >= 70);
+  const mediumFaskesList = liveFaskes.filter(f => f.friScore >= 40 && f.friScore < 70);
+  const safeFaskesList = liveFaskes.filter(f => f.friScore < 40);
+
+  const filteredFaskes = liveFaskes.filter((f) => {
     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase()) || f.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesClass = selectedClass === 'all' || f.type.toLowerCase().includes(selectedClass.toLowerCase());
     return matchesSearch && matchesClass;
@@ -247,10 +325,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 Total Faskes Terpantau
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                2.091 FKRTL Terpantau
+                {Number(nationalSummary?.distinct_fkrtl_facilities || 2091).toLocaleString('id-ID')} FKRTL Terpantau
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                496 Kab/Kota (8 Audit Prioritas)
+                {Number(nationalSummary?.kabupaten_kota_coverage || 496).toLocaleString('id-ID')} Kab/Kota ({liveFaskes.length} Audit Prioritas)
               </div>
             </div>
 
@@ -261,10 +339,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 <AlertOctagon className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Risiko Kritis (FRI ≥ 70)
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                1 RS Kritis
+                {criticalFaskesList.length} RS Kritis
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                RS Khusus Mitra Husada (Skor 88)
+                {criticalFaskesList[0] ? `${criticalFaskesList[0].name} (Skor ${criticalFaskesList[0].friScore})` : 'Memuat evaluasi...'}
               </div>
             </div>
 
@@ -275,10 +353,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 Pengawasan Khusus (40-70)
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                2 RS Sedang
+                {mediumFaskesList.length} RS Sedang
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                RS Hermina &amp; RS Indriati
+                {mediumFaskesList.length > 0 ? mediumFaskesList.slice(0, 2).map(x => x.name).join(' & ') : 'Pantauan berkala aktif'}
               </div>
             </div>
 
@@ -289,10 +367,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 Kepatuhan Terverifikasi
               </div>
               <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                5 RS Terakreditasi
+                {safeFaskesList.length} RS Terakreditasi
               </div>
               <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Validasi Biometrik FRISTA &gt; 96%
+                Skor FRI Rendah (&lt; 40)
               </div>
             </div>
           </div>
@@ -330,7 +408,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   : isLight ? 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200' : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'
               }`}
             >
-              Semua Kelas ({FASKES_DATA.length})
+              Semua Kelas ({liveFaskes.length})
             </button>
             <button type="button"
               onClick={() => setSelectedClass('khusus')}
@@ -340,7 +418,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   : isLight ? 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200' : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'
               }`}
             >
-              RS Khusus (2)
+              RS Khusus ({liveFaskes.filter(f => f.type.toLowerCase().includes('khusus')).length})
             </button>
             <button type="button"
               onClick={() => setSelectedClass('kelas a')}
@@ -350,7 +428,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   : isLight ? 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200' : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'
               }`}
             >
-              Kelas A (2)
+              Kelas A ({liveFaskes.filter(f => f.type.toLowerCase().includes('kelas a')).length})
             </button>
             <button type="button"
               onClick={() => setSelectedClass('kelas b')}
@@ -360,7 +438,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   : isLight ? 'text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200' : 'text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'
               }`}
             >
-              Kelas B (4)
+              Kelas B ({liveFaskes.filter(f => f.type.toLowerCase().includes('kelas b')).length})
             </button>
           </div>
         </div>
@@ -519,7 +597,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                     {isCritical && (
                       <motion.button
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => onSelectFaskesCase && onSelectFaskesCase('CLM-2026-10-085')}
+                        onClick={() => onSelectFaskesCase && onSelectFaskesCase(faskes.linkedClaimId || 'CLM-2026-8801')}
                         className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-xs font-mono cursor-pointer"
                       >
                         Telaah Kasus Kritis &rarr;

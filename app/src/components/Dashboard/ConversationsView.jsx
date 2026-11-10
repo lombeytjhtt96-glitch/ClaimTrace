@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   MessageSquare,
@@ -290,7 +291,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : themeIsLight;
 
-  const [userGroups, setUserGroups] = useState(INITIAL_CONVERSATION_GROUPS);
+  const [userGroups, setUserGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [selectedSession, setSelectedSession] = useState(null);
@@ -298,6 +299,27 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('Indikasi kuat Phantom Billing & Sangkalan Pasien');
   const [toastMsg, setToastMsg] = useState(null);
+
+  const fetchConversations = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/conversations`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.groups)) {
+          setUserGroups(data.groups);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal memuat log audit percakapan:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   // Auto-dismiss Toast Feedback setelah 3.2 detik
   useEffect(() => {
@@ -310,10 +332,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
 
   // Handle Refresh
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
+    fetchConversations();
   };
 
   // Filtered Groups
@@ -331,24 +350,26 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
     });
   }, [userGroups, searchQuery, roleFilter]);
 
-  // Aggregate Stats (Matching media_1792847792743_cc7652ee.png)
+  // Aggregate Stats (Real computation from fetched conversation groups)
   const stats = useMemo(() => {
     const totalSessions = userGroups.reduce((acc, g) => acc + g.sessions.length, 0);
-    const totalConversations = userGroups.reduce((acc, g) => acc + g.totalMessages, 0);
+    const totalConversations = userGroups.reduce((acc, g) => acc + (g.totalMessages || 0), 0);
     const avgMessages = totalSessions > 0 ? (totalConversations / totalSessions).toFixed(1) : '0.0';
+    const flaggedCount = userGroups.reduce((acc, g) => acc + (g.openFlagCount || 0), 0);
 
     return {
       totalSessions,
       totalUsers: userGroups.length,
       totalConversations,
-      conversationsToday: 12,
+      conversationsToday: totalSessions,
       avgSession: avgMessages,
-      thisWeek: 42,
+      thisWeek: totalConversations,
+      flaggedCount,
     };
   }, [userGroups]);
 
-  // Handle Flag Session
-  const handleSaveFlag = () => {
+  // Handle Flag Session (Persisted via /api/v1/operations/flags)
+  const handleSaveFlag = async () => {
     if (selectedSession) {
       setUserGroups((prev) =>
         prev.map((g) => ({
@@ -359,7 +380,22 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
         }))
       );
       setSelectedSession((prev) => (prev ? { ...prev, status: 'flagged' } : prev));
-      setToastMsg(`Sesi ${selectedSession.session_id} berhasil ditandai bendera investigasi audit Wasrik.`);
+      try {
+        await authFetch(`${API_BASE_URL}/api/v1/operations/flags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: selectedSession.session_id,
+            claim_id: selectedSession.claim_id || '',
+            fkrtl: selectedSession.title || 'FKRTL Terkait',
+            reason: flagReason,
+            tags: ['conversation_flag', 'audit_wasrik'],
+          }),
+        });
+      } catch (err) {
+        console.error('Gagal mencatat penandaan sesi:', err);
+      }
+      setToastMsg(`Sesi ${selectedSession.session_id} berhasil ditandai & dicatat ke antrean Flags Wasrik.`);
     }
     setFlagModalOpen(false);
   };
@@ -375,7 +411,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const userMsg = {
       role: 'user',
-      sender_name: 'Budi Santoso, S.Kom, M.TI (Verifikator)',
+      sender_name: 'Verifikator Medis (Live)',
       text: q,
       timestamp: nowTime,
     };
@@ -390,7 +426,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             }
           : prev
       );
-      setGroups((prev) =>
+      setUserGroups((prev) =>
         prev.map((g) => ({
           ...g,
           sessions: g.sessions.map((s) =>

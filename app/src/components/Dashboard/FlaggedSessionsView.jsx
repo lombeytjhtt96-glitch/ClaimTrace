@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Flag,
@@ -64,94 +65,6 @@ const PREDEFINED_CATEGORIES = [
   },
 ];
 
-const INITIAL_FLAGS = [
-  {
-    id: 501,
-    session_id: 'SEP-0114R0010326V008291 · Sesi Audit #AUD-9921',
-    user_id: 10293,
-    peserta_name: 'Tn. Bambang Suryanto (0001829348122)',
-    fkrtl: 'RSUD Dr. Soetomo Surabaya',
-    ina_cbg: 'I-4-10-III (Infark Miokard Akut - Berat)',
-    tarif_selisih: 'Rp 9.450.000',
-    reason: 'Peningkatan derajat keparahan INA-CBG ke Level III tanpa bukti penunjang Troponin I serial dan hasil ekokardiografi pada berkas klaim elektronik.',
-    status: 'open',
-    flagged_by_admin_id: 1,
-    flagged_by_name: 'dr. Arief Pratama, Sp.KP (Verifikator Utama)',
-    created_at: new Date(Date.now() - 42 * 60000).toISOString(),
-    updated_at: new Date(Date.now() - 15 * 60000).toISOString(),
-    tags: ['fraud_indicator', 'repeated_upcoding', 'kardiologi-level-3'],
-    notes: 'Perlu klarifikasi langsung dengan DPJP Kardiologi dan Tim Casemix RSUD Dr. Soetomo sebelum batas SLA 10 hari kerja.'
-  },
-  {
-    id: 502,
-    session_id: 'SEP-0301R0120326V001044 · Sesi Lapis 3 #MJK-4410',
-    user_id: 20481,
-    peserta_name: 'Ny. Siti Aminah (0002938471920)',
-    fkrtl: 'RSUP Dr. Hasan Sadikin Bandung',
-    ina_cbg: 'K-4-17-I (Nyeri Abdomen & Gastroenteritis)',
-    tarif_selisih: 'Rp 4.280.000',
-    reason: 'Peserta menekan tombol "Bukan Saya / Sangkalan Presensi" pada notifikasi real-time Mobile JKN untuk klaim rawat inap 3 hari.',
-    status: 'open',
-    flagged_by_admin_id: 2,
-    flagged_by_name: 'Sentinel-AI Engine Lapis 3',
-    created_at: new Date(Date.now() - 3.2 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 1.1 * 3600000).toISOString(),
-    tags: ['presence_denial', 'fraud_indicator', 'phantom-billing-alert'],
-    notes: 'Log geolokasi Mobile JKN menunjukkan peserta berada di luar kota saat tanggal admisi SEP diterbitkan. Eskalasi ke Tim Pencegahan Kecurangan (PK-JKN).'
-  },
-  {
-    id: 503,
-    session_id: 'SEP-0092R0040326V004912 · Sesi Audit #AUD-9884',
-    user_id: 30912,
-    peserta_name: 'Tn. Hendra Wijaya (0008391029384)',
-    fkrtl: 'RSUPN Dr. Cipto Mangunkusumo (RSCM)',
-    ina_cbg: 'J-1-20-II (Pneumonia Komunitas dgn Komorbid)',
-    tarif_selisih: 'Rp 3.120.000',
-    reason: 'Diskrepansi antara diagnosis sekunder J96.0 (Gagal Napas Akut) di lembar koding INA-CBG dengan catatan SOAP perawat yang mencatat saturasi O2 98% udara ruang.',
-    status: 'reviewed',
-    flagged_by_admin_id: 1,
-    flagged_by_name: 'dr. Nadia Kusuma, M.Kes',
-    created_at: new Date(Date.now() - 9.5 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 2.4 * 3600000).toISOString(),
-    tags: ['resume_discrepancy', 'audit-pnpk-paru'],
-    notes: 'Sudah dikirimkan Berita Acara Konfirmasi Koding (BAKK) ke bagian rekam medis RSCM. Menunggu unggahan hasil analisis gas darah (AGD).'
-  },
-  {
-    id: 504,
-    session_id: 'SEP-0211R0080326V003118 · Sesi Audit #AUD-9810',
-    user_id: 49102,
-    peserta_name: 'An. Rafa Putra Pratama (0004920192831)',
-    fkrtl: 'RSUP Dr. Sardjito Yogyakarta',
-    ina_cbg: 'P-8-08-II (Observasi Neonatus & Fototerapi)',
-    tarif_selisih: 'Rp 1.850.000',
-    reason: 'Anomali frekuensi klaim fisioterapi/fototerapi berulang dalam siklus 14 hari pada nomor kartu JKN yang sama (indikasi fragmentasi layanan).',
-    status: 'reviewed',
-    flagged_by_admin_id: 3,
-    flagged_by_name: 'dr. Bima Sakti, Sp.A (Auditor Klinis)',
-    created_at: new Date(Date.now() - 22 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 6 * 3600000).toISOString(),
-    tags: ['repeated_upcoding', 'security_alert'],
-    notes: 'Sedang ditinjau kesesuaian indikasi rawat ulang berdasarkan pedoman IDAI dan Peraturan BPJS Kesehatan.'
-  },
-  {
-    id: 505,
-    session_id: 'SEP-0188R0020326V007721 · Sesi Audit #AUD-9742',
-    user_id: 58201,
-    peserta_name: 'Ny. Ratna Dewi Lestari (0007182930192)',
-    fkrtl: 'RSUP Fatmawati Jakarta',
-    ina_cbg: 'M-1-40-I (Tindakan Artroskopi Lutut)',
-    tarif_selisih: 'Rp 0 (Terverifikasi Sesuai)',
-    reason: 'Penandaan otomatis untuk verifikasi kelengkapan laporan operasi implan ortopedi dan kesesuaian e-Katalog.',
-    status: 'resolved',
-    flagged_by_admin_id: 1,
-    flagged_by_name: 'dr. Arief Pratama, Sp.KP',
-    created_at: new Date(Date.now() - 48 * 3600000).toISOString(),
-    updated_at: new Date(Date.now() - 18 * 3600000).toISOString(),
-    tags: ['compliance_verified', 'ortopedi-ekatalog'],
-    notes: 'Faktur implan dan laporan operasi telah diverifikasi lengkap. Klaim disetujui masuk ke Berita Acara Hasil Verifikasi (BAHV).'
-  }
-];
-
 export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLight: propIsLight }) {
   const [isLight, setIsLight] = useState(() => {
     if (propIsLight !== undefined) return propIsLight;
@@ -175,8 +88,8 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
     return () => obs.disconnect();
   }, [propIsLight]);
 
-  const [flags, setFlags] = useState(INITIAL_FLAGS);
-  const [loading, setLoading] = useState(false);
+  const [flags, setFlags] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all');
@@ -187,16 +100,46 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Detail/edit modal states
-  const [expandedId, setExpandedId] = useState(501);
-  const [editNotes, setEditNotes] = useState(INITIAL_FLAGS[0].notes || '');
-  const [editReason, setEditReason] = useState(INITIAL_FLAGS[0].reason || '');
-  const [editTags, setEditTags] = useState(INITIAL_FLAGS[0].tags || []);
+  const [expandedId, setExpandedId] = useState(null);
+  const [editNotes, setEditNotes] = useState('');
+  const [editReason, setEditReason] = useState('');
+  const [editTags, setEditTags] = useState([]);
   const [customTag, setCustomTag] = useState('');
 
   // Bulk tag modal state
   const [showBulkTagModal, setShowBulkTagModal] = useState(false);
   const [bulkTagsToAdd, setBulkTagsToAdd] = useState([]);
   const [bulkActionMessage, setBulkActionMessage] = useState(null);
+
+  const fetchFlags = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/flags`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = (Array.isArray(data.flags) ? data.flags : []).map((f) => ({
+          ...f,
+          peserta_name: f.peserta_name || (f.participant_token ? `Peserta Terproteksi (${f.participant_token})` : 'Peserta Terproteksi (Zero-PHI)'),
+          flagged_by_name: f.flagged_by_name || 'ClaimTrace AI Engine',
+        }));
+        setFlags(mapped);
+        if (mapped.length > 0 && !expandedId) {
+          setExpandedId(mapped[0].id);
+          setEditNotes(mapped[0].notes || '');
+          setEditReason(mapped[0].reason || '');
+          setEditTags(mapped[0].tags || []);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal memuat sesi ditandai:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [expandedId]);
+
+  useEffect(() => {
+    fetchFlags();
+  }, [fetchFlags]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -210,8 +153,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
   }, [showBulkTagModal]);
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => setLoading(false), 350);
+    fetchFlags();
   };
 
   // Filtered flags
@@ -277,26 +219,34 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
     }
   };
 
-  const handleSaveDetail = (flagId) => {
+  const handleSaveDetail = async (flagId) => {
+    const payload = {
+      reason: editReason || null,
+      notes: editNotes || null,
+      tags: editTags,
+    };
     setFlags((prev) =>
       prev.map((f) =>
         f.id === flagId
-          ? {
-              ...f,
-              reason: editReason || null,
-              notes: editNotes || null,
-              tags: editTags,
-              updated_at: new Date().toISOString(),
-            }
+          ? { ...f, ...payload, updated_at: new Date().toISOString() }
           : f
       )
     );
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/operations/flags/${flagId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error('Gagal menyimpan detail penandaan sesi:', err);
+    }
     setExpandedId(null);
-    setBulkActionMessage(`Detail penandaan sesi #${flagId} berhasil diperbarui.`);
+    setBulkActionMessage(`Detail penandaan sesi #${flagId} berhasil disimpan ke server.`);
     setTimeout(() => setBulkActionMessage(null), 3500);
   };
 
-  const handleQuickStatusToggle = (flag) => {
+  const handleQuickStatusToggle = async (flag) => {
     const nextStatus =
       flag.status === 'open' ? 'reviewed' : flag.status === 'reviewed' ? 'resolved' : 'open';
     setFlags((prev) =>
@@ -304,11 +254,21 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
         f.id === flag.id ? { ...f, status: nextStatus, updated_at: new Date().toISOString() } : f
       )
     );
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/operations/flags/${flag.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+    } catch (err) {
+      console.error('Gagal memperbarui status flag:', err);
+    }
   };
 
-  const handleBulkClose = () => {
+  const handleBulkClose = async () => {
     if (selectedIds.size === 0) return;
-    const count = selectedIds.size;
+    const ids = Array.from(selectedIds);
+    const count = ids.length;
     setFlags((prev) =>
       prev.map((f) =>
         selectedIds.has(f.id)
@@ -317,13 +277,27 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
       )
     );
     setSelectedIds(new Set());
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          authFetch(`${API_BASE_URL}/api/v1/operations/flags/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'resolved' }),
+          })
+        )
+      );
+    } catch (err) {
+      console.error('Gagal menutup sesi massal:', err);
+    }
     setBulkActionMessage(`${count} sesi klaim yang ditandai berhasil ditutup (Selesai).`);
     setTimeout(() => setBulkActionMessage(null), 3500);
   };
 
-  const handleBulkTag = () => {
+  const handleBulkTag = async () => {
     if (selectedIds.size === 0 || bulkTagsToAdd.length === 0) return;
-    const count = selectedIds.size;
+    const targetFlags = flags.filter((f) => selectedIds.has(f.id));
+    const count = targetFlags.length;
     setFlags((prev) =>
       prev.map((f) =>
         selectedIds.has(f.id)
@@ -338,6 +312,21 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
     setShowBulkTagModal(false);
     setBulkTagsToAdd([]);
     setSelectedIds(new Set());
+    try {
+      await Promise.all(
+        targetFlags.map((f) =>
+          authFetch(`${API_BASE_URL}/api/v1/operations/flags/${f.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tags: Array.from(new Set([...(f.tags || []), ...bulkTagsToAdd])),
+            }),
+          })
+        )
+      );
+    } catch (err) {
+      console.error('Gagal menambahkan tag massal:', err);
+    }
     setBulkActionMessage(`Kategori tag berhasil ditambahkan ke ${count} sesi klaim.`);
     setTimeout(() => setBulkActionMessage(null), 3500);
   };

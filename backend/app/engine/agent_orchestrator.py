@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
-from app.security.audit_log import AuditLogger
+from app.security.audit_log import get_audit_logger
 from app.data.synthetic_seed import SYNTHETIC_CLAIMS_DATABASE
 from app.engine.scoring import evaluate_claim_triage
 from app.engine.duckdb_analytics import duckdb_engine
@@ -109,7 +109,7 @@ class ClaimTraceAgentOrchestrator:
     """
 
     def __init__(self):
-        self.audit_logger = AuditLogger()
+        self.audit_logger = get_audit_logger()
         self.traces_db: Dict[str, AgentInvestigationResponse] = {}
 
     def get_tool_catalog(self) -> List[Dict[str, Any]]:

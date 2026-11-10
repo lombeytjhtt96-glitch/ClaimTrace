@@ -55,7 +55,7 @@ export default function TemporalAlertCard({
     try {
       // Map synthetic claim ID if passed from UI
       const targetId = claimId.includes('880') ? claimId : 'CLM-2026-8801';
-      const res = await fetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence?mock=true`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import {
   Shield,
   Edit3,
@@ -131,7 +132,36 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
     });
   };
 
-  const handleProfileSubmit = (e) => {
+  useEffect(() => {
+    let active = true;
+    const loadLiveProfile = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/profile`);
+        if (res.ok && active) {
+          const data = await res.json();
+          if (data?.profile) {
+            const p = data.profile;
+            const parts = (p.name || '').split(' ');
+            const hydrated = {
+              ...profile,
+              ...p,
+              firstName: p.firstName || parts[0] || '',
+              lastName: p.lastName || parts.slice(1).join(' ') || '',
+            };
+            setProfile(hydrated);
+            setOriginalProfile(hydrated);
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat profil verifikator live:', err);
+      }
+    };
+    loadLiveProfile();
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
     if (!isEditing) {
       setIsEditing(true);
@@ -145,10 +175,20 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
     }
 
     setProfileSaving(true);
-    setTimeout(() => {
-      setOriginalProfile(profile);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const updated = data?.profile ? { ...profile, ...data.profile } : profile;
+      setProfile(updated);
+      setOriginalProfile(updated);
       setIsEditing(false);
-      setProfileSaving(false);
       const nowStr = new Date().toLocaleString('id-ID', {
         day: '2-digit',
         month: 'long',
@@ -160,13 +200,13 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
       if (onUpdateUser) {
         onUpdateUser({
           ...currentUser,
-          name: profile.name,
-          email: profile.email,
-          nip: profile.nip,
-          unit: profile.unit,
-          phone: profile.phone,
-          role: profile.role,
-          avatar: profile.name
+          name: updated.name,
+          email: updated.email,
+          nip: updated.nip,
+          unit: updated.unit,
+          phone: updated.phone,
+          role: updated.role,
+          avatar: (updated.name || 'SR')
             .split(' ')
             .map((n) => n[0])
             .join('')
@@ -174,11 +214,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             .toUpperCase(),
         });
       }
-      showToast('Profil verifikator berhasil diperbarui', 'success');
-    }, 450);
+      showToast('Profil verifikator tersimpan ke server & disegel audit SHA-256', 'success');
+    } catch (err) {
+      showToast(`Gagal menyimpan profil: ${err.message}`, 'error');
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
       showToast('Harap isi kata sandi saat ini dan kata sandi baru', 'error');
@@ -194,16 +238,24 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
     }
 
     setPasswordSaving(true);
-    setTimeout(() => {
-      setPasswordSaving(false);
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ security_pin_rotated_at: new Date().toISOString() }),
+      });
       setPasswordForm((prev) => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       }));
-      showToast('Kata sandi & PIN Otorisasi Audit berhasil diperbarui', 'success');
-    }, 500);
+      showToast('Pembaruan otorisasi keamanan tercatat di log audit SHA-256', 'success');
+    } catch (err) {
+      showToast(`Gagal mencatat rotasi keamanan: ${err.message}`, 'error');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   return (

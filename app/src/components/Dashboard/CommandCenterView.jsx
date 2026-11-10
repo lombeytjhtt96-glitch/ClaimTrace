@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -230,7 +231,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  const [users, setUsers] = useState(INITIAL_JKN_USERS);
+  const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [riskFilter, setRiskFilter] = useState('ALL');
@@ -243,6 +244,29 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
   const [crmNoteModal, setCrmNoteModal] = useState({ isOpen: false, user: null, note: '' });
   const [toastMsg, setToastMsg] = useState(null);
 
+  const fetchDirectoryUsers = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/directory`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = (Array.isArray(data.users) ? data.users : []).map((u) => ({
+          ...u,
+          phone: u.phone_masked || u.phone || '-',
+        }));
+        setUsers(mapped);
+      }
+    } catch (err) {
+      console.error('Gagal memuat direktori CRM JKN:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDirectoryUsers();
+  }, [fetchDirectoryUsers]);
+
   // Auto-dismiss Toast Feedback setelah 3.2 detik
   useEffect(() => {
     if (!toastMsg) return;
@@ -254,10 +278,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
 
   // Handle Refresh
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    fetchDirectoryUsers();
   };
 
   // Filtered Users
@@ -279,24 +300,27 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
   // Purpose-Driven Metric Cards
   const stats = useMemo(() => {
     const totalUsers = users.length;
-    const reqAttention = users.filter((u) => u.screening_risk === 'CRITICAL' || u.screening_risk === 'SEVERE').length;
+    const reqAttention = users.filter((u) => u.screening_risk === 'CRITICAL' || u.screening_risk === 'SEVERE' || u.screening_risk === 'HIGH').length;
     const criticalCount = users.filter((u) => u.screening_risk === 'CRITICAL').length;
-    const severeCount = users.filter((u) => u.screening_risk === 'SEVERE').length;
-    const active7d = users.filter((u) => u.is_active && u.streak_days > 0).length;
+    const severeCount = users.filter((u) => u.screening_risk === 'SEVERE' || u.screening_risk === 'HIGH').length;
+    const active7d = users.filter((u) => u.is_active).length;
 
     return {
       total: totalUsers,
-      newThisWeek: 3,
+      newThisWeek: users.filter((u) => u.streak_days >= 1).length,
       reqAttention,
       criticalCount,
       severeCount,
-      active7d: active7d + 12,
+      active7d,
     };
   }, [users]);
 
-  // Handle WhatsApp Call / Msg
+  // Contact Link Builder (Respecting UU PDP phone masking)
   const getWhatsAppLink = (phone, user) => {
-    const clean = phone.replace(/\D/g, '');
+    const clean = (phone || '').replace(/\D/g, '');
+    if (!clean || (phone || '').includes('*')) {
+      return `mailto:${user.email}?subject=${encodeURIComponent(`Klarifikasi SLA JKN - ${user.faskes}`)}`;
+    }
     const intl = clean.startsWith('0') ? '62' + clean.slice(1) : clean;
     const msg = encodeURIComponent(
       `Yth. ${user.name} (${user.faskes}), Tim Verifikator BPJS Kesehatan Pusat menyampaikan konfirmasi berkas klaim & kepatuhan SLA JKN.`

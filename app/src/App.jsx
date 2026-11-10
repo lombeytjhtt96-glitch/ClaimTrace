@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { API_BASE_URL, authFetch } from './services/apiConfig';
 import { Analytics } from '@vercel/analytics/react';
 import { 
   Bell, Search, Shield, ShieldCheck, AlertTriangle, CheckCircle, XCircle, 
@@ -227,6 +228,31 @@ export default function App() {
     };
   }, [dashboardTab, authView, selectedCase, viewMode]);
 
+  // Live Sidebar Badges synchronized with DuckDB Queue & Operations Store
+  const [sidebarBadges, setSidebarBadges] = useState({
+    queue_count: null,
+    pending_cases: null,
+    flagged_count: null,
+    audit_chain_length: null,
+  });
+
+  useEffect(() => {
+    let active = true;
+    const refreshBadges = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/system/sidebar-badges`);
+        if (res.ok && active) {
+          const data = await res.json();
+          setSidebarBadges(data);
+        }
+      } catch {
+        // Keep previous badge counts if temporarily offline
+      }
+    };
+    refreshBadges();
+    return () => { active = false; };
+  }, [dashboardTab]);
+
   // Navigasi Cockpit Sidebar Dikelompokkan Rapi
   const sidebarNavGroups = [
     {
@@ -240,10 +266,10 @@ export default function App() {
     {
       group: 'Triase & Berkas Klaim',
       items: [
-        { id: 'queue', label: 'Antrean Triase Klaim', icon: ListFilter, badge: '85', badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
+        { id: 'queue', label: 'Antrean Triase Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
         { id: 'cases_mgmt', label: 'Berkas Klaim (Cases)', icon: Briefcase },
         { id: 'quick_triage', label: 'Triase Cepat (Quick)', icon: Zap },
-        { id: 'flagged_sessions', label: 'Sesi Ditandai (Flags)', icon: Flag, badge: '5', badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
+        { id: 'flagged_sessions', label: 'Sesi Ditandai (Flags)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
         { id: 'appointments', label: 'Jadwal Klarifikasi DPJP', icon: Calendar },
       ],
     },
@@ -2011,6 +2037,10 @@ export default function App() {
                       <CasesManagementView
                         isLight={isLight}
                         onNavigateTab={(t) => setDashboardTab(t)}
+                        onInspectCase={(cId) => {
+                          setSelectedCase({ id: cId });
+                          setDashboardTab('investigation');
+                        }}
                         onSelectCase={(cId) => {
                           setSelectedCase({ id: cId });
                           setDashboardTab('investigation');

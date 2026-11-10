@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
@@ -223,9 +224,31 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedDoctor, setSelectedDoctor] = useState(() => DOCTORS_DATA[0]);
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [dpjpAiResult, setDpjpAiResult] = useState({});
   const [dpjpAiLoading, setDpjpAiLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const loadDpjp = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`);
+        if (res.ok && active) {
+          const data = await res.json();
+          const list = Array.isArray(data?.doctors) ? data.doctors : [];
+          setDoctors(list);
+          if (list.length > 0) {
+            setSelectedDoctor((prev) => prev || list[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Gagal memuat intelijen DPJP live:', err);
+      }
+    };
+    loadDpjp();
+    return () => { active = false; };
+  }, []);
 
   const handleRunDpjpAiAudit = async (doc) => {
     if (!doc || dpjpAiLoading) return;
@@ -234,8 +257,8 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
       const geoSummary = doc.geovelocityEvent
         ? `Anomali Geovelocity pada ${doc.geovelocityEvent.date}: ${doc.geovelocityEvent.pointA.time} di ${doc.geovelocityEvent.pointA.faskes} (${doc.geovelocityEvent.pointA.action}) menuju ${doc.geovelocityEvent.pointB.time} di ${doc.geovelocityEvent.pointB.faskes} (${doc.geovelocityEvent.pointB.action}), jarak ${doc.geovelocityEvent.distanceKm} km dalam ${doc.geovelocityEvent.timeGapMinutes} menit (kecepatan ${doc.geovelocityEvent.requiredSpeedKmh} km/jam).`
         : 'Tidak ada anomali geovelocity antar-faskes.';
-      const sipSummary = doc.hospitals.map((h) => `${h.name} (Status: ${h.status}, Berlaku s/d ${h.sipValidUntil})`).join('; ');
-      const prompt = `Lakukan telaah forensik beban kerja dan legalitas praktik DPJP berikut (maksimal 4 poin tajam):\n- Nama DPJP: ${doc.name} (${doc.specialty}) | NIP: ${doc.nip} | STR: ${doc.str}\n- Indeks Risiko: ${doc.riskScore}/100 | Beban Harian: ${doc.dailyWorkload} pasien/hari (Batas Permenkes No. 14/2021: ${doc.workloadLimit} pasien/hari)\n- Status SIP di Faskes (SATUSEHAT SDMK): ${sipSummary}\n- Telemetri Geovelocity OSRM: ${geoSummary}\n- Klaim Tertaut: ${doc.casesLinked.join(', ') || 'Tidak ada'} (Eksposur: Rp ${doc.estimatedExposure.toLocaleString('id-ID')})\n\nJelaskan analisis kepatuhan hukum (UU Praktik Kedokteran, Permenkes 14/2021, Perpres 82/2018) dan instruksi tindakan verifikator BPJS Kesehatan tanpa emoji.`;
+      const sipSummary = (doc.hospitals || []).map((h) => `${h.name} (Status: ${h.status}, Berlaku s/d ${h.sipValidUntil})`).join('; ');
+      const prompt = `Lakukan telaah forensik beban kerja dan legalitas praktik DPJP berikut (maksimal 4 poin tajam):\n- Nama DPJP: ${doc.name} (${doc.specialty}) | ID/Token SDMK: ${doc.nip || doc.nip_hash} | STR: ${doc.str}\n- Indeks Risiko: ${doc.riskScore}/100 | Beban Harian: ${doc.dailyWorkload} pasien/hari (Batas Permenkes No. 14/2021: ${doc.workloadLimit} pasien/hari)\n- Status SIP di Faskes (SATUSEHAT SDMK): ${sipSummary}\n- Telemetri Geovelocity OSRM: ${geoSummary}\n- Klaim Tertaut: ${(doc.casesLinked || []).join(', ') || 'Tidak ada'} (Eksposur: Rp ${Number(doc.estimatedExposure || 0).toLocaleString('id-ID')})\n\nJelaskan analisis kepatuhan hukum (UU Praktik Kedokteran, Permenkes 14/2021, Perpres 82/2018) dan instruksi tindakan verifikator BPJS Kesehatan tanpa emoji.`;
       const res = await callClaimTraceGenerateContent({
         prompt,
         systemInstruction: 'Anda adalah Auditor Forensik SDMK & Geovelocity Klaim JKN BPJS Kesehatan (ClaimTrace AI). Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji.',
@@ -258,12 +281,14 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
     }
   };
 
-  const doctors = DOCTORS_DATA;
+  const geoCount = doctors.filter(d => d.geovelocityEvent !== null).length;
+  const overcapacityCount = doctors.filter(d => d.dailyWorkload > d.workloadLimit).length;
+  const sipIssueCount = doctors.filter(d => d.sipStatus === 'EXPIRED' || d.sipStatus === 'EXPIRED_WARN' || d.sipStatus === 'PENDING_SYNC').length;
 
   const handleExportSdmk = () => {
-    const csvHeader = "ID,Nama,NIP,STR,Spesialisasi,Faskes Utama,Beban Pasien Harian,Batas Permenkes,Skor Risiko,Status Anomali,Potensi Eksposur\n";
+    const csvHeader = "ID,Nama,Token_SDMK,STR,Spesialisasi,Faskes Utama,Beban Pasien Harian,Batas Permenkes,Skor Risiko,Status Anomali,Potensi Eksposur\n";
     const csvRows = doctors.map(d => 
-      `"${d.id}","${d.name}","${d.nip}","${d.str}","${d.specialty}","${d.primaryHospital}",${d.dailyWorkload},${d.workloadLimit},${d.riskScore},"${d.flagType}",${d.estimatedExposure}`
+      `"${d.id}","${d.name}","${d.nip || d.nip_hash || ''}","${d.str}","${d.specialty}","${d.primaryHospital}",${d.dailyWorkload},${d.workloadLimit},${d.riskScore},"${d.flagType}",${d.estimatedExposure}`
     ).join("\n");
     const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -275,8 +300,9 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
   };
 
   const filteredDoctors = doctors.filter(doc => {
+    const docId = (doc.nip || doc.nip_hash || '').toLowerCase();
     const matchSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        doc.nip.includes(searchTerm) ||
+                        docId.includes(searchTerm.toLowerCase()) ||
                         doc.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         doc.primaryHospital.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -372,10 +398,10 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 Total DPJP Terpantau
               </span>
               <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                1.482 Dokter
+                {doctors.length.toLocaleString('id-ID')} Dokter
               </span>
               <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-white/50'}`}>
-                Faskes Terintegrasi Nasional
+                Profil SDMK Terpantau Live
               </span>
             </div>
             <div className={`rounded-xl p-2.5 border relative overflow-hidden transition-all ${
@@ -387,10 +413,10 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 Anomali Geovelocity
               </span>
               <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                3 Kasus Kritis
+                {geoCount} Kasus Kritis
               </span>
               <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-white/50'}`}>
-                Kecepatan &gt; 120 km/jam antar-RS
+                Mustahil Hadir (OSRM / Jarak Tempuh)
               </span>
             </div>
             <div className={`rounded-xl p-2.5 border relative overflow-hidden transition-all ${
@@ -402,10 +428,10 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 Kelebihan Beban Pelayanan
               </span>
               <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                14 DPJP Overcapacity
+                {overcapacityCount} DPJP Overcapacity
               </span>
               <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-white/50'}`}>
-                &gt; 40 pasien/hari (Permenkes)
+                &gt; 40 pasien/hari (Permenkes 14/2021)
               </span>
             </div>
             <div className={`rounded-xl p-2.5 border relative overflow-hidden transition-all ${
@@ -417,7 +443,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 SIP Non-Aktif / Kadaluwarsa
               </span>
               <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                7 Dokter Bermasalah
+                {sipIssueCount} Dokter Bermasalah
               </span>
               <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-slate-500'}`}>
                 Klaim diajukan saat izin non-aktif
@@ -577,7 +603,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                     <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] mt-2 font-mono ${
                       isLight ? 'text-slate-500' : 'text-white/40'
                     }`}>
-                      <span>NIP: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{doc.nip}</strong></span>
+                      <span>ID/SDMK: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{doc.nip || doc.nip_hash}</strong></span>
                       <span>•</span>
                       <span>STR: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{doc.str}</strong></span>
                     </div>
