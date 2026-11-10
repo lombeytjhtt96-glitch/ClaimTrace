@@ -82,200 +82,6 @@ const ALLOW_LISTED_QUERIES = [
   },
 ];
 
-const QUERY_RESULTS_MAP = {
-  high_risk_trends: {
-    summary:
-      'Terdeteksi penurunan klaim risiko tinggi sebesar 14,2% dalam 14 hari terakhir setelah pengaktifan filter anomali readmisi < 30 hari. Volume klaim rawat inap berulang tetap terkonsentrasi pada subspesialisasi Jantung dan Bedah Saraf.',
-    recommendations: [
-      {
-        priority: 'Kritis',
-        recommendation: 'Prioritaskan verifikasi berkas klaim readmisi < 7 hari pada 3 RS Mitra Utama',
-        action: 'Terbitkan Surat Permintaan Penjelasan (SPP) otomatis via sistem antrean',
-      },
-      {
-        priority: 'Sedang',
-        recommendation: 'Perkuat pemantauan diagnosis komorbiditas sekunder pada pasien geriatri',
-        action: 'Terapkan validasi resume medis terstruktur sebelum persetujuan grouping INA-CBG',
-      },
-    ],
-    data: [
-      { name: '18 Okt', value: 24, avg_risk: 86.4 },
-      { name: '19 Okt', value: 28, avg_risk: 88.2 },
-      { name: '20 Okt', value: 22, avg_risk: 84.1 },
-      { name: '21 Okt', value: 19, avg_risk: 81.5 },
-      { name: '22 Okt', value: 25, avg_risk: 87.0 },
-      { name: '23 Okt', value: 18, avg_risk: 79.8 },
-      { name: '24 Okt', value: 15, avg_risk: 78.4 },
-    ],
-  },
-  support_plan_effectiveness: {
-    summary:
-      'Dari 84 berkas klaim yang diterbitkan Berita Acara Klarifikasi Bersama (BAKB), 72,6% diselesaikan dengan koreksi tarif mandiri oleh FKRTL, menghemat potensi kerugian dana jaminan sosial sebesar Rp 412,8 juta.',
-    recommendations: [
-      {
-        priority: 'Tinggi',
-        recommendation: 'Standarisasi format lampiran hasil penunjang radiologi dan patologi anatomi',
-        action: 'Kirim modul panduan koding INA-CBG Edisi Revisi ke seluruh Tim Casemix Faskes',
-      },
-    ],
-    data: [
-      { name: 'Koreksi Mandiri FKRTL', value: 61 },
-      { name: 'Bantahan Diterima Medis', value: 14 },
-      { name: 'Eskalasi Komite Pertimbangan', value: 6 },
-      { name: 'Kadaluwarsa / Ditolak', value: 3 },
-    ],
-  },
-  case_distribution: {
-    summary:
-      'Mayoritas berkas klaim berada pada Jalur Hijau (68%), 19% Jalur Kuning, 9% Jalur Oranye, dan 4% Jalur Merah yang membutuhkan investigasi forensik mendalam.',
-    recommendations: [
-      {
-        priority: 'Rendah',
-        recommendation: 'Terapkan Auto-Approval berbasis Machine Learning pada Jalur Hijau murni',
-        action: 'Percepat SLA pembayaran FPK hingga di bawah 5 hari kerja untuk faskes bintang 5',
-      },
-    ],
-    data: [
-      { name: 'Jalur Hijau (Risiko Rendah)', value: 68 },
-      { name: 'Jalur Kuning (Risiko Sedang)', value: 19 },
-      { name: 'Jalur Oranye (Risiko Tinggi)', value: 9 },
-      { name: 'Jalur Merah (Kritis/Audit)', value: 4 },
-    ],
-  },
-  default: {
-    summary:
-      'Hasil pemrosesan analitik agregat terproteksi Zero-PHI. Seluruh entitas klaim telah melewati penyaringan k-anonymity (k=12) dan injeksi derau terukur differential privacy.',
-    recommendations: [
-      {
-        priority: 'Info',
-        recommendation: 'Pertahankan kuota privasi epsilon di bawah ambang batas aman',
-        action: 'Pantau log akses analitik harian pada dashboard audit verifikator',
-      },
-    ],
-    data: [
-      { name: 'RS Tipe A Rujukan', value: 45 },
-      { name: 'RS Tipe B Regional', value: 32 },
-      { name: 'RS Tipe C Kab/Kota', value: 28 },
-      { name: 'Klinik / FKRTL Khusus', value: 19 },
-    ],
-  },
-};
-
-const INITIAL_REPORTS = [
-  {
-    id: 'rep-1',
-    report_type: 'Audit Eksekutif Mingguan Klaim FKRTL',
-    generated_at: '24 Okt 2026, 08:30 WIB',
-    summary:
-      'Evaluasi 1.420 berkas klaim rawat inap & jalan. Deteksi anomali readmisi menurun 12%, kepatuhan Fornas mencapai 94,8%.',
-    assessment_count: 1420,
-    high_risk_count: 57,
-    llm_powered: true,
-    badge_label: 'AI Engine',
-    badge_color: 'purple',
-    prevented_loss: 'Rp 412,8 Juta',
-    faskes_scope: '28 FKRTL Rujukan Nasional & Vertikal',
-    key_findings: [
-      'Penurunan anomali readmisi rawat inap < 30 hari sebesar 12,4% pasca integrasi filter triase',
-      'Kepatuhan restriksi Fornas pada subspesialisasi Jantung & Paru mencapai 94,8%',
-      '57 berkas berisiko tinggi terkonsentrasi pada klaim tindakan bedah saraf berulang',
-    ],
-    recommendations: [
-      'Penerbitan Surat Permintaan Penjelasan (SPP) digital pada 3 faskes dengan volume readmisi tertinggi',
-      'Penyelarasan resume medis digital dengan hasil pemeriksaan patologi sebelum persetujuan grouping',
-    ],
-  },
-  {
-    id: 'rep-2',
-    report_type: 'Laporan Triase Cepat & Validasi Presensi Mobile JKN',
-    generated_at: '23 Okt 2026, 17:00 WIB',
-    summary:
-      'Validasi kehadiran peserta via telemetri geolokasi Mobile JKN berhasil mencegah 29 klaim fiktif fisioterapi rawat jalan.',
-    assessment_count: 384,
-    high_risk_count: 18,
-    llm_powered: false,
-    badge_label: 'Telemetri JKN',
-    badge_color: 'emerald',
-    prevented_loss: 'Rp 87,4 Juta',
-    faskes_scope: '14 Klinik Pratama & RS Tipe C/D',
-    key_findings: [
-      '29 transaksi klaim fisioterapi terdeteksi anomali tanpa rekaman check-in biometrik peserta',
-      'Penyimpangan geolokasi faskes terdeteksi > 500 meter dari koordinat terdaftar',
-      'Tingkat validasi presensi real-time peserta mencapai 97,2% di seluruh FKRTL aktif',
-    ],
-    recommendations: [
-      'Penangguhan klaim pending untuk 29 berkas tanpa bukti check-in digital',
-      'Koordinasi verifikator faskes untuk validasi fisik logbook faskes',
-    ],
-  },
-  {
-    id: 'rep-3',
-    report_type: 'Evaluasi Efisiensi SLA Verifikasi Kantor Cabang',
-    generated_at: '22 Okt 2026, 09:15 WIB',
-    summary:
-      'Rata-rata waktu penyelesaian audit berkas klaim mencapai 4,2 jam, jauh melampaui batas toleransi SLA 10 hari kerja.',
-    assessment_count: 912,
-    high_risk_count: 31,
-    llm_powered: true,
-    badge_label: 'AI Engine',
-    badge_color: 'purple',
-    prevented_loss: 'SLA 4,2 Jam (100% On-Time)',
-    faskes_scope: 'Seluruh Faskes Terintegrasi Nasional (Multiregional)',
-    key_findings: [
-      'Rata-rata siklus verifikasi pra-bayar turun dari 8,6 hari kerja menjadi 4,2 jam berkat triase otomatis',
-      'Zero klaim kadaluwarsa (out of SLA) tercapai selama 4 pekan berturut-turut',
-      'Pencegahan denda keterlambatan pembayaran FPK sesuai amanat Perpres 82/2018',
-    ],
-    recommendations: [
-      'Pertahankan mekanisme auto-routing berkas berisiko rendah (Jalur Hijau)',
-      'Tingkatkan kuota verifikator medis pada jam puncak pengajuan klaim (14:00 - 17:00 WIB)',
-    ],
-  },
-  {
-    id: 'rep-4',
-    report_type: 'Audit Integritas Koding INA-CBG Spesialisasi Orthopedi',
-    generated_at: '19 Okt 2026, 14:00 WIB',
-    summary:
-      'Analisis pola penambahan kode prosedur fiksasi interna pada 520 klaim orthopedi, mendeteksi 14 anomali fragmentasi tindakan (unbundling).',
-    assessment_count: 520,
-    high_risk_count: 14,
-    llm_powered: true,
-    badge_label: 'Audit Casemix',
-    badge_color: 'blue',
-    prevented_loss: 'Rp 148,2 Juta',
-    faskes_scope: '9 RS Tipe A & B Bedah Tulang',
-    key_findings: [
-      'Ditemukan pemisahan kode penutupan luka dan pemasangan implan yang seharusnya terbundel dalam 1 paket tarif',
-      'Potensi ketidaksesuaian tarif INA-CBG terdeteksi dengan skor anomali rata-rata 86,4/100',
-    ],
-    recommendations: [
-      'Penerbitan rekomendasi koreksi koding mandiri kepada tim koder rumah sakit',
-      'Pelaksanaan forum sosialisasi berita acara klarifikasi casemix bersama perwakilan komite medik',
-    ],
-  },
-  {
-    id: 'rep-5',
-    report_type: 'Kajian Kepatuhan Formularium Nasional Saraf & Jantung',
-    generated_at: '16 Okt 2026, 11:30 WIB',
-    summary:
-      'Audit keselarasan terapi obat kronis antihipertensi dan antikoagulan dengan restriksi Kepmenkes HK.01.07/MENKES/6477/2021.',
-    assessment_count: 760,
-    high_risk_count: 9,
-    llm_powered: false,
-    badge_label: 'Farmakovigilan',
-    badge_color: 'amber',
-    prevented_loss: 'Rp 64,5 Juta',
-    faskes_scope: '18 RS Rujukan Kardiovaskular',
-    key_findings: [
-      'Kepatuhan resep Fornas lini pertama mencapai 96,1%',
-      'Hanya 9 berkas membutuhkan verifikasi lanjutan alasan penggantian obat non-Fornas',
-    ],
-    recommendations: [
-      'Validasi formulir persetujuan komite farmasi dan terapi RS untuk klaim obat khusus',
-    ],
-  },
-];
-
 function getPriorityBadgeStyle(priority, isLight) {
   const p = (priority || '').toLowerCase();
   if (p === 'kritis' || p === 'critical') {
@@ -319,7 +125,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
           tickLine={false}
           axisLine={false}
           tick={{ fontSize: 11, fill: isLight ? '#059669' : '#06b6d4' }}
-          tickFormatter={(v) => `${v} kss`}
+          tickFormatter={(v) => `${Number(v).toLocaleString('id-ID')} kss`}
         />
         {data[0]?.avg_risk !== undefined && (
           <YAxis
@@ -432,14 +238,16 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  // Privacy status state (dynamically tracked from backend)
+  // Privacy status state (dynamically tracked from backend DuckDB)
   const [status, setStatus] = useState({
-    k_value: 12,
+    k_value: 5,
     k_threshold: 5,
-    epsilon_used: 7.1,
+    epsilon_used: 0.0,
     epsilon_total: 20.0,
-    consented_users: 324,
-    total_users: 500,
+    consented_users: 0,
+    total_users: 1,
+    dataset_date_min: '',
+    dataset_date_max: '',
   });
 
   // Query Selector state
@@ -447,31 +255,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [severity, setSeverity] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState({
-    query_name: 'high_risk_trends',
-    query_label: ALLOW_LISTED_QUERIES[0].label,
-    execution_path: [
-      'Validasi Otorisasi Verifikator',
-      'Filter K-Anonymity (k≥5)',
-      'Agregasi Zero-PHI',
-      'Sintesis AI Wawasan JKN (IA Agent)',
-    ],
-    execution_time_ms: 56,
-    summary: QUERY_RESULTS_MAP.high_risk_trends.summary,
-    recommendations: QUERY_RESULTS_MAP.high_risk_trends.recommendations,
-    result: {
-      total_records_anonymized: 5415,
-      k_anonymity_satisfied: true,
-      data: QUERY_RESULTS_MAP.high_risk_trends.data,
-    },
-    privacy_metadata: {
-      k_value: 12,
-      epsilon_used: 0.35,
-      delta_used: 1e-5,
-    },
-  });
-  const [reports, setReports] = useState(INITIAL_REPORTS);
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(null);
+  const [reports, setReports] = useState([]);
   const [selectedReportModal, setSelectedReportModal] = useState(null);
   const [showAllReportsModal, setShowAllReportsModal] = useState(false);
   const [reportSearchQuery, setReportSearchQuery] = useState('');
@@ -483,12 +269,14 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
       if (res.ok) {
         const data = await res.json();
         setStatus({
-          k_value: data.k_value || 12,
+          k_value: typeof data.k_value === 'number' ? data.k_value : 5,
           k_threshold: data.k_threshold || 5,
-          epsilon_used: typeof data.epsilon_used === 'number' ? data.epsilon_used : 7.1,
+          epsilon_used: typeof data.epsilon_used === 'number' ? data.epsilon_used : 0.0,
           epsilon_total: typeof data.epsilon_total === 'number' ? data.epsilon_total : 20.0,
-          consented_users: data.consented_users || 324,
-          total_users: data.total_users || 500,
+          consented_users: typeof data.consented_users === 'number' ? data.consented_users : 0,
+          total_users: typeof data.total_users === 'number' && data.total_users > 0 ? data.total_users : 1,
+          dataset_date_min: data.dataset_date_min || '',
+          dataset_date_max: data.dataset_date_max || '',
         });
       }
     } catch (err) {
@@ -757,8 +545,8 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   </span>
                 </div>
                 <p className={`text-3xl font-bold relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {status.consented_users}{' '}
-                  <span className={`text-lg font-normal ${isLight ? 'text-slate-400' : 'text-white/40'}`}>/ {status.total_users}</span>
+                  {Number(status.consented_users || 0).toLocaleString('id-ID')}{' '}
+                  <span className={`text-lg font-normal ${isLight ? 'text-slate-400' : 'text-white/40'}`}>/ {Number(status.total_users || 0).toLocaleString('id-ID')}</span>
                 </p>
                 <p className={`text-xs mt-1 font-mono relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                   Peserta aktif terverifikasi presensi Mobile JKN
@@ -848,9 +636,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <input aria-label="Bidang input data"
+                    <input aria-label="Tanggal Awal SEP"
                       type="date"
                       value={startDate}
+                      min={status.dataset_date_min || undefined}
+                      max={status.dataset_date_max || undefined}
                       onChange={(e) => setStartDate(e.target.value)}
                       className={`block w-full rounded-xl text-sm py-3 px-4 border ${
                         isLight
@@ -861,9 +651,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                     />
                   </div>
                   <div>
-                    <input aria-label="Bidang input data"
+                    <input aria-label="Tanggal Akhir SEP"
                       type="date"
                       value={endDate}
+                      min={status.dataset_date_min || undefined}
+                      max={status.dataset_date_max || undefined}
                       onChange={(e) => setEndDate(e.target.value)}
                       className={`block w-full rounded-xl text-sm py-3 px-4 border ${
                         isLight
@@ -874,6 +666,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                     />
                   </div>
                 </div>
+                {status.dataset_date_min && status.dataset_date_max && (
+                  <p className={`mt-2 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    Cakupan tanggal aktif pada DuckDB: {status.dataset_date_min} s.d. {status.dataset_date_max}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -890,7 +687,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 <select
                   id="severity-filter"
                   value={severity}
-                  onChange={(e) => setSeverity(e.target.value)}
+                  onChange={(e) => {
+                    const nextSev = e.target.value;
+                    setSeverity(nextSev);
+                    executeLiveQuery(selectedQuery, startDate, endDate, nextSev);
+                  }}
                   className={`block w-full rounded-xl text-sm py-3 px-4 cursor-pointer border ${
                     isLight
                       ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
@@ -899,10 +700,10 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   disabled={loading}
                 >
                   <option value="" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Semua Tingkat Risiko (All Severities)</option>
-                  <option value="low" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Rendah (Jalur Hijau)</option>
-                  <option value="moderate" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Sedang (Jalur Kuning)</option>
-                  <option value="high" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Tinggi (Jalur Oranye)</option>
-                  <option value="critical" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Kritis (Jalur Merah Pra-Bayar)</option>
+                  <option value="low" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Rendah (Jalur Hijau / RJTL)</option>
+                  <option value="moderate" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Sedang (Jalur Kuning / Severity I)</option>
+                  <option value="high" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Tinggi (Jalur Oranye / Severity II)</option>
+                  <option value="critical" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Kritis (Jalur Merah / Severity III)</option>
                 </select>
               </div>
             </div>
@@ -927,33 +728,10 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   type="button"
                   onClick={() => {
                     setSelectedQuery('high_risk_trends');
-                    setStartDate('2026-10-18');
-                    setEndDate('2026-10-24');
+                    setStartDate('');
+                    setEndDate('');
                     setSeverity('');
-                    const template = QUERY_RESULTS_MAP.high_risk_trends;
-                    setResult({
-                      query_name: 'high_risk_trends',
-                      query_label: ALLOW_LISTED_QUERIES[0].label,
-                      execution_path: [
-                        'Validasi Otorisasi Verifikator',
-                        'Filter K-Anonymity (k≥5)',
-                        'Agregasi Zero-PHI',
-                        'Sintesis AI Wawasan JKN (IA Agent)',
-                      ],
-                      execution_time_ms: 310,
-                      summary: template.summary,
-                      recommendations: template.recommendations,
-                      result: {
-                        total_records_anonymized: 158,
-                        k_anonymity_satisfied: true,
-                        data: template.data,
-                      },
-                      privacy_metadata: {
-                        k_value: 12,
-                        epsilon_used: 0.35,
-                        delta_used: 1e-5,
-                      },
-                    });
+                    executeLiveQuery('high_risk_trends', '', '', '');
                   }}
                   disabled={loading}
                   className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer border ${
@@ -962,7 +740,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                       : 'bg-white/5 border-white/10 text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  Reset ke Default
+                  Reset &amp; Kueri Ulang Live
                 </button>
               )}
             </div>
@@ -1033,9 +811,16 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               }`}>
                 <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 <div className="text-xs space-y-1">
-                  <p className={`font-bold text-sm ${isLight ? 'text-emerald-900' : 'text-emerald-200'}`}>Kueri berhasil dieksekusi oleh Insights Agent</p>
-                  <p className={isLight ? 'text-emerald-800' : 'text-emerald-300'}>Alur Eksekusi: {result.execution_path.join(' → ')}</p>
+                  <p className={`font-bold text-sm ${isLight ? 'text-emerald-900' : 'text-emerald-200'}`}>
+                    Kueri berhasil dieksekusi langsung di DuckDB ({Number(result?.result?.total_records_anonymized || 0).toLocaleString('id-ID')} berkas teranonimisasi)
+                  </p>
+                  <p className={isLight ? 'text-emerald-800' : 'text-emerald-300'}>Alur Eksekusi: {(result.execution_path || []).join(' → ')}</p>
                   <p className={isLight ? 'text-emerald-800' : 'text-emerald-300'}>Waktu Eksekusi: {result.execution_time_ms} ms</p>
+                  {result?.filter_applied?.filter_note && (
+                    <p className={`mt-1.5 font-semibold ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>
+                      Catatan Filter: {result.filter_applied.filter_note}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1157,12 +942,12 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                     <div className={`flex items-center gap-4 mt-2 text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                       <span className="flex items-center gap-1 font-medium">
                         <FileText className="w-3.5 h-3.5 opacity-60" />
-                        {report.assessment_count} berkas klaim dianalisis
+                        {Number(report.assessment_count || 0).toLocaleString('id-ID')} berkas klaim dianalisis
                       </span>
                       {report.high_risk_count > 0 && (
                         <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          {report.high_risk_count} klaim risiko tinggi/kritis
+                          {Number(report.high_risk_count || 0).toLocaleString('id-ID')} klaim risiko tinggi/kritis
                         </span>
                       )}
                     </div>
@@ -1301,7 +1086,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                   Risiko Tinggi / Kritis
                 </div>
                 <div className="text-xl font-bold mt-1 text-rose-700 dark:text-rose-400">
-                  {selectedReportModal.high_risk_count}
+                  {Number(selectedReportModal.high_risk_count || 0).toLocaleString('id-ID')}
                   <span className="text-xs font-normal ml-1 opacity-80">berkas</span>
                 </div>
               </div>
@@ -1514,12 +1299,12 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                         <div className={`flex flex-wrap items-center gap-4 mt-2 text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                           <span className="flex items-center gap-1 font-medium">
                             <FileText className="w-3.5 h-3.5 opacity-60" />
-                            {report.assessment_count} berkas klaim dianalisis
+                            {Number(report.assessment_count || 0).toLocaleString('id-ID')} berkas klaim dianalisis
                           </span>
                           {report.high_risk_count > 0 && (
                             <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-semibold">
                               <AlertTriangle className="w-3.5 h-3.5" />
-                              {report.high_risk_count} klaim risiko tinggi/kritis
+                              {Number(report.high_risk_count || 0).toLocaleString('id-ID')} klaim risiko tinggi/kritis
                             </span>
                           )}
                           {report.prevented_loss && (

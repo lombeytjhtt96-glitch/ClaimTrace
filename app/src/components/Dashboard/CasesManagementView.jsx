@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Shield,
@@ -171,7 +172,7 @@ function formatRelativeTime(iso) {
   return `${Math.round(diffHours / 24)} hari lalu`;
 }
 
-export default function CasesManagementView({ onNavigateTab, onInspectCase, isLight: propIsLight }) {
+export default function CasesManagementView({ onNavigateTab, onInspectCase, onSelectCase, isLight: propIsLight }) {
   const [internalIsLight, setInternalIsLight] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('theme');
@@ -203,7 +204,29 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  const [cases, setCases] = useState(INITIAL_CASES);
+  const [cases, setCases] = useState([]);
+  const [loadingCases, setLoadingCases] = useState(true);
+
+  const fetchLiveCases = useCallback(async () => {
+    setLoadingCases(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/cases`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.cases)) {
+          setCases(data.cases);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal memuat daftar berkas klaim:', err);
+    } finally {
+      setLoadingCases(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveCases();
+  }, [fetchLiveCases]);
   const [activeChip, setActiveChip] = useState('all');
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
@@ -1022,7 +1045,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                   </label>
                   <select
                     value={selectedCase.status}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const nextStatus = e.target.value;
                       setCases((prev) =>
                         prev.map((c) =>
@@ -1030,6 +1053,15 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                         )
                       );
                       setSelectedCase((prev) => ({ ...prev, status: nextStatus }));
+                      try {
+                        await authFetch(`${API_BASE_URL}/api/v1/operations/cases/${selectedCase.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: nextStatus }),
+                        });
+                      } catch (err) {
+                        console.error('Gagal menyimpan status berkas:', err);
+                      }
                     }}
                     className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
                       isLight
@@ -1050,7 +1082,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                   </label>
                   <select
                     value={selectedCase.assigned_to || ''}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const nextAssignee = e.target.value || null;
                       setCases((prev) =>
                         prev.map((c) =>
@@ -1058,6 +1090,15 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                         )
                       );
                       setSelectedCase((prev) => ({ ...prev, assigned_to: nextAssignee }));
+                      try {
+                        await authFetch(`${API_BASE_URL}/api/v1/operations/cases/${selectedCase.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ assigned_to: nextAssignee }),
+                        });
+                      } catch (err) {
+                        console.error('Gagal menugaskan verifikator:', err);
+                      }
                     }}
                     className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border focus:outline-none ${
                       isLight
@@ -1095,7 +1136,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, isLi
                 onClick={() => {
                   const id = selectedCase.id;
                   setSelectedCase(null);
-                  onInspectCase?.(id);
+                  (onInspectCase || onSelectCase)?.(id);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs ${
                   isLight

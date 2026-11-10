@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -206,7 +207,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
 
   // 4 Tabs: 'dashboard' | 'queue' | 'plans' | 'users'
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [plans, setPlans] = useState(INITIAL_INTERVENTION_PLANS);
+  const [plans, setPlans] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -219,12 +220,30 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     note: '',
   });
 
+  const fetchInterventions = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/interventions`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.interventions)) {
+          setPlans(data.interventions);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal memuat rencana intervensi:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInterventions();
+  }, [fetchInterventions]);
+
   // Handle Refresh
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
+    fetchInterventions();
   };
 
   // Compute 8 Key Metrics (Matching exact 8 cards from Image 1)
@@ -282,7 +301,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
   }, [plans, searchQuery, riskFilter, statusFilter]);
 
   // Toggle step completion interactively
-  const handleToggleStep = (planId, stepIdx) => {
+  const handleToggleStep = async (planId, stepIdx) => {
     setPlans((prev) =>
       prev.map((p) => {
         if (p.id !== planId) return p;
@@ -293,15 +312,12 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
         const isAllDone = completedCount === newSteps.length;
         const newStatus = isAllDone ? 'completed' : p.status === 'completed' ? 'in_progress' : p.status;
         const targetStep = p.plan_steps[stepIdx];
-        
         setToastFeedback({
           type: 'success',
-          message: targetStep.completed 
+          message: targetStep.completed
             ? `Tahapan "${targetStep.title}" ditandai belum selesai.`
             : `Tahapan "${targetStep.title}" berhasil diselesaikan & diverifikasi.`,
         });
-        setTimeout(() => setToastFeedback(null), 3500);
-
         return {
           ...p,
           plan_steps: newSteps,
@@ -310,6 +326,15 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
         };
       })
     );
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/operations/interventions/${planId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step_index: stepIdx }),
+      });
+    } catch (err) {
+      console.error('Gagal menyimpan status tahapan intervensi:', err);
+    }
   };
 
   // Review Queue Plans (pending approval)
@@ -436,11 +461,20 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     };
   };
 
-  const handleApprovePlan = (id, note) => {
+  const handleApprovePlan = async (id, note) => {
     setPlans((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: 'in_progress', approval_note: note } : p))
     );
     setReviewNoteModal({ isOpen: false, planId: null, type: 'approve', note: '' });
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/operations/interventions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in_progress', approval_note: note }),
+      });
+    } catch (err) {
+      console.error('Gagal menyetujui rencana intervensi:', err);
+    }
     setToastFeedback({
       type: 'success',
       message: `Rencana intervensi #${id} berhasil disetujui untuk dieksekusi bersama FKRTL.`,
@@ -448,11 +482,20 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     setTimeout(() => setToastFeedback(null), 4000);
   };
 
-  const handleRejectPlan = (id, note) => {
+  const handleRejectPlan = async (id, note) => {
     setPlans((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: 'rejected', rejection_note: note } : p))
     );
     setReviewNoteModal({ isOpen: false, planId: null, type: 'reject', note: '' });
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/operations/interventions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'rejected', rejection_note: note }),
+      });
+    } catch (err) {
+      console.error('Gagal menolak rencana intervensi:', err);
+    }
     setToastFeedback({
       type: 'error',
       message: `Rencana intervensi #${id} ditolak: ${note || 'Alasan penolakan dicatat dalam ledger audit'}.`,

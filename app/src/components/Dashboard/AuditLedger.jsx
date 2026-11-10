@@ -494,17 +494,31 @@ export default function AuditLedger({ isLight: propIsLight }) {
       });
   }, []);
 
-  const handleVerifyLedger = () => {
+  const handleVerifyLedger = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/audit-logs`);
+      const data = await res.json();
+      const verified = Boolean(data?.integrity_verified);
+      const chainLen = Number(data?.chain_length || blocks.length);
+      const brokenIdx = data?.broken_at_index;
       setVerificationResult({
-        verified: true,
-        checkedBlocks: blocks.length,
-        integrityRate: 100,
+        verified,
+        checkedBlocks: chainLen,
+        integrityRate: verified ? 100 : Math.max(0, Math.round(((brokenIdx ?? 0) / Math.max(1, chainLen)) * 100)),
+        brokenAt: brokenIdx,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB'
       });
-    }, 1000);
+    } catch {
+      setVerificationResult({
+        verified: false,
+        checkedBlocks: blocks.length,
+        integrityRate: 0,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB'
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleExportFhir = () => {

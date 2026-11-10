@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
@@ -73,6 +74,41 @@ export default function DecisionConsole({
   const [notes, setNotes] = useState(
     'Ditemukan indikasi kuat klaim fiktif massal (Phantom Billing) pasca kegiatan Baksos 12 Okt 2026. Data federasi SATUSEHAT SDMK membuktikan SIP DPJP telah tidak aktif/mutasi pada tanggal pelayanan. Respon langsung out-of-band Mobile JKN memvalidasi 8 dari 10 peserta tidak pernah hadir menerima fisioterapi. Direkomendasikan penundaan Berita Acara Kelengkapan Berkas (BAKB) sesuai Pasal 76 ayat (2) Perpres 82/2018.'
   );
+
+  const [auditSealHash, setAuditSealHash] = useState('');
+  const [sealTimestamp, setSealTimestamp] = useState('');
+  const [decisionError, setDecisionError] = useState(null);
+  const [verifierInfo, setVerifierInfo] = useState({ name: 'dr. Siti Rahma, Sp.PK', nip: '198704202011012001' });
+
+  const resolvedApiClaimId = (!currentCase?.id || currentCase.id === 'CLM-2026-10-085')
+    ? 'CLM-2026-8801'
+    : currentCase.id;
+
+  useEffect(() => {
+    let active = true;
+    const loadSeal = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase?.id || 'CLM-2026-8801'}/official-bakb`);
+        if (res.ok && active) {
+          const data = await res.json();
+          const seal = data?.dossier?.cryptographic_seal;
+          const ver = data?.dossier?.verifier;
+          if (seal?.document_hash) setAuditSealHash(seal.document_hash);
+          if (data?.dossier?.issued_at) setSealTimestamp(data.dossier.issued_at);
+          if (ver?.name || ver?.nip) {
+            setVerifierInfo({
+              name: ver.name || 'dr. Siti Rahma, Sp.PK',
+              nip: ver.nip || '198704202011012001',
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Gagal memuat segel kriptografis BAKB:', err);
+      }
+    };
+    loadSeal();
+    return () => { active = false; };
+  }, [currentCase?.id]);
 
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -200,9 +236,9 @@ IV. KEPUTUSAN & INSTRUKSI VERIFIKATOR
 3. Penjadwalan audit fisik lapangan oleh Tim Pencegahan Kecurangan JKN.
 
 Diterbitkan secara digital oleh:
-Verifikator Medis: dr. Siti Rahma, Sp.PK (NIP: 19880412 201402 2 001)
-Digital Seal SHA-256: 9e8a7c2b512f43a91e0892cfa71290bb34102c98d7831fa281
-Timestamp: ${new Date().toISOString()}`;
+Verifikator Medis: ${verifierInfo.name} (NIP: ${verifierInfo.nip})
+Digital Seal SHA-256: ${auditSealHash || 'MENUNGGU-DISPOSISI-SHA256'}
+Timestamp: ${sealTimestamp || new Date().toISOString()}`;
 
     const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -215,13 +251,42 @@ Timestamp: ${new Date().toISOString()}`;
     setSuccessToast(true);
   };
 
-  const handleActionClick = (actionType) => {
+  const handleActionClick = async (actionType) => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    setDecisionError(null);
+    const decisionMap = {
+      clarification: 'KLARIFIKASI_FASKES',
+      audit: 'AUDIT_LAPANGAN',
+      override: 'LOLOSKAN_KLAIM',
+    };
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/decision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verifier_id: verifierInfo.nip || '198704202011012001',
+          decision: decisionMap[actionType] || 'KLARIFIKASI_FASKES',
+          catatan_verifikator: notes || 'Disposisi verifikator direkam melalui Konsol Keputusan Pra-Bayar.',
+        }),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.detail || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (data?.audit_entry?.current_hash) {
+        setAuditSealHash(data.audit_entry.current_hash);
+      }
+      if (data?.audit_entry?.timestamp) {
+        setSealTimestamp(data.audit_entry.timestamp);
+      }
       onSetVerificatorAction(actionType);
-      setIsSubmitting(false);
       setSuccessToast(true);
-    }, 400);
+    } catch (err) {
+      setDecisionError(err.message || 'Gagal mencatat keputusan ke server');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -258,6 +323,16 @@ Timestamp: ${new Date().toISOString()}`;
         </div>
 
         {/* Action Status Toast */}
+        {decisionError && (
+          <div className={`px-3 py-1.5 rounded-xl text-xs flex items-center space-x-2 border ${
+            isLight
+              ? 'bg-rose-50 border-rose-300 text-rose-900'
+              : 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+          }`}>
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Gagal menyimpan keputusan ke server: {decisionError}</span>
+          </div>
+        )}
         {successToast && (
           <div className={`px-3 py-1.5 rounded-xl text-xs flex items-center space-x-2 animate-fade-in shadow-md border ${
             isLight
@@ -305,11 +380,11 @@ Timestamp: ${new Date().toISOString()}`;
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center space-x-1.5">
-                  <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>dr. Siti Rahma, Sp.PK</span>
+                  <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{verifierInfo.name}</span>
                   <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
                 </div>
                 <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Verifikator Medis Utama (Wasrik) • NIP: <span className={`font-mono font-bold ${isLight ? 'text-slate-800' : 'text-cyan-300'}`}>VERIF-NAT-0412</span>
+                  Verifikator Medis Utama (Wasrik) • NIP: <span className={`font-mono font-bold ${isLight ? 'text-slate-800' : 'text-cyan-300'}`}>{verifierInfo.nip}</span>
                 </span>
                 <div className="flex items-center space-x-1.5 mt-1 font-mono text-[9.5px]">
                   <span className={`px-2 py-0.5 rounded uppercase border font-medium ${
@@ -402,7 +477,7 @@ Timestamp: ${new Date().toISOString()}`;
                   <p className={`text-[11px] mt-1 leading-relaxed text-pretty ${
                     isLight ? 'text-slate-600' : 'text-white/60'
                   }`}>
-                    Menahan pencairan tagihan Rp 15.300.000 sebelum batas SLA 10 hari sesuai Pasal 76 ayat (2) Perpres No. 82/2018.
+                    Menahan pencairan tagihan {currentCase.tariff || 'klaim terkait'} sebelum batas SLA 10 hari sesuai Pasal 76 ayat (2) Perpres No. 82/2018.
                   </p>
                 </div>
               </button>
@@ -442,7 +517,7 @@ Timestamp: ${new Date().toISOString()}`;
                   <p className={`text-[11px] mt-1 leading-relaxed text-pretty ${
                     isLight ? 'text-slate-600' : 'text-white/60'
                   }`}>
-                    Menerjunkan verifikator paska-klaim ke RS Khusus Mitra Husada untuk memeriksa logbook fisioterapi fisik.
+                    Menerjunkan verifikator pasca-klaim ke {currentCase.hospital || 'faskes terkait'} untuk memeriksa logbook dan rekam medis fisik.
                   </p>
                 </div>
               </button>
@@ -559,12 +634,12 @@ Timestamp: ${new Date().toISOString()}`;
             }`}>
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>WAKTU SEGEL (ISO 8601):</span>
-                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>2026-10-22T10:45:12.891+07:00</span>
+                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>{sealTimestamp || 'Menunggu segel disposisi'}</span>
               </div>
 
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>ID VERIFIKATOR RESMI:</span>
-                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block`}>VERIF-NAT-0412 (dr. Siti Rahma, Sp.PK)</span>
+                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block`}>{verifierInfo.nip} ({verifierInfo.name})</span>
               </div>
 
               <div>
@@ -579,7 +654,7 @@ Timestamp: ${new Date().toISOString()}`;
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>HASH KRIPTOGRAFIS SHA-256:</span>
                 <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[9px] break-all`}>
-                  9e8a7c2b512f43a91e0892cfa71290bb34102c98d7831fa281
+                  {auditSealHash || 'Memuat hash SHA-256 BAKB...'}
                 </span>
               </div>
 
@@ -733,7 +808,7 @@ Timestamp: ${new Date().toISOString()}`;
                     }`}>
                       LEMBAR TELAAH PRA-BAYAR
                     </span>
-                    <p className={`text-[9px] font-mono mt-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>No: 085/BAKB/X/2026</p>
+                    <p className={`text-[9px] font-mono mt-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>No: {resolvedApiClaimId}/BAKB</p>
                   </div>
                 </div>
 
@@ -751,11 +826,11 @@ Timestamp: ${new Date().toISOString()}`;
                   </div>
                   <div>
                     <span className={isLight ? 'text-slate-500' : 'text-white/50'}>Prosedur INA-CBG:</span>
-                    <div className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentCase.code} - Fisioterapi Massal</div>
+                    <div className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentCase.code} {currentCase.description ? `- ${currentCase.description}` : ''}</div>
                   </div>
                   <div>
                     <span className={isLight ? 'text-slate-500' : 'text-white/50'}>Nilai Tagihan:</span>
-                    <div className="font-bold text-rose-600">{currentCase.tariff} (85 Klaim)</div>
+                    <div className="font-bold text-rose-600">{currentCase.tariff}{currentCase.claimCount ? ` (${currentCase.claimCount} Klaim)` : ''}</div>
                   </div>
                 </div>
 
@@ -793,16 +868,16 @@ Timestamp: ${new Date().toISOString()}`;
                 {/* Signature Block */}
                 <div className="pt-4 flex justify-between items-end text-[10px]">
                   <div>
-                    <p className={`font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Digital Seal: SHA-256 9e8a7c2b...f43a91e</p>
-                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Tanggal: 22 Oktober 2026, 10:45 WIB</p>
+                    <p className={`font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Digital Seal: SHA-256 {auditSealHash ? `${auditSealHash.slice(0, 12)}...${auditSealHash.slice(-8)}` : 'menunggu disposisi'}</p>
+                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Waktu Segel: {sealTimestamp ? sealTimestamp : new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                   </div>
                   <div className="text-center w-48 relative">
                     <div className="verdict-stamp-print will-change-transform absolute -top-4 left-4 pointer-events-none px-2.5 py-1 rounded border-2 border-emerald-600 text-emerald-600 font-mono font-black text-[10px] uppercase tracking-wider bg-emerald-500/10 backdrop-blur-2xs">
                       [SEALED · SAH]
                     </div>
                     <p className={`mb-8 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Verifikator Klaim BPJS,</p>
-                    <p className={`font-bold underline ${isLight ? 'text-slate-900' : 'text-white'}`}>dr. Siti Rahma, Sp.PK</p>
-                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>NIP: 19880412 201402 2 001</p>
+                    <p className={`font-bold underline ${isLight ? 'text-slate-900' : 'text-white'}`}>{verifierInfo.name}</p>
+                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>NIP: {verifierInfo.nip}</p>
                   </div>
                 </div>
 

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -194,9 +195,38 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
     return () => obs.disconnect();
   }, [propIsLight]);
 
-  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
-  const [loading, setLoading] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState(null);
+
+  const normalizeScheduleItem = (s) => {
+    const pic = s.faskes_pic || s.user || { name: 'Faskes PIC', email: '-', registry_code: s.claim_id };
+    return {
+      ...s,
+      user: { ...pic, student_id: pic.registry_code || pic.student_id },
+      psychologist: s.verificator || s.psychologist || { name: 'Verifikator Medis', specialization: '-' },
+      appointment_type: s.session_type || s.appointment_type || { id: 1, name: 'Klarifikasi BAKK', duration_minutes: 60 },
+    };
+  };
+
+  const fetchSchedules = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/schedules`);
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments((Array.isArray(data.schedules) ? data.schedules : []).map(normalizeScheduleItem));
+      }
+    } catch (err) {
+      console.error('Gagal memuat jadwal klarifikasi live:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSchedules();
+  }, [fetchSchedules]);
 
   // Auto-dismiss Toast Feedback setelah 3.5 detik
   useEffect(() => {
@@ -220,8 +250,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => setLoading(false), 350);
+    fetchSchedules();
   };
 
   // Unique appointment types
@@ -245,7 +274,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
         (apt) =>
           apt.user?.name?.toLowerCase().includes(q) ||
           apt.user?.email?.toLowerCase().includes(q) ||
-          apt.user?.student_id?.toLowerCase().includes(q) ||
+          (apt.user?.registry_code || apt.user?.student_id || '').toLowerCase().includes(q) ||
           apt.psychologist?.name?.toLowerCase().includes(q) ||
           apt.psychologist?.specialization?.toLowerCase().includes(q) ||
           apt.appointment_type?.name?.toLowerCase().includes(q) ||
@@ -419,7 +448,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
       apt.appointment_datetime,
       apt.user?.name || 'N/A',
       apt.user?.email || 'N/A',
-      apt.user?.student_id || 'N/A',
+      (apt.user?.registry_code || apt.user?.student_id) || 'N/A',
       apt.psychologist?.name || 'N/A',
       apt.psychologist?.specialization || 'N/A',
       apt.appointment_type?.name || 'N/A',

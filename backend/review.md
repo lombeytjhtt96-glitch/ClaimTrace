@@ -1,14 +1,14 @@
-## PR Reviewer Guide 🔍
+## PR Reviewer Guide
 
 Here are some key observations to aid the review process:
 
-### ⏱️ Estimated effort to review: 4 🔵🔵🔵🔵⚪
+### Estimated effort to review: 4 / 5
 
-### 🧪 PR contains tests
+### PR contains tests
 
-### 🔒 No security concerns identified
+### No security concerns identified
 
-### ⚡ Recommended focus areas for review
+### Recommended focus areas for review
 
 #### 
 **In-Memory State**
@@ -21,7 +21,7 @@ Active OTP challenges are stored in a global in-memory dictionary. In a multi-wo
 
 <hr>
 
-⚠️ **Review coverage:** The following files were not included in this review because of the token budget:
+**[PERINGATAN] Review coverage:** The following files were not included in this review because of the token budget:
 - `app/engine/duckdb_analytics.py`
 - `app/engine/chroma_semantic.py`
 - `app/engine/fhir_adapter.py`

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   FolderOpen,
@@ -199,9 +200,34 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
     return () => obs.disconnect();
   }, [propIsLight]);
 
-  const [cases, setCases] = useState(INITIAL_QUEUE_CASES);
+  const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
+
+  const fetchQueueCases = useCallback(async () => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/cases`);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = (Array.isArray(data.cases) ? data.cases : []).map((c) => ({
+          case_id: c.case_id || c.id,
+          sep_no: c.sep_no || '-',
+          hospital: c.hospital || '-',
+          severity: c.severity === 'med' ? 'moderate' : c.severity || 'high',
+          status: c.status || 'new',
+          sla_breach_at: c.sla_breach_at || new Date(Date.now() + (c.minutes_until_breach || 120) * 60000).toISOString(),
+          assigned_to: c.assigned_to || null,
+        }));
+        setCases(mapped);
+      }
+    } catch (err) {
+      console.error('Gagal memuat antrean triase cepat:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchQueueCases();
+  }, [fetchQueueCases]);
 
   // Auto-dismiss Toast Feedback setelah 3.5 detik
   useEffect(() => {
@@ -244,53 +270,53 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
   const handleCreateCase = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-
-    const newCaseId = `CLM-2026-${Math.floor(885000 + Math.random() * 9000)}`;
-    const slaHours =
-      formData.severity === 'critical'
-        ? 1
-        : formData.severity === 'high'
-        ? 4
-        : formData.severity === 'moderate'
-        ? 12
-        : 48;
-
-    const newRecord = {
-      case_id: newCaseId,
-      sep_no: formData.session_id || '0114R0011026V004901',
-      hospital: formData.user_id.toLowerCase().includes('rs')
-        ? formData.user_id
-        : `RS Faskes (${formData.user_id || '0114R001'})`,
-      severity: formData.severity,
-      status: 'new',
-      sla_breach_at: new Date(Date.now() + slaHours * 3600000).toISOString(),
-      assigned_to: 'dr. Nadia Kusuma, Sp.PK',
-      created_at: new Date().toISOString(),
-    };
-
-    setCases((prev) => [newRecord, ...prev]);
-    setFormData({
-      user_id: '',
-      session_id: '',
-      user_hash: '',
-      severity: 'high',
-      message: '',
-      intent: 'upcoding_review',
-      verification_layer: 'tri_layer',
-      risk_level: 2,
-    });
-    setMessageExpanded(false);
-    setLoading(false);
-    setToastMsg(`Berkas klaim ${newCaseId} berhasil dibuat & dijadwalkan oleh CMA`);
-    setTimeout(() => setToastMsg(null), 3500);
+    try {
+      const payload = {
+        sep_no: formData.session_id || undefined,
+        hospital: formData.user_id || 'RS Rujukan FKRTL',
+        user_hash: formData.user_hash || 'AES256_TRIAGE_NEW',
+        severity: formData.severity === 'moderate' ? 'med' : formData.severity,
+        summary_redacted: formData.message || 'Triase cepat pengawasan klaim FKRTL.',
+      };
+      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/cases`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const c = data.case;
+        const createdId = c?.case_id || c?.id || 'BARU';
+        await fetchQueueCases();
+        setFormData({
+          user_id: '',
+          session_id: '',
+          user_hash: '',
+          severity: 'high',
+          message: '',
+          intent: 'upcoding_review',
+          verification_layer: 'tri_layer',
+          risk_level: 2,
+        });
+        setMessageExpanded(false);
+        setToastMsg(`Berkas klaim ${createdId} berhasil disimpan ke server & dijadwalkan.`);
+      } else {
+        setToastMsg('Gagal membuat berkas triase baru.');
+      }
+    } catch (err) {
+      console.error('Gagal mengirim triase cepat:', err);
+      setToastMsg('Terjadi gangguan koneksi saat menyimpan triase.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setToastMsg(null), 3500);
+    }
   };
 
   const handleAutofillTemplate = () => {
     setFormData({
       user_id: 'RSUPN Dr. Cipto Mangunkusumo Jakarta (0112R001)',
       session_id: '0114R0011026V004928',
-      user_hash: 'JKN-9948201-BMS',
+      user_hash: 'AES256_9948201_BMS',
       severity: 'high',
       message: 'Diskrepansi derajat keparahan INA-CBG dari Level I ke Level III (I-4-10-III). Dokumen penunjang hasil Troponin I serial dan EKG 12-lead belum terlampir pada berkas klaim digital.',
       intent: 'upcoding_review',
@@ -775,7 +801,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
           </div>
           <button
             type="button"
-            onClick={() => setCases([...INITIAL_QUEUE_CASES])}
+            onClick={fetchQueueCases}
             className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl border transition-colors cursor-pointer ${
               isLight ? 'text-slate-800 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 border-slate-200' : 'text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border-white/10'
             }`}

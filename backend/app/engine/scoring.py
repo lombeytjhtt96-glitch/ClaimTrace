@@ -1,9 +1,9 @@
 from typing import Dict, Any, List
 from app.models.schemas import ClaimInput, TriageResult, TriageScoreBreakdown
-from app.security.audit_log import AuditLogger
+from app.security.audit_log import get_audit_logger
 from app.engine.episode_graph import generate_cluster_graph
 
-audit_logger = AuditLogger()
+audit_logger = get_audit_logger()
 
 def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     """

@@ -1,4 +1,4 @@
-from .audit_log import AuditLogger, pseudonymize_nik
+from .audit_log import AuditLogger, get_audit_logger, pseudonymize_nik
 from .access_control import (
     Privilege,
     Subject,
@@ -12,7 +12,8 @@ from .access_control import (
 )
 
 __all__ = [
-    "AuditLogger", 
+    "AuditLogger",
+    "get_audit_logger",
     "pseudonymize_nik",
     "Privilege",
     "Subject",

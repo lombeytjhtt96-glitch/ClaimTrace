@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, AlertOctagon, CheckCircle2, Clock, ChevronRight, 
@@ -41,6 +42,67 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const [activeLane, setActiveLane] = useState('all'); // 'all' | 'red' | 'yellow' | 'green'
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [selectedFaskes, setSelectedFaskes] = useState('all');
+  const [liveClaims, setLiveClaims] = useState([]);
+  const [portfolioStats, setPortfolioStats] = useState(null);
+  const [isLoadingClaims, setIsLoadingClaims] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchLiveQueue = async () => {
+      setIsLoadingClaims(true);
+      try {
+        const [claimsRes, statsRes] = await Promise.all([
+          authFetch(`${API_BASE_URL}/api/v1/claims`),
+          authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics`),
+        ]);
+        if (claimsRes.ok && active) {
+          const rawList = await claimsRes.json();
+          const mapped = (Array.isArray(rawList) ? rawList : []).map(({ claim, triage }) => {
+            const laneCode = triage?.triage_lane === 'MERAH' ? 'red' : triage?.triage_lane === 'KUNING' ? 'yellow' : 'green';
+            const flags = [];
+            if (triage?.ai_anomaly_prediction?.primary_anomaly_category) {
+              flags.push(triage.ai_anomaly_prediction.primary_anomaly_category);
+            }
+            if (claim.dpjp_meta?.sip_status === 'EXPIRED') flags.push('SIP_EXPIRED');
+            if (claim.episode_meta?.indikasi_repeat_billing) flags.push('REPEAT_BILLING');
+            if (claim.mobile_meta?.status_konfirmasi === 'ANOMALY_DENIED') flags.push('MOBILE_DENIED');
+            if (flags.length === 0) flags.push(triage?.triage_lane === 'HIJAU' ? 'GREEN_VERIFIED' : 'REVIEW_REQUIRED');
+            return {
+              id: claim.claim_id,
+              sep: claim.fkl02_id_kunjungan || claim.claim_id,
+              hospital: claim.nama_faskes,
+              date: claim.tanggal_layanan,
+              code: claim.ina_cbg_code,
+              description: claim.deskripsi_cbg,
+              dpjp: claim.dpjp_meta?.nama_dpjp_alias || '-',
+              tariff: `Rp ${Number(claim.nilai_klaim_rp || 0).toLocaleString('id-ID')}`,
+              claimCount: claim.episode_meta?.jumlah_klaim_klaster || 1,
+              s1: Math.round(claim.s1_score ?? triage?.score_breakdown?.s1_value ?? 0),
+              s2: Math.round(claim.s2_score ?? triage?.score_breakdown?.s2_value ?? 0),
+              s3: Math.round(claim.s3_score ?? triage?.score_breakdown?.s3_value ?? 0),
+              totalScore: Number(triage?.final_priority_score ?? triage?.raw_weighted_score ?? 0),
+              lane: laneCode,
+              flags,
+              statusVerifikasi: claim.status_verifikasi,
+              rawClaim: claim,
+              rawTriage: triage,
+            };
+          });
+          setLiveClaims(mapped);
+        }
+        if (statsRes.ok && active) {
+          const statsData = await statsRes.json();
+          setPortfolioStats(statsData?.window_metrics || statsData?.portfolio_metrics || null);
+        }
+      } catch (err) {
+        console.error('Gagal memuat antrean triase live:', err);
+      } finally {
+        if (active) setIsLoadingClaims(false);
+      }
+    };
+    fetchLiveQueue();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (typeof initialSearchQuery === 'string') {
@@ -183,11 +245,16 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     },
   ];
 
-  const redCount = claims.filter(c => c.lane === 'red').length;
-  const yellowCount = claims.filter(c => c.lane === 'yellow').length;
-  const greenCount = claims.filter(c => c.lane === 'green').length;
+  const redCount = liveClaims.filter(c => c.lane === 'red').length;
+  const yellowCount = liveClaims.filter(c => c.lane === 'yellow').length;
+  const greenCount = liveClaims.filter(c => c.lane === 'green').length;
+  const totalQueueCount = liveClaims.length;
+  const redPct = totalQueueCount ? ((redCount / totalQueueCount) * 100).toFixed(1) : '0.0';
+  const yellowPct = totalQueueCount ? ((yellowCount / totalQueueCount) * 100).toFixed(1) : '0.0';
+  const greenPct = totalQueueCount ? ((greenCount / totalQueueCount) * 100).toFixed(1) : '0.0';
+  const uniqueFaskesOptions = Array.from(new Set(liveClaims.map(c => c.hospital).filter(Boolean)));
 
-  const filteredClaims = claims.filter(c => {
+  const filteredClaims = liveClaims.filter(c => {
     const matchesLane = activeLane === 'all' || c.lane === activeLane;
     const matchesFaskes = selectedFaskes === 'all' || c.hospital.toLowerCase().includes(selectedFaskes.toLowerCase());
     const matchesSearch = searchQuery === '' || 
@@ -240,16 +307,20 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         >
           <div className="flex items-center justify-between relative z-10">
             <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Total Pengajuan Klaim
+              Total Antrean Aktif ({totalQueueCount} Berkas)
             </span>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${
               isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-cyan-300 border-white/10'
             }`}>
-              14 OKT 2026
+              LIVE DUCKDB + ENGINE
             </span>
           </div>
-          <div className={`text-3xl font-bold mt-1 tabular-nums relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>4.341</div>
-          <p className={`text-[11px] mt-0.5 relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Klaim terdaftar pada siklus ini</p>
+          <div className={`text-3xl font-bold mt-1 tabular-nums relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            {portfolioStats?.claims_volume ? Number(portfolioStats.claims_volume).toLocaleString('id-ID') : totalQueueCount.toLocaleString('id-ID')}
+          </div>
+          <p className={`text-[11px] mt-0.5 relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            {portfolioStats?.claims_volume ? `Total klaim FKRTL nasional (${totalQueueCount} berkas triase aktif)` : 'Berkas antrean triase pra-bayar aktif'}
+          </p>
         </motion.div>
 
         <motion.div 
@@ -271,12 +342,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
               isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'
-            }`}>89.6%</span>
+            }`}>{greenPct}%</span>
           </div>
           <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
             isLight ? 'text-emerald-600' : 'text-emerald-400'
-          }`}>3.892</div>
-          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Klaim wajar terverifikasi sah</p>
+          }`}>{greenCount.toLocaleString('id-ID')}</div>
+          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            {portfolioStats?.full_approved_count ? `${Number(portfolioStats.full_approved_count).toLocaleString('id-ID')} lolos nasional` : 'Klaim wajar terverifikasi sah'}
+          </p>
         </motion.div>
 
         <motion.div 
@@ -298,11 +371,11 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
               isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'text-amber-300 bg-amber-500/15 border-amber-500/30'
-            }`}>8.4%</span>
+            }`}>{yellowPct}%</span>
           </div>
           <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
             isLight ? 'text-amber-600' : 'text-amber-400'
-          }`}>364</div>
+          }`}>{yellowCount.toLocaleString('id-ID')}</div>
           <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Memerlukan berkas penunjang</p>
         </motion.div>
 
@@ -325,12 +398,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
               isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'text-rose-300 bg-rose-500/15 border-rose-500/30'
-            }`}>2.0%</span>
+            }`}>{redPct}%</span>
           </div>
           <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
             isLight ? 'text-rose-600' : 'text-rose-400'
-          }`}>85</div>
-          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Indikasi Phantom / Repeat Billing</p>
+          }`}>{redCount.toLocaleString('id-ID')}</div>
+          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            {portfolioStats?.severity_distribution?.Kritis ? `${Number(portfolioStats.severity_distribution.Kritis).toLocaleString('id-ID')} kritis historis` : 'Indikasi Phantom / Repeat Billing'}
+          </p>
         </motion.div>
       </div>
 
@@ -354,7 +429,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     : 'text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10')
             }`}
           >
-            Semua ({claims.length})
+            Semua ({liveClaims.length})
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.96 }}
@@ -411,13 +486,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
             }`}
           >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Faskes (Nasional)</option>
-            <option value="Mitra Husada" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Khusus Mitra Husada</option>
-            <option value="Hermina" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RS Hermina Kemayoran Jakarta</option>
-            <option value="Harapan Bunda" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSU Harapan Bunda</option>
-            <option value="Cipto" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUPN Dr. Cipto Mangunkusumo</option>
-            <option value="Sardjito" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUP Dr. Sardjito</option>
-            <option value="Fatmawati" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RSUP Fatmawati Jakarta</option>
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Faskes ({uniqueFaskesOptions.length})</option>
+            {uniqueFaskesOptions.map((hosp) => (
+              <option key={hosp} value={hosp} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>{hosp}</option>
+            ))}
           </select>
 
           <div className="relative min-w-[220px]">
@@ -457,16 +529,16 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           }`} />
           <span>
             {activeLane === 'all' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas prioritas</strong> audit pra-bayar dari total <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>4.341 pengajuan klaim</strong> aktif pada siklus verifikasi 14 Okt 2026.</>
+              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas prioritas</strong> dari <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{totalQueueCount} antrean triase live</strong> (Basis Nasional: {portfolioStats?.claims_volume ? Number(portfolioStats.claims_volume).toLocaleString('id-ID') : '-'} klaim).</>
             )}
             {activeLane === 'red' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-rose-900' : 'text-white'}`}>{filteredClaims.length} berkas telaah investigasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>85 anomali Jalur Merah</strong> aktif pada siklus verifikasi 14 Okt 2026.</>
+              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-rose-900' : 'text-white'}`}>{filteredClaims.length} berkas telaah investigasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>{redCount} anomali Jalur Merah</strong> aktif pra-bayar.</>
             )}
             {activeLane === 'yellow' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-amber-900' : 'text-white'}`}>{filteredClaims.length} berkas klarifikasi dokumen</strong> dari total <strong className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>364 klaim Jalur Kuning</strong> aktif pada siklus verifikasi 14 Okt 2026.</>
+              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-amber-900' : 'text-white'}`}>{filteredClaims.length} berkas klarifikasi dokumen</strong> dari total <strong className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>{yellowCount} klaim Jalur Kuning</strong> aktif.</>
             )}
             {activeLane === 'green' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas fast-track terverifikasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>3.892 klaim wajar Jalur Hijau</strong> aktif pada siklus verifikasi 14 Okt 2026.</>
+              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas fast-track terverifikasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{greenCount} klaim wajar Jalur Hijau</strong> aktif.</>
             )}
           </span>
         </div>

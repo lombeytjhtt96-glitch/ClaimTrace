@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Smartphone, Radio, Send, CheckCircle2, XCircle, Clock, 
@@ -44,8 +45,8 @@ export default function MobileTelemetry({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [testNik, setTestNik] = useState('3372015509920002');
-  const [testClaimId, setTestClaimId] = useState('KLAIM-2026-0881');
+  const [testNik, setTestNik] = useState('TOKEN-JKN-8801');
+  const [testClaimId, setTestClaimId] = useState('CLM-2026-8801');
   const [sendingPush, setSendingPush] = useState(false);
   const [pushSentSuccess, setPushSentSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -62,121 +63,78 @@ export default function MobileTelemetry({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showComplianceModal]);
 
-  const handleSyncData = () => {
+  const handleSyncData = async () => {
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      setSyncNotice('Sinkronisasi Berhasil: 1.248 sesi FCM aktif terpantau dengan integritas ZK-Proof 100%.');
+    try {
+      await fetchLiveTelemetry();
+      setSyncNotice('Sinkronisasi Live Berhasil: Log telemetri Mobile JKN (Zero-PHI) diperbarui langsung dari backend.');
       setTimeout(() => setSyncNotice(null), 4000);
-    }, 900);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
-  // Live telemetry logs of Lapis 3 Mobile JKN Push Bridge
-  const [telemetryLogs, setTelemetryLogs] = useState([
-    {
-      id: 'TEL-8821',
-      claimId: 'KLAIM-2026-0881',
-      participantName: 'Ny. Siti Aisyah',
-      nikHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-      faskes: 'RS Swasta Medika Kasih',
-      procedure: 'Operasi Katarak Fakoemulsifikasi',
-      dispatchedAt: '24 Okt 2026 14:15 WIB',
-      respondedAt: '24 Okt 2026 14:28 WIB',
-      latencyMin: 13,
-      status: 'DENIED', // Pasien menyangkal! Phantom billing flag!
-      channel: 'Mobile JKN Push (FCM-Encrypted)',
-      zkProof: '0x9a8f...21ce (Valid Presence Signature)'
-    },
-    {
-      id: 'TEL-8820',
-      claimId: 'KLAIM-2026-0879',
-      participantName: 'Tn. Agus Salim',
-      nikHash: 'b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78',
-      faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-      procedure: 'Hemodialisa Rutin',
-      dispatchedAt: '24 Okt 2026 13:50 WIB',
-      respondedAt: '24 Okt 2026 14:02 WIB',
-      latencyMin: 12,
-      status: 'CONFIRMED',
-      channel: 'Mobile JKN Push (FCM-Encrypted)',
-      zkProof: '0x1b4c...f78a (Valid Presence Signature)'
-    },
-    {
-      id: 'TEL-8819',
-      claimId: 'KLAIM-2026-0875',
-      participantName: 'Ny. Sri Wahyuni',
-      nikHash: '7d793037a0760186574b0282f2f435e7b1e50774690f4e020e9ea73d9c0e724f',
-      faskes: 'RS Hermina Solo',
-      procedure: 'Fisioterapi Rehabilitasi Medik',
-      dispatchedAt: '24 Okt 2026 13:20 WIB',
-      respondedAt: '24 Okt 2026 13:35 WIB',
-      latencyMin: 15,
-      status: 'CONFIRMED',
-      channel: 'Mobile JKN Push (FCM-Encrypted)',
-      zkProof: '0x3e12...890d (Valid Presence Signature)'
-    },
-    {
-      id: 'TEL-8818',
-      claimId: 'KLAIM-2026-0870',
-      participantName: 'Tn. Joko Riyanto',
-      nikHash: '4a6b2c...991e',
-      faskes: 'Klinik Pratama Sehat Sejahtera',
-      procedure: 'Pemeriksaan Darah Lengkap & Kimia',
-      dispatchedAt: '24 Okt 2026 12:45 WIB',
-      respondedAt: '24 Okt 2026 13:01 WIB',
-      latencyMin: 16,
-      status: 'DENIED',
-      channel: 'Mobile JKN Push (FCM-Encrypted)',
-      zkProof: '0x7f4a...1102 (Valid Presence Signature)'
-    },
-    {
-      id: 'TEL-8817',
-      claimId: 'KLAIM-2026-0868',
-      participantName: 'Ny. Endang Susanti',
-      nikHash: '98d3ef...3321',
-      faskes: 'RS Panti Waluyo',
-      procedure: 'Rawat Jalan Spesialis Penyakit Dalam',
-      dispatchedAt: '24 Okt 2026 12:10 WIB',
-      respondedAt: 'Belum merespons',
-      latencyMin: null,
-      status: 'PENDING',
-      channel: 'Mobile JKN Push (FCM-Encrypted)',
-      zkProof: 'Pending Challenge'
-    }
-  ]);
+  // Live telemetry logs of Lapis 3 Mobile JKN Push Bridge (hydrated from backend)
+  const [telemetryLogs, setTelemetryLogs] = useState([]);
 
-  const handleSendTestPush = (e) => {
+  const [telemetryMetrics, setTelemetryMetrics] = useState({
+    total_dispatched: 0,
+    confirmed_count: 0,
+    denied_count: 0,
+    response_rate_pct: 0,
+  });
+
+  const fetchLiveTelemetry = useCallback(async () => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/mobile-telemetry`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.logs)) {
+          setTelemetryLogs(data.logs);
+        }
+        if (data.metrics) {
+          setTelemetryMetrics(data.metrics);
+        }
+      }
+    } catch (err) {
+      console.error('Gagal memuat telemetri Mobile JKN live:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveTelemetry();
+  }, [fetchLiveTelemetry]);
+
+  const handleSendTestPush = async (e) => {
     e.preventDefault();
     setSendingPush(true);
     setPushSentSuccess(false);
 
-    setTimeout(() => {
-      setSendingPush(false);
-      setPushSentSuccess(true);
-      
-      const newLog = {
-        id: `TEL-${Math.floor(Math.random() * 9000) + 1000}`,
-        claimId: testClaimId,
-        participantName: 'Peserta Terverifikasi (Ahmad Syafiq - Pasien Fiktif)',
-        nikHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        faskes: 'RS Swasta Medika Kasih',
-        procedure: 'Konfirmasi Presensi Lapis 3 (Telemetri Mobile JKN)',
-        dispatchedAt: 'Baru saja (Live Push)',
-        respondedAt: 'Menunggu respon di smartphone...',
-        latencyMin: null,
-        status: 'PENDING',
-        channel: 'Mobile JKN Bridge Direct',
-        zkProof: 'Generating...'
-      };
-      
-      setTelemetryLogs([newLog, ...telemetryLogs]);
-
-      if (onTriggerPush) {
-        onTriggerPush();
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/mobile-telemetry/push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          claim_id: testClaimId,
+          nik: testNik,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.log) {
+          setTelemetryLogs((prev) => [data.log, ...prev]);
+        } else {
+          await fetchLiveTelemetry();
+        }
+        setPushSentSuccess(true);
+        if (onTriggerPush) onTriggerPush();
+        setTimeout(() => setPushSentSuccess(false), 4000);
       }
-
-      setTimeout(() => setPushSentSuccess(false), 4000);
-    }, 800);
+    } catch (err) {
+      console.error('Gagal mengirim push telemetri Mobile JKN:', err);
+    } finally {
+      setSendingPush(false);
+    }
   };
 
   const filteredLogs = telemetryLogs.filter(log => {
@@ -313,16 +271,16 @@ export default function MobileTelemetry({
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Notifikasi Terkirim (24j)
+                Sampel Terkirim (Live Queue)
               </span>
               <span className={`text-base font-semibold tabular-nums mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                1.248
+                {Number(telemetryMetrics.total_dispatched || telemetryLogs.length).toLocaleString('id-ID')}
               </span>
               <span className={`text-[9.5px] flex items-center space-x-1 mt-0.5 font-medium ${
                 isLight ? 'text-emerald-700' : 'text-emerald-400'
               }`}>
                 <ArrowUpRight className="w-3 h-3" />
-                <span>Tingkat Terkirim 99,4%</span>
+                <span>{telemetryLogs.length} Berkas Terpantau</span>
               </span>
             </div>
 
@@ -335,10 +293,10 @@ export default function MobileTelemetry({
               <span className={`text-base font-semibold tabular-nums mt-0.5 block ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                78,6%
+                {Number(telemetryMetrics.response_rate_pct || 0).toFixed(1).replace('.', ',')}%
               </span>
               <span className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Rerata Respons: 14,2 Menit
+                {Number(telemetryMetrics.confirmed_count || 0).toLocaleString('id-ID')} Konfirmasi Hadir Sah
               </span>
             </div>
 
@@ -351,7 +309,7 @@ export default function MobileTelemetry({
               <span className={`text-base font-semibold tabular-nums mt-0.5 block ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                135 (10,8%)
+                {Number(telemetryMetrics.denied_count || 0).toLocaleString('id-ID')} ({telemetryMetrics.total_dispatched ? ((telemetryMetrics.denied_count / telemetryMetrics.total_dispatched) * 100).toFixed(1).replace('.', ',') : '0,0'}%)
               </span>
               <span className={`text-[9.5px] font-medium ${isLight ? 'text-rose-600' : 'text-rose-400'}`}>
                 Klaim Ditahan Otomatis
@@ -414,47 +372,47 @@ export default function MobileTelemetry({
                   <button
                     type="button"
                     onClick={() => {
-                      setTestClaimId('KLAIM-2026-0881');
-                      setTestNik('3372015509920002');
+                      setTestClaimId('CLM-2026-8801');
+                      setTestNik('TOKEN-JKN-8801');
                     }}
                     className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono transition border cursor-pointer ${
-                      testClaimId === 'KLAIM-2026-0881'
+                      testClaimId === 'CLM-2026-8801'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40 font-bold')
                         : (isLight ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10')
                     }`}
-                    title="Pilih kasus Katarak dr. Hendra"
+                    title="Pilih kasus Klaster Fisioterapi (CLM-2026-8801)"
                   >
-                    0881 (Katarak)
+                    8801 (Fisioterapi)
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setTestClaimId('KLAIM-2026-0870');
-                      setTestNik('3372011203850001');
+                      setTestClaimId('CLM-2026-8802');
+                      setTestNik('TOKEN-JKN-8802');
                     }}
                     className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono transition border cursor-pointer ${
-                      testClaimId === 'KLAIM-2026-0870'
+                      testClaimId === 'CLM-2026-8802'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40 font-bold')
                         : (isLight ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10')
                     }`}
-                    title="Pilih kasus Lab Darah"
+                    title="Pilih kasus Readmisi Dini (CLM-2026-8802)"
                   >
-                    0870 (Lab)
+                    8802 (Readmisi)
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setTestClaimId('KLAIM-2026-0868');
-                      setTestNik('3372014408790003');
+                      setTestClaimId('CLM-2026-8804');
+                      setTestNik('TOKEN-JKN-8804');
                     }}
                     className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono transition border cursor-pointer ${
-                      testClaimId === 'KLAIM-2026-0868'
+                      testClaimId === 'CLM-2026-8804'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40 font-bold')
                         : (isLight ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10')
                     }`}
-                    title="Pilih kasus Penyakit Dalam"
+                    title="Pilih kasus Wajar Fast-Track (CLM-2026-8804)"
                   >
-                    0868 (Interna)
+                    8804 (Fast-Track)
                   </button>
                 </div>
               </div>
