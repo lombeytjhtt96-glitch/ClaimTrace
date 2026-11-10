@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -377,33 +377,40 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch Tables & Status on Mount
+  // Fetch Tables & Status on Mount (parallelized + SWR instant hydration)
   const fetchTablesAndStatus = async () => {
-    setIsLoading(true);
     const apiBase = getApiBase();
+    const tablesUrl = `${apiBase}/api/v1/duckdb/tables`;
+    const infoUrl = `${apiBase}/api/v1/duckdb/info`;
+
+    const cachedTables = getCachedJsonSync(tablesUrl);
+    const cachedInfo = getCachedJsonSync(infoUrl);
+    if (cachedTables?.tables?.length) {
+      setTablesList(cachedTables.tables);
+    }
+    if (cachedInfo) {
+      setDbStatus(cachedInfo);
+    }
+    setIsLoading(!cachedTables?.tables?.length && !cachedInfo);
+
     try {
-      // 1. Fetch tables
-      const tRes = await authFetch(`${apiBase}/api/v1/duckdb/tables`);
-      if (tRes.ok) {
-        const tJson = await tRes.json();
-        if (tJson.tables && tJson.tables.length > 0) {
-          setTablesList(tJson.tables);
-        } else {
-          setTablesList(FALLBACK_TABLES);
-        }
-      } else {
+      const [tJson, infoJson] = await Promise.all([
+        cachedAuthGetJson(tablesUrl),
+        cachedAuthGetJson(infoUrl),
+      ]);
+      if (tJson?.tables && tJson.tables.length > 0) {
+        setTablesList(tJson.tables);
+      } else if (!cachedTables?.tables?.length) {
         setTablesList(FALLBACK_TABLES);
       }
-
-      // 2. Fetch DB info
-      const infoRes = await authFetch(`${apiBase}/api/v1/duckdb/info`);
-      if (infoRes.ok) {
-        const infoJson = await infoRes.json();
+      if (infoJson) {
         setDbStatus(infoJson);
       }
     } catch (err) {
       console.warn('[DatabaseViewer] Failed to fetch live database tables, using fallback schema', err);
-      setTablesList(FALLBACK_TABLES);
+      if (!cachedTables?.tables?.length) {
+        setTablesList(FALLBACK_TABLES);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -441,76 +448,64 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     fetchTablesAndStatus();
   }, []);
 
-  // Fetch Table Data & Schema when selectedTable or page or pageSize changes
+  // Fetch Table Data & Schema in parallel when selectedTable, page, or pageSize changes
   useEffect(() => {
     if (!selectedTable) return;
 
     let isMounted = true;
-    // Pre-seed row count immediately from known authoritative metadata
     const expected = TABLE_DEFAULTS[selectedTable];
     if (expected?.totalRows && isMounted) {
       setTotalRows(expected.totalRows);
     }
 
+    const apiBase = getApiBase();
+    const descUrl = `${apiBase}/api/v1/duckdb/describe/${selectedTable}`;
+    const cachedDesc = getCachedJsonSync(descUrl);
+    if (cachedDesc?.columns?.length && isMounted) {
+      setColumnsSchema(cachedDesc.columns);
+    }
+
+    const offset = (page - 1) * pageSize;
+    const countSql = `SELECT COUNT(*) as total FROM ${selectedTable};`;
+    const querySql = `SELECT * FROM ${selectedTable} LIMIT ${pageSize} OFFSET ${offset};`;
+
+    const postQueryJson = async (sql) => {
+      const res = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sql }),
+      });
+      if (!res.ok) return null;
+      return res.json();
+    };
+
     const loadTableData = async () => {
-      setIsLoading(true);
-      const apiBase = getApiBase();
+      setIsLoading(!cachedDesc?.columns?.length);
       try {
-        // 1. Fetch Schema / Describe
-        const descRes = await authFetch(`${apiBase}/api/v1/duckdb/describe/${selectedTable}`);
-        if (descRes.ok) {
-          const descJson = await descRes.json();
-          if (isMounted && descJson.columns && descJson.columns.length > 0) {
-            setColumnsSchema(descJson.columns);
-          } else if (isMounted) {
-            setColumnsSchema(FALLBACK_COLUMNS);
-          }
-        } else {
-          if (isMounted) setColumnsSchema(FALLBACK_COLUMNS);
+        const [descJson, countJson, dataJson] = await Promise.all([
+          cachedAuthGetJson(descUrl),
+          postQueryJson(countSql),
+          postQueryJson(querySql),
+        ]);
+
+        if (!isMounted) return;
+
+        if (descJson?.columns?.length > 0) {
+          setColumnsSchema(descJson.columns);
+        } else if (dataJson?.columns?.length > 0) {
+          setColumnsSchema(dataJson.columns.map(c => ({ column_name: c, column_type: 'VARCHAR' })));
+        } else if (!cachedDesc?.columns?.length) {
+          setColumnsSchema(FALLBACK_COLUMNS);
         }
 
-        // 2. Fetch Count
-        const countRes = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sql: `SELECT COUNT(*) as total FROM ${selectedTable};` })
-        });
-        if (countRes.ok) {
-          const countJson = await countRes.json();
-          if (countJson.data && countJson.data.length > 0 && typeof countJson.data[0].total === 'number') {
-            if (isMounted) setTotalRows(countJson.data[0].total);
-          }
+        if (countJson?.data?.length > 0 && typeof countJson.data[0].total === 'number') {
+          setTotalRows(countJson.data[0].total);
         }
 
-        // 3. Fetch Rows with Pagination
-        const offset = (page - 1) * pageSize;
-        const querySql = `SELECT * FROM ${selectedTable} LIMIT ${pageSize} OFFSET ${offset};`;
-        const dataRes = await authFetch(`${apiBase}/api/v1/duckdb/query`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sql: querySql })
-        });
-        if (dataRes.ok) {
-          const dataJson = await dataRes.json();
-          if (isMounted) {
-            if (dataJson.data && dataJson.data.length > 0) {
-              setTableRows(dataJson.data);
-            } else {
-              setTableRows(FALLBACK_ROWS);
-            }
-            if ((!columnsSchema.length || columnsSchema.length < 5) && dataJson.columns) {
-              setColumnsSchema(dataJson.columns.map(c => ({ column_name: c, column_type: 'VARCHAR' })));
-            }
-          }
+        if (dataJson?.data?.length > 0) {
+          setTableRows(dataJson.data);
         } else {
-          if (isMounted) {
-            setTableRows(FALLBACK_ROWS);
-            setColumnsSchema(FALLBACK_COLUMNS);
-          }
+          setTableRows(FALLBACK_ROWS);
         }
       } catch (err) {
         console.error('[DatabaseViewer] Error loading table rows', err);

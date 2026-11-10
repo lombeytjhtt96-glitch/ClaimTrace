@@ -4158,6 +4158,52 @@ def update_verifier_profile(
     )
 
 
+def _prewarm_claimtrace_caches() -> None:
+    """Hangatkan cache DuckDB OLAP, Chroma MiniLM, dan OSRM di latar belakang saat startup."""
+    import threading
+
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return
+
+    def _run_warmup():
+        try:
+            duckdb_engine.list_tables()
+            duckdb_engine.database_info()
+            for tbl in (
+                "claims_warehouse",
+                "bpjs_fkrtl_all",
+                "bpjs_kepesertaan_all",
+                "bpjs_diagnosissekunder_all",
+                "bpjs_fkrtl_2024",
+                "icd10_master_bpjs",
+            ):
+                try:
+                    duckdb_engine.describe_table(tbl)
+                    if tbl != "claims_warehouse":
+                        duckdb_engine.execute_query(f"SELECT COUNT(*) as total FROM {tbl};")
+                except Exception:
+                    pass
+            for window_days in (None, 7, 30, 90):
+                duckdb_engine.tool_national_metrics(days=window_days)
+            for trend_days in (7, 30):
+                duckdb_engine.tool_national_telemetry_trends(days=trend_days)
+            duckdb_engine.tool_retention_analytics()
+            duckdb_engine.tool_provider_fraud_risk_profile()
+            duckdb_engine.tool_insights_reports()
+
+            for claim in list(SYNTHETIC_CLAIMS_DATABASE.values()):
+                evaluate_claim_triage(claim)
+            operations_store.get_dpjp_intelligence(SYNTHETIC_CLAIMS_DATABASE)
+            operations_store.list_cases(SYNTHETIC_CLAIMS_DATABASE)
+        except Exception as exc:
+            print(f"[Warmup] Background pre-warm notice: {exc}")
+
+    threading.Thread(target=_run_warmup, name="claimtrace-prewarm", daemon=True).start()
+
+
+_prewarm_claimtrace_caches()
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))

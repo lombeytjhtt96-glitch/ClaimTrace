@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, AlertOctagon, CheckCircle2, Clock, ChevronRight, 
@@ -39,59 +39,64 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
+  const mapLiveClaims = (rawList) => (Array.isArray(rawList) ? rawList : []).map(({ claim, triage }) => {
+    const laneCode = triage?.triage_lane === 'MERAH' ? 'red' : triage?.triage_lane === 'KUNING' ? 'yellow' : 'green';
+    const flags = [];
+    const addFlag = (tag) => {
+      if (tag && !flags.includes(tag)) flags.push(tag);
+    };
+    addFlag(triage?.ai_anomaly_prediction?.primary_anomaly_category);
+    if (claim.dpjp_meta?.sip_status === 'EXPIRED') addFlag('SIP_EXPIRED');
+    if (claim.episode_meta?.indikasi_repeat_billing) addFlag('REPEAT_BILLING');
+    if (claim.mobile_meta?.status_konfirmasi === 'ANOMALY_DENIED') addFlag('MOBILE_DENIED');
+    if (flags.length === 0) addFlag(triage?.triage_lane === 'HIJAU' ? 'GREEN_VERIFIED' : 'REVIEW_REQUIRED');
+    return {
+      id: claim.claim_id,
+      sep: claim.fkl02_id_kunjungan || claim.claim_id,
+      hospital: claim.nama_faskes,
+      date: claim.tanggal_layanan,
+      code: claim.ina_cbg_code,
+      description: claim.deskripsi_cbg,
+      dpjp: claim.dpjp_meta?.nama_dpjp_alias || '-',
+      tariff: `Rp ${Number(claim.nilai_klaim_rp || 0).toLocaleString('id-ID')}`,
+      claimCount: claim.episode_meta?.jumlah_klaim_klaster || 1,
+      s1: Math.round(claim.s1_score ?? triage?.score_breakdown?.s1_value ?? 0),
+      s2: Math.round(claim.s2_score ?? triage?.score_breakdown?.s2_value ?? 0),
+      s3: Math.round(claim.s3_score ?? triage?.score_breakdown?.s3_value ?? 0),
+      totalScore: Number(triage?.final_priority_score ?? triage?.raw_weighted_score ?? 0),
+      lane: laneCode,
+      flags,
+      statusVerifikasi: claim.status_verifikasi,
+      rawClaim: claim,
+      rawTriage: triage,
+    };
+  });
+
+  const claimsUrl = `${API_BASE_URL}/api/v1/claims`;
+  const statsUrl = `${API_BASE_URL}/api/v1/system/national-scale-metrics`;
+  const cachedClaimsRaw = getCachedJsonSync(claimsUrl);
+  const cachedStatsRaw = getCachedJsonSync(statsUrl);
+
   const [activeLane, setActiveLane] = useState('all'); // 'all' | 'red' | 'yellow' | 'green'
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [selectedFaskes, setSelectedFaskes] = useState('all');
-  const [liveClaims, setLiveClaims] = useState([]);
-  const [portfolioStats, setPortfolioStats] = useState(null);
-  const [isLoadingClaims, setIsLoadingClaims] = useState(true);
+  const [liveClaims, setLiveClaims] = useState(() => cachedClaimsRaw ? mapLiveClaims(cachedClaimsRaw) : []);
+  const [portfolioStats, setPortfolioStats] = useState(() => cachedStatsRaw?.window_metrics || cachedStatsRaw?.portfolio_metrics || null);
+  const [isLoadingClaims, setIsLoadingClaims] = useState(() => !cachedClaimsRaw);
 
   useEffect(() => {
     let active = true;
     const fetchLiveQueue = async () => {
-      setIsLoadingClaims(true);
+      if (!getCachedJsonSync(claimsUrl)) setIsLoadingClaims(true);
       try {
-        const [claimsRes, statsRes] = await Promise.all([
-          authFetch(`${API_BASE_URL}/api/v1/claims`),
-          authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics`),
+        const [rawList, statsData] = await Promise.all([
+          cachedAuthGetJson(claimsUrl),
+          cachedAuthGetJson(statsUrl),
         ]);
-        if (claimsRes.ok && active) {
-          const rawList = await claimsRes.json();
-          const mapped = (Array.isArray(rawList) ? rawList : []).map(({ claim, triage }) => {
-            const laneCode = triage?.triage_lane === 'MERAH' ? 'red' : triage?.triage_lane === 'KUNING' ? 'yellow' : 'green';
-            const flags = [];
-            if (triage?.ai_anomaly_prediction?.primary_anomaly_category) {
-              flags.push(triage.ai_anomaly_prediction.primary_anomaly_category);
-            }
-            if (claim.dpjp_meta?.sip_status === 'EXPIRED') flags.push('SIP_EXPIRED');
-            if (claim.episode_meta?.indikasi_repeat_billing) flags.push('REPEAT_BILLING');
-            if (claim.mobile_meta?.status_konfirmasi === 'ANOMALY_DENIED') flags.push('MOBILE_DENIED');
-            if (flags.length === 0) flags.push(triage?.triage_lane === 'HIJAU' ? 'GREEN_VERIFIED' : 'REVIEW_REQUIRED');
-            return {
-              id: claim.claim_id,
-              sep: claim.fkl02_id_kunjungan || claim.claim_id,
-              hospital: claim.nama_faskes,
-              date: claim.tanggal_layanan,
-              code: claim.ina_cbg_code,
-              description: claim.deskripsi_cbg,
-              dpjp: claim.dpjp_meta?.nama_dpjp_alias || '-',
-              tariff: `Rp ${Number(claim.nilai_klaim_rp || 0).toLocaleString('id-ID')}`,
-              claimCount: claim.episode_meta?.jumlah_klaim_klaster || 1,
-              s1: Math.round(claim.s1_score ?? triage?.score_breakdown?.s1_value ?? 0),
-              s2: Math.round(claim.s2_score ?? triage?.score_breakdown?.s2_value ?? 0),
-              s3: Math.round(claim.s3_score ?? triage?.score_breakdown?.s3_value ?? 0),
-              totalScore: Number(triage?.final_priority_score ?? triage?.raw_weighted_score ?? 0),
-              lane: laneCode,
-              flags,
-              statusVerifikasi: claim.status_verifikasi,
-              rawClaim: claim,
-              rawTriage: triage,
-            };
-          });
-          setLiveClaims(mapped);
+        if (rawList && active) {
+          setLiveClaims(mapLiveClaims(rawList));
         }
-        if (statsRes.ok && active) {
-          const statsData = await statsRes.json();
+        if (statsData && active) {
           setPortfolioStats(statsData?.window_metrics || statsData?.portfolio_metrics || null);
         }
       } catch (err) {
@@ -102,7 +107,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     };
     fetchLiveQueue();
     return () => { active = false; };
-  }, []);
+  }, [claimsUrl, statsUrl]);
 
   useEffect(() => {
     if (typeof initialSearchQuery === 'string') {
@@ -497,8 +502,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                           <span className="font-semibold">{c.id}</span>
                           <span>•</span>
                           <span>{c.date}</span>
-                          {c.flags.map(f => (
-                            <span key={f} className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                          {c.flags.map((f, flagIdx) => (
+                            <span key={`${c.id}-${f}-${flagIdx}`} className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                               f.includes('PHANTOM') || f.includes('REPEAT')
                                 ? (isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30')
                                 : (isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-white/10 text-white/70')

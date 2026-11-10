@@ -29,7 +29,7 @@ import {
   CheckCircle2,
   Search,
 } from 'lucide-react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 
 const CHART_COLORS = ['#059669', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
 
@@ -252,12 +252,16 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   // Query Selector state
   const [selectedQuery, setSelectedQuery] = useState('high_risk_trends');
+  const privacyUrl = `${API_BASE_URL}/api/v1/insights/privacy-status`;
+  const reportsUrl = `${API_BASE_URL}/api/v1/insights/reports`;
+  const cachedReports = getCachedJsonSync(reportsUrl);
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [severity, setSeverity] = useState('');
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState(null);
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState(() => Array.isArray(cachedReports) ? cachedReports : []);
   const [selectedReportModal, setSelectedReportModal] = useState(null);
   const [showAllReportsModal, setShowAllReportsModal] = useState(false);
   const [reportSearchQuery, setReportSearchQuery] = useState('');
@@ -265,9 +269,8 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   // Fetch real privacy status from live backend
   const fetchPrivacyStatus = async () => {
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/insights/privacy-status`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await cachedAuthGetJson(privacyUrl);
+      if (data) {
         setStatus({
           k_value: typeof data.k_value === 'number' ? data.k_value : 5,
           k_threshold: data.k_threshold || 5,
@@ -287,12 +290,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
   // Fetch real synthesized audit reports from live backend
   const fetchReports = async () => {
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/insights/reports`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setReports(data);
-        }
+      const data = await cachedAuthGetJson(reportsUrl);
+      if (Array.isArray(data) && data.length > 0) {
+        setReports(data);
       }
     } catch (err) {
       console.warn('Gagal memuat laporan analitik backend', err);

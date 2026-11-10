@@ -12,8 +12,13 @@ health facilities without feasible travel time (Impossible Travel).
 import math
 import urllib.request
 import json
+import threading
+import time
 from typing import Dict, Any, List, Optional, Tuple
 from pydantic import BaseModel
+
+_OSRM_CACHE_LOCK = threading.Lock()
+_OSRM_ROUTE_CACHE: Dict[Tuple[float, float, float, float], Tuple[float, Optional[Tuple[float, float]]]] = {}
 
 # Standard Indonesian Health Facility (FKRTL) Geocode Directory (National Metropolitan Baselines)
 FASKES_GEO_DIRECTORY: Dict[str, Dict[str, Any]] = {
@@ -127,12 +132,21 @@ def calculate_haversine_distance(lat1: float, lon1: float, lat2: float, lon2: fl
     return round(R * c, 2)
 
 def query_osrm_routing_api(
-    lat1: float, lon1: float, lat2: float, lon2: float, timeout_sec: float = 2.0
+    lat1: float, lon1: float, lat2: float, lon2: float, timeout_sec: float = 0.8
 ) -> Optional[Tuple[float, float]]:
     """
-    Attempts to query the live Open Source Routing Machine (OSRM) HTTP routing service.
+    Attempts to query the live Open Source Routing Machine (OSRM) HTTP routing service
+    with a bounded cache so slow/unreachable external routing never stalls UI requests.
     Returns (road_distance_km, duration_minutes) if successful, else None.
     """
+    key = (round(lat1, 4), round(lon1, 4), round(lat2, 4), round(lon2, 4))
+    now = time.time()
+    with _OSRM_CACHE_LOCK:
+        cached = _OSRM_ROUTE_CACHE.get(key)
+        if cached and (now - cached[0]) < 600.0:
+            return cached[1]
+
+    result: Optional[Tuple[float, float]] = None
     try:
         # Coordinates in OSRM are format: {longitude},{latitude}
         url = f"https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false"
@@ -147,11 +161,14 @@ def query_osrm_routing_api(
                     route = data["routes"][0]
                     dist_km = round(route["distance"] / 1000.0, 2)
                     dur_min = round(route["duration"] / 60.0, 1)
-                    return (dist_km, dur_min)
+                    result = (dist_km, dur_min)
     except Exception:
         # Fallback to calibrated road network model if offline or rate-limited
-        pass
-    return None
+        result = None
+
+    with _OSRM_CACHE_LOCK:
+        _OSRM_ROUTE_CACHE[key] = (now, result)
+    return result
 
 def verify_geovelocity_feasibility(
     origin_id: str,

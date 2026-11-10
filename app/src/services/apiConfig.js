@@ -20,6 +20,67 @@ export const API_BASE_URL = getApiBaseUrl();
 
 let pendingSessionPromise = null;
 let authBackoffUntil = 0;
+const _sessionJsonCache = new Map();
+const _inflightGetMap = new Map();
+
+export const getCachedJsonSync = (url) => {
+  const entry = _sessionJsonCache.get(url);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > 60000) return entry.data; // allow stale-while-revalidate immediately
+  return entry.data;
+};
+
+export const cachedAuthGetJson = async (url, options = {}) => {
+  if (_inflightGetMap.has(url)) {
+    return _inflightGetMap.get(url);
+  }
+  const promise = authFetch(url, options)
+    .then(async (res) => {
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (_sessionJsonCache.size > 60) {
+        const firstKey = _sessionJsonCache.keys().next().value;
+        _sessionJsonCache.delete(firstKey);
+      }
+      _sessionJsonCache.set(url, { ts: Date.now(), data });
+      return data;
+    })
+    .catch(() => null)
+    .finally(() => {
+      _inflightGetMap.delete(url);
+    });
+  _inflightGetMap.set(url, promise);
+  return promise;
+};
+
+let _prefetchedSession = false;
+export const prefetchDashboardHotEndpoints = () => {
+  if (_prefetchedSession) return;
+  _prefetchedSession = true;
+  const hotUrls = [
+    `${API_BASE_URL}/api/v1/system/national-scale-metrics`,
+    `${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=7`,
+    `${API_BASE_URL}/api/v1/analytics/retention`,
+    `${API_BASE_URL}/api/v1/claims`,
+    `${API_BASE_URL}/api/v1/operations/cases`,
+    `${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`,
+    `${API_BASE_URL}/api/v1/analytics/provider-risk`,
+    `${API_BASE_URL}/api/v1/insights/privacy-status`,
+    `${API_BASE_URL}/api/v1/insights/reports`,
+    `${API_BASE_URL}/api/v1/duckdb/tables`,
+    `${API_BASE_URL}/api/v1/duckdb/info`,
+  ];
+  const runPrefetch = () => {
+    hotUrls.forEach((u) => {
+      cachedAuthGetJson(u);
+    });
+  };
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(runPrefetch, { timeout: 600 });
+  } else {
+    setTimeout(runPrefetch, 120);
+  }
+};
 
 export const ensureSessionToken = async () => {
   if (typeof localStorage === 'undefined') return null;

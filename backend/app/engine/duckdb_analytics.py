@@ -86,6 +86,8 @@ class DuckDbAnalyticsEngine:
             raw_con = duckdb.connect(":memory:")
         self.con = _ThreadSafeDuckDBConn(raw_con)
         self._privacy_lock = threading.RLock()
+        self._cache_lock = threading.RLock()
+        self._olap_cache: Dict[str, Tuple[float, Any]] = {}
         self._init_schema_and_seed()
         # Privacy tracking for Insights Analytics (UU PDP No. 27/2022 & NIST Privacy Framework)
         self.privacy_state = {
@@ -569,6 +571,22 @@ class DuckDbAnalyticsEngine:
                 "INSERT INTO claims_warehouse VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 rows
             )
+        self._invalidate_olap_cache()
+
+    def _invalidate_olap_cache(self) -> None:
+        with self._cache_lock:
+            self._olap_cache.clear()
+
+    def _get_or_compute_cached(self, cache_key: str, ttl_seconds: float, fn):
+        now = time.time()
+        with self._cache_lock:
+            entry = self._olap_cache.get(cache_key)
+            if entry and (now - entry[0]) < ttl_seconds:
+                return entry[1]
+        value = fn()
+        with self._cache_lock:
+            self._olap_cache[cache_key] = (time.time(), value)
+        return value
 
     def refresh_from_database(self, claims_map: Optional[Dict[str, Any]] = None) -> None:
         """Sinkronkan ulang data DuckDB dengan basis data klaim aktif"""
@@ -576,6 +594,7 @@ class DuckDbAnalyticsEngine:
             self.sync_claims_warehouse(claims_map)
         else:
             self._init_schema_and_seed()
+        self._invalidate_olap_cache()
 
     def execute_query(self, sql: str, output_format: str = "json") -> Dict[str, Any]:
         """
@@ -594,7 +613,24 @@ class DuckDbAnalyticsEngine:
             }
 
         clean_sql = sql.strip().rstrip(";")
+        normalized_sql = " ".join(clean_sql.lower().split())
+        is_count_only = (
+            normalized_sql.startswith("select count(*)")
+            and " from " in normalized_sql
+            and "claims_warehouse" not in normalized_sql
+        )
+        if is_count_only:
+            cached_res = self._get_or_compute_cached(
+                f"query_count:{output_format}:{normalized_sql}",
+                120.0,
+                lambda: self._execute_query_uncached(sql, clean_sql, output_format),
+            )
+            return dict(cached_res) if isinstance(cached_res, dict) else cached_res
 
+        return self._execute_query_uncached(sql, clean_sql, output_format)
+
+    def _execute_query_uncached(self, sql: str, clean_sql: str, output_format: str) -> Dict[str, Any]:
+        """Eksekutor internal query DuckDB tanpa cache wrapper."""
         try:
             rel = self.con.execute(clean_sql)
             columns = [desc[0] for desc in rel.description] if rel.description else []
@@ -653,97 +689,106 @@ class DuckDbAnalyticsEngine:
 
     def list_tables(self) -> List[Dict[str, Any]]:
         """Mendaftar semua tabel dan views di warehouse"""
-        res = self.con.execute("""
-            SELECT table_name, table_type 
-            FROM information_schema.tables 
-            WHERE table_schema = 'main'
-            ORDER BY table_type, table_name;
-        """).fetchall()
-        return [{"name": r[0], "type": r[1]} for r in res]
+        def _compute():
+            res = self.con.execute("""
+                SELECT table_name, table_type 
+                FROM information_schema.tables 
+                WHERE table_schema = 'main'
+                ORDER BY table_type, table_name;
+            """).fetchall()
+            return [{"name": r[0], "type": r[1]} for r in res]
+
+        return list(self._get_or_compute_cached("list_tables", 120.0, _compute))
 
     def describe_table(self, table_name: str) -> List[Dict[str, Any]]:
         """Mendapatkan skema detail kolom tabel"""
-        res = self.con.execute(f"DESCRIBE {table_name};").fetchall()
-        return [{"column_name": r[0], "column_type": r[1], "null": r[2]} for r in res]
+        def _compute():
+            res = self.con.execute(f"DESCRIBE {table_name};").fetchall()
+            return [{"column_name": r[0], "column_type": r[1], "null": r[2]} for r in res]
+
+        return list(self._get_or_compute_cached(f"describe_table:{table_name}", 120.0, _compute))
 
     def database_info(self) -> Dict[str, Any]:
         """Informasi ikhtisar status basis data DuckDB mencakup 100% data transaksi resmi BPJS"""
-        row_claims = self.con.execute("SELECT COUNT(*) FROM claims_warehouse;").fetchone()
-        total_claims = int(row_claims[0]) if (row_claims and row_claims[0] is not None) else 0
+        def _compute():
+            row_claims = self.con.execute("SELECT COUNT(*) FROM claims_warehouse;").fetchone()
+            total_claims = int(row_claims[0]) if (row_claims and row_claims[0] is not None) else 0
 
-        row_rp = self.con.execute("SELECT COALESCE(SUM(nilai_klaim_rp), 0) FROM claims_warehouse;").fetchone()
-        total_rp = int(row_rp[0]) if (row_rp and row_rp[0] is not None) else 0
+            row_rp = self.con.execute("SELECT COALESCE(SUM(nilai_klaim_rp), 0) FROM claims_warehouse;").fetchone()
+            total_rp = int(row_rp[0]) if (row_rp and row_rp[0] is not None) else 0
 
-        tables = self.list_tables()
+            tables = self.list_tables()
 
-        full_sample_stats = None
-        has_full = any(t["name"] == "bpjs_fkrtl_all" for t in tables)
-        if has_full:
-            try:
-                row = self.con.execute("SELECT * FROM v_bpjs_full_summary;").fetchone()
-                kep_row = self.con.execute("SELECT COUNT(*), COUNT(DISTINCT PSTV02) FROM bpjs_kepesertaan_all;").fetchone()
-                dx_cnt = self.con.execute("SELECT COUNT(*) FROM bpjs_diagnosissekunder_all;").fetchone()
-                agg_row = self.con.execute("""
-                    SELECT 
-                        COUNT(DISTINCT FKL06) as kab_cnt,
-                        COUNT(DISTINCT FKL05_NEW) as prov_cnt,
-                        COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
-                        COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_rp,
-                        COUNT(DISTINCT FKP02) FILTER (WHERE FKP02 IS NOT NULL AND FKP02 != '') as fktp_ref
-                    FROM bpjs_fkrtl_all;
-                """).fetchone()
-                if row:
-                    kep_rows = int(kep_row[0]) if kep_row else 0
-                    fkrtl_rows = int(row[0] or 0)
-                    dx_rows = int(dx_cnt[0]) if dx_cnt else 0
-                    ref_rows = 6706
-                    dt_min_str = str(row[5])[:10] if row[5] else "2023-07-15"
-                    dt_max_str = str(row[6])[:10] if row[6] else "2024-12-31"
-                    full_sample_stats = {
-                        "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
-                        "operational_status": "ONLINE_CONTINUOUS_REALTIME",
-                        "total_rows_ingested": kep_rows + fkrtl_rows + dx_rows + ref_rows,
-                        "kepesertaan_rows": kep_rows,
-                        "kepesertaan_families": int(kep_row[1]) if kep_row else 1065281,
-                        "diagnosis_sekunder_rows": dx_rows,
-                        "icd10_reference_rows": ref_rows,
-                        "total_claims": fkrtl_rows,
-                        "unique_patients": int(row[1] or 0),
-                        "unique_fktp_referrals": int(agg_row[4] or 345047) if agg_row else 345047,
-                        "active_fkrtl_profiles": 2091,
-                        "active_kabupaten_kota": int(agg_row[0] or 496) if agg_row else 496,
-                        "active_provinces": int(agg_row[1] or 38) if agg_row else 38,
-                        "total_portfolio_rp": int(row[2] or 0),
-                        "total_verified_rp": int(row[3] or 0),
-                        "direct_verification_adjustment_rp": int(agg_row[3] or 0) if agg_row else 0,
-                        "direct_verification_adjusted_claims": int(agg_row[2] or 0) if agg_row else 0,
-                        "daily_claims_average": 4643,
-                        "daily_claims_peak": 7870,
-                        "sample_participants": kep_rows,
-                        "avg_claim_rp": float(row[4] or 0),
-                        "date_min": dt_min_str,
-                        "date_max": "LIVE_CONTINUOUS",
-                        "fkrtl_window_min": dt_min_str,
-                        "fkrtl_window_max": dt_max_str,
-                        "multihospital_same_day_cases": 2584,
-                        "multihospital_same_day_exposure_rp": 19259853205,
-                        "same_hospital_same_day_cases": 2292,
-                        "same_hospital_same_day_exposure_rp": 13329931215,
-                        "total_same_day_exposure_rp": 32589784420
-                    }
-            except Exception as e:
-                print(f"[DuckDB] Error querying full stats: {e}")
+            full_sample_stats = None
+            has_full = any(t["name"] == "bpjs_fkrtl_all" for t in tables)
+            if has_full:
+                try:
+                    row = self.con.execute("SELECT * FROM v_bpjs_full_summary;").fetchone()
+                    kep_row = self.con.execute("SELECT COUNT(*), COUNT(DISTINCT PSTV02) FROM bpjs_kepesertaan_all;").fetchone()
+                    dx_cnt = self.con.execute("SELECT COUNT(*) FROM bpjs_diagnosissekunder_all;").fetchone()
+                    agg_row = self.con.execute("""
+                        SELECT 
+                            COUNT(DISTINCT FKL06) as kab_cnt,
+                            COUNT(DISTINCT FKL05_NEW) as prov_cnt,
+                            COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
+                            COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_rp,
+                            COUNT(DISTINCT FKP02) FILTER (WHERE FKP02 IS NOT NULL AND FKP02 != '') as fktp_ref
+                        FROM bpjs_fkrtl_all;
+                    """).fetchone()
+                    if row:
+                        kep_rows = int(kep_row[0]) if kep_row else 0
+                        fkrtl_rows = int(row[0] or 0)
+                        dx_rows = int(dx_cnt[0]) if dx_cnt else 0
+                        ref_rows = 6706
+                        dt_min_str = str(row[5])[:10] if row[5] else "2023-07-15"
+                        dt_max_str = str(row[6])[:10] if row[6] else "2024-12-31"
+                        full_sample_stats = {
+                            "dataset_source": "Gudang Data Nasional BPJS Kesehatan",
+                            "operational_status": "ONLINE_CONTINUOUS_REALTIME",
+                            "total_rows_ingested": kep_rows + fkrtl_rows + dx_rows + ref_rows,
+                            "kepesertaan_rows": kep_rows,
+                            "kepesertaan_families": int(kep_row[1]) if kep_row else 1065281,
+                            "diagnosis_sekunder_rows": dx_rows,
+                            "icd10_reference_rows": ref_rows,
+                            "total_claims": fkrtl_rows,
+                            "unique_patients": int(row[1] or 0),
+                            "unique_fktp_referrals": int(agg_row[4] or 345047) if agg_row else 345047,
+                            "active_fkrtl_profiles": 2091,
+                            "active_kabupaten_kota": int(agg_row[0] or 496) if agg_row else 496,
+                            "active_provinces": int(agg_row[1] or 38) if agg_row else 38,
+                            "total_portfolio_rp": int(row[2] or 0),
+                            "total_verified_rp": int(row[3] or 0),
+                            "direct_verification_adjustment_rp": int(agg_row[3] or 0) if agg_row else 0,
+                            "direct_verification_adjusted_claims": int(agg_row[2] or 0) if agg_row else 0,
+                            "daily_claims_average": 4643,
+                            "daily_claims_peak": 7870,
+                            "sample_participants": kep_rows,
+                            "avg_claim_rp": float(row[4] or 0),
+                            "date_min": dt_min_str,
+                            "date_max": "LIVE_CONTINUOUS",
+                            "fkrtl_window_min": dt_min_str,
+                            "fkrtl_window_max": dt_max_str,
+                            "multihospital_same_day_cases": 2584,
+                            "multihospital_same_day_exposure_rp": 19259853205,
+                            "same_hospital_same_day_cases": 2292,
+                            "same_hospital_same_day_exposure_rp": 13329931215,
+                            "total_same_day_exposure_rp": 32589784420
+                        }
+                except Exception as e:
+                    print(f"[DuckDB] Error querying full stats: {e}")
 
-        return {
-            "engine": "DuckDB In-Memory OLAP",
-            "version": duckdb.__version__,
-            "status": "ONLINE_ACTIVE",
-            "total_claims_indexed": total_claims,
-            "total_portfolio_rupiah": total_rp,
-            "tables_and_views_count": len(tables),
-            "tables": tables,
-            "full_sample_official_bpjs": full_sample_stats
-        }
+            return {
+                "engine": "DuckDB In-Memory OLAP",
+                "version": duckdb.__version__,
+                "status": "ONLINE_ACTIVE",
+                "total_claims_indexed": total_claims,
+                "total_portfolio_rupiah": total_rp,
+                "tables_and_views_count": len(tables),
+                "tables": tables,
+                "full_sample_official_bpjs": full_sample_stats
+            }
+
+        return dict(self._get_or_compute_cached("database_info", 120.0, _compute))
 
     # =========================================================================
     # PRE-PUBLISHED ANALYTICAL TOOLS (Matching teaguesterling/duckdb_mcp pattern)
@@ -943,39 +988,44 @@ class DuckDbAnalyticsEngine:
         Tool Terpublikasi: Profil Risiko Perilaku Faskes / Provider Fraud Analysis (diadaptasi dari rohansoni634).
         Menganalisis rasio klaim per pasien, konsentrasi DPJP, repeat billing, dan pembobotan risiko faskes.
         """
-        where_clause = ""
-        if risk_level:
-            clean_rl = risk_level.strip().upper()
-            where_clause = f"WHERE kategori_risiko_faskes = '{clean_rl}'"
+        cache_key = f"provider_fraud_risk:{risk_level.strip().upper() if risk_level else 'ALL'}"
 
-        sql = f"""
-            SELECT 
-                faskes_id,
-                nama_faskes,
-                kelas_rs,
-                total_klaim,
-                total_pasien_unik,
-                total_dpjp_unik,
-                total_biaya_tagih_rp,
-                rata_biaya_klaim_rp,
-                rasio_klaim_per_pasien,
-                total_klaim_repeat_billing,
-                jumlah_klaim_merah,
-                rata_skor_prioritas_klaim,
-                skor_risiko_perilaku_faskes,
-                kategori_risiko_faskes
-            FROM v_provider_fraud_risk_profile
-            {where_clause}
-            ORDER BY skor_risiko_perilaku_faskes DESC;
-        """
-        res = self.execute_query(sql, output_format="json")
-        return {
-            "tool_name": "provider_fraud_risk_profile",
-            "description": "Healthcare Provider Behavioral Risk Profile & Anomaly Scoring (Adaptasi rohansoni634)",
-            "filter_risk_level": risk_level,
-            "total_providers": len(res.get("data", [])),
-            "providers": res.get("data", [])
-        }
+        def _compute():
+            where_clause = ""
+            if risk_level:
+                clean_rl = risk_level.strip().upper()
+                where_clause = f"WHERE kategori_risiko_faskes = '{clean_rl}'"
+
+            sql = f"""
+                SELECT 
+                    faskes_id,
+                    nama_faskes,
+                    kelas_rs,
+                    total_klaim,
+                    total_pasien_unik,
+                    total_dpjp_unik,
+                    total_biaya_tagih_rp,
+                    rata_biaya_klaim_rp,
+                    rasio_klaim_per_pasien,
+                    total_klaim_repeat_billing,
+                    jumlah_klaim_merah,
+                    rata_skor_prioritas_klaim,
+                    skor_risiko_perilaku_faskes,
+                    kategori_risiko_faskes
+                FROM v_provider_fraud_risk_profile
+                {where_clause}
+                ORDER BY skor_risiko_perilaku_faskes DESC;
+            """
+            res = self.execute_query(sql, output_format="json")
+            return {
+                "tool_name": "provider_fraud_risk_profile",
+                "description": "Healthcare Provider Behavioral Risk Profile & Anomaly Scoring (Adaptasi rohansoni634)",
+                "filter_risk_level": risk_level,
+                "total_providers": len(res.get("data", [])),
+                "providers": res.get("data", [])
+            }
+
+        return dict(self._get_or_compute_cached(cache_key, 120.0, _compute))
 
     def run_national_scale_benchmark(self, claim_count: int = 100000) -> Dict[str, Any]:
         """
@@ -1158,32 +1208,37 @@ class DuckDbAnalyticsEngine:
         Mengembalikan status privasi data klaim real-time (k-anonymity, differential privacy budget,
         dan rasio konfirmasi peserta Mobile JKN langsung dari DuckDB).
         """
-        cw_row = self.con.execute("""
-            SELECT 
-                COALESCE(SUM(mobile_respon_hadir), 0),
-                COALESCE(SUM(mobile_respon_hadir + mobile_respon_tidak_hadir), 0),
-                COUNT(*)
-            FROM claims_warehouse;
-        """).fetchone()
-        cw_hadir = int(cw_row[0]) if cw_row else 0
-        cw_total = int(cw_row[1]) if cw_row else 0
+        def _compute_db_stats():
+            cw_row = self.con.execute("""
+                SELECT 
+                    COALESCE(SUM(mobile_respon_hadir), 0),
+                    COALESCE(SUM(mobile_respon_hadir + mobile_respon_tidak_hadir), 0),
+                    COUNT(*)
+                FROM claims_warehouse;
+            """).fetchone()
+            cw_hadir = int(cw_row[0]) if cw_row else 0
+            cw_total = int(cw_row[1]) if cw_row else 0
 
-        # Active FKRTL unique patients confirmed on latest operational day
-        daily_consented_row = self.con.execute("""
-            SELECT 
-                COUNT(DISTINCT PSTV01) FILTER (WHERE FKL48 = FKL47),
-                COUNT(DISTINCT PSTV01)
-            FROM bpjs_fkrtl_all
-            WHERE FKL03 = (SELECT MAX(FKL03) FROM bpjs_fkrtl_all);
-        """).fetchone()
-        daily_verified = int(daily_consented_row[0]) if daily_consented_row else 0
-        daily_total = int(daily_consented_row[1]) if daily_consented_row else 0
+            # Active FKRTL unique patients confirmed on latest operational day
+            daily_consented_row = self.con.execute("""
+                SELECT 
+                    COUNT(DISTINCT PSTV01) FILTER (WHERE FKL48 = FKL47),
+                    COUNT(DISTINCT PSTV01)
+                FROM bpjs_fkrtl_all
+                WHERE FKL03 = (SELECT MAX(FKL03) FROM bpjs_fkrtl_all);
+            """).fetchone()
+            daily_verified = int(daily_consented_row[0]) if daily_consented_row else 0
+            daily_total = int(daily_consented_row[1]) if daily_consented_row else 0
+            bounds = self._get_dataset_date_bounds()
+            return cw_hadir, cw_total, daily_verified, daily_total, bounds
+
+        cw_hadir, cw_total, daily_verified, daily_total, bounds = self._get_or_compute_cached(
+            "insights_privacy_db_stats", 120.0, _compute_db_stats
+        )
 
         # Real combined telemetry pool (daily active FKRTL + interactive cluster responses)
         consented = cw_hadir + daily_verified
         total_u = max(1, cw_total + daily_total)
-
-        bounds = self._get_dataset_date_bounds()
 
         with self._privacy_lock:
             k_val = self.privacy_state["k_value"]
@@ -1688,38 +1743,54 @@ class DuckDbAnalyticsEngine:
         (bpjs_fkrtl_all, bpjs_diagnosissekunder_all, dan claims_warehouse).
         """
         now = datetime.datetime.now()
-        metrics_row = self.con.execute("""
-            SELECT 
-                COUNT(*) as total_claims,
-                COUNT(*) FILTER (WHERE FKL19 LIKE '%-II' OR FKL19 LIKE '%-III') as sev_high_crit,
-                COUNT(*) FILTER (WHERE FKL19 LIKE '%-III') as sev_crit,
-                COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
-                COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_rp,
-                COUNT(*) FILTER (WHERE FKL19 LIKE 'Z-3%') as z3_cnt,
-                COUNT(*) FILTER (WHERE FKL03 >= (SELECT MAX(FKL03) - INTERVAL 30 DAYS FROM bpjs_fkrtl_all)) as recent_30d,
-                COUNT(DISTINCT FKL06) as kab_cnt
-            FROM bpjs_fkrtl_all;
-        """).fetchone()
 
-        total_claims = int(metrics_row[0] or 0)
-        sev_high_crit = int(metrics_row[1] or 0)
-        sev_crit = int(metrics_row[2] or 0)
-        corr_cnt = int(metrics_row[3] or 0)
-        corr_rp = int(metrics_row[4] or 0)
-        z3_cnt = int(metrics_row[5] or 0)
-        recent_30d = int(metrics_row[6] or 0)
-        kab_cnt = int(metrics_row[7] or 0)
+        def _compute_db_metrics():
+            metrics_row = self.con.execute("""
+                SELECT 
+                    COUNT(*) as total_claims,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE '%-II' OR FKL19 LIKE '%-III') as sev_high_crit,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE '%-III') as sev_crit,
+                    COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
+                    COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_rp,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE 'Z-3%') as z3_cnt,
+                    COUNT(*) FILTER (WHERE FKL03 >= (SELECT MAX(FKL03) - INTERVAL 30 DAYS FROM bpjs_fkrtl_all)) as recent_30d,
+                    COUNT(DISTINCT FKL06) as kab_cnt
+                FROM bpjs_fkrtl_all;
+            """).fetchone()
 
-        dx_cnt_row = self.con.execute("SELECT COUNT(*) FROM bpjs_diagnosissekunder_all;").fetchone()
-        dx_rows = int(dx_cnt_row[0] or 0) if dx_cnt_row else 0
+            dx_cnt_row = self.con.execute("SELECT COUNT(*) FROM bpjs_diagnosissekunder_all;").fetchone()
+            cw_row = self.con.execute("""
+                SELECT COALESCE(SUM(mobile_respon_tidak_hadir), 0),
+                       COALESCE(SUM(mobile_respon_hadir + mobile_respon_tidak_hadir), 0)
+                FROM claims_warehouse;
+            """).fetchone()
+            return (
+                int(metrics_row[0] or 0),
+                int(metrics_row[1] or 0),
+                int(metrics_row[2] or 0),
+                int(metrics_row[3] or 0),
+                int(metrics_row[4] or 0),
+                int(metrics_row[5] or 0),
+                int(metrics_row[6] or 0),
+                int(metrics_row[7] or 0),
+                int(dx_cnt_row[0] or 0) if dx_cnt_row else 0,
+                int(cw_row[0] or 0) if cw_row else 0,
+                int(cw_row[1] or 0) if cw_row else 0,
+            )
 
-        cw_row = self.con.execute("""
-            SELECT COALESCE(SUM(mobile_respon_tidak_hadir), 0),
-                   COALESCE(SUM(mobile_respon_hadir + mobile_respon_tidak_hadir), 0)
-            FROM claims_warehouse;
-        """).fetchone()
-        cw_denied = int(cw_row[0] or 0) if cw_row else 0
-        cw_total_resp = int(cw_row[1] or 0) if cw_row else 0
+        (
+            total_claims,
+            sev_high_crit,
+            sev_crit,
+            corr_cnt,
+            corr_rp,
+            z3_cnt,
+            recent_30d,
+            kab_cnt,
+            dx_rows,
+            cw_denied,
+            cw_total_resp,
+        ) = self._get_or_compute_cached("insights_reports_db_stats", 120.0, _compute_db_metrics)
 
         privacy = self.tool_insights_privacy_status()
 
@@ -1856,201 +1927,213 @@ class DuckDbAnalyticsEngine:
 
     def tool_national_metrics(self, days: Optional[int] = None) -> Dict[str, Any]:
         """Menghitung metrik eksekutif langsung dari tabel DuckDB dengan dukungan jendela hari (7/30/90/all)."""
-        where_win = ""
-        if days and int(days) > 0:
-            where_win = f" WHERE FKL03 >= (SELECT MAX(FKL03) - INTERVAL {int(days)} DAYS FROM bpjs_fkrtl_all) "
+        norm_days = int(days) if days and int(days) > 0 else "all"
 
-        row = self.con.execute(f"""
-            SELECT 
-                COUNT(*) as claims_cnt,
-                COUNT(*) FILTER (WHERE FKL19 LIKE '%-III') as sev3_cnt,
-                COUNT(*) FILTER (WHERE FKL19 LIKE '%-II') as sev2_cnt,
-                COUNT(*) FILTER (WHERE FKL19 LIKE '%-I' AND FKL19 NOT LIKE '%-II' AND FKL19 NOT LIKE '%-III') as sev1_cnt,
-                COUNT(*) FILTER (WHERE FKL19 NOT LIKE '%-I' AND FKL19 NOT LIKE '%-II' AND FKL19 NOT LIKE '%-III') as sev0_cnt,
-                COALESCE(SUM(FKL47), 0) as claimed_idr,
-                COALESCE(SUM(FKL48), 0) as verified_idr,
-                COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
-                COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_idr,
-                COUNT(DISTINCT FKL06) as kab_cnt,
-                COUNT(DISTINCT FKL05_NEW) as prov_cnt,
-                COUNT(DISTINCT PSTV01) as uniq_patients,
-                COUNT(*) FILTER (WHERE FKL19 LIKE 'Z-3%') as z3_cnt,
-                COUNT(*) FILTER (WHERE FKL48 = FKL47) as full_approved_cnt
-            FROM bpjs_fkrtl_all
-            {where_win};
-        """).fetchone()
+        def _compute():
+            where_win = ""
+            if norm_days != "all":
+                where_win = f" WHERE FKL03 >= (SELECT MAX(FKL03) - INTERVAL {norm_days} DAYS FROM bpjs_fkrtl_all) "
 
-        claims_cnt = int(row[0] or 0)
-        sev3 = int(row[1] or 0)
-        sev2 = int(row[2] or 0)
-        sev1 = int(row[3] or 0)
-        sev0 = int(row[4] or 0)
-        claimed_idr = int(row[5] or 0)
-        verified_idr = int(row[6] or 0)
-        corr_cnt = int(row[7] or 0)
-        corr_idr = int(row[8] or 0)
-        kab_cnt = int(row[9] or 0)
-        prov_cnt = int(row[10] or 0)
-        uniq_patients = int(row[11] or 0)
-        z3_cnt = int(row[12] or 0)
-        full_approved = int(row[13] or 0)
+            row = self.con.execute(f"""
+                SELECT 
+                    COUNT(*) as claims_cnt,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE '%-III') as sev3_cnt,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE '%-II') as sev2_cnt,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE '%-I' AND FKL19 NOT LIKE '%-II' AND FKL19 NOT LIKE '%-III') as sev1_cnt,
+                    COUNT(*) FILTER (WHERE FKL19 NOT LIKE '%-I' AND FKL19 NOT LIKE '%-II' AND FKL19 NOT LIKE '%-III') as sev0_cnt,
+                    COALESCE(SUM(FKL47), 0) as claimed_idr,
+                    COALESCE(SUM(FKL48), 0) as verified_idr,
+                    COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_cnt,
+                    COALESCE(SUM(FKL47 - FKL48) FILTER (WHERE FKL48 < FKL47), 0) as corr_idr,
+                    COUNT(DISTINCT FKL06) as kab_cnt,
+                    COUNT(DISTINCT FKL05_NEW) as prov_cnt,
+                    COUNT(DISTINCT PSTV01) as uniq_patients,
+                    COUNT(*) FILTER (WHERE FKL19 LIKE 'Z-3%') as z3_cnt,
+                    COUNT(*) FILTER (WHERE FKL48 = FKL47) as full_approved_cnt
+                FROM bpjs_fkrtl_all
+                {where_win};
+            """).fetchone()
 
-        ratio_pct = round((verified_idr / claimed_idr) * 100, 2) if claimed_idr > 0 else 99.90
-        return {
-            "claims_volume": claims_cnt,
-            "severity_distribution": {
-                "Rendah": sev0,
-                "Sedang": sev1,
-                "Tinggi": sev2,
-                "Kritis": sev3,
-            },
-            "claimed_idr": claimed_idr,
-            "verified_idr": verified_idr,
-            "correction_count": corr_cnt,
-            "correction_idr": corr_idr,
-            "kabupaten_kota_coverage": kab_cnt,
-            "provinsi_coverage": prov_cnt,
-            "unique_patients": uniq_patients,
-            "z3_rehab_claims": z3_cnt,
-            "full_approved_count": full_approved,
-            "claim_ratio_pct": ratio_pct,
-        }
+            claims_cnt = int(row[0] or 0)
+            sev3 = int(row[1] or 0)
+            sev2 = int(row[2] or 0)
+            sev1 = int(row[3] or 0)
+            sev0 = int(row[4] or 0)
+            claimed_idr = int(row[5] or 0)
+            verified_idr = int(row[6] or 0)
+            corr_cnt = int(row[7] or 0)
+            corr_idr = int(row[8] or 0)
+            kab_cnt = int(row[9] or 0)
+            prov_cnt = int(row[10] or 0)
+            uniq_patients = int(row[11] or 0)
+            z3_cnt = int(row[12] or 0)
+            full_approved = int(row[13] or 0)
+
+            ratio_pct = round((verified_idr / claimed_idr) * 100, 2) if claimed_idr > 0 else 99.90
+            return {
+                "claims_volume": claims_cnt,
+                "severity_distribution": {
+                    "Rendah": sev0,
+                    "Sedang": sev1,
+                    "Tinggi": sev2,
+                    "Kritis": sev3,
+                },
+                "claimed_idr": claimed_idr,
+                "verified_idr": verified_idr,
+                "correction_count": corr_cnt,
+                "correction_idr": corr_idr,
+                "kabupaten_kota_coverage": kab_cnt,
+                "provinsi_coverage": prov_cnt,
+                "unique_patients": uniq_patients,
+                "z3_rehab_claims": z3_cnt,
+                "full_approved_count": full_approved,
+                "claim_ratio_pct": ratio_pct,
+            }
+
+        return dict(self._get_or_compute_cached(f"national_metrics:{norm_days}", 120.0, _compute))
 
     def tool_national_telemetry_trends(self, days: int = 7) -> List[Dict[str, Any]]:
         """Menghitung tren telemetri harian NYATA langsung dari FKL03 pada bpjs_fkrtl_all."""
-        t0 = time.perf_counter()
         limit_n = max(7, min(int(days or 7), 90))
-        rows = self.con.execute(f"""
-            SELECT 
-                strftime(FKL03, '%Y-%m-%d') as dt,
-                dayofweek(FKL03) as dow,
-                COUNT(*) as vol,
-                COUNT(*) FILTER (WHERE FKL48 = FKL47) as verified_vol,
-                COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_vol,
-                COUNT(DISTINCT FKL06) as kab_cnt,
-                COALESCE(SUM(FKL47), 0) as claimed_rp,
-                COALESCE(SUM(FKL48), 0) as verified_rp
-            FROM bpjs_fkrtl_all
-            WHERE FKL03 IS NOT NULL
-            GROUP BY 1, 2
-            HAVING COUNT(*) >= 5
-            ORDER BY 1 DESC
-            LIMIT {limit_n};
-        """).fetchall()
-        rows.reverse()
-        total_ms = round((time.perf_counter() - t0) * 1000, 1)
-        per_day_ms = round(max(6.2, total_ms / max(len(rows), 1)), 1)
 
-        day_names = {0: "Minggu", 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu"}
-        short_months = {"01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mei", "06": "Jun",
-                        "07": "Jul", "08": "Agt", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des"}
+        def _compute():
+            t0 = time.perf_counter()
+            rows = self.con.execute(f"""
+                SELECT 
+                    strftime(FKL03, '%Y-%m-%d') as dt,
+                    dayofweek(FKL03) as dow,
+                    COUNT(*) as vol,
+                    COUNT(*) FILTER (WHERE FKL48 = FKL47) as verified_vol,
+                    COUNT(*) FILTER (WHERE FKL48 < FKL47) as corr_vol,
+                    COUNT(DISTINCT FKL06) as kab_cnt,
+                    COALESCE(SUM(FKL47), 0) as claimed_rp,
+                    COALESCE(SUM(FKL48), 0) as verified_rp
+                FROM bpjs_fkrtl_all
+                WHERE FKL03 IS NOT NULL
+                GROUP BY 1, 2
+                HAVING COUNT(*) >= 5
+                ORDER BY 1 DESC
+                LIMIT {limit_n};
+            """).fetchall()
+            rows.reverse()
+            total_ms = round((time.perf_counter() - t0) * 1000, 1)
+            per_day_ms = round(max(6.2, total_ms / max(len(rows), 1)), 1)
 
-        trends = []
-        for dt_str, dow, vol, ver_vol, corr_vol, kab_cnt, claimed_rp, verified_rp in rows:
-            yyyy, mm, dd = dt_str.split("-")
-            mon_id = short_months.get(mm, mm)
-            dname = day_names.get(int(dow or 1), "Hari")
-            sla_pct = round((ver_vol / max(vol, 1)) * 100, 2)
-            # Estimate active FKRTL sites proportionally based on real kab/kota participation
-            est_fkrtl = max(kab_cnt, int(round(kab_cnt * 3.1)))
-            trends.append({
-                "date": dt_str,
-                "day_name": dname,
-                "day_short": dname[:3],
-                "day_label": f"{dname}, {int(dd)} {mon_id} {yyyy[-2:]}",
-                "short_label": f"{int(dd)} {mon_id}",
-                "active_hospitals": est_fkrtl,
-                "sample_active_fkrtl": est_fkrtl,
-                "sample_kab_kota": int(kab_cnt),
-                "active_hospitals_note": f"{est_fkrtl:,} FKRTL Aktif ({kab_cnt} Kab/Kota) · Kliring {dname}".replace(",", "."),
-                "sla_compliance_pct": sla_pct,
-                "sla_compliance_note": f"{ver_vol:,}/{vol:,} Disetujui Penuh".replace(",", "."),
-                "sample_claims_volume": int(vol),
-                "sample_claims_verified": int(ver_vol),
-                "corrected_claims": int(corr_vol),
-                "sample_claimed_idr": int(claimed_rp),
-                "daily_claims_volume": int(vol),
-                "daily_claims_volume_label": f"{vol:,} berkas".replace(",", "."),
-                "daily_claims_volume_note": f"Nilai Tagihan Rp {f'{claimed_rp / 1e9:.2f}'.replace('.', ',')} Miliar",
-                "engine_latency_ms": per_day_ms,
-                "engine_latency_note": "Eksekusi Kolumnar DuckDB Live"
-            })
-        return trends
+            day_names = {0: "Minggu", 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu"}
+            short_months = {"01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mei", "06": "Jun",
+                            "07": "Jul", "08": "Agt", "09": "Sep", "10": "Okt", "11": "Nov", "12": "Des"}
+
+            trends = []
+            for dt_str, dow, vol, ver_vol, corr_vol, kab_cnt, claimed_rp, verified_rp in rows:
+                yyyy, mm, dd = dt_str.split("-")
+                mon_id = short_months.get(mm, mm)
+                dname = day_names.get(int(dow or 1), "Hari")
+                sla_pct = round((ver_vol / max(vol, 1)) * 100, 2)
+                # Estimate active FKRTL sites proportionally based on real kab/kota participation
+                est_fkrtl = max(kab_cnt, int(round(kab_cnt * 3.1)))
+                trends.append({
+                    "date": dt_str,
+                    "day_name": dname,
+                    "day_short": dname[:3],
+                    "day_label": f"{dname}, {int(dd)} {mon_id} {yyyy[-2:]}",
+                    "short_label": f"{int(dd)} {mon_id}",
+                    "active_hospitals": est_fkrtl,
+                    "sample_active_fkrtl": est_fkrtl,
+                    "sample_kab_kota": int(kab_cnt),
+                    "active_hospitals_note": f"{est_fkrtl:,} FKRTL Aktif ({kab_cnt} Kab/Kota) · Kliring {dname}".replace(",", "."),
+                    "sla_compliance_pct": sla_pct,
+                    "sla_compliance_note": f"{ver_vol:,}/{vol:,} Disetujui Penuh".replace(",", "."),
+                    "sample_claims_volume": int(vol),
+                    "sample_claims_verified": int(ver_vol),
+                    "corrected_claims": int(corr_vol),
+                    "sample_claimed_idr": int(claimed_rp),
+                    "daily_claims_volume": int(vol),
+                    "daily_claims_volume_label": f"{vol:,} berkas".replace(",", "."),
+                    "daily_claims_volume_note": f"Nilai Tagihan Rp {f'{claimed_rp / 1e9:.2f}'.replace('.', ',')} Miliar",
+                    "engine_latency_ms": per_day_ms,
+                    "engine_latency_note": "Eksekusi Kolumnar DuckDB Live"
+                })
+            return trends
+
+        return list(self._get_or_compute_cached(f"national_trends:{limit_n}", 120.0, _compute))
 
     def tool_retention_analytics(self) -> Dict[str, Any]:
         """
         Menghitung analitik kohort longitudinal dan aktivitas harian 30 hari terakhir
         secara LIVE langsung dari v_bpjs_longitudinal_kohort dan bpjs_fkrtl_all.
         """
-        daily_rows = self.con.execute("""
-            SELECT 
-                strftime(FKL03, '%Y-%m-%d') as dt,
-                COUNT(DISTINCT FKL06) as active_kab,
-                COUNT(*) as total_claims,
-                COALESCE(SUM(FKL47), 0) as claimed_rp
-            FROM bpjs_fkrtl_all
-            WHERE FKL03 IS NOT NULL
-            GROUP BY 1
-            ORDER BY 1 DESC
-            LIMIT 30;
-        """).fetchall()
+        def _compute():
+            daily_rows = self.con.execute("""
+                SELECT 
+                    strftime(FKL03, '%Y-%m-%d') as dt,
+                    COUNT(DISTINCT FKL06) as active_kab,
+                    COUNT(*) as total_claims,
+                    COALESCE(SUM(FKL47), 0) as claimed_rp
+                FROM bpjs_fkrtl_all
+                WHERE FKL03 IS NOT NULL
+                GROUP BY 1
+                ORDER BY 1 DESC
+                LIMIT 30;
+            """).fetchall()
 
-        daily_activity = [
-            {
-                "date": str(r[0]),
-                "activeUsers": int(round(int(r[1]) * 3.1)),
-                "activeKabKota": int(r[1]),
-                "totalRequests": int(r[2]),
-                "claimedIdr": int(r[3]),
+            daily_activity = [
+                {
+                    "date": str(r[0]),
+                    "activeUsers": int(round(int(r[1]) * 3.1)),
+                    "activeKabKota": int(r[1]),
+                    "totalRequests": int(r[2]),
+                    "claimedIdr": int(r[3]),
+                }
+                for r in daily_rows
+            ]
+
+            cohort_rows = self.con.execute("""
+                SELECT 
+                    gelombang_kohort,
+                    tahun_sampel,
+                    peserta_sampel,
+                    bobot_populasi_nasional,
+                    permintaan_klaim_masuk,
+                    klaim_disetujui_penuh,
+                    klaim_dikoreksi_verif,
+                    total_biaya_tagih_rp,
+                    total_biaya_verif_rp
+                FROM v_bpjs_longitudinal_kohort
+                ORDER BY tahun_sampel ASC;
+            """).fetchall()
+
+            cohorts = []
+            for idx, r in enumerate(cohort_rows):
+                masuk = int(r[4] or 0)
+                penuh = int(r[5] or 0)
+                koreksi = int(r[6] or 0)
+                approval_rate = round(penuh / max(masuk, 1), 4)
+                verif_idr_rate = round(int(r[8] or 0) / max(int(r[7] or 1), 1), 4)
+                # Retention / SLA stability proxies grounded directly on observed cohort data
+                day7_rate = round(max(0.95, approval_rate - 0.006 - (koreksi / max(masuk, 1)) * 0.1), 4)
+                day30_rate = round(min(0.999, max(0.94, verif_idr_rate - 0.012 + idx * 0.0005)), 4)
+                cohorts.append({
+                    "cohort_date": str(r[0]),
+                    "cohort_year": int(r[1]),
+                    "cohort_size": int(r[2] or 0),
+                    "weighted_population": int(r[3] or 0),
+                    "claims_count": masuk,
+                    "corrected_count": koreksi,
+                    "retention": {
+                        1: {"retained_users": penuh, "retention_rate": approval_rate},
+                        7: {"retained_users": int(round(masuk * day7_rate)), "retention_rate": day7_rate},
+                        30: {"retained_users": int(round(masuk * day30_rate)), "retention_rate": day30_rate},
+                    },
+                })
+
+            return {
+                "status": "success",
+                "source": "DuckDB Live v_bpjs_longitudinal_kohort & bpjs_fkrtl_all",
+                "daily_activity": daily_activity,
+                "cohorts": cohorts,
             }
-            for r in daily_rows
-        ]
 
-        cohort_rows = self.con.execute("""
-            SELECT 
-                gelombang_kohort,
-                tahun_sampel,
-                peserta_sampel,
-                bobot_populasi_nasional,
-                permintaan_klaim_masuk,
-                klaim_disetujui_penuh,
-                klaim_dikoreksi_verif,
-                total_biaya_tagih_rp,
-                total_biaya_verif_rp
-            FROM v_bpjs_longitudinal_kohort
-            ORDER BY tahun_sampel ASC;
-        """).fetchall()
-
-        cohorts = []
-        for idx, r in enumerate(cohort_rows):
-            masuk = int(r[4] or 0)
-            penuh = int(r[5] or 0)
-            koreksi = int(r[6] or 0)
-            approval_rate = round(penuh / max(masuk, 1), 4)
-            verif_idr_rate = round(int(r[8] or 0) / max(int(r[7] or 1), 1), 4)
-            # Retention / SLA stability proxies grounded directly on observed cohort data
-            day7_rate = round(max(0.95, approval_rate - 0.006 - (koreksi / max(masuk, 1)) * 0.1), 4)
-            day30_rate = round(min(0.999, max(0.94, verif_idr_rate - 0.012 + idx * 0.0005)), 4)
-            cohorts.append({
-                "cohort_date": str(r[0]),
-                "cohort_year": int(r[1]),
-                "cohort_size": int(r[2] or 0),
-                "weighted_population": int(r[3] or 0),
-                "claims_count": masuk,
-                "corrected_count": koreksi,
-                "retention": {
-                    1: {"retained_users": penuh, "retention_rate": approval_rate},
-                    7: {"retained_users": int(round(masuk * day7_rate)), "retention_rate": day7_rate},
-                    30: {"retained_users": int(round(masuk * day30_rate)), "retention_rate": day30_rate},
-                },
-            })
-
-        return {
-            "status": "success",
-            "source": "DuckDB Live v_bpjs_longitudinal_kohort & bpjs_fkrtl_all",
-            "daily_activity": daily_activity,
-            "cohorts": cohorts,
-        }
+        return dict(self._get_or_compute_cached("retention_analytics", 120.0, _compute))
 
     def get_published_tools_catalog(self) -> List[Dict[str, Any]]:
         """Katalog lengkap tools analitik yang dipublikasikan via DuckDB MCP"""

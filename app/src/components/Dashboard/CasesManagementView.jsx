@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Shield,
@@ -73,25 +73,24 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  const [cases, setCases] = useState([]);
-  const [loadingCases, setLoadingCases] = useState(true);
+  const casesUrl = `${API_BASE_URL}/api/v1/operations/cases`;
+  const cachedCasesData = getCachedJsonSync(casesUrl);
+  const [cases, setCases] = useState(() => Array.isArray(cachedCasesData?.cases) ? cachedCasesData.cases : []);
+  const [loadingCases, setLoadingCases] = useState(() => !Array.isArray(cachedCasesData?.cases));
 
   const fetchLiveCases = useCallback(async () => {
-    setLoadingCases(true);
+    if (!getCachedJsonSync(casesUrl)) setLoadingCases(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/cases`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.cases)) {
-          setCases(data.cases);
-        }
+      const data = await cachedAuthGetJson(casesUrl);
+      if (Array.isArray(data?.cases)) {
+        setCases(data.cases);
       }
     } catch (err) {
       console.error('Gagal memuat daftar berkas klaim:', err);
     } finally {
       setLoadingCases(false);
     }
-  }, []);
+  }, [casesUrl]);
 
   useEffect(() => {
     fetchLiveCases();
