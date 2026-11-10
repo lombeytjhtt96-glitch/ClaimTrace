@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
@@ -32,10 +32,15 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
 
   const isLight = propIsLight !== undefined ? propIsLight : domIsLight;
 
+  const dpjpUrl = `${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`;
+  const initialDpjpList = Array.isArray(getCachedJsonSync(dpjpUrl)?.doctors)
+    ? getCachedJsonSync(dpjpUrl).doctors
+    : [];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [doctors, setDoctors] = useState(initialDpjpList);
+  const [selectedDoctor, setSelectedDoctor] = useState(() => initialDpjpList[0] || null);
   const [dpjpAiResult, setDpjpAiResult] = useState({});
   const [dpjpAiLoading, setDpjpAiLoading] = useState(false);
 
@@ -43,9 +48,8 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
     let active = true;
     const loadDpjp = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`);
-        if (res.ok && active) {
-          const data = await res.json();
+        const data = await cachedAuthGetJson(dpjpUrl);
+        if (data && active) {
           const list = Array.isArray(data?.doctors) ? data.doctors : [];
           setDoctors(list);
           if (list.length > 0) {
@@ -58,7 +62,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
     };
     loadDpjp();
     return () => { active = false; };
-  }, []);
+  }, [dpjpUrl]);
 
   const handleRunDpjpAiAudit = async (doc) => {
     if (!doc || dpjpAiLoading) return;

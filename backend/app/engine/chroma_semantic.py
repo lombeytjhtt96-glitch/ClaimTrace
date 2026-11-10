@@ -157,6 +157,8 @@ INITIAL_CLINICAL_RESUMES = [
     }
 ]
 
+import threading
+
 class ChromaSemanticEngine:
     """
     Mesin Deteksi Plagiarisme Teks Resume Medis & Copy-Paste Narasi Klinis
@@ -165,6 +167,8 @@ class ChromaSemanticEngine:
     _instance: Optional["ChromaSemanticEngine"] = None
 
     def __init__(self, persistent_path: str = CHROMA_DATA_DIR):
+        self._cache_lock = threading.RLock()
+        self._plagiarism_cache: Dict[tuple, Dict[str, Any]] = {}
         try:
             self.client = chromadb.PersistentClient(path=persistent_path)
         except Exception:
@@ -229,17 +233,26 @@ class ChromaSemanticEngine:
         Analisis kemiripan teks resume medis klaim terhadap repositori nasional.
         Jika ada klaim lain dengan kemiripan > threshold (default 90%), memicu sinyal kecurangan.
         """
+        cache_key = (str(claim_id), round(float(threshold), 4), int(n_results), self.collection.count())
+        with self._cache_lock:
+            cached = self._plagiarism_cache.get(cache_key)
+            if cached is not None:
+                return dict(cached)
+
         # Cari dokumen target
         existing = self.collection.get(ids=[claim_id], include=["documents", "metadatas"])
         if not existing or not existing["documents"] or len(existing["documents"]) == 0:
             # Fallback jika claim_id belum ada di koleksi
-            return {
+            res_not_found = {
                 "claim_id": claim_id,
                 "status": "NOT_INDEXED",
                 "is_plagiarized": False,
                 "max_similarity_pct": 0.0,
                 "matches": []
             }
+            with self._cache_lock:
+                self._plagiarism_cache[cache_key] = dict(res_not_found)
+            return res_not_found
 
         target_text = existing["documents"][0]
         target_meta = existing["metadatas"][0] if existing["metadatas"] else {}
@@ -316,7 +329,7 @@ class ChromaSemanticEngine:
                 "individual dan independen antar-pasien."
             )
 
-        return {
+        result_payload = {
             "claim_id": claim_id,
             "target_meta": target_meta,
             "target_resume_text": target_text,
@@ -327,6 +340,9 @@ class ChromaSemanticEngine:
             "signal_code": "IND-SEM-COPYPASTE" if is_plagiarized else None,
             "matches": matches
         }
+        with self._cache_lock:
+            self._plagiarism_cache[cache_key] = dict(result_payload)
+        return result_payload
 
     def compare_custom_text(self, text_input: str, top_k: int = 4) -> Dict[str, Any]:
         """

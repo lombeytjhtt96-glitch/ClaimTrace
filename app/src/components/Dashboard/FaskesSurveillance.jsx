@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
@@ -62,69 +62,76 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     }
   };
 
-  const [liveFaskes, setLiveFaskes] = useState([]);
-  const [nationalSummary, setNationalSummary] = useState(null);
+  const mapProvidersToFaskes = (provData, claimsRaw) => {
+    const claimsByFaskes = {};
+    (Array.isArray(claimsRaw) ? claimsRaw : []).forEach((item) => {
+      const c = item?.claim;
+      const t = item?.triage;
+      if (c?.faskes_id) claimsByFaskes[c.faskes_id] = { claim: c, triage: t };
+    });
+    const providers = Array.isArray(provData?.providers) ? provData.providers : [];
+    return providers.map((p) => {
+      const linked = claimsByFaskes[p.faskes_id];
+      const c = linked?.claim || {};
+      const t = linked?.triage || {};
+      const triageScore = Number(t.final_priority_score ?? p.rata_skor_prioritas_klaim ?? p.skor_risiko_perilaku_faskes ?? 0);
+      const friScore = Number(triageScore > p.skor_risiko_perilaku_faskes ? triageScore : p.skor_risiko_perilaku_faskes).toFixed(1);
+      const numericFri = Number(friScore);
+      const riskLevel = numericFri >= 70
+        ? 'TINGGI / KRITIS (MERAH)'
+        : numericFri >= 40
+        ? 'SEDANG (KUNING)'
+        : 'RENDAH (HIJAU)';
+      const isExpired = c.dpjp_meta?.sip_status === 'EXPIRED';
+      const spikeRatio = c.episode_meta?.rasio_lonjakan_baseline
+        ? `${Number(c.episode_meta.rasio_lonjakan_baseline).toFixed(1)}x`
+        : `${Number(p.rasio_klaim_per_pasien || 1).toFixed(1)}x`;
+      return {
+        id: p.faskes_id,
+        linkedClaimId: c.claim_id || 'CLM-2026-8801',
+        name: p.nama_faskes,
+        type: `${c.fkl08_jenis_faskes || 'Rumah Sakit'} Kelas ${p.kelas_rs || c.kelas_rs || 'B'}`,
+        city: p.nama_faskes.includes('Bandung') ? 'Bandung' : p.nama_faskes.includes('Surabaya') ? 'Surabaya' : p.nama_faskes.includes('Yogyakarta') ? 'Yogyakarta' : 'Jabodetabek',
+        province: 'Indonesia',
+        director: c.dpjp_meta?.nama_dpjp_alias ? `PIC Medis: ${c.dpjp_meta.nama_dpjp_alias}` : 'Komite Medik FKRTL',
+        friScore: numericFri,
+        riskLevel,
+        totalClaimsMonth: Number(p.total_klaim || 0),
+        totalRupiahMonth: `Rp ${Number(p.total_biaya_tagih_rp || 0).toLocaleString('id-ID')}`,
+        anomalyCount: Number(p.jumlah_klaim_merah || p.total_klaim_repeat_billing || 0),
+        spikeRatio,
+        primaryFinding: t.ringkasan_bukti_audit || `Skor perilaku faskes ${p.skor_risiko_perilaku_faskes}/100 (${p.kategori_risiko_faskes}).`,
+        fristaStatus: isExpired ? 'ANOMALI HARD-TRIGGER' : numericFri >= 40 ? 'KLARIFIKASI AKTIF' : 'AKTIF TERVERIFIKASI',
+        historyAudit: t.rekomendasi_sop || `Pemantauan DuckDB real-time atas ${p.total_klaim} berkas klaim & ${p.total_dpjp_unik} DPJP unik.`,
+      };
+    });
+  };
+
+  const provUrl = `${API_BASE_URL}/api/v1/analytics/provider-risk`;
+  const claimsUrl = `${API_BASE_URL}/api/v1/claims`;
+  const natUrl = `${API_BASE_URL}/api/v1/system/national-scale-metrics`;
+  const cachedProv = getCachedJsonSync(provUrl);
+  const cachedClaims = getCachedJsonSync(claimsUrl);
+  const cachedNat = getCachedJsonSync(natUrl);
+
+  const [liveFaskes, setLiveFaskes] = useState(() =>
+    cachedProv ? mapProvidersToFaskes(cachedProv, cachedClaims) : []
+  );
+  const [nationalSummary, setNationalSummary] = useState(() => cachedNat?.portfolio_metrics || null);
 
   useEffect(() => {
     let active = true;
     const loadFaskesIntelligence = async () => {
       try {
-        const [provRes, claimsRes, natRes] = await Promise.all([
-          authFetch(`${API_BASE_URL}/api/v1/analytics/provider-risk`),
-          authFetch(`${API_BASE_URL}/api/v1/claims`),
-          authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics`),
+        const [provData, claimsRaw, nat] = await Promise.all([
+          cachedAuthGetJson(provUrl),
+          cachedAuthGetJson(claimsUrl),
+          cachedAuthGetJson(natUrl),
         ]);
-        const claimsByFaskes = {};
-        if (claimsRes.ok) {
-          const claimsRaw = await claimsRes.json();
-          (Array.isArray(claimsRaw) ? claimsRaw : []).forEach((item) => {
-            const c = item?.claim;
-            const t = item?.triage;
-            if (c?.faskes_id) claimsByFaskes[c.faskes_id] = { claim: c, triage: t };
-          });
+        if (provData && active) {
+          setLiveFaskes(mapProvidersToFaskes(provData, claimsRaw));
         }
-        if (provRes.ok && active) {
-          const provData = await provRes.json();
-          const providers = Array.isArray(provData.providers) ? provData.providers : [];
-          const mapped = providers.map((p) => {
-            const linked = claimsByFaskes[p.faskes_id];
-            const c = linked?.claim || {};
-            const t = linked?.triage || {};
-            const triageScore = Number(t.final_priority_score ?? p.rata_skor_prioritas_klaim ?? p.skor_risiko_perilaku_faskes ?? 0);
-            const friScore = Number(triageScore > p.skor_risiko_perilaku_faskes ? triageScore : p.skor_risiko_perilaku_faskes).toFixed(1);
-            const numericFri = Number(friScore);
-            const riskLevel = numericFri >= 70
-              ? 'TINGGI / KRITIS (MERAH)'
-              : numericFri >= 40
-              ? 'SEDANG (KUNING)'
-              : 'RENDAH (HIJAU)';
-            const isExpired = c.dpjp_meta?.sip_status === 'EXPIRED';
-            const spikeRatio = c.episode_meta?.rasio_lonjakan_baseline
-              ? `${Number(c.episode_meta.rasio_lonjakan_baseline).toFixed(1)}x`
-              : `${Number(p.rasio_klaim_per_pasien || 1).toFixed(1)}x`;
-            return {
-              id: p.faskes_id,
-              linkedClaimId: c.claim_id || 'CLM-2026-8801',
-              name: p.nama_faskes,
-              type: `${c.fkl08_jenis_faskes || 'Rumah Sakit'} Kelas ${p.kelas_rs || c.kelas_rs || 'B'}`,
-              city: p.nama_faskes.includes('Bandung') ? 'Bandung' : p.nama_faskes.includes('Surabaya') ? 'Surabaya' : p.nama_faskes.includes('Yogyakarta') ? 'Yogyakarta' : 'Jabodetabek',
-              province: 'Indonesia',
-              director: c.dpjp_meta?.nama_dpjp_alias ? `PIC Medis: ${c.dpjp_meta.nama_dpjp_alias}` : 'Komite Medik FKRTL',
-              friScore: numericFri,
-              riskLevel,
-              totalClaimsMonth: Number(p.total_klaim || 0),
-              totalRupiahMonth: `Rp ${Number(p.total_biaya_tagih_rp || 0).toLocaleString('id-ID')}`,
-              anomalyCount: Number(p.jumlah_klaim_merah || p.total_klaim_repeat_billing || 0),
-              spikeRatio,
-              primaryFinding: t.ringkasan_bukti_audit || `Skor perilaku faskes ${p.skor_risiko_perilaku_faskes}/100 (${p.kategori_risiko_faskes}).`,
-              fristaStatus: isExpired ? 'ANOMALI HARD-TRIGGER' : numericFri >= 40 ? 'KLARIFIKASI AKTIF' : 'AKTIF TERVERIFIKASI',
-              historyAudit: t.rekomendasi_sop || `Pemantauan DuckDB real-time atas ${p.total_klaim} berkas klaim & ${p.total_dpjp_unik} DPJP unik.`,
-            };
-          });
-          setLiveFaskes(mapped);
-        }
-        if (natRes.ok && active) {
-          const nat = await natRes.json();
+        if (nat && active) {
           setNationalSummary(nat?.portfolio_metrics || null);
         }
       } catch (err) {
@@ -133,7 +140,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
     };
     loadFaskesIntelligence();
     return () => { active = false; };
-  }, []);
+  }, [provUrl, claimsUrl, natUrl]);
 
   const criticalFaskesList = liveFaskes.filter(f => f.friScore >= 70);
   const mediumFaskesList = liveFaskes.filter(f => f.friScore >= 40 && f.friScore < 70);

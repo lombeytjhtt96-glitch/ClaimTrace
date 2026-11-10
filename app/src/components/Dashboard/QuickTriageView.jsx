@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   FolderOpen,
@@ -125,30 +125,32 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
     return () => obs.disconnect();
   }, [propIsLight]);
 
-  const [cases, setCases] = useState([]);
+  const mapQuickCases = (casesList) => (Array.isArray(casesList) ? casesList : []).map((c) => ({
+    case_id: c.case_id || c.id,
+    sep_no: c.sep_no || '-',
+    hospital: c.hospital || '-',
+    severity: c.severity === 'med' ? 'moderate' : c.severity || 'high',
+    status: c.status || 'new',
+    sla_breach_at: c.sla_breach_at || new Date(Date.now() + (c.minutes_until_breach || 120) * 60000).toISOString(),
+    assigned_to: c.assigned_to || null,
+  }));
+
+  const casesUrl = `${API_BASE_URL}/api/v1/operations/cases`;
+  const cachedCasesData = getCachedJsonSync(casesUrl);
+  const [cases, setCases] = useState(() => Array.isArray(cachedCasesData?.cases) ? mapQuickCases(cachedCasesData.cases) : []);
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
 
   const fetchQueueCases = useCallback(async () => {
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/cases`);
-      if (res.ok) {
-        const data = await res.json();
-        const mapped = (Array.isArray(data.cases) ? data.cases : []).map((c) => ({
-          case_id: c.case_id || c.id,
-          sep_no: c.sep_no || '-',
-          hospital: c.hospital || '-',
-          severity: c.severity === 'med' ? 'moderate' : c.severity || 'high',
-          status: c.status || 'new',
-          sla_breach_at: c.sla_breach_at || new Date(Date.now() + (c.minutes_until_breach || 120) * 60000).toISOString(),
-          assigned_to: c.assigned_to || null,
-        }));
-        setCases(mapped);
+      const data = await cachedAuthGetJson(casesUrl);
+      if (data?.cases) {
+        setCases(mapQuickCases(data.cases));
       }
     } catch (err) {
       console.error('Gagal memuat antrean triase cepat:', err);
     }
-  }, []);
+  }, [casesUrl]);
 
   useEffect(() => {
     fetchQueueCases();

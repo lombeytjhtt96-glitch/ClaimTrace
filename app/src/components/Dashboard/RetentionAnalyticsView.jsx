@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import {
   Activity,
   Calendar,
@@ -243,21 +243,26 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  const [asOfDate, setAsOfDate] = useState('-');
-  const [dailyActivity, setDailyActivity] = useState([]);
-  const [cohorts, setCohorts] = useState([]);
-  const [nationalSummary, setNationalSummary] = useState(null);
+  const retUrl = `${API_BASE_URL}/api/v1/analytics/retention`;
+  const natUrl = `${API_BASE_URL}/api/v1/system/national-scale-metrics`;
+  const initialRet = getCachedJsonSync(retUrl);
+  const initialNat = getCachedJsonSync(natUrl);
+
+  const [asOfDate, setAsOfDate] = useState(() => initialRet?.daily_activity?.[0]?.date || '-');
+  const [dailyActivity, setDailyActivity] = useState(() => Array.isArray(initialRet?.daily_activity) ? initialRet.daily_activity : []);
+  const [cohorts, setCohorts] = useState(() => Array.isArray(initialRet?.cohorts) ? initialRet.cohorts : []);
+  const [nationalSummary, setNationalSummary] = useState(() => initialNat || null);
+  const [isInitialLoading, setIsInitialLoading] = useState(() => !initialRet && !initialNat);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchLiveRetention = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [retRes, natRes] = await Promise.all([
-        authFetch(`${API_BASE_URL}/api/v1/analytics/retention`),
-        authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics`),
+      const [retData, natData] = await Promise.all([
+        cachedAuthGetJson(retUrl),
+        cachedAuthGetJson(natUrl),
       ]);
-      if (retRes.ok) {
-        const retData = await retRes.json();
+      if (retData) {
         const daily = Array.isArray(retData.daily_activity) ? retData.daily_activity : [];
         const coh = Array.isArray(retData.cohorts) ? retData.cohorts : [];
         setDailyActivity(daily);
@@ -266,16 +271,16 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           setAsOfDate(daily[0].date);
         }
       }
-      if (natRes.ok) {
-        const natData = await natRes.json();
+      if (natData) {
         setNationalSummary(natData);
       }
     } catch (err) {
       console.error('Gagal memuat data retensi kohort live:', err);
     } finally {
+      setIsInitialLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [retUrl, natUrl]);
 
   useEffect(() => {
     fetchLiveRetention();
@@ -350,29 +355,29 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
         <KpiCard
           isLight={isLight}
           title="Puncak FKRTL Harian & 7H"
-          value={`${Number(peak7dRs || 0).toLocaleString('id-ID')} RS`}
-          subtitle={`${Number(pMetrics.claims_7d_volume || 0).toLocaleString('id-ID')} klaim masuk (7H)`}
+          value={isInitialLoading && !peak7dRs ? '...' : `${Number(peak7dRs || 0).toLocaleString('id-ID')} RS`}
+          subtitle={isInitialLoading && !pMetrics.claims_7d_volume ? 'Menyinkronkan rekam 7H...' : `${Number(pMetrics.claims_7d_volume || 0).toLocaleString('id-ID')} klaim masuk (7H)`}
           badge="7 Hari Terakhir"
           icon={Users}
-          trend={`${dailyActivity[0]?.activeKabKota || pMetrics.kabupaten_kota_coverage || 0} Kab/Kota`}
+          trend={isInitialLoading && !pMetrics.kabupaten_kota_coverage ? '...' : `${dailyActivity[0]?.activeKabKota || pMetrics.kabupaten_kota_coverage || 0} Kab/Kota`}
         />
         <KpiCard
           isLight={isLight}
           title="FKRTL Aktif 30 Hari"
-          value={`${Number(max30dRs || 0).toLocaleString('id-ID')} RS/hr`}
-          subtitle={`${Number(pMetrics.claims_30d_volume || 0).toLocaleString('id-ID')} klaim masuk · ${Number(pMetrics.distinct_patients_served || 0).toLocaleString('id-ID')} pasien unik`}
+          value={isInitialLoading && !max30dRs ? '...' : `${Number(max30dRs || 0).toLocaleString('id-ID')} RS/hr`}
+          subtitle={isInitialLoading && !pMetrics.claims_30d_volume ? 'Menyinkronkan rekam 30H...' : `${Number(pMetrics.claims_30d_volume || 0).toLocaleString('id-ID')} klaim masuk · ${Number(pMetrics.distinct_patients_served || 0).toLocaleString('id-ID')} pasien unik`}
           badge="30 Hari Terakhir"
           icon={Activity}
-          trend={`${Number(pMetrics.kabupaten_kota_coverage || 0).toLocaleString('id-ID')} Kab/Kota`}
+          trend={isInitialLoading && !pMetrics.kabupaten_kota_coverage ? '...' : `${Number(pMetrics.kabupaten_kota_coverage || 0).toLocaleString('id-ID')} Kab/Kota`}
         />
         <KpiCard
           isLight={isLight}
           title="Total FKRTL & Peserta"
-          value={`${Number(pMetrics.distinct_fkrtl_facilities || 0).toLocaleString('id-ID')} RS`}
-          subtitle={`${Number(pMetrics.kepesertaan_rows || 0).toLocaleString('id-ID')} peserta · ${Number(pMetrics.fkrtl_claims_volume || 0).toLocaleString('id-ID')} klaim FKRTL`}
+          value={isInitialLoading && !pMetrics.distinct_fkrtl_facilities ? '...' : `${Number(pMetrics.distinct_fkrtl_facilities || 0).toLocaleString('id-ID')} RS`}
+          subtitle={isInitialLoading && !pMetrics.kepesertaan_rows ? 'Menghitung total nasional...' : `${Number(pMetrics.kepesertaan_rows || 0).toLocaleString('id-ID')} peserta · ${Number(pMetrics.fkrtl_claims_volume || 0).toLocaleString('id-ID')} klaim FKRTL`}
           badge="Total Lengkap"
           icon={Building2}
-          trend={`${pMetrics.kabupaten_kota_coverage || 0} Kab/Kota (${pMetrics.provinsi_coverage || 0} Provinsi)`}
+          trend={isInitialLoading && !pMetrics.kabupaten_kota_coverage ? '...' : `${pMetrics.kabupaten_kota_coverage || 0} Kab/Kota (${pMetrics.provinsi_coverage || 0} Provinsi)`}
         />
       </div>
 
@@ -382,7 +387,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           isLight={isLight}
           title="Penyelesaian H+1 (Green Lane)"
           value={`${d1RatePct}%`}
-          subtitle={`${Number(wMetrics.full_approved_count || 0).toLocaleString('id-ID')} / ${Number(pMetrics.fkrtl_claims_volume || 0).toLocaleString('id-ID')} klaim disetujui penuh`}
+          subtitle={isInitialLoading && !pMetrics.fkrtl_claims_volume ? 'Menyinkronkan metrik SLA H+1...' : `${Number(wMetrics.full_approved_count || 0).toLocaleString('id-ID')} / ${Number(pMetrics.fkrtl_claims_volume || 0).toLocaleString('id-ID')} klaim disetujui penuh`}
           badge="SLA H+1"
           icon={CheckCircle2}
           progressPercent={parseFloat(d1RatePct)}
@@ -391,7 +396,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           isLight={isLight}
           title="Rekonsiliasi H+7 (Klaim Revisi)"
           value={`${d7RatePct}%`}
-          subtitle={`${Number(wMetrics.correction_count || totalCorrected || 0).toLocaleString('id-ID')} klaim dikoreksi tarif (Rp ${(Number(wMetrics.correction_idr || pMetrics.direct_tariff_correction_idr || 0) / 1e9).toFixed(2).replace('.', ',')} Miliar)`}
+          subtitle={isInitialLoading && !cohorts.length ? 'Menyinkronkan koreksi tarif...' : `${Number(wMetrics.correction_count || totalCorrected || 0).toLocaleString('id-ID')} klaim dikoreksi tarif (Rp ${(Number(wMetrics.correction_idr || pMetrics.direct_tariff_correction_idr || 0) / 1e9).toFixed(2).replace('.', ',')} Miliar)`}
           badge="SLA H+7"
           icon={TrendingUp}
           progressPercent={parseFloat(d7RatePct)}
@@ -459,7 +464,16 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
                 </tr>
               </thead>
               <tbody className={`divide-y ${isLight ? 'divide-slate-200 bg-white' : 'divide-white/5'}`}>
-                {dailyActivity.slice(0, 14).map((row) => (
+                {isInitialLoading && dailyActivity.length === 0 ? (
+                  [0, 1, 2, 3].map((idx) => (
+                    <tr key={`skeleton-${idx}`}>
+                      <td className="py-2.5 px-3"><div className={`h-3 w-20 rounded animate-pulse ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} /></td>
+                      <td className="py-2.5 px-3 text-right"><div className={`h-3 w-12 ml-auto rounded animate-pulse ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} /></td>
+                      <td className="py-2.5 px-3 text-right"><div className={`h-3 w-16 ml-auto rounded animate-pulse ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} /></td>
+                      <td className="py-2.5 px-3 text-right"><div className={`h-4 w-14 ml-auto rounded-full animate-pulse ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} /></td>
+                    </tr>
+                  ))
+                ) : dailyActivity.slice(0, 14).map((row) => (
                   <tr key={row.date} className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}>
                     <td className={`py-2.5 px-3 font-mono text-xs whitespace-nowrap ${isLight ? 'text-slate-700 font-semibold' : 'text-white/90'}`}>{row.date}</td>
                     <td className={`py-2.5 px-3 text-right font-semibold whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white'}`}>{row.activeUsers.toLocaleString('id-ID')} RS</td>

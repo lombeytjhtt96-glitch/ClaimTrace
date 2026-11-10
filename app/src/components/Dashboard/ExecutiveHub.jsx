@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ResponsiveContainer,
@@ -2026,9 +2026,17 @@ export default function ExecutiveHub({
     },
   ];
 
-  const [liveWindowData, setLiveWindowData] = useState(null);
-  const [liveTelemetryTrend, setLiveTelemetryTrend] = useState(null);
-  const [liveCohortTrends, setLiveCohortTrends] = useState(null);
+  const initialExecMetrics = getCachedJsonSync(`${API_BASE_URL}/api/v1/system/national-scale-metrics`);
+  const initialExecTrends = getCachedJsonSync(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=7`);
+  const initialExecRet = getCachedJsonSync(`${API_BASE_URL}/api/v1/analytics/retention`);
+
+  const [liveWindowData, setLiveWindowData] = useState(() => initialExecMetrics?.window_metrics || null);
+  const [liveTelemetryTrend, setLiveTelemetryTrend] = useState(() => (
+    Array.isArray(initialExecTrends?.trends) && initialExecTrends.trends.length > 0 ? initialExecTrends.trends : null
+  ));
+  const [liveCohortTrends, setLiveCohortTrends] = useState(() => (
+    Array.isArray(initialExecRet?.cohorts) && initialExecRet.cohorts.length > 0 ? initialExecRet.cohorts : null
+  ));
 
   const handleRunNationalBenchmark = async () => {
     setIsBenchmarking(true);
@@ -2195,13 +2203,12 @@ export default function ExecutiveHub({
     const daysQuery = activeRange === 'all' ? '' : `?days=${activeRange}`;
     const trendDays = activeRange === 'all' ? 7 : Number(activeRange);
     try {
-      const [resMetrics, resTrends, resRet] = await Promise.all([
-        authFetch(`${API_BASE_URL}/api/v1/system/national-scale-metrics${daysQuery}`),
-        authFetch(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=${trendDays}`),
-        activeRange === 'all' ? authFetch(`${API_BASE_URL}/api/v1/analytics/retention`) : Promise.resolve(null),
+      const [metricsPayload, tPayload, rPayload] = await Promise.all([
+        cachedAuthGetJson(`${API_BASE_URL}/api/v1/system/national-scale-metrics${daysQuery}`),
+        cachedAuthGetJson(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=${trendDays}`),
+        activeRange === 'all' ? cachedAuthGetJson(`${API_BASE_URL}/api/v1/analytics/retention`) : Promise.resolve(null),
       ]);
-      if (resMetrics && resMetrics.ok) {
-        const metricsPayload = await resMetrics.json();
+      if (metricsPayload) {
         const sample = metricsPayload?.portfolio_metrics || metricsPayload?.sample_2015_2024_metrics;
         if (metricsPayload?.window_metrics) {
           setLiveWindowData(metricsPayload.window_metrics);
@@ -2219,17 +2226,11 @@ export default function ExecutiveHub({
           }));
         }
       }
-      if (resTrends && resTrends.ok) {
-        const tPayload = await resTrends.json();
-        if (Array.isArray(tPayload?.trends) && tPayload.trends.length > 0) {
-          setLiveTelemetryTrend(tPayload.trends);
-        }
+      if (Array.isArray(tPayload?.trends) && tPayload.trends.length > 0) {
+        setLiveTelemetryTrend(tPayload.trends);
       }
-      if (resRet && resRet.ok) {
-        const rPayload = await resRet.json();
-        if (Array.isArray(rPayload?.cohorts) && rPayload.cohorts.length > 0) {
-          setLiveCohortTrends(rPayload.cohorts);
-        }
+      if (Array.isArray(rPayload?.cohorts) && rPayload.cohorts.length > 0) {
+        setLiveCohortTrends(rPayload.cohorts);
       }
     } catch (e) {
       console.warn('[ExecutiveHub] Live backend sync fallback to deterministic baseline:', e);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { API_BASE_URL, authFetch } from './services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson, prefetchDashboardHotEndpoints } from './services/apiConfig';
 import { Analytics } from '@vercel/analytics/react';
 import { 
   Bell, Search, Shield, ShieldCheck, AlertTriangle, CheckCircle, XCircle, 
@@ -241,21 +241,23 @@ export default function App() {
   }, [dashboardTab, authView, selectedCase, viewMode]);
 
   // Live Sidebar Badges synchronized with DuckDB Queue & Operations Store
-  const [sidebarBadges, setSidebarBadges] = useState({
-    queue_count: null,
-    pending_cases: null,
-    flagged_count: null,
-    audit_chain_length: null,
-  });
+  const badgesUrl = `${API_BASE_URL}/api/v1/system/sidebar-badges`;
+  const [sidebarBadges, setSidebarBadges] = useState(() => (
+    getCachedJsonSync(badgesUrl) || {
+      queue_count: null,
+      pending_cases: null,
+      flagged_count: null,
+      audit_chain_length: null,
+    }
+  ));
 
   useEffect(() => {
     if (authView !== 'dashboard') return;
     let active = true;
     const refreshBadges = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/system/sidebar-badges`);
-        if (res.ok && active) {
-          const data = await res.json();
+        const data = await cachedAuthGetJson(badgesUrl);
+        if (data && active) {
           setSidebarBadges(data);
         }
       } catch {
@@ -263,8 +265,14 @@ export default function App() {
       }
     };
     refreshBadges();
-    return () => { active = false; };
-  }, [authView, dashboardTab]);
+    prefetchDashboardHotEndpoints();
+    const handleOpsUpdated = () => refreshBadges();
+    window.addEventListener('claimtrace:operations-updated', handleOpsUpdated);
+    return () => {
+      active = false;
+      window.removeEventListener('claimtrace:operations-updated', handleOpsUpdated);
+    };
+  }, [authView, badgesUrl]);
 
   // Navigasi Cockpit Sidebar Dikelompokkan Rapi
   const sidebarNavGroups = [

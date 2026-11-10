@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -52,26 +52,38 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
     return () => obs.disconnect();
   }, [propIsLight]);
 
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toastMsg, setToastMsg] = useState(null);
-
   const normalizeScheduleItem = (s) => {
     const pic = s.faskes_pic || s.user || { name: 'Faskes PIC', email: '-', registry_code: s.claim_id };
+    const rawType = s.session_type || s.appointment_type;
+    const normalizedType = typeof rawType === 'string'
+      ? { id: rawType, name: rawType, duration_minutes: 60 }
+      : {
+          id: rawType?.id ?? rawType?.name ?? 'klarifikasi-bakk',
+          name: rawType?.name ?? 'Klarifikasi BAKK',
+          duration_minutes: rawType?.duration_minutes ?? 60,
+        };
     return {
       ...s,
       user: { ...pic, student_id: pic.registry_code || pic.student_id },
       psychologist: s.verificator || s.psychologist || { name: 'Verifikator Medis', specialization: '-' },
-      appointment_type: s.session_type || s.appointment_type || { id: 1, name: 'Klarifikasi BAKK', duration_minutes: 60 },
+      appointment_type: normalizedType,
     };
   };
 
+  const schedulesUrl = `${API_BASE_URL}/api/v1/operations/schedules`;
+  const cachedSchedules = getCachedJsonSync(schedulesUrl);
+
+  const [appointments, setAppointments] = useState(() =>
+    Array.isArray(cachedSchedules?.schedules) ? cachedSchedules.schedules.map(normalizeScheduleItem) : []
+  );
+  const [loading, setLoading] = useState(() => !Array.isArray(cachedSchedules?.schedules));
+  const [toastMsg, setToastMsg] = useState(null);
+
   const fetchSchedules = useCallback(async () => {
-    setLoading(true);
+    if (!getCachedJsonSync(schedulesUrl)) setLoading(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/schedules`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await cachedAuthGetJson(schedulesUrl);
+      if (data) {
         setAppointments((Array.isArray(data.schedules) ? data.schedules : []).map(normalizeScheduleItem));
       }
     } catch (err) {
@@ -79,7 +91,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [schedulesUrl]);
 
   useEffect(() => {
     fetchSchedules();
@@ -115,7 +127,11 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
     const types = new Map();
     appointments.forEach((apt) => {
       if (apt.appointment_type) {
-        types.set(apt.appointment_type.id, apt.appointment_type.name);
+        const typeId = apt.appointment_type.id ?? apt.appointment_type.name ?? apt.appointment_type;
+        const typeName = apt.appointment_type.name ?? String(apt.appointment_type);
+        if (typeId !== undefined && typeId !== null && typeName) {
+          types.set(String(typeId), typeName);
+        }
       }
     });
     return Array.from(types.entries()).map(([id, name]) => ({ id, name }));
@@ -144,7 +160,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
     }
 
     if (typeFilter !== 'all') {
-      filtered = filtered.filter((apt) => apt.appointment_type?.id?.toString() === typeFilter);
+      filtered = filtered.filter((apt) => String(apt.appointment_type?.id ?? '') === typeFilter);
     }
 
     const now = new Date();
@@ -650,7 +666,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             >
               <option value="all">Semua Jenis (All Types)</option>
               {appointmentTypes.map((type) => (
-                <option key={type.id} value={type.id.toString()}>
+                <option key={String(type.id ?? type.name)} value={String(type.id ?? type.name)}>
                   {type.name}
                 </option>
               ))}
