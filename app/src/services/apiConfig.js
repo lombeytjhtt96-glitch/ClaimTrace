@@ -61,6 +61,7 @@ export const prefetchDashboardHotEndpoints = () => {
     `${API_BASE_URL}/api/v1/system/national-scale-metrics`,
     `${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=7`,
     `${API_BASE_URL}/api/v1/analytics/retention`,
+    `${API_BASE_URL}/api/v1/screening/pipeline-summary`,
     `${API_BASE_URL}/api/v1/claims`,
     `${API_BASE_URL}/api/v1/operations/cases`,
     `${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`,

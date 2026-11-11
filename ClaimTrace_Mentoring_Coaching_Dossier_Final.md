@@ -25,6 +25,27 @@
 
 ---
 
+## 0. RINGKASAN HAFALAN MENTORING & PENGUASAAN SISTEM (WAJIB DI LUAR KEPALA)
+
+- **Satu Tujuan Utama Sistem:** Mengendalikan kecurangan (*anti-fraud*) klaim FKRTL secara **pra-bayar** — fokus pada **#6 Phantom Billing**, **#11 Repeat/Split Billing**, dan **Upcoding INA-CBG** — agar dana bocor tertahan sebelum cair, tetap mematuhi batas verifikasi 10 hari kerja (Perpres No. 82/2018).
+- **Rentang & Rumus Resmi Skor Sistem:**
+  - Skala: **`0 - 100`**
+  - Formula: `Skor = 0,50*S1 (Pola & Semantik) + 0,30*S2 (SIP & Geovelocity DPJP) + 0,20*S3 (Mobile JKN)`
+  - **Jalur Hijau (`0,0 - 49,9`):** Klaim wajar -> lolos cepat (*Fast-Track* < 24 jam).
+  - **Jalur Kuning (`50,0 - 74,9`):** Perlu klarifikasi berkas / ketidaksinkronan data (seperti `DPJP UNSYNCED`, tidak boleh langsung divonis fraud).
+  - **Jalur Merah (`75,0 - 100,0`) atau Hard Trigger:** Anomali berat atau pelanggaran fatal (`SIP Expired` pada tgl layanan memaksa skor minimal `75,0`) -> Tahan Pra-Bayar (`HOLD_BAKB`) + terbitkan Berita Acara QR SHA-256.
+- **Cara Sistem Menyaring Klaim Anomali (4 Tahap):**
+  1. **Tahap 1 — Filter Awal & Pengecualian PRB:** Terima seluruh FPK masuk dari `2.091` FKRTL dan kecualikan resep rutin kronis PRB `<= 30` hari (Permenkes No. 3/2023 Pasal 37).
+  2. **Tahap 2 — Aturan Pola, Lonjakan & Klaim Ganda:** Flag lonjakan klaster `>= 3,0x` baseline tanpa izin baksos resmi, koreksi tarif langsung (`1.631` berkas), dan klaim ganda hari sama (`4.876` pasang / `9.555` berkas senilai `Rp 32,59 Miliar`).
+  3. **Tahap 3 — Validasi SDMK SATUSEHAT, OSRM & Semantik NLP:** Uji status SIP (`EXPIRED` = Hard Trigger Merah; `UNSYNCED` = Kuning), rute antar-kota DPJP (`> 120 km/jam` dalam < 45 menit), beban `> 40` pasien/hari, serta kemiripan teks resume medis ChromaDB (`cosine similarity >= 90%`) dan Isolation Forest.
+  4. **Tahap 4 — Konfirmasi Mobile JKN (Zero-PHI) & Fusi `0-100`:** Kirim konfirmasi kehadiran Ya/Tidak tanpa diagnosis medis ke peserta -> hitung skor akhir -> eksekusi putusan Human-in-the-Loop.
+- **Data Live di Gudang Data DuckDB (`claimtrace_warehouse.db`, Total `6.264.346` Baris):**
+  - `1.699.219` klaim FKRTL (Rp `1,536` Triliun; rata-rata `4.643`/hari, puncak `7.870`/hari) across `2.091` RS di `496` Kab/Kota (`38` Provinsi).
+  - `2.590.751` master peserta (`bpjs_kepesertaan_all`), `1.967.670` diagnosis sekunder (`bpjs_diagnosissekunder_all`), `6.706` ICD-10.
+  - Antrean Triase Aktif End-to-End: 6 kasus representatif (`CLM-2026-8801` s/d `8806`) untuk membedah jalur Hijau, Kuning (`UNSYNCED`), dan Merah (*Phantom*, *Repeat*, *Geovelocity*, *Upcoding*).
+
+---
+
 ## 1. RINGKASAN EKSEKUTIF & VALUE PROPOSITION
 
 ### 1.1 Pernyataan Nilai Utama
@@ -77,11 +98,11 @@ flowchart TD
         C --> D4["Lapis 4: Verifikasi Presensi Biometrik FRISTA"]
     end
 
-    D1 & D2 & D3 & D4 --> E["Fusion Scoring & Risk Engine"]
+    D1 & D2 & D3 & D4 --> E["Fusion Scoring Engine (Skala 0 - 100)"]
     
-    E -->|"Skor Anomali < 25"| F["Jalur Hijau: Auto-Approve (3.892 Berkas / 89.6%)"]
-    E -->|"Skor Anomali 25 - 65"| G["Jalur Kuning: Klarifikasi Administrasi (364 Berkas / 8.4%)"]
-    E -->|"Skor Anomali > 65"| H["Jalur Merah: Hold Pra-Bayar & BAKB (85 Berkas / 1.9%)"]
+    E -->|"Skor 0,0 - 49,9"| F["Jalur Hijau: Fast-Track < 24 Jam (1.697.588 / 99,90% bersih)"]
+    E -->|"Skor 50,0 - 74,9 atau UNSYNCED"| G["Jalur Kuning: Klarifikasi Administrasi / SDMK Sync"]
+    E -->|"Skor 75,0 - 100 atau Hard Trigger"| H["Jalur Merah: Hold Pra-Bayar & BAKB Audit"]
     
     F --> I["Pembayaran Terjadwal VClaim (Cepat & Likuid)"]
     G --> J["Permintaan Bukti Tambahan ke Faskes via Portal"]
@@ -90,9 +111,9 @@ flowchart TD
 ```
 
 **Nilai Tambah Alur TO-BE bagi BPJS Kesehatan:**
-1. **Zero Friction bagi 89,6% Faskes Patuh:** Klaim yang lolos tanpa anomali masuk Jalur Hijau dan disetujui secara otomatis dalam hitungan detik, mempercepat SLA pembayaran faskes.
-2. **Fokus pada 1,9% Kasus Kritis:** Verifikator tidak mengalami kelelahan memeriksa berkas sah (alert fatigue), melainkan mencurahkan waktu analisis secara mendalam pada 85 klaim Jalur Merah yang memiliki potensi kerugian dana sebesar Rp 72.450.000,-.
-3. **Pencegahan Sejak Pintu Masuk:** Penyelamatan dana dilakukan sebelum pencairan kas (pre-payment avoidance), menghilangkan risiko kredit macet pengembalian dana faskes.
+1. **Zero Friction bagi Klaim Faskes Patuh:** Pada data gudang DuckDB (`1.699.219` klaim FKRTL), `99,90%` (`1.697.588` berkas) disetujui penuh dan diarahkan ke Jalur Hijau (*Fast-Track* < 24 jam) sehingga arus kas RS patuh tetap lancar.
+2. **Fokus Tajam pada Klaim Anomali Kritis:** Verifikator tidak mengalami *alert fatigue* memeriksa berkas rutin, melainkan memusatkan audit pra-bayar pada klaster anomali berisiko tinggi (seperti `4.876` pasang klaim ganda hari sama senilai `Rp 32,59 Miliar` dan `1.631` koreksi tarif langsung senilai `Rp 2,07 Miliar`).
+3. **Pencegahan Sejak Pintu Masuk:** Penyelamatan dana dilakukan sebelum pencairan kas (*pre-payment avoidance*), menghilangkan risiko gagal tagih pasca-bayar.
 
 ---
 
@@ -105,18 +126,17 @@ flowchart TD
 | **Lapis 3: Konfirmasi Peserta** | Telemetri Gawai & Push Notification Mobile JKN | Out-of-Band Zero-PHI Cryptographic Attestation | Mengirimkan pertanyaan biner (1-klik Ya/Tidak) ke aplikasi peserta mengenai penerimaan layanan fisik, mematahkan fabrikasi berkas baksos fiktif (#6 Phantom Billing). |
 | **Lapis 4: Terminal Biometrik** | Log Sistem Face Match FRISTA Faskes | Multimodal Biometric Verification Log & Terminal Integrity | Memverifikasi bahwa peserta benar-benar hadir secara fisik di mesin perekam wajah faskes pada jam pelayanan, menggagalkan manipulasi tanda tangan absensi kertas. |
 
-### Formula Fusi Skor Risiko Gabungan (Composite Risk Score)
-Skor gabungan dihitung secara matematis dengan bobot terkalibrasi:
+### Formula Fusi Skor Risiko Gabungan (Composite Risk Score, Skala 0 - 100)
+Skor inti dihitung secara matematis dengan bobot deterministik terkalibrasi (mengacu pada [`scoring.py`](backend/app/engine/scoring.py)):
 \[
-S_{\text{total}} = w_1 \cdot S_{\text{klinis}} + w_2 \cdot S_{\text{legalitas}} + w_3 \cdot S_{\text{peserta}} + w_4 \cdot S_{\text{frista}}
+S_{\text{total}} = 0,50 \cdot S_1 + 0,30 \cdot S_2 + 0,20 \cdot S_3
 \]
-Dengan bobot standar:
-- \(w_1 = 0.35\) (Sinyal Klinis & Koding INA-CBG)
-- \(w_2 = 0.25\) (Sinyal SATUSEHAT SDMK & Geovelocity)
-- \(w_3 = 0.25\) (Sinyal Notifikasi Mobile JKN)
-- \(w_4 = 0.15\) (Sinyal Biometrik FRISTA)
+Dengan komponen:
+- \(w_1 = 0,50\) (`S1`: Pola Episode, Lonjakan Klaster >= 3,0x, Repeat Billing <= 30 hari, Upcoding & ChromaDB Cosine >= 90%)
+- \(w_2 = 0,30\) (`S2`: Legalitas SIP SATUSEHAT SDMK, Geovelocity OSRM > 120 km/jam & Beban Kerja > 40 pasien/hari)
+- \(w_3 = 0,20\) (`S3`: Telemetri Konfirmasi Biner Zero-PHI Mobile JKN; ditambah pencocokan Biometrik FRISTA pada modul Lapis 4)
 
-*Catatan Hard Trigger:* Apabila terdeteksi pelanggaran fatal independen (misalnya SIP dokter kedaluwarsa atau dokter terbukti melayani di 2 RS berbeda pada menit yang sama), sistem secara otomatis memicu override langsung ke **Jalur Merah (HOLD)** tanpa menunggu akumulasi skor komponen lainnya.
+*Catatan Hard Trigger & Rentang:* **0,0 - 49,9 = Jalur HIJAU**, **50,0 - 74,9 (atau DPJP UNSYNCED) = Jalur KUNING**, dan **75,0 - 100,0 = Jalur MERAH**. Apabila terdeteksi SIP DPJP kedaluwarsa (`EXPIRED`) pada tanggal layanan, sistem otomatis memicu Hard Trigger ke Jalur Merah (skor minimum `75,0`).
 
 ---
 
@@ -139,23 +159,22 @@ Salah satu titik rawan sengketa klaim adalah ketiadaan bukti rantai pengawasan (
 
 ---
 
-## 5. ANALISIS DAMPAK FINANSIAL & SOLVABILITAS DANA JKN
+## 5. ANALISIS DAMPAK DATA EMPIRIS & SOLVABILITAS DANA JKN
 
-### 5.1 Simulasi Empiris pada 4.341 Berkas Klaim Nasional
-Pengujian pada basis data warehouse ClaimTrace menghasilkan distribusi triase sebagai berikut:
+### 5.1 Hasil Audit Empiris Gudang Data DuckDB (1.699.219 Klaim FKRTL · 2.091 RS)
+Eksekusi mesin kolumnar DuckDB OLAP pada dataset terintegrasi (`6.264.346` total baris) menunjukkan sebaran konkret sebagai berikut:
 
-| Kategori Triase | Jumlah Berkas | Persentase | Nilai Finansial Klaim | Tindakan Sistem |
-| :--- | :--- | :--- | :--- | :--- |
-| **Jalur Hijau (Clean)** | 3.892 berkas | 89,66% | Rp 18.420.500.000,- | Auto-cleared untuk percepatan pembayaran VClaim. |
-| **Jalur Kuning (Clarify)**| 364 berkas | 8,38% | Rp 1.840.200.000,- | Klarifikasi kelengkapan berkas/SIP via faskes portal. |
-| **Jalur Merah (Hold/BAKB)**| 85 berkas | 1,96% | **Rp 72.450.000,-** | **Penahanan pra-bayar dan penerbitan BAKB audit.** |
-| **TOTAL** | **4.341 berkas** | **100,00%** | **Rp 20.333.150.000,-** | **Penyelamatan langsung Rp 72,45 Juta di gerbang.** |
+| Indikator / Kategori Saring | Volume Tercatat | Nilai Finansial | Tindakan Sistem |
+| :--- | :--- | :--- | :--- |
+| **Total Klaim FKRTL Masuk** | 1.699.219 berkas | Rp 1,536 Triliun | Penapisan Tahap 1-4 Real-Time |
+| **Disetujui Penuh (Jalur Hijau `0-49,9`)** | 1.697.588 berkas (99,90%) | Rp 1,534 Triliun | Fast-Track pembayaran VClaim (< 24 Jam) |
+| **Koreksi Tarif Langsung (FKL47 vs FKL48)** | 1.631 berkas | Rp 2,07 Miliar | Klarifikasi & Rekonsiliasi Koding Casemix |
+| **Klaim Ganda Hari Sama (Lintas & Intra RS)** | 4.876 pasang (9.555 berkas) | **Rp 32,59 Miliar** | **Prioritas Audit Pra-Bayar Jalur Merah (`>=75`)** |
 
-### 5.2 Proyeksi Efisiensi Nasional (Ekstrapolasi FKRTL)
-Jika diimplementasikan pada skala nasional di 3.000+ FKRTL mitra BPJS Kesehatan dengan rata-rata 500.000 klaim fisioterapi dan prosedur khusus per bulan:
-- **Potensi Penghematan Dana JKN:** Rp 8,5 Miliar hingga Rp 14,2 Miliar per bulan dicegah dari klaim fiktif (#6) dan klaim berulang (#11).
-- **Pengurangan Waktu Telaah Verifikator:** Dari rata-rata 18 menit per kasus yang dicurigai menjadi di bawah 4 menit berkat rangkuman bukti otomatis (Dossier Siap-Audit).
-- **Penurunan Sengketa Klaim:** Berita Acara berstempel hash SHA-256 menurunkan potensi eskalasi sengketa ke Pengadilan Hubungan Industrial atau Arbitrase hingga 60%.
+### 5.2 Manfaat Operasional Langsung bagi BPJS Kesehatan
+- **Total Eksposur Anomali & Koreksi Teridentifikasi:** **Rp 34,66 Miliar** (`Rp 32,59 Miliar` klaim ganda hari sama + `Rp 2,07 Miliar` selisih koreksi tarif langsung) terdeteksi langsung di tingkat transaksi FKRTL.
+- **Kepatuhan SLA 10 Hari Kerja:** Pemilahan cepat menjaga SLA < 10 hari kerja (menghindari penalti keterlambatan 1% Perpres No. 82/2018).
+- **Kesiapan Pembuktian Hukum:** Berita Acara berstempel hash SHA-256 menyediakan jejak audit (*chain of custody*) anti-manipulasi bila terjadi sengketa dengan Faskes.
 
 ---
 
@@ -177,11 +196,11 @@ Jika diimplementasikan pada skala nasional di 3.000+ FKRTL mitra BPJS Kesehatan 
 
 ### Q1: "Apakah ClaimTrace memperlambat waktu verifikasi klaim faskes sehingga membahayakan SLA 10 hari kerja BPJS Kesehatan?"
 **Jawaban Defensif:**
-"Sama sekali tidak, justru sebaliknya. ClaimTrace menyaring 89,6% klaim bersih (Jalur Hijau) untuk disetujui secara otomatis (auto-clearance) dalam hitungan milidetik. Verifikator manusia tidak lagi memeriksa ribuan berkas rutin secara manual, melainkan hanya memusatkan perhatian pada 1,9% klaim berisiko tinggi (Jalur Merah). Selain itu, sistem kami memiliki modul `StatutoryBusinessDaysEngine` yang mengunci batas SLA 10 hari kerja murni secara real-time, memberi sinyal peringatan dini (early warning countdown) pada hari kerja ke-7 agar verifikator segera memutuskan klarifikasi sebelum melewati batas denda 1% Perpres 82/2018."
+"Sama sekali tidak, justru sebaliknya. ClaimTrace meloloskan klaim bersih (Jalur Hijau, rentang `0,0 - 49,9`) secara otomatis (*fast-track* < 24 jam) sehingga verifikator manusia tidak membuang waktu pada 99,90% klaim wajar. Verifikator hanya fokus pada klaster Kuning (`50,0 - 74,9`) dan Merah (`75,0 - 100` / Hard Trigger), sementara `StatutoryBusinessDaysEngine` memantau tenggat SLA 10 hari kerja Perpres No. 82/2018."
 
 ### Q2: "Bagaimana jika pasien tidak memiliki gawai pintar atau tidak membuka aplikasi Mobile JKN untuk membalas konfirmasi?"
 **Jawaban Defensif:**
-"Sinyal konfirmasi Mobile JKN (Lapis 3) hanya memiliki bobot 25% dan tidak berdiri sendiri. Ketiadaan jawaban dari peserta tidak pernah menyebabkan klaim langsung ditolak atau masuk Jalur Merah. Jika peserta tidak merespons dalam waktu 48 jam, bobot dialihkan secara proporsional ke Lapis 1 (Analitik Klinis) dan Lapis 2 (SATUSEHAT SDMK). Klaim baru dialihkan ke Jalur Kuning untuk klarifikasi biasa, bukan pemotongan sepihak. Hal ini menjamin hak faskes tetap terlindungi."
+"Sinyal konfirmasi Mobile JKN (Sinyal 3) hanya memiliki bobot **20%** (`0,20*S3`) dan tidak pernah berdiri sendiri untuk memvonis Merah. Ketiadaan jawaban peserta tidak menyebabkan klaim langsung ditolak; tanpa konfirmasi sangkalan dan tanpa Hard Trigger SIP Expired, klaim hanya masuk klarifikasi Jalur Kuning (`50,0 - 74,9`), sehingga hak Faskes yang patuh tetap aman."
 
 ### Q3: "Apakah deteksi upcoding tidak menghukum rumah sakit yang memang merawat pasien komplikasi berat?"
 **Jawaban Defensif:**

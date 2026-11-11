@@ -91,23 +91,23 @@ export default function LandingPage({
   const handleLogin = onEnterCockpit || onGoToLogin;
   const handleDemo = onExplore || onGoToDemo || onEnterCockpit;
 
-  // Real-time Tri-Layer Mathematical Fusion
+  // Real-time Tri-Layer Mathematical Fusion (Skala Resmi 0 - 100 sesuai backend scoring.py)
   const calculatedScore = Math.round((0.5 * sliderS1 + 0.3 * sliderS2 + 0.2 * sliderS3) * 10) / 10;
-  const lane = calculatedScore >= 70 
-    ? 'MERAH (Telaah Pra-Bayar Ketat)' 
-    : calculatedScore >= 40 
-    ? 'KUNING (Klarifikasi Berkas & SIP)' 
-    : 'HIJAU (Fast-Track Wajar < 24 Jam)';
+  const lane = calculatedScore >= 75 
+    ? 'MERAH (75-100 · Hold Pra-Bayar)' 
+    : calculatedScore >= 50 
+    ? 'KUNING (50-74,9 · Klarifikasi Berkas)' 
+    : 'HIJAU (0-49,9 · Fast-Track < 24 Jam)';
 
   const laneBadgeColor = effectiveIsLight
-    ? calculatedScore >= 70
+    ? calculatedScore >= 75
       ? 'text-rose-700 border-rose-300 bg-rose-50 shadow-sm'
-      : calculatedScore >= 40
+      : calculatedScore >= 50
       ? 'text-amber-800 border-amber-300 bg-amber-50 shadow-sm'
       : 'text-emerald-800 border-emerald-300 bg-emerald-50 shadow-sm'
-    : calculatedScore >= 70 
+    : calculatedScore >= 75 
       ? 'text-rose-300 border-rose-500/40 bg-rose-500/20' 
-      : calculatedScore >= 40 
+      : calculatedScore >= 50 
       ? 'text-amber-300 border-amber-500/40 bg-amber-500/20' 
       : 'text-emerald-300 border-emerald-500/40 bg-emerald-500/20';
 
@@ -356,9 +356,9 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-950' : 'text-white'
               }`}
             >
-              Sistem Deteksi Fraud Klaim BPJS Kesehatan. <br />
+              Sistem Pengendalian Kecurangan Klaim JKN. <br />
               <span className={effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}>
-                Satu Skor Prioritas, Tiga Lapis Bukti Faktual.
+                Penapisan Pra-Bayar 3 Lapis (Skor 0 - 100).
               </span>
             </motion.h1>
 
@@ -370,7 +370,7 @@ export default function LandingPage({
                 effectiveIsLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
-              ClaimTrace mengawal penuh 6.264.346 baris data transaksi terpadu BPJS Kesehatan (2.590.751 master peserta dan 1.699.219 klaim FKRTL terintegrasi pada 2.091 Rumah Sakit). Sistem bekerja preventif pada tahap pra-bayar melalui Matriks Bukti 3 Lapis dalam koridor SLA 10 hari kerja Perpres No. 82 Tahun 2018.
+              Satu tujuan terfokus: mencegah kebocoran Dana Jaminan Sosial akibat #6 Phantom Billing, #11 Repeat Billing, dan Upcoding secara pra-bayar pada 6.264.346 baris data BPJS Kesehatan (1.699.219 klaim FKRTL di 2.091 Rumah Sakit) dengan rentang skor pasti Hijau (0–49,9), Kuning (50–74,9), dan Merah (75–100) dalam batas SLA 10 hari kerja Perpres No. 82/2018.
             </motion.p>
 
             <motion.div 
@@ -709,10 +709,13 @@ export default function LandingPage({
             >
               <div className="space-y-1 text-center md:text-left">
                 <span className={`text-[10.5px] font-bold uppercase tracking-wide ${effectiveIsLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Formula Matematis Fusi Deterministik
+                  Formula Matematis Fusi Deterministik (Rentang Resmi Sistem: 0 - 100)
                 </span>
                 <div className={`text-xs font-mono font-bold ${effectiveIsLight ? 'text-slate-800' : 'text-white/90'}`}>
                   Total = 0.5·S1 + 0.3·S2 + 0.2·S3 = ({(0.5 * sliderS1).toFixed(1)} + {(0.3 * sliderS2).toFixed(1)} + {(0.2 * sliderS3).toFixed(1)}) = {calculatedScore} / 100
+                </div>
+                <div className={`text-[10.5px] font-medium ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  Batas Jalur: Hijau <strong>0–49,9</strong> · Kuning <strong>50,0–74,9</strong> · Merah <strong>75,0–100</strong> (atau Hard Trigger SIP Expired)
                 </div>
               </div>
 

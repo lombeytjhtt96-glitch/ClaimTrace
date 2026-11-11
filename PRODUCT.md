@@ -12,26 +12,25 @@ Auditor Medis BPJS Kesehatan, Verifikator Klaim Kantor Cabang (KC), Tim Audit In
 
 ## Product Purpose
 
-ClaimTrace JKN adalah Sistem Pendukung Keputusan (Decision Support System / DSS) terpadu untuk deteksi anomali, pencegahan fraud, dan audit rekonsiliasi klaim pelayanan kesehatan tingkat pertama (FKTP) maupun fasilitas kesehatan rujukan tingkat lanjutan (FKRTL). Tujuannya adalah mengamankan kesinambungan Dana Jaminan Sosial (DJS) kesehatan secara adil, akuntabel, dan transparan.
+ClaimTrace JKN adalah Sistem Pendukung Keputusan (*Decision Support System* / DSS) pra-bayar yang berfokus pada **1 tujuan tunggal: pengendalian kecurangan (*anti-fraud*) klaim FKRTL** -- khususnya #6 *Phantom Billing*, #11 *Repeat/Split Billing*, dan *Upcoding* -- sebelum pencairan kas Dana Jaminan Sosial (DJS) dalam batas SLA 10 hari kerja.
 
 ## Positioning
 
-Solusi DSS deteksi fraud berbasis Tri-Layer Mathematical Fusion (Heuristic Rules, Anomaly Scoring, Bipartite Graph Analytics) yang dirancang khusus untuk ekosistem JKN Indonesia. Berbeda dari solusi generik, ClaimTrace JKN patuh regulasi RI (UU PDP 27/2022, Perpres 82/2018, Permenkes 26/2021), berarsitektur Zero-PHI (Protected Health Information terpseudonimkan), dan mengintegrasikan ledger audit forensik SHA-256 tamper-evident dengan performa analitik sub-15ms.
+Solusi penapisan klaim anomali pra-bayar berbasis **Fusi Deterministik 3 Lapis (`S = 0,50*S1 + 0,30*S2 + 0,20*S3` pada skala `0 - 100`: Hijau `0-49,9`, Kuning `50,0-74,9`, Merah `75,0-100` + Hard Trigger)** yang dipadukan dengan gudang data DuckDB (`6.264.346` baris dari `1.699.219` klaim FKRTL), ChromaDB semantic matching, rute geovelocity OSRM, arsitektur Zero-PHI (UU PDP 27/2022), dan ledger SHA-256 tahan manipulasi.
 
 ## Operating Context
 
-- Verifikasi harian pra-bayar klaim rumah sakit dan klinik.
-- Audit berkala pasca-bayar berbasis analisis geovelocity DPJP dan pola rujukan anomali.
-- Investigasi terarah komite audit terhadap fasilitas kesehatan dan sindikat klaim berulang.
-- Penerbitan Berita Acara Rekonsiliasi resmi untuk penyelesaian sengketa klaim.
+- Penyaringan pra-bayar 4 tahap terhadap FPK masuk FKRTL sebelum penerbitan Berita Acara.
+- Audit anomali klaim ganda hari sama (`4.876` pasang), lonjakan klaster (`>= 3,0x`), SIP DPJP & geovelocity (`> 120 km/jam`), dan konfirmasi peserta Mobile JKN.
+- Eksekusi putusan Human-in-the-Loop dan penerbitan Berita Acara Klarifikasi Bersama (BAKB) SHA-256.
 
 ## Capabilities and Constraints
 
-- 15 modul analitik fungsional: Executive Hub, Triage Overview, Fraud Forensics, DPJP Velocity, Geovelocity Map, Bipartite Graph, Audit Ledger, D3FEND & MITRE Frameworks, WBS Whistleblower, Post-Healthkathon Suite, Interventions, Settings, dan Database Viewer.
-- Engine backend FastAPI terdistribusi dengan pemrosesan kolumnar terakselerasi.
-- Antarmuka frontend React 19 + Vite + Tailwind CSS dengan transisi mikro interaktif.
-- Zero-PHI: Data identitas pasien terlindungi penuh melalui enkripsi hash satu arah.
-- Pantang data fiktif atau klaim bombastis: Seluruh formula matematis diverifikasi oleh 113 automated unit & integration tests.
+- Kokpit terfokus dalam 3 alur pengendalian fraud inti (Ringkasan Fraud & DuckDB SQL, Pipeline & Bedah Saring Klaim 4-Tahap, dan Konsol Putusan/BAKB/Ledger), dilengkapi simulasi Dual View Mobile JKN.
+- Engine backend FastAPI terintegrasi DuckDB OLAP SIMD (`6.264.346` baris), Scikit-Learn Isolation Forest, ChromaDB MiniLM, dan OSRM geovelocity.
+- Antarmuka frontend React 18 + Vite + Tailwind CSS dengan SWR cache dan navigasi terpusat pada pengendalian kecurangan.
+- Zero-PHI: Data identitas pasien terlindungi penuh sesuai Pasal 34 UU PDP No. 27/2022.
+- Terverifikasi oleh `244` uji backend (`backend/tests/`) dan `112` uji E2E (`tests_e2e/`).
 
 ## Brand Commitments
 

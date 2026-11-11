@@ -3833,6 +3833,46 @@ def trigger_mobile_telemetry_push(
     return {"status": "success", "entry": entry, "log": entry}
 
 
+@app.get("/api/v1/screening/pipeline-summary")
+def get_anomaly_screening_pipeline_summary():
+    """
+    Ringkasan teknis 4-tahap cara menyaring klaim anomali pra-bayar, rentang skor resmi (0-100),
+    ambang rule deterministik, dan statistik antrean aktif live.
+    """
+    summary = duckdb_engine.tool_screening_pipeline_summary()
+    lane_counts = {"HIJAU": 0, "KUNING": 0, "MERAH": 0}
+    hard_trigger_count = 0
+    flagged_exposure_idr = 0
+    active_claims_breakdown = []
+
+    for claim in SYNTHETIC_CLAIMS_DATABASE.values():
+        triage = evaluate_claim_triage(claim)
+        lane_counts[triage.triage_lane] = lane_counts.get(triage.triage_lane, 0) + 1
+        if triage.hard_trigger_activated:
+            hard_trigger_count += 1
+        if triage.triage_lane in ("MERAH", "KUNING"):
+            flagged_exposure_idr += int(claim.nilai_klaim_rp or 0)
+        active_claims_breakdown.append({
+            "claim_id": claim.claim_id,
+            "hospital": claim.nama_faskes,
+            "lane": triage.triage_lane,
+            "score": triage.final_priority_score,
+            "hard_trigger": triage.hard_trigger_activated,
+            "indicators_count": len(triage.kode_indikator),
+        })
+
+    return {
+        **summary,
+        "live_triage_queue": {
+            "total_active": len(SYNTHETIC_CLAIMS_DATABASE),
+            "lane_counts": lane_counts,
+            "hard_trigger_count": hard_trigger_count,
+            "flagged_exposure_idr": flagged_exposure_idr,
+            "items": active_claims_breakdown,
+        },
+    }
+
+
 @app.get("/api/v1/system/sidebar-badges")
 def get_dynamic_sidebar_badges():
     """Mengembalikan jumlah dinamis berkas aktif dan sesi ditandai untuk badge navigasi."""
@@ -4188,6 +4228,7 @@ def _prewarm_claimtrace_caches() -> None:
             for trend_days in (7, 30):
                 duckdb_engine.tool_national_telemetry_trends(days=trend_days)
             duckdb_engine.tool_retention_analytics()
+            duckdb_engine.tool_screening_pipeline_summary()
             duckdb_engine.tool_provider_fraud_risk_profile()
             duckdb_engine.tool_insights_reports()
 
