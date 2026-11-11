@@ -38,6 +38,7 @@ ROLE_PRIVILEGES_MAP: Dict[str, Set[Privilege]] = {
     # System Administrator & Security Officer
     "SUPER_ADMIN": PRIVILEGE_HIERARCHY[Privilege.ADMIN],
     "ADMIN": PRIVILEGE_HIERARCHY[Privilege.ADMIN],
+    "Administrator Kebijakan & Tata Kelola JKN": PRIVILEGE_HIERARCHY[Privilege.ADMIN],
     "SECURITY_OFFICER": PRIVILEGE_HIERARCHY[Privilege.ADMIN],
 
     # Verifikator Medis & Triage Officer (Can adjudicate & read)
@@ -51,6 +52,7 @@ ROLE_PRIVILEGES_MAP: Dict[str, Set[Privilege]] = {
     # Analysts, Auditors & Viewers (Strictly Read-Only: NO ADJUDICATION)
     "ANALYST": PRIVILEGE_HIERARCHY[Privilege.READ],
     "AUDITOR_VIEWER": PRIVILEGE_HIERARCHY[Privilege.READ],
+    "Auditor Pengawasan (Read-Only)": PRIVILEGE_HIERARCHY[Privilege.READ],
     "Analis Forensik Digital Anti-Fraud": PRIVILEGE_HIERARCHY[Privilege.READ],
     "INVESTIGATOR": PRIVILEGE_HIERARCHY[Privilege.READ],
 
@@ -87,6 +89,20 @@ KNOWN_ACTORS = {
         "role": "Analis Forensik Digital Anti-Fraud",
         "unit": "Kedeputian Bidang Pengawasan dan Pemeriksaan",
         "allowedRoles": ["ANALYST"]
+    },
+    "198501012010011001": {
+        "nip": "198501012010011001",
+        "name": "Hendra Wijaya, S.Si, M.M",
+        "role": "ADMIN",
+        "unit": "Kantor Pusat BPJS Kesehatan · Tata Kelola Verifikasi Nasional",
+        "allowedRoles": ["ADMIN", "SUPER_ADMIN", "VERIFICATOR_MEDIS", "BAKB_SIGNER"]
+    },
+    "199003152018011005": {
+        "nip": "199003152018011005",
+        "name": "dr. Andi Pratama, MARS",
+        "role": "Auditor Pengawasan (Read-Only)",
+        "unit": "Kantor Regional · Tim Pengawasan & Pemeriksaan (Read-Only)",
+        "allowedRoles": ["AUDITOR_VIEWER", "ANALYST"]
     }
 }
 

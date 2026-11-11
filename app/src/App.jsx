@@ -302,6 +302,7 @@ export default function App() {
         { id: 'cases_mgmt', label: 'Daftar Berkas & Klarifikasi', icon: Briefcase },
         { id: 'flagged_sessions', label: 'Klaim Ditandai (Hold/Flag)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
         { id: 'audit', label: 'Ledger Audit SHA-256', icon: Key },
+        { id: 'settings', label: 'Tata Kelola & Kebijakan', icon: Settings },
       ],
     },
   ];
@@ -379,34 +380,71 @@ export default function App() {
     {
       id: 'ALT-01',
       severity: 'critical',
-      type: 'KLASTER FIKTIF (PHANTOM)',
-      title: 'Klaster 85 Pasien Fisioterapi (CLM-2026-10-085)',
-      message: 'RS Khusus Mitra Husada · SIP DPJP kedaluwarsa & sangkalan presensi Mobile JKN.',
-      time: '2 mnt lalu',
+      type: 'ANOMALI JALUR MERAH',
+      title: 'Berkas Prioritas Tinggi (CLM-2026-8801)',
+      message: 'Memerlukan telaah 4-Lapis pra-bayar & konfirmasi SDMK/Mobile JKN.',
+      time: 'Live',
       is_seen: false,
       targetTab: 'investigation'
     },
     {
       id: 'ALT-02',
       severity: 'high',
-      type: 'PERINGATAN JATUH TEMPO SLA',
-      title: 'Batas Waktu SLA 10 Hari Kerja (Sisa 7 Hari)',
-      message: '3 klaim prioritas tinggi memerlukan verifikasi sebelum jatuh tempo BAKB.',
-      time: '14 mnt lalu',
+      type: 'PERINGATAN SLA 10 HK',
+      title: 'Kepatuhan Batas Waktu Verifikasi VEDIKA',
+      message: 'Pantau antrean klaim Jalur Kuning/Merah sebelum batas Perpres 82/2018.',
+      time: 'Aktif',
       is_seen: false,
       targetTab: 'decision'
     },
-    {
-      id: 'ALT-03',
-      severity: 'info',
-      type: 'LAPORAN IA TERSEDIA',
-      title: 'Laporan Mingguan Analitik Wawasan (IA) Diterbitkan',
-      message: 'Analisis pola anomali mingguan & rekomendasi intervensi siap ditinjau.',
-      time: '1 jam lalu',
-      is_seen: false,
-      targetTab: 'executive'
-    }
   ]);
+
+  useEffect(() => {
+    if (authView !== 'dashboard') return;
+    let active = true;
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims`).then((rawList) => {
+      if (!active || !Array.isArray(rawList) || rawList.length === 0) return;
+      const priorityItems = rawList
+        .filter((r) => r?.triage?.triage_lane === 'MERAH' || r?.triage?.triage_lane === 'KUNING')
+        .slice(0, 4)
+        .map((entry, idx) => {
+          const { claim, triage } = entry;
+          const mappedCase = {
+            id: claim.claim_id,
+            sep: claim.fkl02_id_kunjungan || claim.claim_id,
+            hospital: claim.nama_faskes,
+            date: claim.tanggal_layanan,
+            code: claim.ina_cbg_code,
+            description: claim.deskripsi_cbg,
+            dpjp: claim.dpjp_meta?.nama_dpjp_alias || '-',
+            tariff: `Rp ${Number(claim.nilai_klaim_rp || 0).toLocaleString('id-ID')}`,
+            claimCount: claim.episode_meta?.jumlah_klaim_klaster || 1,
+            s1: Math.round(claim.s1_score ?? triage?.score_breakdown?.s1_value ?? 0),
+            s2: Math.round(claim.s2_score ?? triage?.score_breakdown?.s2_value ?? 0),
+            s3: Math.round(claim.s3_score ?? triage?.score_breakdown?.s3_value ?? 0),
+            totalScore: Number(triage?.final_priority_score ?? 0),
+            lane: triage?.triage_lane === 'MERAH' ? 'red' : triage?.triage_lane === 'KUNING' ? 'yellow' : 'green',
+            rawClaim: claim,
+            rawTriage: triage,
+          };
+          return {
+            id: `ALT-${claim.claim_id}`,
+            severity: triage?.triage_lane === 'MERAH' ? 'critical' : 'high',
+            type: triage?.ai_anomaly_prediction?.primary_anomaly_category || 'PRIORITAS TELAAH',
+            title: `${claim.nama_faskes} (${claim.claim_id})`,
+            message: `Skor ${Number(triage?.final_priority_score || 0).toFixed(1)} · SLA ${triage?.sla_deadline_days ?? 3} HK · ${triage?.ringkasan_bukti_audit?.slice(0, 80) || 'Siap diperiksa.'}`,
+            time: idx === 0 ? 'Prioritas #1' : `Prioritas #${idx + 1}`,
+            is_seen: false,
+            targetTab: 'investigation',
+            claimData: mappedCase,
+          };
+        });
+      if (priorityItems.length > 0) {
+        setHeaderAlerts(priorityItems);
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [authView]);
 
   // Layar aktif di Mobile JKN Simulator
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -930,8 +968,25 @@ export default function App() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (headerSearch.trim()) {
-                      setGlobalSearchQuery(headerSearch.trim());
+                    const q = headerSearch.trim();
+                    if (!q) return;
+                    const ql = q.toLowerCase();
+                    if (ql.includes('kebijakan') || ql.includes('setting') || ql.includes('rbac') || ql.includes('ambang')) {
+                      setDashboardTab('settings');
+                    } else if (ql.includes('bakb') || ql.includes('bahv') || ql.includes('putusan')) {
+                      setDashboardTab('decision');
+                    } else if (ql.includes('audit') || ql.includes('sha')) {
+                      setDashboardTab('audit');
+                    } else if (ql.includes('sql') || ql.includes('gudang') || ql.includes('duckdb')) {
+                      setDashboardTab('database_viewer');
+                    } else if (ql.includes('faskes') || ql.includes('fri')) {
+                      setDashboardTab('faskes');
+                    } else if (ql.includes('dpjp') || ql.includes('sip') || ql.includes('geovelocity')) {
+                      setDashboardTab('dpjp');
+                    } else if (ql.includes('graf') || ql.includes('sindikat')) {
+                      setDashboardTab('graph');
+                    } else {
+                      setGlobalSearchQuery(q);
                       setDashboardTab('queue');
                     }
                   }}
@@ -1119,6 +1174,9 @@ export default function App() {
                                     item.id === alert.id ? { ...item, is_seen: true } : item
                                   )
                                 );
+                                if (alert.claimData) {
+                                  setSelectedCase(alert.claimData);
+                                }
                                 setDashboardTab(alert.targetTab || 'investigation');
                                 setAlertsMenuOpen(false);
                               }}
@@ -1254,18 +1312,74 @@ export default function App() {
                           <p className={`text-xs truncate mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                             {sanitizeOfficialField(currentUser.email, 'siti.rahma@bpjs-kesehatan.go.id')}
                           </p>
-                          <div className="mt-2 flex items-center gap-1.5">
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
                               isLight 
                                 ? 'bg-slate-100 text-slate-700 border-slate-200' 
                                 : 'bg-white/10 text-white/80 border-white/15'
                             }`}>
-                              Verifikator Medis Utama
+                              {sanitizeOfficialField(currentUser.role, 'VERIFICATOR_MEDIS')}
                             </span>
-                            <span className={`text-[10px] font-mono ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                              NIP 19880312
+                            <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                              NIP {sanitizeOfficialField(currentUser.nip, '198704202011012001')}
                             </span>
                           </div>
+                        </div>
+
+                        <div className={`px-3 py-2 border-b space-y-1 ${isLight ? 'border-slate-100 bg-slate-50/40' : 'border-white/10 bg-black/20'}`}>
+                          <div className={`text-[9.5px] font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                            Simulasi Ganti Peran RBAC (C03.04)
+                          </div>
+                          {[
+                            { id: '198704202011012001', label: 'Verifikator Medis · dr. Siti Rahma' },
+                            { id: '198501012010011001', label: 'Admin Cabang · Hendra Wijaya' },
+                            { id: '199003152018011005', label: 'Auditor Wasrik (Read-Only) · dr. Andi' },
+                          ].map((roleOpt) => (
+                            <button
+                              key={roleOpt.id}
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      identifier: roleOpt.id,
+                                      password: 'Password123!',
+                                      recaptcha_token: 'local-verified',
+                                    }),
+                                  });
+                                  const data = await res.json();
+                                  if (res.ok && data?.token && data?.user) {
+                                    localStorage.setItem('claimtrace_token', data.token);
+                                    localStorage.setItem('bpjs_session_token', data.token);
+                                    const nextUser = {
+                                      name: data.user.name,
+                                      email: data.user.email,
+                                      nip: data.user.nip,
+                                      role: data.user.role,
+                                      roleTitle: data.user.roleTitle,
+                                      unit: data.user.unit,
+                                      avatar: data.user.avatar || data.user.name.slice(0, 2).toUpperCase(),
+                                      allowedRoles: data.user.allowedRoles || [],
+                                      isMfaVerified: true,
+                                    };
+                                    setCurrentUser(nextUser);
+                                    localStorage.setItem('claimtrace_user', JSON.stringify(nextUser));
+                                    setProfileMenuOpen(false);
+                                    setToastMessage(`Sesi RBAC aktif beralih ke ${data.user.name} (${data.user.role}).`);
+                                  }
+                                } catch {}
+                              }}
+                              className={`w-full text-left px-2 py-1 rounded text-[10.5px] font-semibold transition cursor-pointer ${
+                                String(currentUser.nip || '').replace(/\s+/g, '') === roleOpt.id
+                                  ? (isLight ? 'bg-emerald-100 text-emerald-900 font-bold' : 'bg-emerald-500/25 text-emerald-300 font-bold')
+                                  : (isLight ? 'text-slate-600 hover:bg-slate-200/70' : 'text-white/70 hover:bg-white/10')
+                              }`}
+                            >
+                              {roleOpt.label}
+                            </button>
+                          ))}
                         </div>
 
                         <div className="p-1 space-y-0.5">
@@ -2433,16 +2547,17 @@ export default function App() {
                     {dashboardTab === 'decision' && (
                       <DecisionConsole 
                         caseData={selectedCase}
-                        totalScore={totalScore}
-                        s1={s1}
-                        s2={s2}
-                        s3={s3}
+                        totalScore={selectedCase?.totalScore ?? totalScore}
+                        s1={selectedCase?.s1 ?? s1}
+                        s2={selectedCase?.s2 ?? s2}
+                        s3={selectedCase && patientResponse === null ? (selectedCase.s3 ?? s3) : s3}
                         patientResponse={patientResponse}
                         verificatorAction={verificatorAction}
                         onSetVerificatorAction={setVerificatorAction}
                         onBackToInvestigation={() => setDashboardTab('investigation')}
                         onBackToQueue={() => setDashboardTab('queue')}
                         onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
+                        currentUser={currentUser}
                         isLight={isLight}
                       />
                     )}

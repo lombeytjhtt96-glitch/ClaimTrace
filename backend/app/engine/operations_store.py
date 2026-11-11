@@ -499,15 +499,21 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
     ]
 
     settings_values = {
-        "ui_theme_mode": "dark",
+        "ui_theme_mode": "light",
         "ui_density": "standard",
         "ui_accent_color": "emerald",
         "ui_glassmorphism": True,
         "ui_motion_effects": True,
         "ui_language": "id",
         "auto_flag_critical": True,
-        "red_lane_threshold": 80,
-        "yellow_lane_threshold": 45,
+        "red_lane_threshold": 75,
+        "yellow_lane_threshold": 50,
+        "geovelocity_speed_limit": 120,
+        "split_claim_threshold": 3,
+        "semantic_plagiarism_threshold": 90,
+        "min_claim_value_audit": 500000,
+        "ai_temperature": 0.1,
+        "satusehat_sync_interval_hours": 12,
         "sla_deadline_days": 10,
         "require_mfa_adjudicate": True,
         "zero_phi_strict": True,
@@ -528,6 +534,8 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         "case_overrides": case_overrides,
+        "case_checklists": {},
+        "claim_pending_reasons": {},
         "flags": flags,
         "schedules": schedules,
         "interventions": interventions,
@@ -554,6 +562,15 @@ class OperationsStore:
                     with open(OPERATIONS_STATE_FILE, "r", encoding="utf-8") as f:
                         loaded = json.load(f)
                         if isinstance(loaded, dict) and "flags" in loaded and "schedules" in loaded:
+                            saved_settings = loaded.setdefault("settings", {})
+                            if saved_settings.get("red_lane_threshold") == 80 and saved_settings.get("yellow_lane_threshold") == 45:
+                                saved_settings["red_lane_threshold"] = 75
+                                saved_settings["yellow_lane_threshold"] = 50
+                            saved_settings.setdefault("geovelocity_speed_limit", 120)
+                            saved_settings.setdefault("split_claim_threshold", 3)
+                            saved_settings.setdefault("semantic_plagiarism_threshold", 90)
+                            loaded.setdefault("case_checklists", {})
+                            loaded.setdefault("claim_pending_reasons", {})
                             self.state = loaded
                             return
                 except Exception as e:
@@ -1157,6 +1174,19 @@ class OperationsStore:
         with self._lock:
             self._ensure_init(claims_db)
             settings = self.state.setdefault("settings", {})
+            merged = {**settings, **updates}
+            red_thr = float(merged.get("red_lane_threshold", 75))
+            yellow_thr = float(merged.get("yellow_lane_threshold", 50))
+            if red_thr <= yellow_thr or red_thr > 100 or yellow_thr < 5:
+                raise ValueError(
+                    f"Ambang tidak valid: yellow_lane_threshold ({yellow_thr}) wajib lebih kecil dari red_lane_threshold ({red_thr}) dalam skala 0-100."
+                )
+            sla_days = merged.get("sla_deadline_days")
+            if sla_days is not None and (int(sla_days) < 1 or int(sla_days) > 30):
+                raise ValueError("Batas SLA hari kerja wajib berada pada rentang 1 s.d. 30 hari kerja.")
+            geo_limit = merged.get("geovelocity_speed_limit")
+            if geo_limit is not None and float(geo_limit) < 20:
+                raise ValueError("Batas geovelocity minimal 20 km/jam.")
             settings.update(updates)
             self._persist()
             audit_entry = get_audit_logger().record_event(
@@ -1170,6 +1200,68 @@ class OperationsStore:
                 "settings": copy.deepcopy(settings),
                 "audit_hash": audit_entry["current_hash"]
             }
+
+    def get_claim_checklist(self, claims_db: Dict[str, Any], claim_id: str) -> Dict[str, Any]:
+        with self._lock:
+            self._ensure_init(claims_db)
+            saved = self.state.setdefault("case_checklists", {}).get(claim_id)
+            if saved:
+                return copy.deepcopy(saved)
+            claim = claims_db.get(claim_id)
+            sip_ok = True if not claim else (claim.dpjp_meta.sip_status == "ACTIVE")
+            baksos_ok = bool(claim and getattr(claim.episode_meta, "terdaftar_baksos_resmi", False))
+            cluster_ok = True if not claim else (claim.episode_meta.rasio_lonjakan_baseline < 3.0 or baksos_ok)
+            mobile_ok = True if not claim else (claim.mobile_meta.respon_tidak_hadir == 0)
+            return {
+                "checklist": {
+                    "sep_valid": True,
+                    "rujukan_prb_valid": cluster_ok,
+                    "resume_tte_dpjp": sip_ok,
+                    "koding_inacbg_sesuai": cluster_ok and not bool(claim and claim.episode_meta.indikasi_repeat_billing),
+                    "bukti_penunjang_lengkap": bool(claim and claim.s1_score < 70),
+                    "konfirmasi_peserta_sah": mobile_ok,
+                },
+                "notes": "",
+                "updated_by": None,
+                "updated_at": None,
+            }
+
+    def save_claim_checklist(
+        self,
+        claims_db: Dict[str, Any],
+        claim_id: str,
+        checklist: Dict[str, bool],
+        notes: Optional[str],
+        actor: str,
+    ) -> Dict[str, Any]:
+        with self._lock:
+            self._ensure_init(claims_db)
+            record = {
+                "checklist": {k: bool(v) for k, v in checklist.items()},
+                "notes": (notes or "").strip(),
+                "updated_by": actor,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            self.state.setdefault("case_checklists", {})[claim_id] = record
+            self._persist()
+            get_audit_logger().record_event(
+                event_type="CLAIM_WORKSHEET_CHECKLIST_SAVED",
+                claim_id=claim_id,
+                actor=actor,
+                payload={"checked_items": sum(1 for v in record["checklist"].values() if v), "total_items": len(record["checklist"])}
+            )
+            return copy.deepcopy(record)
+
+    def save_pending_reasons(self, claims_db: Dict[str, Any], claim_id: str, reasons: List[str]) -> None:
+        with self._lock:
+            self._ensure_init(claims_db)
+            self.state.setdefault("claim_pending_reasons", {})[claim_id] = list(reasons)
+            self._persist()
+
+    def get_pending_reasons(self, claims_db: Dict[str, Any], claim_id: str) -> List[str]:
+        with self._lock:
+            self._ensure_init(claims_db)
+            return list(self.state.get("claim_pending_reasons", {}).get(claim_id, []))
 
     def get_profile(self, claims_db: Dict[str, Any]) -> Dict[str, Any]:
         with self._lock:

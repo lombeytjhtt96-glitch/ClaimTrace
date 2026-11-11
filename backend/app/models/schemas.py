@@ -137,10 +137,65 @@ class TriageResult(BaseModel):
     # Automatic AI Anomaly Detection Prediction
     ai_anomaly_prediction: Optional[AIAnomalyPrediction] = None
 
+VEDIKA_DECISION_CODES = Literal[
+    "LOLOSKAN_KLAIM",
+    "LAYAK_BAYAR",
+    "KLARIFIKASI_FASKES",
+    "PENDING_KLARIFIKASI",
+    "DISPUTE_TKMKB",
+    "AUDIT_LAPANGAN",
+    "TIDAK_LAYAK_FRAUD",
+]
+
+
 class VerifierDecisionRequest(BaseModel):
     verifier_id: str
-    decision: Literal["LOLOSKAN_KLAIM", "KLARIFIKASI_FASKES", "AUDIT_LAPANGAN"]
+    decision: VEDIKA_DECISION_CODES
     catatan_verifikator: str
+    pending_reasons: List[str] = Field(default_factory=list)
+    checklist_status: Optional[Dict[str, bool]] = None
+
+
+class BatchDecisionRequest(BaseModel):
+    claim_ids: List[str] = Field(..., min_length=1)
+    decision: VEDIKA_DECISION_CODES
+    verifier_id: str = "198704202011012001"
+    catatan_verifikator: str = "Disposisi massal verifikator pra-bayar sesuai kaidah VEDIKA & Perpres 82/2018."
+    pending_reasons: List[str] = Field(default_factory=list)
+
+
+class ClaimChecklistRequest(BaseModel):
+    verifier_id: str = "198704202011012001"
+    checklist: Dict[str, bool] = Field(default_factory=dict)
+    notes: Optional[str] = None
+
+
+class ClaimIngestSimulateRequest(BaseModel):
+    claim_id: Optional[str] = None
+    nama_faskes: str = "RS Rujukan FKRTL Simulasi"
+    kelas_rs: Literal["A", "B", "C", "Klinik"] = "B"
+    ina_cbg_code: str = "Z-3-12-0"
+    deskripsi_cbg: str = "Prosedur Rehabilitasi / Fisioterapi (Permenkes 3/2023)"
+    icd10_primary: str = "M54.5 (Low Back Pain)"
+    icd9cm_procedure: str = "93.39 (Other Physical Therapy)"
+    nilai_klaim_rp: int = Field(15300000, ge=1000)
+    dpjp_name: str = "dr. Hendra, Sp.KFR"
+    sip_status: Literal["ACTIVE", "EXPIRED", "UNSYNCED"] = "ACTIVE"
+    catatan_sdmk: str = "Terdaftar pada faskes layanan"
+    rasio_lonjakan_baseline: float = Field(1.2, ge=0.1, le=50.0)
+    jumlah_klaim_klaster: int = Field(1, ge=1, le=5000)
+    indikasi_repeat_billing: bool = False
+    klaim_episode_sebelumnya_id: Optional[str] = None
+    selisih_hari_admisi: Optional[int] = None
+    terdaftar_baksos_resmi: bool = False
+    cluster_id: str = "CLS-FPK-SIM"
+    mobile_sampel_terkirim: int = Field(10, ge=0, le=500)
+    mobile_respon_hadir: int = Field(10, ge=0, le=500)
+    mobile_respon_tidak_hadir: int = Field(0, ge=0, le=500)
+    add_to_queue: bool = True
+    s1_override: Optional[float] = Field(None, ge=0, le=100)
+    s2_override: Optional[float] = Field(None, ge=0, le=100)
+    s3_override: Optional[float] = Field(None, ge=0, le=100)
 
 class AuditLogEntry(BaseModel):
     index: int

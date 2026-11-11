@@ -3,7 +3,7 @@ import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { 
   Settings, Check, X, RefreshCw, Eye, EyeOff, CheckCircle2,
   Sun, Moon, Monitor, Palette, Layers, Bot, Smartphone, 
-  Shield, Database, Bell, Volume2, Sparkles, Sliders,
+  Shield, ShieldCheck, Database, Bell, Volume2, Sparkles, Sliders,
   HelpCircle, AlertTriangle, ArrowRight, Lock, Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -111,7 +111,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         help_text:
           'Skor komposit minimum Tiga Lapis (0-100) untuk mengklasifikasikan berkas klaim sebagai Risiko Kritis / Tinggi.',
         type: 'number',
-        value: 80,
+        value: 75,
         editable: true,
       },
       {
@@ -426,7 +426,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         help_text:
           'Jumlah total rekam klaim empiris BPJS Kesehatan yang tersimpan dalam data lakehouse database.',
         type: 'text',
-        value: '6.284.192 Rekam Klaim (Parquet Columnar Lakehouse)',
+        value: '6.264.346 Rekam Klaim (Parquet Columnar Lakehouse)',
         editable: false,
       },
       {
@@ -1045,7 +1045,7 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
   );
 }
 
-export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'dark', onThemeChange }) {
+export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'dark', onThemeChange, isLight: propIsLight }) {
   const [systemPrefersLight, setSystemPrefersLight] = useState(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -1061,7 +1061,9 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const effectiveTheme = currentTheme === 'system' ? (systemPrefersLight ? 'light' : 'dark') : currentTheme;
+  const effectiveTheme = typeof propIsLight === 'boolean'
+    ? (propIsLight ? 'light' : 'dark')
+    : (currentTheme === 'system' ? (systemPrefersLight ? 'light' : 'dark') : currentTheme);
   const isLight = effectiveTheme === 'light';
 
   const [categories, setCategories] = useState(() => {
@@ -1080,6 +1082,25 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
 
   const [activeFilter, setActiveFilter] = useState('all');
   const [toast, setToast] = useState(null);
+  const [rbacDirectory, setRbacDirectory] = useState([]);
+  const [activePrivileges, setActivePrivileges] = useState(null);
+  const [opsDirectory, setOpsDirectory] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      authFetch(`${API_BASE_URL}/api/v1/auth/verificators`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      authFetch(`${API_BASE_URL}/api/v1/auth/my-privileges`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      authFetch(`${API_BASE_URL}/api/v1/operations/directory`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([verData, privData, dirData]) => {
+      if (!active) return;
+      const actorList = Array.isArray(verData) ? verData : verData?.verificators;
+      if (Array.isArray(actorList)) setRbacDirectory(actorList);
+      if (privData?.subject) setActivePrivileges(privData.subject);
+      if (dirData) setOpsDirectory(dirData);
+    });
+    return () => { active = false; };
+  }, []);
 
   // Auto-dismiss Toast Notification setelah 3.5 detik
   useEffect(() => {
@@ -1164,7 +1185,11 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
       if (res.ok) {
         setToast({ message: `${catTitle} tersimpan ke server & disegel audit SHA-256!`, type: 'success' });
       } else {
-        setToast({ message: `${catTitle} tersimpan lokal (server mengembalikan status ${res.status}).`, type: 'error' });
+        const errBody = await res.json().catch(() => ({}));
+        setToast({
+          message: errBody.detail || `${catTitle} gagal divalidasi server (HTTP ${res.status}).`,
+          type: 'error',
+        });
       }
     } catch (err) {
       console.error('Gagal menyimpan konfigurasi ke server:', err);
@@ -1263,7 +1288,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
       </header>
 
       {/* Kategori Navigation Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+      <div className="flex flex-wrap items-center gap-2 pb-1">
         <button
           type="button"
           onClick={() => setActiveFilter('all')}
@@ -1299,6 +1324,21 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
             </button>
           );
         })}
+        {/* RBAC Tab Filter Pill */}
+        <button
+          type="button"
+          onClick={() => setActiveFilter('rbac_governance')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+            activeFilter === 'rbac_governance'
+              ? (isLight ? 'bg-emerald-600 text-white shadow-md' : 'bg-[#FFCA40] text-[#000c24] shadow-md')
+              : isLight
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300/80'
+                : 'bg-white/5 hover:bg-white/10 text-white/70 border border-white/10'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Tata Kelola &amp; RBAC C03.04</span>
+        </button>
       </div>
 
       {/* Daftar Kategori Pengaturan */}
@@ -1313,6 +1353,103 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
           />
         ))}
       </div>
+
+      {/* TATA KELOLA PERAN, OTORITAS VERIFIKATOR & MATRIKS RBAC C03.04 */}
+      {(activeFilter === 'all' || activeFilter === 'rbac_governance') && (
+        <section className={`rounded-3xl border p-6 space-y-5 shadow-xl ${
+          isLight ? 'bg-white border-slate-200/90 text-slate-900' : 'bg-[#00153A]/85 border-white/10 text-white'
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4 border-slate-200 dark:border-white/10">
+            <div>
+              <h2 className="text-base font-bold">Tata Kelola Peran Verifikator &amp; Matriks Hak Akses RBAC (C03.04)</h2>
+              <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/65'}`}>
+                Hierarki kewenangan Administrator Cabang, Verifikator Medis (VEDIKA/VIDI), dan Pengamat Wasrik (Read-Only) beserta direktori Kedeputian Wilayah.
+              </p>
+            </div>
+            {activePrivileges && (
+              <span className={`text-[11px] font-mono font-bold px-3 py-1 rounded-full border ${
+                isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35'
+              }`}>
+                Sesi Aktif: {activePrivileges.role} ({activePrivileges.can_adjudicate ? 'Dapat Memutus FPK' : 'Read-Only'})
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className={`rounded-2xl border p-4 space-y-2.5 ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+            }`}>
+              <div className="text-xs font-bold">Direktori Aktor Terotorisasi (BPJS SSO / NIP)</div>
+              <div className="space-y-2">
+                {rbacDirectory.map((actor) => (
+                  <div key={actor.nip} className={`p-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-2 ${
+                    isLight ? 'bg-white border-slate-200' : 'bg-black/25 border-white/10'
+                  }`}>
+                    <div>
+                      <div className="font-bold">{actor.name}</div>
+                      <div className={`text-[10.5px] font-mono ${isLight ? 'text-slate-500' : 'text-white/55'}`}>
+                        NIP: {actor.nip} · {actor.unit}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      (actor.role_code === 'ADMIN' || actor.privilege_tier === 'ADMIN')
+                        ? (isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30')
+                        : (actor.role_code === 'AUDITOR_VIEWER' || actor.privilege_tier === 'READ')
+                        ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                        : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                    }`}>
+                      {actor.role_code || actor.role} · {actor.privilege_tier}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={`rounded-2xl border p-4 space-y-2.5 ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+            }`}>
+              <div className="text-xs font-bold">Inventori Hak Akses &amp; Parameter Aktif Sesi</div>
+              {activePrivileges ? (
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between font-mono text-[11px]">
+                    <span className={isLight ? 'text-slate-600' : 'text-white/60'}>Pemegang Sesi:</span>
+                    <span className="font-bold">{activePrivileges.name} ({activePrivileges.nip})</span>
+                  </div>
+                  <div className="flex justify-between font-mono text-[11px]">
+                    <span className={isLight ? 'text-slate-600' : 'text-white/60'}>Cakupan Wilayah:</span>
+                    <span className="font-bold">{activePrivileges.is_national_scope ? 'Nasional (Semua KC)' : activePrivileges.allowed_provinces?.join(', ') || 'Wilayah Terbatas'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {(activePrivileges.privileges || []).map((priv) => (
+                      <span key={priv} className={`text-[10px] font-mono px-2 py-0.5 rounded border font-semibold ${
+                        isLight ? 'bg-white border-slate-300 text-slate-700' : 'bg-white/10 border-white/15 text-cyan-200'
+                      }`}>
+                        {priv}
+                      </span>
+                    ))}
+                  </div>
+                  {opsDirectory?.deputies && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-white/10 text-[10.5px]">
+                      <span className="font-bold block mb-1">Unit Kepwil / Cabang Terdaftar ({opsDirectory.deputies.length}):</span>
+                      <div className="flex flex-wrap gap-1">
+                        {opsDirectory.deputies.slice(0, 6).map((d) => (
+                          <span key={d.code || d.name} className={`px-2 py-0.5 rounded font-mono ${
+                            isLight ? 'bg-white border border-slate-200 text-slate-600' : 'bg-black/25 text-white/70'
+                          }`}>
+                            {d.code || ''} {d.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/55'}`}>Memuat daftar hak akses peran...</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Footer Info & Disclaimers */}
       <footer className={`mt-8 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs ${
