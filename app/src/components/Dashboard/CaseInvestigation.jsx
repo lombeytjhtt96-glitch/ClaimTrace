@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import TemporalAlertCard from './TemporalAlertCard';
 import { 
@@ -166,6 +166,77 @@ export default function CaseInvestigation({
     : (totalScore >= 50 || sipStatus === 'UNSYNCED')
     ? 'KUNING'
     : 'HIJAU';
+
+  const VEDIKA_CHECKLIST_META = [
+    { key: 'sep_valid', label: '1. Kelengkapan SEP & Eligibilitas JKN', rule: 'Perpres 82/2018 Pasal 46' },
+    { key: 'resume_medis', label: '2. Resume Medis & Otorisasi DPJP', rule: 'PMK 24/2022 Rekam Medis' },
+    { key: 'penunjang_klinis', label: '3. Bukti Lab / Radiologi / Terapi Sah', rule: 'Panduan Audit VEDIKA' },
+    { key: 'koding_cbg', label: '4. Kepatuhan Koding ICD-10 / ICD-9 & Tarif CBG', rule: 'Permenkes 26/2021' },
+    { key: 'sdmk_aktif', label: '5. Validitas SIP/STR & Rasio Kapasitas SDMK', rule: 'Permenkes 14/2021' },
+    { key: 'biometrik_mobile', label: '6. Log FRISTA & Konfirmasi Mobile JKN', rule: 'SE FRISTA / UU PDP' },
+  ];
+
+  const defaultChecklistForLane = (lane) => ({
+    sep_valid: true,
+    resume_medis: lane !== 'MERAH',
+    penunjang_klinis: lane === 'HIJAU',
+    koding_cbg: lane !== 'MERAH',
+    sdmk_aktif: sipStatus === 'ACTIVE',
+    biometrik_mobile: lane === 'HIJAU',
+  });
+
+  const [caseChecklist, setCaseChecklist] = useState(() => (
+    (typeof caseData === 'object' && caseData?.checklist && typeof caseData.checklist === 'object')
+      ? { ...defaultChecklistForLane(effectiveLane), ...caseData.checklist }
+      : defaultChecklistForLane(effectiveLane)
+  ));
+  const [checklistSaving, setChecklistSaving] = useState(false);
+  const [checklistNotice, setChecklistNotice] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setChecklistNotice('');
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/checklist`).then((data) => {
+      if (!active) return;
+      if (data?.checklist && typeof data.checklist === 'object') {
+        setCaseChecklist({ ...defaultChecklistForLane(effectiveLane), ...data.checklist });
+      } else {
+        setCaseChecklist(defaultChecklistForLane(effectiveLane));
+      }
+    }).catch(() => {
+      if (active) setCaseChecklist(defaultChecklistForLane(effectiveLane));
+    });
+    return () => { active = false; };
+  }, [currentCase.id]);
+
+  const handleToggleChecklistItem = async (itemKey) => {
+    const updated = { ...caseChecklist, [itemKey]: !caseChecklist[itemKey] };
+    setCaseChecklist(updated);
+    setChecklistSaving(true);
+    setChecklistNotice('');
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/checklist`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verifier_id: 'VERIF-VEDIKA-01',
+          checklist: updated,
+          notes: `Pembaruan Kertas Kerja 6 Kaidah pada ${currentCase.id}`,
+        }),
+      });
+      if (res.ok) {
+        setChecklistNotice('Kertas kerja tersimpan ke log audit.');
+      } else {
+        setChecklistNotice('Disimpan lokal (mode viewer tidak menyimpan ke server).');
+      }
+    } catch {
+      setChecklistNotice('Gagal menyinkronkan ke backend.');
+    } finally {
+      setChecklistSaving(false);
+    }
+  };
+
+  const checkedCount = VEDIKA_CHECKLIST_META.filter((m) => Boolean(caseChecklist[m.key])).length;
 
   const clusterVolume = Number(rawClaim?.episode_meta?.jumlah_klaim_klaster ?? currentCase.claimCount ?? 85);
   const spikeRatio = Number(rawClaim?.episode_meta?.rasio_lonjakan_baseline ?? 8.5);
@@ -904,7 +975,11 @@ export default function CaseInvestigation({
             </div>
 
             <p className={`text-[10.5px] leading-relaxed font-medium ${isLight ? 'text-slate-800' : 'text-white/60'}`}>
-              Analisis mendeteksi 85 klaim diajukan serentak pasca baksos tanpa rekam medis perorangan yang wajar.
+              {effectiveLane === 'HIJAU'
+                ? `Terdeteksi ${clusterVolume} berkas dalam batas distribusi normal (${spikeRatio.toFixed(1)}x baseline) dan konsisten dengan riwayat pelayanan faskes.`
+                : isRepeatBilling
+                ? `Terdeteksi pengulangan episode ${clusterVolume} berkas (${spikeRatio.toFixed(1)}x baseline) dengan indikasi duplikasi kode atau pemecahan tagihan.`
+                : `Analisis mendeteksi ${clusterVolume} klaim (${spikeRatio.toFixed(1)}x baseline) dengan deviasi volume atau keseragaman dokumentasi klinis.`}
             </p>
           </div>
         </div>
@@ -980,7 +1055,9 @@ export default function CaseInvestigation({
             <div className={`p-2 rounded-xl border text-[10px] space-y-0.5 ${isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/60'}`}>
               <span className={`font-bold block ${isLight ? 'text-slate-900' : 'text-white/90'}`}>Rujukan Standar Permenkes 14/2021:</span>
               <p className="leading-relaxed font-medium">
-                Beban kerja maks 30–40 px/hari. Klaim 85 tindakan secara fisik melampaui kapasitas wajar.
+                {effectiveLane === 'HIJAU'
+                  ? `Beban layanan ${clusterVolume} berkas berada dalam koridor praktik klinis wajar (batas kapasitas 30-40 pasien/hari).`
+                  : `Beban kerja maks 30-40 px/hari. Pengajuan ${clusterVolume} klaim (${spikeRatio.toFixed(1)}x baseline) memerlukan verifikasi rasio jam praktik DPJP.`}
               </p>
             </div>
           </div>
@@ -1115,25 +1192,57 @@ export default function CaseInvestigation({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-          <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/30'}`}>
-            <div className="text-[10px] font-mono uppercase font-bold text-rose-600 dark:text-rose-300">Log Biometrik FRISTA SEP</div>
-            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-rose-900' : 'text-white'}`}>94.1% Bypass Manual</div>
-            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-rose-800' : 'text-rose-200/80'}`}>
-              80/85 SEP diterbitkan pukul 22:14–23:48 WIB tanpa pemindaian wajah 3D Liveness maupun sidik jari.
+          <div className={`p-3 rounded-xl border ${
+            effectiveLane === 'MERAH'
+              ? (isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/30')
+              : effectiveLane === 'KUNING'
+              ? (isLight ? 'bg-amber-50/70 border-amber-200' : 'bg-amber-500/10 border-amber-500/30')
+              : (isLight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/30')
+          }`}>
+            <div className={`text-[10px] font-mono uppercase font-bold ${
+              effectiveLane === 'MERAH' ? 'text-rose-600 dark:text-rose-300' : effectiveLane === 'KUNING' ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300'
+            }`}>Log Biometrik FRISTA SEP</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {effectiveLane === 'MERAH'
+                ? `${Math.min(99, Math.round((Math.max(1, currentCase.deniedCount) / Math.max(1, currentCase.sampleCount)) * 100))}% Anomali Bypass Liveness`
+                : effectiveLane === 'KUNING'
+                ? 'Menunggu Verifikasi FRISTA SEP'
+                : '100% Liveness Terverifikasi'}
+            </div>
+            <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+              {effectiveLane === 'MERAH'
+                ? `${currentCase.deniedCount}/${currentCase.sampleCount} sampel peserta menyangkal kehadiran pada klaster ${clusterVolume} SEP tanpa liveness valid.`
+                : effectiveLane === 'KUNING'
+                ? `Log FRISTA pada ${currentCase.sep} perlu pencocokan ulang sidik jari/wajah bersama berkas FPK.`
+                : `Otentikasi biometrik wajah/sidik jari pada SEP ${currentCase.sep} tercatat sah saat registrasi.`}
             </p>
           </div>
           <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-            <div className="text-[10px] font-mono uppercase font-bold text-amber-600 dark:text-amber-300">Audit Upcoding (Modus #4)</div>
-            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>Severity Level I -&gt; III</div>
+            <div className="text-[10px] font-mono uppercase font-bold text-amber-600 dark:text-amber-300">Audit Upcoding (Kode {currentCase.code})</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {effectiveLane === 'MERAH' && !isRepeatBilling && !isPhantomBilling
+                ? 'Terindikasi Eskalasi Severity'
+                : effectiveLane === 'HIJAU'
+                ? 'Tarif CBG Konsisten'
+                : 'Dalam Uji Koding PMK 26/2021'}
+            </div>
             <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-              Deteksi otomatis klaim komorbiditas berat (A41.9 / K92.2) tanpa bukti lab kultur darah &amp; laktat.
+              {effectiveLane === 'HIJAU'
+                ? `Tarif ${currentCase.tariff} (${currentCase.code}) sepadan dengan diagnosis ${rawClaim?.icd10_primary || 'klinis tercatat'}.`
+                : `Audit kesesuaian kode ${currentCase.code} (${currentCase.tariff}) terhadap bukti lab, penunjang, dan resume medis.`}
             </p>
           </div>
           <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-            <div className="text-[10px] font-mono uppercase font-bold text-cyan-700 dark:text-cyan-300">Audit Unbundling (Modus #9)</div>
-            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>Split 3 SEP / 5 Hari</div>
+            <div className="text-[10px] font-mono uppercase font-bold text-cyan-700 dark:text-cyan-300">Audit Unbundling &amp; Repeat (#11)</div>
+            <div className={`text-sm font-bold mt-1 font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              {isRepeatBilling ? 'Terdeteksi Duplikasi Episode' : effectiveLane === 'HIJAU' ? 'Tidak Ada Split Episode' : `${clusterVolume} Berkas Klaster Terpaut`}
+            </div>
             <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-              Deteksi pemecahan paket diagnostik &amp; poli menjadi klaim terpisah beruntun untuk arbitrase tarif CBG.
+              {isRepeatBilling
+                ? `Ditemukan kemiripan episode ${rawClaim?.episode_meta?.klaim_episode_sebelumnya_id || 'sebelumnya'} (selisih ${rawClaim?.episode_meta?.selisih_hari_admisi ?? 0} hari).`
+                : effectiveLane === 'HIJAU'
+                ? 'Tidak ada pemecahan kunjungan atau penagihan berulang pada NIK peserta yang sama.'
+                : 'Pengujian keterkaitan antar-SEP satu NIK dan satu periode pelayanan guna mencegah arbitrase tarif.'}
             </p>
           </div>
           <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
@@ -1196,10 +1305,18 @@ export default function CaseInvestigation({
                   <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-purple-800' : 'text-purple-400'}`}>Lapis 3 (Peserta)</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Konfirmasi Kehadiran Mobile JKN</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
-                    {currentCase.deniedCount} dari {currentCase.sampleCount} peserta menyangkal
+                    {currentCase.deniedCount === 0
+                      ? `${currentCase.sampleCount} dari ${currentCase.sampleCount} peserta mengonfirmasi hadir`
+                      : `${currentCase.deniedCount} dari ${currentCase.sampleCount} peserta menyangkal`}
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>KONFIRMATIF</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${
+                      currentCase.deniedCount === 0
+                        ? (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                        : (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                    }`}>
+                      {currentCase.deniedCount === 0 ? 'HADIR SAH' : 'KONFIRMATIF'}
+                    </span>
                   </td>
                   <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-purple-900' : 'text-purple-300'}`}>F3: FA0001.F1005 · D3FEND: D3-MFA</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>UU PDP No. 27/2022</td>
@@ -1208,10 +1325,22 @@ export default function CaseInvestigation({
                   <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>Lapis 4 (FRISTA)</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Biometrik FRISTA &amp; Audit Upcoding/Unbundling</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>
-                    94.1% Bypass Biometrik (80/85 SEP Tanpa Liveness)
+                    {effectiveLane === 'MERAH'
+                      ? `${currentCase.deniedCount}/${currentCase.sampleCount} sampel anomali tanpa biometrik liveness sah`
+                      : effectiveLane === 'KUNING'
+                      ? `Perlu klarifikasi kelengkapan FRISTA & berkas penunjang (${currentCase.sep})`
+                      : `Biometrik FRISTA 3D Liveness & tarif ${currentCase.code} tervalidasi`}
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>BIOMETRIC FAIL</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${
+                      effectiveLane === 'MERAH'
+                        ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                        : effectiveLane === 'KUNING'
+                        ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                        : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                    }`}>
+                      {effectiveLane === 'MERAH' ? 'BIOMETRIC FAIL' : effectiveLane === 'KUNING' ? 'VERIFIKASI ULANG' : 'TERVERIFIKASI'}
+                    </span>
                   </td>
                   <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>D3FEND: D3-BA · ISO 30107-3</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>SE BPJS FRISTA 2024</td>
@@ -1219,6 +1348,75 @@ export default function CaseInvestigation({
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      {/* KERTAS KERJA PEMERIKSAAN VERIFIKATOR (6 KAIDAH VEDIKA) */}
+      <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+            <div>
+              <span className={`text-xs font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Kertas Kerja Verifikator (6 Kaidah Administratif &amp; Klinis VEDIKA)
+              </span>
+              <span className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/55'}`}>
+                Centang kelengkapan berkas {currentCase.id} sebelum putusan final · Tersinkron ke audit trail.
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {checklistNotice && (
+              <span className={`text-[10.5px] font-semibold ${isLight ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                {checklistNotice}
+              </span>
+            )}
+            <span className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border ${
+              checkedCount === 6
+                ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                : (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+            }`}>
+              {checkedCount} / 6 Kaidah Terpenuhi {checklistSaving ? '(Menyimpan...)' : ''}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+          {VEDIKA_CHECKLIST_META.map((item) => {
+            const isChecked = Boolean(caseChecklist[item.key]);
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleToggleChecklistItem(item.key)}
+                className={`text-left p-3 rounded-xl border transition flex items-start gap-2.5 cursor-pointer ${
+                  isChecked
+                    ? (isLight ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100/70' : 'bg-emerald-500/10 border-emerald-500/35 hover:bg-emerald-500/20')
+                    : (isLight ? 'bg-rose-50/60 border-rose-200 hover:bg-rose-100/60' : 'bg-rose-500/10 border-rose-500/30 hover:bg-rose-500/20')
+                }`}
+              >
+                <span className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center shrink-0 border ${
+                  isChecked
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : (isLight ? 'bg-white border-rose-400 text-rose-600' : 'bg-black/30 border-rose-400 text-rose-300')
+                }`}>
+                  {isChecked ? <Check className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                </span>
+                <div className="min-w-0">
+                  <div className={`text-[11px] font-bold leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    {item.label}
+                  </div>
+                  <div className={`text-[10px] font-mono mt-0.5 ${
+                    isChecked
+                      ? (isLight ? 'text-emerald-700' : 'text-emerald-300')
+                      : (isLight ? 'text-rose-700' : 'text-rose-300')
+                  }`}>
+                    {isChecked ? 'TERPENUHI' : 'PERLU KLARIFIKASI'} · {item.rule}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

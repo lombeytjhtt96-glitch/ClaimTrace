@@ -14,7 +14,7 @@ import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestr
 
 gsap.registerPlugin(useGSAP);
 
-export default function DecisionConsole({ 
+export default function DecisionConsole({
   caseData,
   totalScore = 87.0,
   s1 = 85,
@@ -26,6 +26,7 @@ export default function DecisionConsole({
   onBackToInvestigation,
   onBackToQueue,
   onOpenExpansionSuite,
+  currentUser,
   isLight: propIsLight
 }) {
   const [internalIsLight, setInternalIsLight] = useState(() => {
@@ -60,7 +61,7 @@ export default function DecisionConsole({
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
   const defaultCase = {
-    id: typeof caseData === 'string' ? caseData : 'CLM-2026-10-085',
+    id: typeof caseData === 'string' ? caseData : 'CLM-2026-8801',
     hospital: 'RS Khusus Mitra Husada',
     sep: '0132R0011026V000085',
     tariff: 'Rp 15.300.000',
@@ -70,32 +71,138 @@ export default function DecisionConsole({
   };
 
   const currentCase = (typeof caseData === 'object' && caseData !== null) ? caseData : defaultCase;
+  const rawClaim = currentCase.rawClaim || null;
+  const rawTriage = currentCase.rawTriage || null;
 
-  const [notes, setNotes] = useState(
-    'Ditemukan indikasi kuat klaim fiktif massal (Phantom Billing) pasca kegiatan Baksos 12 Okt 2026. Data federasi SATUSEHAT SDMK membuktikan SIP DPJP telah tidak aktif/mutasi pada tanggal pelayanan. Respon langsung out-of-band Mobile JKN memvalidasi 8 dari 10 peserta tidak pernah hadir menerima fisioterapi. Direkomendasikan penundaan Berita Acara Kelengkapan Berkas (BAKB) sesuai Pasal 76 ayat (2) Perpres 82/2018.'
+  const effS1 = Math.round(rawClaim?.s1_score ?? rawTriage?.score_breakdown?.s1_value ?? s1);
+  const effS2 = Math.round(rawClaim?.s2_score ?? rawTriage?.score_breakdown?.s2_value ?? s2);
+  const effS3 = patientResponse !== null
+    ? Math.round(s3)
+    : Math.round(rawClaim?.s3_score ?? rawTriage?.score_breakdown?.s3_value ?? s3);
+  const sipStatus = rawClaim?.dpjp_meta?.sip_status || 'ACTIVE';
+  const hardTrigger = Boolean(rawTriage?.hard_trigger_activated || sipStatus === 'EXPIRED');
+  const rawFusionScore = Math.round((0.5 * effS1 + 0.3 * effS2 + 0.2 * effS3) * 10) / 10;
+  const effScore = patientResponse !== null
+    ? (hardTrigger ? Math.max(rawFusionScore, 75) : rawFusionScore)
+    : Number(rawTriage?.final_priority_score ?? totalScore);
+  const effLane = (effScore >= 75 || hardTrigger)
+    ? 'MERAH'
+    : (effScore >= 50 || sipStatus === 'UNSYNCED')
+    ? 'KUNING'
+    : 'HIJAU';
+
+  const spikeRatio = Number(rawClaim?.episode_meta?.rasio_lonjakan_baseline ?? (effLane === 'HIJAU' ? 1.1 : effLane === 'KUNING' ? 2.4 : 8.5));
+  const clusterVolume = Number(rawClaim?.episode_meta?.jumlah_klaim_klaster ?? currentCase.claimCount ?? 1);
+  const sampleCount = Math.max(1, Number(rawClaim?.mobile_meta?.sampel_terkirim ?? currentCase.sampleCount ?? 10));
+  const deniedCount = Number(rawClaim?.mobile_meta?.respon_tidak_hadir ?? currentCase.deniedCount ?? (effLane === 'HIJAU' ? 0 : 8));
+  const userRoles = Array.isArray(currentUser?.allowedRoles) ? currentUser.allowedRoles : [];
+  const activeUserCanAdjudicate = !(
+    currentUser?.role === 'AUDITOR_VIEWER' ||
+    String(currentUser?.role || '').toLowerCase().includes('read-only') ||
+    (userRoles.includes('AUDITOR_VIEWER') && !userRoles.includes('VERIFICATOR_MEDIS') && !userRoles.includes('ADMIN'))
   );
+
+  const VEDIKA_REASON_OPTIONS = [
+    'Resume medis belum dilengkapi tanda tangan DPJP',
+    'Lampiran bukti lab / radiologi / laporan tindakan kurang memadai',
+    'Verifikasi log biometrik FRISTA & kehadiran Mobile JKN',
+    'Sinkronisasi status SIP/STR SATUSEHAT SDMK perlu konfirmasi',
+    'Kesesuaian koding INA-CBG / indikasi unbundling & upcoding',
+    'Eskalasi telaah klinis Tim Kendali Mutu dan Kendali Biaya (TKMKB)',
+  ];
+
+  const defaultNotesForCase = () => {
+    if (rawTriage?.ringkasan_bukti_audit) {
+      return `${rawTriage.ringkasan_bukti_audit} Disposisi verifikasi mengacu pada Perpres No. 82/2018 Pasal 74-76 dan Permenkes No. 16/2019.`;
+    }
+    if (effLane === 'HIJAU') {
+      return `Klaim ${currentCase.id} (${currentCase.hospital}) lolos penyaringan Tri-Layer dengan skor ${effScore.toFixed(1)}/100. Dokumen klinis, keabsahan SDMK (${sipStatus}), dan konfirmasi kehadiran peserta tercatat konsisten sehingga layak diproses Fast-Track sesuai regulasi BPJS Kesehatan.`;
+    }
+    if (effLane === 'KUNING') {
+      return `Klaim ${currentCase.id} (${currentCase.hospital}) berada pada Jalur Kuning (Skor ${effScore.toFixed(1)}/100). Diperlukan permintaan klarifikasi berkas penunjang dan sinkronisasi data kepada faskes dalam batas waktu maksimal 10 hari kerja sesuai Perpres 82/2018.`;
+    }
+    return `Terdeteksi indikasi anomali tinggi pada klaim ${currentCase.id} (${currentCase.hospital}) dengan Skor Fusi ${effScore.toFixed(1)}/100 (lonjakan ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, ${deniedCount}/${sampleCount} sampel peserta menyangkal). Direkomendasikan penahanan pra-bayar / audit faktual sesuai Perpres 82/2018 Pasal 76.`;
+  };
+
+  const [activeSubTab, setActiveSubTab] = useState('disposisi');
+  const [notes, setNotes] = useState(defaultNotesForCase);
+  const [pendingReasons, setPendingReasons] = useState(() => (
+    Array.isArray(currentCase.pendingReasons) && currentCase.pendingReasons.length > 0
+      ? currentCase.pendingReasons
+      : []
+  ));
+  const [bahvRecap, setBahvRecap] = useState(null);
+  const [loadingRecap, setLoadingRecap] = useState(false);
 
   const [auditSealHash, setAuditSealHash] = useState('');
   const [sealTimestamp, setSealTimestamp] = useState('');
+  const [officialBakbHtml, setOfficialBakbHtml] = useState('');
+  const [officialBakbDossier, setOfficialBakbDossier] = useState(null);
   const [decisionError, setDecisionError] = useState(null);
-  const [verifierInfo, setVerifierInfo] = useState({ name: 'dr. Siti Rahma, Sp.PK', nip: '198704202011012001' });
+  const [verifierInfo, setVerifierInfo] = useState({
+    name: currentUser?.name || 'dr. Siti Rahma, Sp.PK',
+    nip: currentUser?.nip || '198704202011012001',
+  });
 
   const resolvedApiClaimId = (!currentCase?.id || currentCase.id === 'CLM-2026-10-085')
     ? 'CLM-2026-8801'
     : currentCase.id;
 
   useEffect(() => {
+    setNotes(defaultNotesForCase());
+    setPendingReasons(
+      Array.isArray(currentCase.pendingReasons) && currentCase.pendingReasons.length > 0
+        ? currentCase.pendingReasons
+        : []
+    );
+    setDecisionError(null);
+    setSuccessToast(false);
+  }, [currentCase?.id]);
+
+  useEffect(() => {
+    if (currentUser?.name || currentUser?.nip) {
+      setVerifierInfo({
+        name: currentUser.name || 'dr. Siti Rahma, Sp.PK',
+        nip: currentUser.nip || '198704202011012001',
+      });
+    }
+  }, [currentUser?.name, currentUser?.nip]);
+
+  const loadBahvRecap = async () => {
+    setLoadingRecap(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/screening/bahv-recap`);
+      if (res.ok) {
+        const data = await res.json();
+        setBahvRecap(data);
+      }
+    } catch (err) {
+      console.warn('Gagal memuat rekapitulasi BAHV FPK:', err);
+    } finally {
+      setLoadingRecap(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubTab === 'bahv_recap') {
+      loadBahvRecap();
+    }
+  }, [activeSubTab]);
+
+  useEffect(() => {
     let active = true;
     const loadSeal = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase?.id || 'CLM-2026-8801'}/official-bakb`);
+        const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`);
         if (res.ok && active) {
           const data = await res.json();
           const seal = data?.dossier?.cryptographic_seal;
           const ver = data?.dossier?.verifier;
+          if (data?.html_printable) setOfficialBakbHtml(data.html_printable);
+          if (data?.dossier) setOfficialBakbDossier(data.dossier);
           if (seal?.document_hash) setAuditSealHash(seal.document_hash);
           if (data?.dossier?.issued_at) setSealTimestamp(data.dossier.issued_at);
-          if (ver?.name || ver?.nip) {
+          if (!currentUser?.name && (ver?.name || ver?.nip)) {
             setVerifierInfo({
               name: ver.name || 'dr. Siti Rahma, Sp.PK',
               nip: ver.nip || '198704202011012001',
@@ -108,7 +215,7 @@ export default function DecisionConsole({
     };
     loadSeal();
     return () => { active = false; };
-  }, [currentCase?.id]);
+  }, [resolvedApiClaimId]);
 
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,6 +237,17 @@ export default function DecisionConsole({
   }, [showPdfModal]);
 
   const handlePrintDossier = () => {
+    if (officialBakbHtml && typeof window !== 'undefined') {
+      const win = window.open('', '_blank', 'width=960,height=780');
+      if (win) {
+        win.document.open();
+        win.document.write(officialBakbHtml);
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 250);
+        return;
+      }
+    }
     window.print();
   };
 
@@ -156,34 +274,37 @@ export default function DecisionConsole({
     );
   }, { scope: consoleRef, dependencies: [verificatorAction] });
 
-  // GSAP 60fps animation when BAKB modal opens
+  // Animate inner verdict badge slightly without fighting Motion modal entrance
   useGSAP(() => {
     if (!showPdfModal || !modalRef.current) return;
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-    tl.fromTo(
-      '.modal-content-panel',
-      { y: 16, autoAlpha: 0 },
-      { y: 0, autoAlpha: 1, duration: 0.25 }
-    )
-    .fromTo(
+    gsap.fromTo(
       '.verdict-stamp-print',
-      { scale: 1.35, rotate: -12, autoAlpha: 0 },
-      { scale: 1, rotate: -4, autoAlpha: 1, duration: 0.4, ease: 'back.out(1.8)' },
-      '-=0.08'
+      { scale: 1.25, rotate: -10, autoAlpha: 0 },
+      { scale: 1, rotate: -4, autoAlpha: 1, duration: 0.35, ease: 'back.out(1.8)' }
     );
   }, { scope: modalRef, dependencies: [showPdfModal] });
+
+  const toggleReason = (reasonText) => {
+    setPendingReasons((prev) =>
+      prev.includes(reasonText) ? prev.filter((r) => r !== reasonText) : [...prev, reasonText]
+    );
+  };
 
   const handleDraftNotesWithAi = async () => {
     setIsDraftingAiNotes(true);
     try {
-      const actionLabel =
-        verificatorAction === 'audit'
-          ? 'Jadwalkan Audit Faktual Lapangan'
-          : verificatorAction === 'override'
-            ? 'Override Manual Loloskan Klaim'
-            : 'Tunda Berita Acara & Minta Klarifikasi Faskes (SOP 10 Hari)';
+      const actionMap = {
+        LAYAK_BAYAR: 'Layak Bayar (Setujui FPK Pra-Bayar)',
+        PENDING_KLARIFIKASI: 'Pending Klarifikasi Faskes (Maksimal 10 Hari Kerja)',
+        DISPUTE_TKMKB: 'Dispute Klinis & Eskalasi TKMKB',
+        TIDAK_LAYAK_FRAUD: 'Tidak Layak Bayar (Penolakan Pra-Bayar / Audit Faktual VPK)',
+        clarification: 'Tunda Berita Acara & Minta Klarifikasi Faskes (SOP 10 Hari)',
+        audit: 'Jadwalkan Audit Faktual Lapangan',
+        override: 'Layak Bayar (Override dengan Catatan Verifikator)',
+      };
+      const actionLabel = actionMap[verificatorAction] || actionMap.PENDING_KLARIFIKASI;
       const res = await callClaimTraceGenerateContent({
-        prompt: `Susun 1 paragraf formal 'Catatan Resmi Verifikator' (maksimal 95 kata) untuk Berita Acara Kelengkapan Berkas (BAKB) BPJS Kesehatan atas klaim ${currentCase.id} (${currentCase.hospital}, SEP: ${currentCase.sep}, Kode: ${currentCase.code}, Tagihan: ${currentCase.tariff}, DPJP: ${currentCase.dpjp}). Skor risiko: ${totalScore}/100 (S1=${s1}, S2=${s2}, S3=${s3}). Keputusan: ${actionLabel}. Cantumkan dasar hukum Perpres No. 82/2018 Pasal 74-76 dan Permenkes No. 16/2019. Jangan gunakan emoji.`,
+        prompt: `Susun 1 paragraf formal 'Catatan Resmi Verifikator' (maksimal 95 kata) untuk Berita Acara Kelengkapan Berkas (BAKB) BPJS Kesehatan atas klaim ${currentCase.id} (${currentCase.hospital}, SEP: ${currentCase.sep}, Kode: ${currentCase.code}, Tagihan: ${currentCase.tariff}, DPJP: ${currentCase.dpjp}, SIP: ${sipStatus}). Skor risiko: ${effScore}/100 (S1=${effS1}, S2=${effS2}, S3=${effS3}). Keputusan: ${actionLabel}. Cantumkan dasar hukum Perpres No. 82/2018 Pasal 74-76 dan Permenkes No. 16/2019. Jangan gunakan emoji.`,
         systemInstruction: 'Anda adalah Pejabat Verifikator Senior BPJS Kesehatan. Tulis paragraf hukum resmi tanpa emoji.'
       });
       if (res?.text) {
@@ -195,56 +316,23 @@ export default function DecisionConsole({
   };
 
   const handleDownloadDossierPdf = () => {
-    const reportText = `BPJS KESEHATAN KANTOR PUSAT
-DIREKTORAT JAMINAN PELAYANAN KESEHATAN
-BERITA ACARA KELENGKAPAN BERKAS (BAKB) & REKOMENDASI AUDIT KLAIM
-Nomor Registrasi: BAKB/BPJS/IX/2026/0881
-Status: TUNDA BAYAR (JALUR MERAH)
-Dasar Hukum: Pasal 76 ayat (2) Perpres No. 82/2018 & Permenkes No. 26/2021
+    const htmlContent = officialBakbHtml || `<!doctype html>
+<html lang="id"><head><meta charset="utf-8" /><title>BAKB Resmi BPJS Kesehatan - ${currentCase.id}</title></head>
+<body style="font-family:Arial,sans-serif;max-width:860px;margin:24px auto;line-height:1.5;color:#111827">
+<h2>BPJS KESEHATAN - BERITA ACARA HASIL UJI KELENGKAPAN BERKAS (BAKB / BAHV)</h2>
+<p><strong>No. Klaim:</strong> ${currentCase.id} | <strong>Faskes:</strong> ${currentCase.hospital} | <strong>SEP:</strong> ${currentCase.sep}</p>
+<p><strong>Kode INA-CBG:</strong> ${currentCase.code} | <strong>Tagihan:</strong> ${currentCase.tariff} (${clusterVolume} Berkas) | <strong>DPJP:</strong> ${currentCase.dpjp} (SIP ${sipStatus})</p>
+<p><strong>Skor Fusi:</strong> ${effScore.toFixed(1)}/100 (S1=${effS1}, S2=${effS2}, S3=${effS3}) · <strong>Jalur ${effLane}</strong></p>
+<p><strong>Catatan Verifikator:</strong> ${notes}</p>
+<p><strong>Digital Seal SHA-256:</strong> ${auditSealHash || 'MENUNGGU-DISPOSISI-SHA256'}</p>
+<p><strong>Verifikator:</strong> ${verifierInfo.name} (NIP ${verifierInfo.nip})</p>
+</body></html>`;
 
-I. IDENTITAS KASUS KLAIM
-- Nomor Registrasi: ${currentCase.id}
-- Fasilitas Kesehatan: ${currentCase.hospital}
-- Nomor SEP: ${currentCase.sep}
-- Kode INA-CBG: ${currentCase.code}
-- Total Tagihan: ${currentCase.tariff} (${currentCase.claimCount || 85} Berkas Klaim)
-- DPJP Tertera: ${currentCase.dpjp}
-
-II. TEMUAN KECURANGAN MULTI-LAPIS (3-LAYER FORENSICS)
-1. Lapis 1 (Pola Spatiotemporal):
-   Lonjakan klaim massal 8.5x dari baseline rata-rata harian faskes pasca baksos 12 Okt 2026.
-   Terindikasi modus Phantom Billing & Repeat Billing.
-2. Lapis 2 (SATUSEHAT SDMK):
-   Surat Izin Praktik (SIP) dokter ${currentCase.dpjp} tidak aktif di faskes ini pada tanggal pelayanan.
-3. Lapis 3 (Mobile JKN Telemetry):
-   Verifikasi out-of-band ke peserta terdaftar membuktikan 8 dari 10 peserta menyangkal pernah hadir.
-
-III. PEMETAAN KERANGKA KERJA SIBER & DETEKSI KECURANGAN JKN
-1. MITRE Fight Fraud Framework (F3 v1.1):
-   - FA0001 (Positioning): F1005.001 (Unauthorized Patient Identity Seeding)
-   - FA0002 (Monetization): F1018 (Unbundling & Split Claim Arbitrage) · F1025.003
-2. MITRE ATT&CK v19.1:
-   - TA0001 (Initial Access): T1078 (Valid Accounts - Inactive DPJP Credentials)
-   - TA0005 (Stealth): T1070 (Indicator Removal / Missing Medical Records)
-3. NIST CSF 2.0: DE.CM-01 (Continuous Monitoring) & RS.AN-03 (Fraud Analysis)
-4. MITRE D3FEND: D3-DS (Digital Signature Chaining) & D3-MFA (Presence Attestation)
-5. NIST AI RMF 1.0: Faithfulness 0.998 · Zero-PHI Preserved
-
-IV. KEPUTUSAN & INSTRUKSI VERIFIKATOR
-1. Penundaan penandatanganan Berita Acara Kelengkapan Berkas (BAKB).
-2. Penerbitan Surat Klarifikasi (SP-1) kepada Direktur ${currentCase.hospital}.
-3. Penjadwalan audit fisik lapangan oleh Tim Pencegahan Kecurangan JKN.
-
-Diterbitkan secara digital oleh:
-Verifikator Medis: ${verifierInfo.name} (NIP: ${verifierInfo.nip})
-Digital Seal SHA-256: ${auditSealHash || 'MENUNGGU-DISPOSISI-SHA256'}
-Timestamp: ${sealTimestamp || new Date().toISOString()}`;
-
-    const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `BAKB_BPJS_${currentCase.id}.txt`;
+    a.download = `BAKB_Resmi_BPJS_${currentCase.id}.html`;
     a.click();
     URL.revokeObjectURL(url);
     setShowPdfModal(false);
@@ -252,21 +340,33 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
   };
 
   const handleActionClick = async (actionType) => {
+    if (!activeUserCanAdjudicate) {
+      setDecisionError('Akses dibatasi (Read-Only): Hanya Verifikator Medis atau Admin Cabang yang berwenang menetapkan putusan.');
+      return;
+    }
     setIsSubmitting(true);
     setDecisionError(null);
     const decisionMap = {
-      clarification: 'KLARIFIKASI_FASKES',
-      audit: 'AUDIT_LAPANGAN',
-      override: 'LOLOSKAN_KLAIM',
+      LAYAK_BAYAR: 'LAYAK_BAYAR',
+      PENDING_KLARIFIKASI: 'PENDING_KLARIFIKASI',
+      DISPUTE_TKMKB: 'DISPUTE_TKMKB',
+      TIDAK_LAYAK_FRAUD: 'TIDAK_LAYAK_FRAUD',
+      clarification: 'PENDING_KLARIFIKASI',
+      audit: 'TIDAK_LAYAK_FRAUD',
+      override: 'LAYAK_BAYAR',
     };
+    const backendDecision = decisionMap[actionType] || 'PENDING_KLARIFIKASI';
     try {
       const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/decision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           verifier_id: verifierInfo.nip || '198704202011012001',
-          decision: decisionMap[actionType] || 'KLARIFIKASI_FASKES',
+          decision: backendDecision,
           catatan_verifikator: notes || 'Disposisi verifikator direkam melalui Konsol Keputusan Pra-Bayar.',
+          pending_reasons: (backendDecision === 'PENDING_KLARIFIKASI' || backendDecision === 'DISPUTE_TKMKB' || backendDecision === 'TIDAK_LAYAK_FRAUD')
+            ? pendingReasons
+            : [],
         }),
       });
       if (!res.ok) {
@@ -280,8 +380,19 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
       if (data?.audit_entry?.timestamp) {
         setSealTimestamp(data.audit_entry.timestamp);
       }
-      onSetVerificatorAction(actionType);
+      onSetVerificatorAction(backendDecision);
       setSuccessToast(true);
+      if (bahvRecap) {
+        loadBahvRecap();
+      }
+      // Refresh BAKB preview HTML to reflect new decision status immediately
+      authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((bakbData) => {
+          if (bakbData?.html_printable) setOfficialBakbHtml(bakbData.html_printable);
+          if (bakbData?.dossier) setOfficialBakbDossier(bakbData.dossier);
+        })
+        .catch(() => {});
     } catch (err) {
       setDecisionError(err.message || 'Gagal mencatat keputusan ke server');
     } finally {
@@ -292,7 +403,7 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
   return (
     <div ref={consoleRef} className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
       {/* HEADER BANNER */}
-      <div className={`w-full px-4 py-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+      <div className={`w-full px-4 py-3.5 rounded-2xl border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         isLight
           ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
           : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 text-white shadow-2xl shadow-[#00081c]/50'
@@ -300,59 +411,186 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Konsol Keputusan Verifikator Medis &amp; Disposisi Klaim
+              Konsol Keputusan VEDIKA &amp; Rekapitulasi BAHV FPK
             </h2>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${
-              isLight
-                ? 'bg-rose-50 text-rose-700 border-rose-300'
-                : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+              effLane === 'MERAH'
+                ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                : effLane === 'KUNING'
+                ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
             }`}>
-              JALUR MERAH · AUDIT FREEZE
+              JALUR {effLane} · {effLane === 'MERAH' ? 'AUDIT FREEZE' : effLane === 'KUNING' ? 'KLARIFIKASI FPK' : 'FAST-TRACK H+1'}
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
               isLight
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                 : 'bg-white/5 text-[#FFCA40] border-white/10'
             }`}>
-              MITRE F3: FA0002 · Perpres 82/2018
+              VEDIKA 4-Status · Perpres 82/2018
             </span>
           </div>
           <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
-            Keputusan mengikat verifikator pra-bayar berdasarkan sintesis bukti 3 lapis, rekonsiliasi data faskes, dan audit trail anti-rekayasa.
+            Penetapan putusan resmi verifikator (Layak, Pending, Dispute TKMKB, Tidak Layak Fraud) beserta BAHV / BAKB SHA-256.
           </p>
         </div>
 
-        {/* Action Status Toast */}
-        {decisionError && (
-          <div className={`px-3 py-1.5 rounded-xl text-xs flex items-center space-x-2 border ${
-            isLight
-              ? 'bg-rose-50 border-rose-300 text-rose-900'
-              : 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+        {/* SUB-TAB SWITCHER & STATUS TOAST */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className={`inline-flex p-1 rounded-xl border text-xs font-bold ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
           }`}>
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Gagal menyimpan keputusan ke server: {decisionError}</span>
-          </div>
-        )}
-        {successToast && (
-          <div className={`px-3 py-1.5 rounded-xl text-xs flex items-center space-x-2 animate-fade-in shadow-md border ${
-            isLight
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200'
-          }`}>
-            <div className="flex items-center space-x-1.5">
-              <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-              <span>
-                Keputusan verifikator berhasil dieksekusi dan dicatat ke dalam <strong className={isLight ? 'text-emerald-950 font-bold' : 'text-white'}>Audit Trail Kriptografis (SHA-256)</strong>.
-              </span>
-            </div>
-            <button type="button" onClick={() => setSuccessToast(false)} className={`cursor-pointer ml-1 ${isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-emerald-400 hover:text-white'}`}>
-              <X className="w-3.5 h-3.5" />
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('disposisi')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                activeSubTab === 'disposisi'
+                  ? (isLight ? 'bg-emerald-700 text-white shadow-xs' : 'bg-emerald-600 text-white shadow-xs')
+                  : (isLight ? 'text-slate-700 hover:bg-slate-200/70' : 'text-white/70 hover:text-white')
+              }`}
+            >
+              Putusan Kasus &amp; BAKB
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('bahv_recap')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                activeSubTab === 'bahv_recap'
+                  ? (isLight ? 'bg-emerald-700 text-white shadow-xs' : 'bg-emerald-600 text-white shadow-xs')
+                  : (isLight ? 'text-slate-700 hover:bg-slate-200/70' : 'text-white/70 hover:text-white')
+              }`}
+            >
+              Rekapitulasi BAHV FPK (4 Status)
             </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* SCROLLABLE MAIN DECISION WORKSPACE */}
+      {decisionError && (
+        <div className={`px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 border ${
+          isLight
+            ? 'bg-rose-50 border-rose-300 text-rose-900'
+            : 'bg-rose-500/20 border-rose-500/40 text-rose-200'
+        }`}>
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{decisionError}</span>
+        </div>
+      )}
+      {successToast && (
+        <div className={`px-4 py-2.5 rounded-xl text-xs flex items-center justify-between space-x-2 shadow-md border ${
+          isLight
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+            : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-200'
+        }`}>
+          <div className="flex items-center space-x-1.5">
+            <CheckCircle2 className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+            <span>
+              Keputusan verifikator berhasil dieksekusi dan dicatat ke dalam <strong className={isLight ? 'text-emerald-950 font-bold' : 'text-white'}>Audit Trail Kriptografis (SHA-256)</strong>.
+            </span>
+          </div>
+          <button type="button" onClick={() => setSuccessToast(false)} className={`cursor-pointer ml-1 ${isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-emerald-400 hover:text-white'}`}>
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {!activeUserCanAdjudicate && activeSubTab === 'disposisi' && (
+        <div className={`px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 border ${
+          isLight ? 'bg-amber-50 border-amber-300 text-amber-950' : 'bg-amber-500/15 border-amber-500/35 text-amber-200'
+        }`}>
+          <Lock className="w-4 h-4 shrink-0" />
+          <span>
+            Mode Pengamat Aktif (<strong>{currentUser?.name}</strong> · Role <code>{currentUser?.role}</code>): Tombol eksekusi putusan VEDIKA dinonaktifkan untuk akun Read-Only Audit.
+          </span>
+        </div>
+      )}
+
+      {activeSubTab === 'bahv_recap' ? (
+        <div className="space-y-4">
+          <div className={`rounded-2xl p-4 border flex flex-wrap items-center justify-between gap-3 ${
+            isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10'
+          }`}>
+            <div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Berita Acara Hasil Verifikasi (BAHV) FPK Pra-Bayar — 4 Status VEDIKA
+              </h3>
+              <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                Periode: {bahvRecap?.period_label || 'FPK Berjalan Okt/Nov 2026'} · Total {bahvRecap?.total_claims_in_queue ?? 0} berkas antrean pra-bayar.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadBahvRecap}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingRecap ? 'animate-spin' : ''}`} />
+                <span>Segarkan BAHV Live</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Rekap BAHV FPK</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            {[
+              { key: 'LAYAK', title: '1. Layak Bayar', desc: 'Lolos verifikasi & siap bayar H+1', tone: 'emerald' },
+              { key: 'PENDING', title: '2. Pending Klarifikasi', desc: 'Menunggu kelengkapan Faskes (<= 10 HK)', tone: 'amber' },
+              { key: 'DISPUTE', title: '3. Sengketa / Dispute TKMKB', desc: 'Eskalasi koding / klinis TKMKB', tone: 'purple' },
+              { key: 'TIDAK_LAYAK', title: '4. Tidak Layak (Fraud)', desc: 'Ditolak / Tahan Bayar & Audit VPK', tone: 'rose' },
+            ].map((card) => {
+              const bucket = bahvRecap?.buckets?.[card.key] || { count: 0, claimed_rp: 0, items: [] };
+              const bucketItems = Array.isArray(bucket.items) ? bucket.items : (Array.isArray(bucket.claims) ? bucket.claims : []);
+              const bucketRp = Number(bucket.claimed_rp ?? bucket.total_tariff_rp ?? 0);
+              return (
+                <div key={card.key} className={`rounded-2xl p-4 border space-y-2 ${
+                  isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/80 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{card.title}</span>
+                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                      card.tone === 'emerald'
+                        ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                        : card.tone === 'amber'
+                        ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                        : card.tone === 'purple'
+                        ? (isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30')
+                        : (isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                    }`}>
+                      {bucket.count} Klaim
+                    </span>
+                  </div>
+                  <div className={`text-lg font-extrabold font-mono tabular-nums ${
+                    isLight ? 'text-slate-900' : 'text-white'
+                  }`}>
+                    Rp {bucketRp.toLocaleString('id-ID')}
+                  </div>
+                  <p className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/55'}`}>{card.desc}</p>
+                  {bucketItems.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-1 max-h-40 overflow-y-auto">
+                      {bucketItems.map((bc) => (
+                        <div key={bc.claim_id} className="text-[10.5px] flex items-center justify-between gap-2 font-mono">
+                          <span className="truncate font-bold">{bc.claim_id} · {bc.hospital || bc.nama_faskes}</span>
+                          <span className="shrink-0">Rp {Number(bc.claimed_rp || 0).toLocaleString('id-ID')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+      /* SCROLLABLE MAIN DECISION WORKSPACE */
       <div className="min-h-[460px] space-y-4 pb-2">
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         
@@ -399,14 +637,26 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
 
             <div className="text-right sm:self-center font-mono">
               <span className={`text-[9.5px] font-bold block uppercase tracking-wider ${
-                isLight ? 'text-rose-700' : 'text-rose-300'
+                effLane === 'MERAH'
+                  ? (isLight ? 'text-rose-700' : 'text-rose-300')
+                  : effLane === 'KUNING'
+                  ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                  : (isLight ? 'text-emerald-700' : 'text-emerald-300')
               }`}>SKOR FUSI KASUS</span>
               <span className={`text-2xl font-bold leading-none ${
-                isLight ? 'text-rose-600' : 'text-rose-400'
-              }`}>{totalScore}</span>
+                effLane === 'MERAH'
+                  ? (isLight ? 'text-rose-600' : 'text-rose-400')
+                  : effLane === 'KUNING'
+                  ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                  : (isLight ? 'text-emerald-700' : 'text-emerald-400')
+              }`}>{effScore.toFixed(1)}</span>
               <span className={`text-[9.5px] block mt-0.5 font-bold ${
-                isLight ? 'text-rose-700' : 'text-rose-300/70'
-              }`}>Jalur Merah</span>
+                effLane === 'MERAH'
+                  ? (isLight ? 'text-rose-700' : 'text-rose-300/80')
+                  : effLane === 'KUNING'
+                  ? (isLight ? 'text-amber-700' : 'text-amber-300/80')
+                  : (isLight ? 'text-emerald-700' : 'text-emerald-300/80')
+              }`}>Jalur {effLane}</span>
             </div>
           </div>
 
@@ -416,38 +666,160 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
               ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 text-white shadow-xl shadow-[#00081c]/40'
           }`}>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className={`text-xs font-bold flex items-center space-x-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                <ShieldAlert className="w-4 h-4 text-rose-500" />
-                <span>Rekomendasi Keputusan Berdasarkan Fusi Bukti</span>
+                <ShieldAlert className={`w-4 h-4 ${
+                  effLane === 'MERAH' ? 'text-rose-500' : effLane === 'KUNING' ? 'text-amber-500' : 'text-emerald-600'
+                }`} />
+                <span>Disposisi VEDIKA Pra-Bayar ({currentCase.id})</span>
               </span>
               <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold border font-mono ${
-                isLight
-                  ? 'bg-rose-50 text-rose-700 border-rose-300'
-                  : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                effLane === 'MERAH'
+                  ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                  : effLane === 'KUNING'
+                  ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                  : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
               }`}>
-                REKOMENDASI: TUNDA BAKB
+                REKOMENDASI: {effLane === 'MERAH' ? 'TIDAK LAYAK / AUDIT VPK' : effLane === 'KUNING' ? 'PENDING KLARIFIKASI' : 'LAYAK BAYAR'}
               </span>
             </div>
 
             <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
-              Berdasarkan temuan anomali multi-lapis (lonjakan 8.5x klaim baksos, DPJP terbukti non-aktif di SATUSEHAT SDMK, serta konfirmasi peserta pada Mobile JKN menyatakan tidak pernah menerima layanan fisioterapi), sistem merekomendasikan:
+              {effLane === 'HIJAU'
+                ? `Sintesis 4 lapis pada ${currentCase.id} (${currentCase.hospital}) menunjukkan lonjakan wajar (${spikeRatio.toFixed(1)}x baseline), status SDMK ${sipStatus}, serta ${sampleCount - deniedCount}/${sampleCount} peserta mengonfirmasi kehadiran. Direkomendasikan status Layak Bayar.`
+                : effLane === 'KUNING'
+                ? `Terdeteksi indikasi ketidaklengkapan/sinkronisasi pada ${currentCase.id} (SIP ${sipStatus}, rasio ${spikeRatio.toFixed(1)}x baseline). Direkomendasikan status Pending Klarifikasi Faskes dalam koridor SLA maksimal 10 hari kerja.`
+                : `Terdeteksi anomali kritikal pada ${currentCase.id} (${clusterVolume} berkas · ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, serta ${deniedCount}/${sampleCount} sampel peserta menyangkal layanan). Sistem merekomendasikan penahanan pra-bayar / audit VPK:`}
             </p>
 
-            {/* ACTION BUTTONS */}
-            <div className="space-y-2.5 pt-1">
+            {/* 4 OFFICIAL VEDIKA ACTION BUTTONS */}
+            <div className="space-y-2 pt-1">
               <span className={`text-[10px] font-bold uppercase tracking-wider block font-mono ${
                 isLight ? 'text-slate-600' : 'text-white/50'
               }`}>
-                Pilih Tindakan Verifikator:
+                Pilih Putusan Resmi Verifikator VEDIKA (4 Status):
               </span>
 
-              {/* 1. TUNDA BERITA ACARA */}
+              {/* 1. LAYAK BAYAR */}
               <button type="button"
-                disabled={isSubmitting}
-                onClick={() => handleActionClick('clarification')}
-                className={`w-full p-3.5 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
-                  verificatorAction === 'clarification'
+                disabled={isSubmitting || !activeUserCanAdjudicate}
+                onClick={() => handleActionClick('LAYAK_BAYAR')}
+                className={`w-full p-3 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer disabled:opacity-55 ${
+                  verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override'
+                    ? (isLight
+                        ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-500 text-emerald-950 shadow-md'
+                        : 'bg-emerald-500/20 border-emerald-500/60 ring-2 ring-emerald-500/40 text-white shadow-lg shadow-emerald-950/40')
+                    : (isLight
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/90')
+                }`}
+              >
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className={`text-xs font-bold ${
+                      verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override'
+                        ? (isLight ? 'text-emerald-900' : 'text-emerald-300')
+                        : (isLight ? 'text-slate-900' : 'text-white')
+                    }`}>
+                      1. Layak Bayar (Setujui FPK &amp; Proses Pencairan Pra-Bayar)
+                    </span>
+                    {(verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override') && (
+                      <span className="action-active-indicator text-[9.5px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                        AKTIF
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                    Seluruh 6 kaidah administrasi &amp; klinis terpenuhi. Klaim disahkan masuk rekapitulasi BAHV Layak Bayar ({currentCase.tariff}).
+                  </p>
+                </div>
+              </button>
+
+              {/* 2. PENDING KLARIFIKASI */}
+              <button type="button"
+                disabled={isSubmitting || !activeUserCanAdjudicate}
+                onClick={() => handleActionClick('PENDING_KLARIFIKASI')}
+                className={`w-full p-3 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer disabled:opacity-55 ${
+                  verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification'
+                    ? (isLight
+                        ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400 text-amber-950 shadow-md'
+                        : 'bg-amber-500/20 border-amber-500/60 ring-2 ring-amber-500/40 text-white shadow-lg shadow-amber-950/40')
+                    : (isLight
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/90')
+                }`}
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <AlertTriangle className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className={`text-xs font-bold ${
+                      verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification'
+                        ? (isLight ? 'text-amber-900' : 'text-amber-300')
+                        : (isLight ? 'text-slate-900' : 'text-white')
+                    }`}>
+                      2. Pending / Dikembalikan (Klarifikasi Faskes Maks 10 HK)
+                    </span>
+                    {(verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification') && (
+                      <span className="action-active-indicator text-[9.5px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                        AKTIF
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                    Menahan pembayaran sementara untuk perbaikan kelengkapan resume medis, SIP SATUSEHAT, atau bukti penunjang sesuai Perpres 82/2018 Pasal 76.
+                  </p>
+                </div>
+              </button>
+
+              {/* 3. DISPUTE TKMKB */}
+              <button type="button"
+                disabled={isSubmitting || !activeUserCanAdjudicate}
+                onClick={() => handleActionClick('DISPUTE_TKMKB')}
+                className={`w-full p-3 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer disabled:opacity-55 ${
+                  verificatorAction === 'DISPUTE_TKMKB'
+                    ? (isLight
+                        ? 'bg-purple-50 border-purple-500 ring-2 ring-purple-400 text-purple-950 shadow-md'
+                        : 'bg-purple-500/20 border-purple-500/60 ring-2 ring-purple-500/40 text-white shadow-lg')
+                    : (isLight
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/90')
+                }`}
+              >
+                <div className="w-8 h-8 rounded-xl bg-purple-700 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                  <Gavel className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className={`text-xs font-bold ${
+                      verificatorAction === 'DISPUTE_TKMKB'
+                        ? (isLight ? 'text-purple-900' : 'text-purple-300')
+                        : (isLight ? 'text-slate-900' : 'text-white')
+                    }`}>
+                      3. Sengketa / Dispute Klinis (Eskalasi TKMKB &amp; BA Sengketa)
+                    </span>
+                    {verificatorAction === 'DISPUTE_TKMKB' && (
+                      <span className="action-active-indicator text-[9.5px] bg-purple-700 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                        AKTIF
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                    Ketidaksepakatan kaidah koding INA-CBG, severity level, atau urgensi medik antara Verifikator &amp; RS guna sidang mediasi TKMKB.
+                  </p>
+                </div>
+              </button>
+
+              {/* 4. TIDAK LAYAK FRAUD */}
+              <button type="button"
+                disabled={isSubmitting || !activeUserCanAdjudicate}
+                onClick={() => handleActionClick('TIDAK_LAYAK_FRAUD')}
+                className={`w-full p-3 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer disabled:opacity-55 ${
+                  verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit'
                     ? (isLight
                         ? 'bg-rose-50 border-rose-500 ring-2 ring-rose-400 text-rose-950 shadow-md'
                         : 'bg-rose-500/20 border-rose-500/60 ring-2 ring-rose-500/40 text-white shadow-lg shadow-rose-950/40')
@@ -461,106 +833,53 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
-                    <span className={`text-xs font-bold break-words text-balance ${
-                      verificatorAction === 'clarification'
-                        ? (isLight ? 'text-rose-900 font-bold' : 'text-rose-300')
+                    <span className={`text-xs font-bold ${
+                      verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit'
+                        ? (isLight ? 'text-rose-900' : 'text-rose-300')
                         : (isLight ? 'text-slate-900' : 'text-white')
                     }`}>
-                      Tunda Berita Acara &amp; Minta Klarifikasi Faskes (SOP 10 Hari)
+                      4. Tidak Layak Bayar / Audit VPK (Tolak Indikasi Kecurangan JKN)
                     </span>
-                    {verificatorAction === 'clarification' && (
-                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                    {(verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit') && (
+                      <span className="action-active-indicator text-[9.5px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] mt-1 leading-relaxed text-pretty ${
-                    isLight ? 'text-slate-600' : 'text-white/60'
-                  }`}>
-                    Menahan pencairan tagihan {currentCase.tariff || 'klaim terkait'} sebelum batas SLA 10 hari sesuai Pasal 76 ayat (2) Perpres No. 82/2018.
+                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                    Membekukan pencairan {currentCase.tariff} dan menerbitkan SP-1 + penjadwalan audit faktual Tim Pencegahan Kecurangan ke {currentCase.hospital}.
                   </p>
                 </div>
               </button>
+            </div>
 
-              {/* 2. JADWALKAN AUDIT FAKTUAL LAPANGAN */}
-              <button type="button"
-                disabled={isSubmitting}
-                onClick={() => handleActionClick('audit')}
-                className={`w-full p-3.5 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
-                  verificatorAction === 'audit'
-                    ? (isLight
-                        ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400 text-amber-950 shadow-md'
-                        : 'bg-amber-500/20 border-amber-500/60 ring-2 ring-amber-500/40 text-white shadow-lg shadow-amber-950/40')
-                    : (isLight
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/90')
-                }`}
-              >
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-600 to-yellow-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-md">
-                  <AlertTriangle className="w-4 h-4 stroke-[2.5]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center justify-between gap-1.5">
-                    <span className={`text-xs font-bold break-words text-balance ${
-                      verificatorAction === 'audit'
-                        ? (isLight ? 'text-amber-900 font-bold' : 'text-amber-300')
-                        : (isLight ? 'text-slate-900' : 'text-white')
-                    }`}>
-                      Jadwalkan Audit Faktual Lapangan (Tim VPK BPJS)
-                    </span>
-                    {verificatorAction === 'audit' && (
-                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
-                        AKTIF
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-relaxed text-pretty ${
-                    isLight ? 'text-slate-600' : 'text-white/60'
-                  }`}>
-                    Menerjunkan verifikator pasca-klaim ke {currentCase.hospital || 'faskes terkait'} untuk memeriksa logbook dan rekam medis fisik.
-                  </p>
-                </div>
-              </button>
-
-              {/* 3. OVERRIDE LOLOSKAN */}
-              <button type="button"
-                disabled={isSubmitting}
-                onClick={() => handleActionClick('override')}
-                className={`w-full p-3.5 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
-                  verificatorAction === 'override'
-                    ? (isLight
-                        ? 'bg-emerald-50 border-emerald-600 ring-2 ring-emerald-500 text-emerald-950 shadow-md'
-                        : 'bg-emerald-500/20 border-emerald-500/60 ring-2 ring-emerald-500/40 text-white shadow-lg shadow-emerald-950/40')
-                    : (isLight
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/90')
-                }`}
-              >
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-md">
-                  <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center justify-between gap-1.5">
-                    <span className={`text-xs font-bold break-words text-balance ${
-                      verificatorAction === 'override'
-                        ? (isLight ? 'text-emerald-900 font-bold' : 'text-emerald-300')
-                        : (isLight ? 'text-slate-900' : 'text-white')
-                    }`}>
-                      Loloskan Klaim (Override Manual dengan Catatan Khusus)
-                    </span>
-                    {verificatorAction === 'override' && (
-                      <span className="action-active-indicator will-change-transform text-[9.5px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
-                        AKTIF
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-[11px] mt-1 leading-relaxed text-pretty ${
-                    isLight ? 'text-slate-600' : 'text-white/60'
-                  }`}>
-                    Hanya digunakan bila faskes telah menyertakan bukti fisik darurat yang sah dan disetujui Kepala Cabang.
-                  </p>
-                </div>
-              </button>
+            {/* ALASAN PENGEMBALIAN / DISPUTE / AUDIT VEDIKA */}
+            <div className="pt-2 space-y-1.5">
+              <div className={`text-[10.5px] font-bold flex items-center justify-between ${
+                isLight ? 'text-slate-800' : 'text-white/80'
+              }`}>
+                <span>Daftar Alasan Baku Pending / Dispute / Penolakan VEDIKA ({pendingReasons.length} dipilih):</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {VEDIKA_REASON_OPTIONS.map((reason) => {
+                  const selected = pendingReasons.includes(reason);
+                  return (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() => toggleReason(reason)}
+                      className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-semibold transition cursor-pointer ${
+                        selected
+                          ? (isLight ? 'bg-amber-100 border-amber-400 text-amber-950' : 'bg-amber-500/25 border-amber-400/50 text-amber-200')
+                          : (isLight ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-white/5 border-white/10 text-white/65 hover:bg-white/10')
+                      }`}
+                    >
+                      {selected ? '[Dipilih] ' : '+ '}
+                      {reason}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* VERIFIER NOTES TEXTAREA */}
@@ -645,9 +964,20 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
               <div>
                 <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>TINDAKAN TERPILIH:</span>
                 <span className={`verdict-status-badge will-change-transform font-bold block ${
-                  verificatorAction === 'clarification' ? 'text-rose-600' : verificatorAction === 'audit' ? 'text-amber-600' : isLight ? 'text-emerald-700' : 'text-emerald-400'
+                  (verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit') ? 'text-rose-600'
+                  : (verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification') ? 'text-amber-600'
+                  : verificatorAction === 'DISPUTE_TKMKB' ? 'text-purple-600'
+                  : isLight ? 'text-emerald-700' : 'text-emerald-400'
                 }`}>
-                  {verificatorAction ? (verificatorAction === 'clarification' ? 'TUNDA BAKB & KLARIFIKASI FASKES' : verificatorAction === 'audit' ? 'AUDIT FAKTUAL LAPANGAN' : 'OVERRIDE LOLOSKAN') : 'MENUNGGU DISPOSISI'}
+                  {verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override'
+                    ? 'LAYAK BAYAR (DISETUJUI PRA-BAYAR)'
+                    : verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification'
+                    ? 'PENDING KLARIFIKASI FASKES (SLA 10 HK)'
+                    : verificatorAction === 'DISPUTE_TKMKB'
+                    ? 'SENGKETA / DISPUTE KLINIS TKMKB'
+                    : verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit'
+                    ? 'TIDAK LAYAK / AUDIT FAKTUAL VPK'
+                    : 'MENUNGGU DISPOSISI'}
                 </span>
               </div>
 
@@ -741,17 +1071,19 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
       </div>
 
       {/* PDF DOSSIER PREVIEW MODAL WITH MOTION */}
-      <AnimatePresence>
-        {showPdfModal && typeof document !== 'undefined' && createPortal(
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowPdfModal(false);
-            }}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
-          >
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showPdfModal && (
+            <motion.div
+              key="bakb-modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowPdfModal(false);
+              }}
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+            >
             <motion.div 
               ref={modalRef}
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -830,39 +1162,66 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
                   </div>
                   <div>
                     <span className={isLight ? 'text-slate-500' : 'text-white/50'}>Nilai Tagihan:</span>
-                    <div className="font-bold text-rose-600">{currentCase.tariff}{currentCase.claimCount ? ` (${currentCase.claimCount} Klaim)` : ''}</div>
+                    <div className={`font-bold ${
+                      effLane === 'HIJAU'
+                        ? (isLight ? 'text-emerald-700' : 'text-emerald-400')
+                        : effLane === 'KUNING'
+                        ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                        : 'text-rose-600'
+                    }`}>{currentCase.tariff}{currentCase.claimCount ? ` (${currentCase.claimCount} Klaim)` : ''}</div>
                   </div>
                 </div>
 
                 {/* Multi-layer Findings */}
                 <div className="space-y-1.5 text-[11px]">
                   <h4 className={`font-bold border-b pb-1 ${isLight ? 'text-slate-900 border-slate-200' : 'text-white border-white/10'}`}>
-                    I. TEMUAN KECURANGAN MULTI-LAPIS (4-LAYER QUAD-TRIANGULATION)
+                    I. TEMUAN FORENSIK MULTI-LAPIS ({currentCase.id} · JALUR {effLane})
                   </h4>
                   <ul className={`list-disc pl-4 space-y-1 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                     <li>
-                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 1 (Pola Spatiotemporal):</strong> Lonjakan penagihan mendadak 8.5x dari baseline pasca acara baksos 12 Okt 2026. Terindikasi modus Phantom Billing &amp; Repeat Billing.
+                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 1 (Pola Spatiotemporal):</strong> Rasio pengajuan {spikeRatio.toFixed(1)}x dari baseline harian faskes ({clusterVolume} berkas klaster; S1 = {effS1}/100). {effLane === 'HIJAU' ? 'Konsisten dengan kapasitas layanan wajar.' : 'Memerlukan verifikasi kesesuaian episode dan dokumentasi klinis.'}
                     </li>
                     <li>
-                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 2 (SDMK SATUSEHAT):</strong> DPJP tertera dr. Hendra, Sp.KFR tercatat tidak memiliki SIP aktif di faskes ini pada tanggal pelayanan (Hard-Trigger).
+                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 2 (SDMK SATUSEHAT):</strong> DPJP {currentCase.dpjp} berstatus SIP <span className="font-mono font-bold">{sipStatus}</span> pada tanggal layanan {currentCase.date || '-'} (S2 = {effS2}/100).
                     </li>
                     <li>
-                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 3 (Mobile JKN Confirmation):</strong> Verifikasi out-of-band ke peserta terdaftar mengonfirmasi 8 dari 10 peserta tidak pernah hadir menerima layanan.
+                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 3 (Mobile JKN Confirmation):</strong>{' '}
+                      {deniedCount === 0
+                        ? `Seluruh ${sampleCount} dari ${sampleCount} peserta sampel mengonfirmasi kehadiran pelayanan secara sah (S3 = ${effS3}/100).`
+                        : `${deniedCount} dari ${sampleCount} peserta sampel menyatakan tidak menerima layanan sesuai catatan klaim (S3 = ${effS3}/100).`}
                     </li>
                     <li>
-                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 4 (Telemetri Biometrik FRISTA BPJS):</strong> 94.1% (80 dari 85 SEP) diterbitkan secara manual pada malam hari (22:14–23:48 WIB) tanpa pemindaian wajah 3D Liveness maupun sidik jari peserta.
+                      <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 4 (Telemetri Biometrik FRISTA &amp; Koding):</strong>{' '}
+                      {effLane === 'HIJAU'
+                        ? `Biometrik FRISTA liveness pada SEP ${currentCase.sep} dan tarif ${currentCase.code} tervalidasi normal.`
+                        : effLane === 'KUNING'
+                        ? `Menunggu sinkronisasi log FRISTA dan kelengkapan berkas penunjang INA-CBG ${currentCase.code}.`
+                        : `Terdeteksi anomali otentikasi biometrik / kesesuaian koding pada SEP ${currentCase.sep} (Skor Fusi: ${effScore.toFixed(1)}/100).`}
                     </li>
                   </ul>
                 </div>
 
                 {/* Verifier Verdict */}
                 <div className={`p-3 rounded-xl text-[11px] space-y-1 border ${
-                  isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/10 border-rose-500/30 text-rose-200'
+                  effLane === 'HIJAU' || verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override'
+                    ? (isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200')
+                    : effLane === 'KUNING' || verificatorAction === 'PENDING_KLARIFIKASI'
+                    ? (isLight ? 'bg-amber-50 border-amber-200 text-amber-950' : 'bg-amber-500/10 border-amber-500/30 text-amber-200')
+                    : (isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/10 border-rose-500/30 text-rose-200')
                 }`}>
-                  <h4 className={`font-bold ${isLight ? 'text-rose-800' : 'text-rose-300'}`}>II. REKOMENDASI DAN KEPUTUSAN VERIFIKATOR</h4>
-                  <p>
-                    Tagihan ditunda pencairannya sebelum Berita Acara Kelengkapan Berkas (BAKB) ditandatangani. Faskes wajib memberikan klarifikasi formal dalam jangka waktu 10 hari kalender sesuai ketentuan Pasal 76 ayat (2) Perpres No. 82/2018.
-                  </p>
+                  <h4 className={`font-bold ${
+                    effLane === 'HIJAU' || verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override'
+                      ? (isLight ? 'text-emerald-800' : 'text-emerald-300')
+                      : effLane === 'KUNING' || verificatorAction === 'PENDING_KLARIFIKASI'
+                      ? (isLight ? 'text-amber-800' : 'text-amber-300')
+                      : (isLight ? 'text-rose-800' : 'text-rose-300')
+                  }`}>II. REKOMENDASI DAN KEPUTUSAN VERIFIKATOR</h4>
+                  <p>{notes}</p>
+                  {pendingReasons.length > 0 && (
+                    <p className="font-mono text-[10px] pt-1">
+                      Alasan VEDIKA: {pendingReasons.join('; ')}
+                    </p>
+                  )}
                 </div>
 
                 {/* Signature Block */}
@@ -871,11 +1230,11 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
                     <p className={`font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Digital Seal: SHA-256 {auditSealHash ? `${auditSealHash.slice(0, 12)}...${auditSealHash.slice(-8)}` : 'menunggu disposisi'}</p>
                     <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Waktu Segel: {sealTimestamp ? sealTimestamp : new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                   </div>
-                  <div className="text-center w-48 relative">
-                    <div className="verdict-stamp-print will-change-transform absolute -top-4 left-4 pointer-events-none px-2.5 py-1 rounded border-2 border-emerald-600 text-emerald-600 font-mono font-black text-[10px] uppercase tracking-wider bg-emerald-500/10 backdrop-blur-2xs">
+                  <div className="text-center w-52 relative pt-6">
+                    <div className="verdict-stamp-print will-change-transform absolute top-0 right-3 pointer-events-none px-2.5 py-0.5 rounded border-2 border-emerald-600 text-emerald-700 font-mono font-black text-[9.5px] uppercase tracking-wider bg-emerald-50">
                       [SEALED · SAH]
                     </div>
-                    <p className={`mb-8 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Verifikator Klaim BPJS,</p>
+                    <p className={`mb-7 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Verifikator Klaim BPJS,</p>
                     <p className={`font-bold underline ${isLight ? 'text-slate-900' : 'text-white'}`}>{verifierInfo.name}</p>
                     <p className={isLight ? 'text-slate-500' : 'text-white/50'}>NIP: {verifierInfo.nip}</p>
                   </div>
@@ -927,10 +1286,11 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
                 </div>
               </div>
             </motion.div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* FOOTER ACTIONS */}
       <div className={`flex items-center justify-between p-3 rounded-2xl border ${
@@ -963,6 +1323,7 @@ Timestamp: ${sealTimestamp || new Date().toISOString()}`;
         </button>
       </div>
       </div>
+      )}
     </div>
   );
 }
