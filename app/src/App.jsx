@@ -274,54 +274,34 @@ export default function App() {
     };
   }, [authView, badgesUrl]);
 
-  // Navigasi Cockpit Sidebar Dikelompokkan Rapi
+  // Navigasi Cockpit Sidebar Terfokus Penuh pada Pengendalian Kecurangan Pra-Bayar
   const sidebarNavGroups = [
     {
-      group: 'Ringkasan & Analitik',
+      group: '1. Pengendalian Fraud (Fokus Utama)',
       items: [
-        { id: 'executive', label: 'Tinjauan Eksekutif', icon: LayoutDashboard },
-        { id: 'insights', label: 'Wawasan Analitik (IA)', icon: Shield },
-        { id: 'retention', label: 'Kohort & Retensi Audit', icon: Activity },
+        { id: 'executive', label: 'Kokpit Anti-Fraud Nasional', icon: LayoutDashboard },
+        { id: 'empirical', label: 'Peta Anomali 1,69 Juta Klaim', icon: Database },
+        { id: 'database_viewer', label: 'Gudang Data BPJS (SQL)', icon: Layers },
       ],
     },
     {
-      group: 'Triase & Berkas Klaim',
+      group: '2. Penyaringan Klaim Anomali',
       items: [
-        { id: 'queue', label: 'Antrean Triase Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { id: 'cases_mgmt', label: 'Berkas Klaim (Cases)', icon: Briefcase },
-        { id: 'quick_triage', label: 'Triase Cepat (Quick)', icon: Zap },
-        { id: 'flagged_sessions', label: 'Sesi Ditandai (Flags)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
-        { id: 'appointments', label: 'Jadwal Klarifikasi DPJP', icon: Calendar },
+        { id: 'queue', label: 'Pipeline Penyaringan Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
+        { id: 'investigation', label: 'Bedah Saring 3 Lapis (0-100)', icon: FileText, badge: 'Inti', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
+        { id: 'graph', label: 'Deteksi Sindikat & Klaim Ganda', icon: GitBranch },
+        { id: 'faskes', label: 'Profil Risiko Faskes (FRI)', icon: Building2 },
+        { id: 'dpjp', label: 'Validasi SIP & Geovelocity', icon: UserCheck },
+        { id: 'mobile_bridge', label: 'Konfirmasi Mobile JKN (S3)', icon: Radio },
       ],
     },
     {
-      group: 'Forensik Bukti 3 Lapis',
+      group: '3. Putusan & Audit Pra-Bayar',
       items: [
-        { id: 'investigation', label: 'Matriks 3 Lapis Bukti', icon: FileText, badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
-        { id: 'expansion_suite', label: 'Ekspansi 5 Pilar (AI)', icon: Layers, badge: '5 Pilar', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-        { id: 'graph', label: 'Peta Sindikat Faskes', icon: GitBranch },
-        { id: 'empirical', label: 'Forensik Data Empiris', icon: Database },
-        { id: 'faskes', label: 'Surveilans Faskes (FRI)', icon: Building2 },
-        { id: 'dpjp', label: 'Intelijen Beban DPJP', icon: UserCheck },
-        { id: 'mobile_bridge', label: 'Telemetri Mobile JKN', icon: Radio },
-      ],
-    },
-    {
-      group: 'Operasi AI & Agen',
-      items: [
-        { id: 'health_ai_chat', label: 'Asisten Audit JKN (AI)', icon: Sparkles, badge: 'HealthAI', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-        { id: 'agent_copilot', label: 'AI Agent Forensik ReAct', icon: Bot, badge: 'AI', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-        { id: 'command_center', label: 'Pusat Komando (CRM)', icon: Users },
-        { id: 'conversations', label: 'Dialog AI Forensik', icon: MessageSquare },
-        { id: 'interventions', label: 'Rencana Intervensi (TCA)', icon: ClipboardList, badge: 'TCA', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200' },
-      ],
-    },
-    {
-      group: 'Tata Kelola & Basis Data',
-      items: [
-        { id: 'decision', label: 'Konsol Eksekusi & BAKB', icon: ShieldAlert },
+        { id: 'decision', label: 'Konsol Putusan & BAKB', icon: ShieldAlert },
+        { id: 'cases_mgmt', label: 'Daftar Berkas & Klarifikasi', icon: Briefcase },
+        { id: 'flagged_sessions', label: 'Klaim Ditandai (Hold/Flag)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
         { id: 'audit', label: 'Ledger Audit SHA-256', icon: Key },
-        { id: 'database_viewer', label: 'Penampil Basis Data (SQL)', icon: Database },
       ],
     },
   ];
@@ -2223,9 +2203,9 @@ export default function App() {
                     {dashboardTab === 'investigation' && (
                       <CaseInvestigation 
                         caseData={selectedCase}
-                        s1={s1}
-                        s2={s2}
-                        s3={s3}
+                        s1={selectedCase?.s1 ?? s1}
+                        s2={selectedCase?.s2 ?? s2}
+                        s3={selectedCase && patientResponse === null ? (selectedCase.s3 ?? s3) : s3}
                         patientResponse={patientResponse}
                         onBackToQueue={() => setDashboardTab('queue')}
                         onOpenGraph={() => setDashboardTab('graph')}

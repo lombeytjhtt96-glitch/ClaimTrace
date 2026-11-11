@@ -11,78 +11,68 @@
 
 ---
 
-## 1. Ringkasan Inovasi (Evidence-First Quad-Triangulation)
+## 1. Tujuan Tunggal & Cara Menyaring Klaim Anomali (Skala 0 - 100)
 
-ClaimTrace menghadirkan paradigma **"Satu skor prioritas, empat sinyal bukti faktual independen, keputusan mutlak tetap di tangan verifikator medis (Human-in-the-Loop)"**. Sistem ini menutup celah verifikasi berkas tunggal pra-bayar (Vedika) sebelum terbit berita acara kelengkapan berkas (SLA 10 hari kerja sesuai amanat **Perpres No. 82 Tahun 2018 Pasal 74**), sehingga anomali klaim fiktif (*phantom billing*), klaim berulang (*repeat billing*), maupun manipulasi tingkat keparahan (*upcoding*) dapat ditapis secara terukur dan deterministik tanpa menghambat pencairan klaim fasilitas kesehatan yang patuh.
+**Tujuan Tunggal ClaimTrace:** Mengendalikan kecurangan (*anti-fraud*) klaim FKRTL secara **pra-bayar** -- berfokus pada **#6 Phantom Billing**, **#11 Repeat/Split Billing**, dan **Upcoding INA-CBG** -- agar kebocoran Dana Jaminan Sosial (DJS) dicegah sebelum pencairan tanpa melanggar SLA verifikasi 10 hari kerja (Perpres No. 82 Tahun 2018).
 
-```
-                              +----------------------------------+
-                              |     Input Berkas Klaim Masuk     |
-                              +-----------------+----------------+
-                                                |
-        +-----------------------+---------------+-----------------------+
-        |                       |               |                       |
-        v                       v               v                       v
- [ Sinyal 1: 35% Bobot ] [ Sinyal 2: 25% Bobot ] [ Sinyal 3: 25% Bobot ] [ Sinyal 4: 15% Bobot ]
-   Integritas Klinis        Jejak SDMK SATUSEHAT     Telemetri Mobile JKN    Biometrik FRISTA
-• Radar Klaster (#6)      • Validasi SIP Kemenkes • Konfirmasi Peserta 1-Klik • Presensi Terminal Wajah
-• Rekonsiliasi Episode    • OSRM Geovelocity      • Minimasi Data (UU PDP)   • Anti-Pencatutan Fisik
-• Deteksi Upcoding        • Beban Wajar Dokter    • Zero-PHI Encryption      • Log Terminal Faskes
-        |                       |               |                       |
-        +-----------------------+---------------+-----------------------+
-                                                |
-                                                v
-                               +----------------------------------+
-                               |    Fusi Skor Risiko (0 - 100)    |
-                               |  S = 0.35*S1 + 0.25*S2 + ...     |
-                               |  + Hard Trigger Independen       |
-                               +----------------+-----------------+
-                                                |
-        +---------------------------------------+---------------------------------------+
-        |                                       |                                       |
-        v                                       v                                       v
- [ JALUR HIJAU ]                         [ JALUR KUNING ]                        [ JALUR MERAH ]
-    (S < 25)                               (25 <= S < 65)                           (S >= 65)
-  Alur Cepat Sah                     Ketidakpastian Administratif             Prioritas Telaah Pra-Bayar
- (Auto-Clearance)                    (Klarifikasi Dokumen Faskes)            (HOLD_BAKB / Fraud Kritis)
- 3.892 Klaim (89,6%)                       364 Klaim (8,4%)                       85 Klaim (1,9%)
-        |                                       |                                       |
-        +---------------------------------------+---------------------------------------+
-                                                |
-                                                v
-                               +----------------------------------+
-                               |  Berkas Siap-Audit Deterministik |
-                               |  + Rantai Hash SHA-256 Imutabel  |
-                               |  + Berita Acara QR Code Resmi    |
-                               |  + Keputusan Human-in-the-Loop   |
-                               +----------------------------------+
+Paradigma kerja: **"Satu skor prioritas (0 - 100), tiga lapis bukti faktual independen, keputusan mutlak tetap di tangan verifikator medis (Human-in-the-Loop)."**
+
+```text
+                        +---------------------------------------+
+                        |    Input Berkas FPK / Klaim FKRTL     |
+                        +-------------------+-------------------+
+                                            |
+        +-----------------------------------+-----------------------------------+
+        |                                   |                                   |
+        v                                   v                                   v
+ [ Sinyal 1: Bobot 50% ]            [ Sinyal 2: Bobot 30% ]            [ Sinyal 3: Bobot 20% ]
+   Pola Tagihan & Semantik           Legalitas SIP & OSRM DPJP           Konfirmasi Mobile JKN
+ - Lonjakan Klaster >= 3,0x         - Validasi SIP SATUSEHAT SDMK      - Push Biner Ya / Tidak
+ - Repeat Billing <= 30 hari        - Geovelocity OSRM > 120 km/jam    - Zero-PHI (UU PDP 27/2022)
+ - ChromaDB Similarity >= 90%       - Beban > 40 pasien/hari           - Absen Respon -> Kuning
+ - Pengecualian PRB <= 30 hari      - Hard Trigger: SIP Expired
+        |                                   |                                   |
+        +-----------------------------------+-----------------------------------+
+                                            |
+                                            v
+                        +---------------------------------------+
+                        |   Fusi Deterministik (Skala 0 - 100)  |
+                        |   S = 0,50*S1 + 0,30*S2 + 0,20*S3     |
+                        +-------------------+-------------------+
+                                            |
+        +-----------------------------------+-----------------------------------+
+        |                                   |                                   |
+        v                                   v                                   v
+ [ JALUR HIJAU ]                    [ JALUR KUNING ]                    [ JALUR MERAH ]
+  (0,0 - 49,9)                        (50,0 - 74,9)                      (75,0 - 100,0)
+ Wajar / Fast-Track             Klarifikasi Berkas / Unsynced         Hard Trigger SIP Expired
+   (< 24 Jam)                    (Tidak langsung vonis fraud)         Hold Pra-Bayar & BAKB SHA-256
 ```
 
 ---
 
-## 2. Empat Lapis Sinyal Triase Independen (Quad-Triangulation)
+## 2. Tiga Lapis Inti, Ambang Saring, & Data Gudang DuckDB
 
-1. **Sinyal 1: Integritas Klinis, Radar Klaster & Upcoding (Bobot 35%)**  
-   Memadukan model Isolation Forest dan representasi vektor semantik untuk mendeteksi lonjakan klaim massal paska-baksos (#6), penagihan berulang (#11), serta manipulasi tingkat keparahan (*Upcoding* dari Level I ke III) sesuai kaidah Permenkes No. 26/2021 dan Permenkes No. 3/2023. Dilengkapi filter pengecualian otomatis untuk obat kronis Program Rujuk Balik (PRB) sesuai Pasal 37 Permenkes No. 3/2023.
-
-2. **Sinyal 2: Validasi SIP DPJP & Geovelocity OSRM (Bobot 25%)**  
-   Merekonsiliasi keabsahan Surat Izin Praktik (SIP) dokter penanggung jawab pelayanan langsung terhadap registri SATUSEHAT SDMK Kemenkes RI. Menggunakan mesin rute OSRM untuk mendeteksi *Impossible Travel* (kecepatan perpindahan antar-faskes >120 km/jam pada menit yang sama) serta ambang batas beban wajar dokter.
-
-3. **Sinyal 3: Telemetri Konfirmasi Partisipatif Mobile JKN (Bobot 25%)**  
-   Pengiriman konfirmasi kehadiran biner (1-klik Ya/Tidak) langsung ke gawai peserta terdaftar saat klaim dicurigai anomali. Menerapkan prinsip *Zero-PHI* (tanpa rincian diagnosa medis atau obat), sepenuhnya patuh pada UU No. 27 Tahun 2022 (UU PDP).
-
-4. **Sinyal 4: Validasi Presensi Terminal Biometrik FRISTA (Bobot 15%)**  
-   Pencocokan log perekaman biometrik wajah pada mesin FRISTA faskes untuk membuktikan kehadiran fisik pasien di ruang layanan pada jam penagihan, mematahkan sindikasi manipulasi berkas baksos fiktif.
+1. **Sinyal 1 -- Pola Tagihan, Semantik NLP, & Outlier AI (Bobot 50%):**
+   Mendeteksi lonjakan klaster (`rasio_lonjakan_baseline >= 3,0x` tanpa izin baksos resmi), penagihan ulang episode identik (#11 Repeat Billing `<= 30` hari atau klaim ganda hari sama lintas/intra RS), upcoding Level I ke III, serta duplikasi narasi resume medis via ChromaDB (`all-MiniLM-L6-v2` cosine similarity `>= 90%`) dan Isolation Forest. Obat kronis Program Rujuk Balik (PRB `<= 30` hari) dikecualikan otomatis sesuai Permenkes No. 3/2023 Pasal 37.
+2. **Sinyal 2 -- Legalitas SIP DPJP & Geovelocity OSRM (Bobot 30%):**
+   Memeriksa masa berlaku SIP DPJP pada tanggal layanan (`EXPIRED` langsung memicu Hard Trigger ke Jalur Merah minimal skor `75,0`, sedangkan `UNSYNCED` dialihkan ke Jalur Kuning agar tidak menjadi *false positive* fraud), memeriksa beban harian DPJP (`> 40` pasien/hari), dan menghitung kelayakan rute darat via OSRM (`> 120 km/jam` antar RS dalam < 45 menit).
+3. **Sinyal 3 -- Konfirmasi Biner Peserta Mobile JKN (Bobot 20%):**
+   Mengirim konfirmasi kehadiran Ya/Tidak berprinsip *Zero-PHI* (tanpa mengekspos kode diagnosis ICD-10 atau obat) sesuai Pasal 34 UU PDP No. 27/2022. Ketiadaan respons peserta tidak memvonis Jalur Merah.
+4. **Data Empiris Gudang Data DuckDB (`claimtrace_warehouse.db` -- Total 6.264.346 Baris):**
+   - `bpjs_fkrtl_all`: **1.699.219 klaim FKRTL** dari **2.091 FKRTL** di **496 Kab/Kota (38 Provinsi)** senilai **Rp 1,536 Triliun** (rata-rata `4.643` klaim/hari, puncak `7.870`/hari).
+   - `bpjs_kepesertaan_all`: **2.590.751 baris** master kepesertaan (1.065.281 keluarga).
+   - `bpjs_diagnosissekunder_all`: **1.967.670 baris** diagnosis sekunder + `6.706` referensi ICD-10.
+   - Anomali Empiris Terindeks: **1.631 klaim** koreksi tarif langsung (**Rp 2,07 Miliar**) dan **4.876 pasang** klaim ganda hari sama (`2.584` lintas RS Rp `19,26 Miliar` + `2.292` intra RS Rp `13,33 Miliar` = total eksposur **Rp 32,59 Miliar**).
 
 ---
 
-## 3. Fitur Utama Platform & Arsitektur Cockpit Verifikator
+## 3. Struktur Cockpit Terfokus (3 Kelompok Inti Pengendalian Fraud)
 
-- **Dual Cockpit Interaktif:** Menampilkan dashboard kerja verifikator BPJS Kesehatan berdampingan secara real-time dengan simulator Mobile JKN peserta dalam satu layar sinkron.
-- **Decision Console & Berita Acara QR SHA-256:** Memfasilitasi eksekusi putusan verifikator (Approve, Clarify, Hold) dengan penerbitan dokumen resmi Berita Acara Klarifikasi Bersama (BAKB) berstempel hash kriptografis SHA-256 anti-sengketa.
-- **Statutory Business Days SLA Engine:** Menghitung batas waktu 10 hari kerja verifikasi murni sesuai Pasal 74 Perpres No. 82/2018 (mengecualikan akhir pekan dan 16 hari libur nasional resmi SKB 3 Menteri 2026), melindungi BPJS Kesehatan dari denda keterlambatan 1%.
-- **Kontrol Akses Berbasis Hak Istimewa (Internet2 Grouper Model):** Otorisasi berlapis (`READ`, `CLARIFY`, `ADJUDICATE`, `ADMIN`) dengan penandatanganan digital NIP verifikator.
-- **Basis Data Warehouse Skala Penuh:** Mengelola 4.341 berkas klaim nasional: 3.892 klaim Jalur Hijau (Rp 18,42 Miliar), 364 klaim Jalur Kuning (Rp 1,84 Miliar), dan 85 klaim prioritas Jalur Merah dengan potensi kebocoran Rp 72.450.000,- berhasil dicegah pra-bayar.
+Navigasi disederhanakan menjadi 3 kelompok inti agar operator dan verifikator menguasai alur penyaringan tanpa distraksi halaman non-inti:
+- **1. Pengendalian Fraud:** Kokpit Anti-Fraud Nasional, Peta Anomali 1,69 Juta Klaim, Gudang Data BPJS (DuckDB SQL).
+- **2. Penyaringan Klaim Anomali:** Pipeline Penyaringan Klaim 4-Tahap (`GET /api/v1/screening/pipeline-summary`), Bedah Saring 3 Lapis (`0-100`), Deteksi Sindikat & Klaim Ganda, Profil Risiko Faskes (FRI), Validasi SIP & Geovelocity DPJP, Konfirmasi Mobile JKN (Dual View).
+- **3. Putusan & Audit Pra-Bayar:** Konsol Putusan & BAKB QR SHA-256, Daftar Berkas & Klarifikasi, Klaim Ditandai (Hold/Flag), dan Ledger Audit SHA-256 tamper-evident.
 
 ---
 
@@ -133,9 +123,10 @@ npm run dev -- --host 0.0.0.0 --port 3000
 
 ## 5. Pengujian Kualitas & Validasi Otomatis
 
-Seluruh 222 pengujian otomatis mencakup keamanan kriptografis, kalkulasi SLA hari kerja, integritas rantai audit SHA-256, deteksi tamper-evident, stress test throughput SIMD 500k klaim, dan algoritma penapisan multi-sinyal:
+Pengujian otomatis (`backend/tests/` dan `tests_e2e/`) memvalidasi keamanan kriptografis, kalkulasi SLA hari kerja, integritas rantai audit SHA-256, rule anti-fraud, Zero-PHI UU PDP, dan algoritma penapisan `0,50*S1 + 0,30*S2 + 0,20*S3`:
 ```bash
-python3 -m pytest backend/tests/ -v
+cd backend && python3 -m pytest tests/ -q
+python3 -m pytest tests_e2e/ -q
 ```
 **Hasil Uji Kualitas Backend:**
 - **222 of 222 Tests Passed (100% Green)**

@@ -125,3 +125,23 @@ def test_insights_reports_endpoint():
         assert "assessment_count" in r
         assert "high_risk_count" in r
 
+
+def test_screening_pipeline_summary_endpoint():
+    response = client.get("/api/v1/screening/pipeline-summary")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    spec = data["scoring_spec"]
+    assert spec["scale_min"] == 0
+    assert spec["scale_max"] == 100
+    assert spec["weights"]["s1_pola_klinis"] == 0.5
+    assert spec["weights"]["s2_dpjp_sdmk"] == 0.3
+    assert spec["weights"]["s3_mobile_jkn"] == 0.2
+    assert len(spec["lanes"]) == 3
+    assert spec["lanes"][0]["code"] == "HIJAU"
+    assert spec["lanes"][1]["code"] == "KUNING"
+    assert spec["lanes"][2]["code"] == "MERAH"
+    assert len(data["stages"]) == 4
+    assert data["portfolio_baseline"]["total_claims"] >= 1699219
+    assert data["live_triage_queue"]["total_active"] >= 6
+

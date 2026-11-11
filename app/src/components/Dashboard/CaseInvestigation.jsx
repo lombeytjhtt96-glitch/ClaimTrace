@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import TemporalAlertCard from './TemporalAlertCard';
 import { 
@@ -80,21 +81,48 @@ export default function CaseInvestigation({
   isLight = false
 }) {
   const [volumeViewType, setVolumeViewType] = useState('bar'); // 'bar' | 'area'
+  const claimsUrl = `${API_BASE_URL}/api/v1/claims`;
+  const [hydratedLeadCase, setHydratedLeadCase] = useState(() => {
+    const rawList = getCachedJsonSync(claimsUrl);
+    if (!Array.isArray(rawList) || rawList.length === 0) return null;
+    const redFirst = rawList.find((r) => r?.triage?.triage_lane === 'MERAH') || rawList[0];
+    return redFirst ? { rawClaim: redFirst.claim, rawTriage: redFirst.triage } : null;
+  });
+
+  useEffect(() => {
+    if (caseData && typeof caseData === 'object' && caseData.rawClaim) return;
+    let active = true;
+    cachedAuthGetJson(claimsUrl).then((rawList) => {
+      if (!active || !Array.isArray(rawList) || rawList.length === 0) return;
+      const targetId = typeof caseData === 'string' ? caseData : caseData?.id;
+      const matched = (targetId && rawList.find((r) => r?.claim?.claim_id === targetId))
+        || rawList.find((r) => r?.triage?.triage_lane === 'MERAH')
+        || rawList[0];
+      if (matched) {
+        setHydratedLeadCase({ rawClaim: matched.claim, rawTriage: matched.triage });
+      }
+    });
+    return () => { active = false; };
+  }, [caseData, claimsUrl]);
+
+  const rawClaim = (typeof caseData === 'object' && caseData?.rawClaim) || hydratedLeadCase?.rawClaim || null;
+  const rawTriage = (typeof caseData === 'object' && caseData?.rawTriage) || hydratedLeadCase?.rawTriage || null;
+
   const defaultCase = {
-    id: typeof caseData === 'string' ? caseData : 'CLM-2026-10-085',
-    sep: '0132R0011026V000085',
-    hospital: 'RS Khusus Mitra Husada',
-    hospitalType: 'FKRTL (RS Khusus Kelas C)',
-    code: 'Z-3-12-0',
-    description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
-    tariff: 'Rp 15.300.000 (85 Klaim)',
-    dpjp: 'dr. Hendra, Sp.KFR',
-    sipNumber: '446.1/108/DPJP/2023',
-    date: '14 Okt 2026',
-    batchTag: 'BAKSOS_MASSAL_OKT26',
-    sampleCount: 10,
-    participantCount: 10,
-    deniedCount: patientResponse === 'denied' ? 9 : patientResponse === 'confirmed' ? 7 : 8,
+    id: typeof caseData === 'string' ? caseData : rawClaim?.claim_id || 'CLM-2026-8801',
+    sep: rawClaim?.fkl02_id_kunjungan || '0132R0011026V000085',
+    hospital: rawClaim?.nama_faskes || 'RS Khusus Mitra Husada',
+    hospitalType: `${rawClaim?.fkl08_jenis_faskes || 'FKRTL'} (Kelas ${rawClaim?.kelas_rs || 'C'})`,
+    code: rawClaim?.ina_cbg_code || 'Z-3-12-0',
+    description: rawClaim?.deskripsi_cbg || 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
+    tariff: `Rp ${Number(rawClaim?.nilai_klaim_rp || 15300000).toLocaleString('id-ID')}`,
+    dpjp: rawClaim?.dpjp_meta?.nama_dpjp_alias || 'dr. Hendra, Sp.KFR',
+    sipNumber: rawClaim?.dpjp_meta?.dpjp_id_hash || '446.1/108/DPJP/2023',
+    date: rawClaim?.tanggal_layanan || '2026-10-14',
+    batchTag: rawClaim?.episode_meta?.cluster_id || 'BAKSOS_MASSAL_OKT26',
+    sampleCount: rawClaim?.mobile_meta?.sampel_terkirim || 10,
+    participantCount: rawClaim?.mobile_meta?.sampel_terkirim || 10,
+    deniedCount: rawClaim?.mobile_meta?.respon_tidak_hadir ?? (patientResponse === 'denied' ? 9 : patientResponse === 'confirmed' ? 7 : 8),
   };
 
   const currentCase = {
@@ -110,64 +138,154 @@ export default function CaseInvestigation({
     dpjp: (typeof caseData === 'object' && caseData?.dpjp) || defaultCase.dpjp,
     sipNumber: (typeof caseData === 'object' && caseData?.sipNumber) || defaultCase.sipNumber,
     date: (typeof caseData === 'object' && caseData?.date) || defaultCase.date,
-    deniedCount: (typeof caseData === 'object' && caseData?.deniedCount !== undefined)
-      ? caseData.deniedCount
-      : (patientResponse === 'denied' ? 9 : patientResponse === 'confirmed' ? 7 : 8),
-    sampleCount: (typeof caseData === 'object' && caseData?.sampleCount !== undefined)
-      ? caseData.sampleCount
-      : 10,
-    participantCount: (typeof caseData === 'object' && (caseData?.participantCount || caseData?.sampleCount))
-      || 10,
+    deniedCount: rawClaim?.mobile_meta?.respon_tidak_hadir !== undefined
+      ? rawClaim.mobile_meta.respon_tidak_hadir
+      : ((typeof caseData === 'object' && caseData?.deniedCount !== undefined)
+        ? caseData.deniedCount
+        : (patientResponse === 'denied' ? 9 : patientResponse === 'confirmed' ? 7 : 8)),
+    sampleCount: Math.max(1, Number(rawClaim?.mobile_meta?.sampel_terkirim ?? ((typeof caseData === 'object' && caseData?.sampleCount) || 10))),
+    participantCount: Math.max(1, Number(rawClaim?.mobile_meta?.sampel_terkirim ?? ((typeof caseData === 'object' && (caseData?.participantCount || caseData?.sampleCount)) || 10))),
   };
 
-  const weightedS1 = Math.round(0.5 * s1 * 10) / 10;
-  const weightedS2 = Math.round(0.3 * s2 * 10) / 10;
-  const weightedS3 = Math.round(0.2 * s3 * 10) / 10;
-  const totalScore = Math.round((weightedS1 + weightedS2 + weightedS3) * 10) / 10;
+  const effS1 = Number(rawClaim?.s1_score ?? rawTriage?.score_breakdown?.s1_value ?? s1);
+  const effS2 = Number(rawClaim?.s2_score ?? rawTriage?.score_breakdown?.s2_value ?? s2);
+  const effS3 = patientResponse !== null ? Number(s3) : Number(rawClaim?.s3_score ?? rawTriage?.score_breakdown?.s3_value ?? s3);
+  const weightedS1 = Math.round(0.5 * effS1 * 10) / 10;
+  const weightedS2 = Math.round(0.3 * effS2 * 10) / 10;
+  const weightedS3 = Math.round(0.2 * effS3 * 10) / 10;
+  const rawFusionScore = Math.round((weightedS1 + weightedS2 + weightedS3) * 10) / 10;
 
-  // AI Automatic Anomaly Detection Variables
-  const isPhantomBilling = currentCase.code === 'Z-3-12-0' || currentCase.id.includes('8801') || currentCase.id.includes('085') || currentCase.batchTag?.includes('BAKSOS');
-  const isRepeatBilling = currentCase.id.includes('8802') || currentCase.code?.startsWith('K-4') || currentCase.description?.toLowerCase().includes('berulang');
+  const sipStatus = rawClaim?.dpjp_meta?.sip_status || 'EXPIRED';
+  const hardTriggerActivated = Boolean(rawTriage?.hard_trigger_activated || sipStatus === 'EXPIRED');
+  const totalScore = patientResponse !== null
+    ? (hardTriggerActivated ? Math.max(rawFusionScore, 75) : rawFusionScore)
+    : Number(rawTriage?.final_priority_score ?? (hardTriggerActivated ? Math.max(rawFusionScore, 75) : rawFusionScore));
 
-  const aiAnomalyCategory = isPhantomBilling 
-    ? 'Modus #6: Phantom Billing (Klaim Fiktif Fisioterapi / Baksos Massal)' 
-    : isRepeatBilling 
-    ? 'Modus #11: Repeat Billing (Penagihan Klaim Berulang Episode)' 
-    : totalScore >= 75 
-    ? 'Anomali Multivariat Tingkat Tinggi' 
-    : 'Pola Layanan Konsisten Normal';
+  const effectiveLane = (totalScore >= 75 || hardTriggerActivated)
+    ? 'MERAH'
+    : (totalScore >= 50 || sipStatus === 'UNSYNCED')
+    ? 'KUNING'
+    : 'HIJAU';
 
-  const aiAnomalyScore = isPhantomBilling ? 94.8 : isRepeatBilling ? 87.4 : Math.min(24.5, totalScore);
-  const aiConfidenceScore = isPhantomBilling ? 96.8 : isRepeatBilling ? 94.2 : 95.0;
-
-  const aiDrivers = isPhantomBilling ? [
-    { label: 'Rasio Lonjakan Klaster Spatiotemporal (8.5x)', pct: 34.5, val: '85 Klaim / 48 Jam', anomalous: true },
-    { label: 'Kemiripan Semantik Resume Medis ChromaDB', pct: 28.2, val: '98.4% Cosine Match', anomalous: true },
-    { label: 'Rasio Penolakan Presensi Mobile JKN', pct: 22.1, val: `${currentCase.deniedCount}/${currentCase.sampleCount} Peserta Menolak`, anomalous: true },
-    { label: 'Diskrepansi Izin Praktik DPJP SATUSEHAT', pct: 15.2, val: 'SIP Expired (Hard-Trigger)', anomalous: true },
-  ] : isRepeatBilling ? [
-    { label: 'Indikasi Klaim Berulang Episode Sama', pct: 41.5, val: 'Unbundling Re-Submission', anomalous: true },
-    { label: 'Interval Admisi Terlalu Singkat', pct: 26.5, val: 'Selisih 3 Hari Rawat', anomalous: true },
-    { label: 'Kesamaan Kode CBG & ICD-10 Primer', pct: 19.5, val: 'K29.7 Identik', anomalous: true },
-    { label: 'Deviasi Kapasitas Jam Kerja DPJP', pct: 12.5, val: 'Beban Layanan > 50 px', anomalous: false },
-  ] : [
-    { label: 'Konsistensi Riwayat Terapi Kronis', pct: 45.0, val: 'Sesuai Pedoman JKN', anomalous: false },
-    { label: 'Status Keaktifan SIP DPJP di SDMK', pct: 25.0, val: 'SIP Aktif Valid', anomalous: false },
-    { label: 'Tingkat Konfirmasi Mobile JKN', pct: 20.0, val: '100% Peserta Hadir', anomalous: false },
-    { label: 'Kesesuaian Tarif INA-CBG Permenkes', pct: 10.0, val: 'Sesuai Standar', anomalous: false },
+  const clusterVolume = Number(rawClaim?.episode_meta?.jumlah_klaim_klaster ?? currentCase.claimCount ?? 85);
+  const spikeRatio = Number(rawClaim?.episode_meta?.rasio_lonjakan_baseline ?? 8.5);
+  const baselineVol = Math.max(1, Math.round(clusterVolume / Math.max(spikeRatio, 1)));
+  const dynamicVolumeData = [
+    { date: 'H-3', volume: baselineVol, isSpike: false },
+    { date: 'H-2', volume: Math.max(1, baselineVol + 2), isSpike: false },
+    { date: 'H-1', volume: Math.max(1, baselineVol - 1), isSpike: false },
+    { date: 'Tgl Klaim', volume: clusterVolume, isSpike: spikeRatio >= 3.0 },
+    { date: 'H+1', volume: Math.max(1, baselineVol + 1), isSpike: false },
   ];
 
-  const aiRationale = isPhantomBilling
-    ? 'Model AI Ensemble (Isolation Forest + ChromaDB MiniLM) secara otomatis mendeteksi anomali kritis Modus #6 Phantom Billing. Ditemukan lonjakan klaster 8.5x lipat dari baseline faskes, diperkuat duplikasi narasi resume medis dengan cosine similarity 98.4% antar-pasien dalam klaster yang sama, serta 8 dari 10 peserta Mobile JKN membantah menerima layanan fisioterapi massal.'
-    : isRepeatBilling
-    ? 'Model AI Ensemble mendeteksi anomali Modus #11 Repeat Billing. Ditemukan penagihan berulang pada episode dan kode diagnosis identik dalam selisih 3 hari admisi pasca-pemulangan tanpa indikasi komplikasi darurat yang sah.'
-    : 'Model AI memverifikasi integritas klaim sesuai baseline normal: seluruh indikator spatiotemporal, SIP dokter di SATUSEHAT SDMK, dan konfirmasi presensi Mobile JKN berada pada rentang wajar.';
+  // AI Automatic Anomaly Detection Variables (grounded on live backend triage output when present)
+  const liveAi = rawTriage?.ai_anomaly_prediction;
+  const isPhantomBilling = liveAi?.primary_anomaly_category === 'PHANTOM_BILLING' || (!liveAi && (currentCase.code === 'Z-3-12-0' || currentCase.id.includes('8801') || currentCase.id.includes('085') || currentCase.batchTag?.includes('BAKSOS')));
+  const isRepeatBilling = liveAi?.primary_anomaly_category === 'REPEAT_BILLING' || (!liveAi && (currentCase.id.includes('8802') || currentCase.code?.startsWith('K-4') || currentCase.description?.toLowerCase().includes('berulang')));
 
-  const aiRecommendation = isPhantomBilling
-    ? 'Tahan Pembayaran Pra-Bayar (Jalur Merah) · Terbitkan Berita Acara Klarifikasi Bersama (BAKB) & Tiket Investigasi SIGAP'
+  const categoryNames = {
+    PHANTOM_BILLING: 'Modus #6: Phantom Billing (Klaim Fiktif Klaster Massal)',
+    REPEAT_BILLING: 'Modus #11: Repeat Billing (Penagihan Klaim Berulang Episode)',
+    IMPOSSIBLE_TRAVEL: 'Anomali Geovelocity DPJP > 120 km/jam (Impossible Travel)',
+    UPCODING_SEVERITY: 'Modus Upcoding Tingkat Keparahan INA-CBG Level III',
+    ADMINISTRATIVE_HARD_TRIGGER: 'Hard Trigger: SIP DPJP Kedaluwarsa pada Tanggal Layanan',
+    ADMINISTRATIVE_UNCERTAINTY: 'Ketidakpastian Sinkronisasi SATUSEHAT SDMK (Jalur Kuning)',
+    NORMAL_CLAIM: 'Klaim Wajar Konsisten (Lolos Saring Fast-Track)',
+  };
+
+  const aiAnomalyCategory = liveAi?.primary_anomaly_category
+    ? (categoryNames[liveAi.primary_anomaly_category] || liveAi.primary_anomaly_category)
+    : isPhantomBilling
+    ? categoryNames.PHANTOM_BILLING
     : isRepeatBilling
-    ? 'Tangguhkan Klaim Duplikat · Rekonsiliasi Riwayat Episode Sebelumnya via VClaim Bridging'
-    : 'Lolos Cepat Vedika Digital (Jalur Hijau) · Pembayaran Tepat Waktu Tanpa Penundaan';
+    ? categoryNames.REPEAT_BILLING
+    : effectiveLane === 'MERAH'
+    ? 'Anomali Multivariat Tingkat Tinggi'
+    : effectiveLane === 'KUNING'
+    ? categoryNames.ADMINISTRATIVE_UNCERTAINTY
+    : categoryNames.NORMAL_CLAIM;
+
+  const aiAnomalyScore = liveAi ? Number(liveAi.anomaly_score) : (effectiveLane === 'MERAH' ? Math.max(totalScore, 85) : effectiveLane === 'KUNING' ? 58.0 : Math.min(24.5, totalScore));
+  const aiConfidenceScore = liveAi ? Number(liveAi.confidence_score) : 95.0;
+
+  const aiDrivers = Array.isArray(liveAi?.feature_drivers) && liveAi.feature_drivers.length > 0
+    ? liveAi.feature_drivers.map((d) => ({
+        label: d.feature_label || d.feature_name,
+        pct: Math.round(Number(d.contribution_pct || 0) * 10) / 10,
+        val: String(d.raw_value ?? '-'),
+        anomalous: Number(d.contribution_pct || 0) >= 20 || effectiveLane === 'MERAH',
+      }))
+    : isPhantomBilling ? [
+        { label: `Rasio Lonjakan Klaster Spatiotemporal (${spikeRatio.toFixed(1)}x)`, pct: 34.5, val: `${clusterVolume} Klaim / Klaster`, anomalous: true },
+        { label: 'Kemiripan Semantik Resume Medis ChromaDB', pct: 28.2, val: '98.4% Cosine Match (>= 90%)', anomalous: true },
+        { label: 'Rasio Penolakan Presensi Mobile JKN', pct: 22.1, val: `${currentCase.deniedCount}/${currentCase.sampleCount} Peserta Menolak`, anomalous: currentCase.deniedCount > 0 },
+        { label: 'Diskrepansi Izin Praktik DPJP SATUSEHAT', pct: 15.2, val: sipStatus === 'EXPIRED' ? 'SIP Expired (Hard-Trigger)' : sipStatus, anomalous: sipStatus === 'EXPIRED' },
+      ] : isRepeatBilling ? [
+        { label: 'Indikasi Klaim Berulang Episode Sama', pct: 41.5, val: 'Repeat / Split Billing <= 30 Hr', anomalous: true },
+        { label: 'Interval Admisi Terlalu Singkat', pct: 26.5, val: 'Episode Terkait Sebelumnya', anomalous: true },
+        { label: 'Kesamaan Kode CBG & ICD-10 Primer', pct: 19.5, val: currentCase.code, anomalous: true },
+        { label: 'Status SIP DPJP SDMK', pct: 12.5, val: sipStatus, anomalous: sipStatus === 'EXPIRED' },
+      ] : [
+        { label: 'Konsistensi Riwayat Layanan & Baseline', pct: 45.0, val: `${spikeRatio.toFixed(1)}x baseline (Wajar)`, anomalous: false },
+        { label: 'Status Keaktifan SIP DPJP di SDMK', pct: 25.0, val: sipStatus === 'UNSYNCED' ? 'UNSYNCED (Kuning Administratif)' : 'SIP Aktif Valid', anomalous: sipStatus !== 'ACTIVE' },
+        { label: 'Tingkat Konfirmasi Mobile JKN', pct: 20.0, val: `${currentCase.sampleCount - currentCase.deniedCount}/${currentCase.sampleCount} Hadir`, anomalous: currentCase.deniedCount > 0 },
+        { label: 'Kesesuaian Tarif INA-CBG Permenkes', pct: 10.0, val: currentCase.code, anomalous: false },
+      ];
+
+  const aiRationale = liveAi?.explanation_rationale
+    || rawTriage?.ringkasan_bukti_audit
+    || (effectiveLane === 'HIJAU'
+      ? `Klaim ${currentCase.id} berada pada rentang Hijau (${totalScore}/100 < 50): pola episode normal (${spikeRatio.toFixed(1)}x baseline), SIP DPJP valid, dan kehadiran peserta konsisten.`
+      : effectiveLane === 'KUNING'
+      ? `Klaim ${currentCase.id} masuk jalur Kuning (${totalScore}/100, batas 50-74,9 atau status SDMK UNSYNCED): memerlukan klarifikasi administratif faskes, bukan vonis kecurangan sepihak.`
+      : `Sistem mendeteksi anomali kritis (${totalScore}/100 >= 75 atau Hard Trigger): lonjakan ${spikeRatio.toFixed(1)}x baseline dan temuan bukti lintas lapis.`);
+
+  const aiRecommendation = liveAi?.recommended_action
+    || rawTriage?.rekomendasi_sop
+    || (effectiveLane === 'MERAH'
+      ? 'Tahan Pembayaran Pra-Bayar (Jalur Merah) · Terbitkan Berita Acara Klarifikasi Bersama (BAKB)'
+      : effectiveLane === 'KUNING'
+      ? 'Minta Klarifikasi Dokumen / Sinkronisasi SDMK Faskes (Jalur Kuning)'
+      : 'Lolos Cepat Vedika Digital (Jalur Hijau < 24 Jam)');
+
+  const screeningTraceSteps = [
+    {
+      step: 1,
+      title: 'Tahap 1 · Filter Dasar & PRB',
+      status: rawClaim?.episode_meta?.terdaftar_baksos_resmi ? 'PENGECUALIAN SAH' : 'TERCATAT DI ANTREAN',
+      passed: true,
+      detail: rawClaim?.episode_meta?.terdaftar_baksos_resmi
+        ? 'Kegiatan baksos/program terdaftar resmi (dikecualikan dari penalti lonjakan).'
+        : `FPK ${currentCase.code} (${currentCase.tariff}) masuk penyaringan pra-bayar.`,
+    },
+    {
+      step: 2,
+      title: 'Tahap 2 · Pola & Semantik (S1 50%)',
+      status: effS1 >= 70 ? `TERFLAG (${effS1}/100)` : `WAJAR (${effS1}/100)`,
+      passed: effS1 < 70,
+      detail: rawClaim?.episode_meta?.terdaftar_baksos_resmi
+        ? `Rasio ${spikeRatio.toFixed(1)}x lolos pengecualian baksos resmi · Klaster ${clusterVolume} klaim · Sumbangan +${weightedS1} pt.`
+        : `Lonjakan ${spikeRatio.toFixed(1)}x baseline (ambang >= 3,0x) · Klaster ${clusterVolume} klaim · Sumbangan +${weightedS1} pt.`,
+    },
+    {
+      step: 3,
+      title: 'Tahap 3 · SDMK & Geovelocity (S2 30%)',
+      status: sipStatus === 'EXPIRED' ? 'HARD-TRIGGER MERAH' : sipStatus === 'UNSYNCED' ? 'KUNING (UNSYNCED)' : `VALID (${effS2}/100)`,
+      passed: sipStatus === 'ACTIVE' && effS2 < 70,
+      detail: sipStatus === 'EXPIRED'
+        ? 'SIP DPJP Expired pada tgl layanan (Hard Trigger >= 75,0).'
+        : sipStatus === 'UNSYNCED'
+        ? 'Profil DPJP UNSYNCED di SATUSEHAT (dialihkan ke Kuning, dicegah jadi false positive Merah).'
+        : `SIP aktif valid · Sumbangan +${weightedS2} pt.`,
+    },
+    {
+      step: 4,
+      title: 'Tahap 4 · Mobile JKN & Fusi (0 - 100)',
+      status: `${effectiveLane} (${totalScore}/100)`,
+      passed: effectiveLane === 'HIJAU',
+      detail: `${currentCase.deniedCount}/${currentCase.sampleCount} peserta menyangkal · Total fusi = ${totalScore} (Batas: Hijau <50 | Kuning 50-74,9 | Merah >=75).`,
+    },
+  ];
 
   // Verified participants array
   const verifiedParticipants = [
@@ -254,8 +372,8 @@ export default function CaseInvestigation({
 
           <div className="flex items-center gap-2">
             <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 ${isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/80 border-white/15'}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              <span>Telaah Prioritas Pra-Bayar · <strong className={isLight ? 'text-rose-700 font-bold' : 'text-rose-400 font-bold'}>Jalur Merah</strong></span>
+              <span className={`w-1.5 h-1.5 rounded-full ${effectiveLane === 'MERAH' ? 'bg-rose-500 animate-pulse' : effectiveLane === 'KUNING' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <span>Penapisan Pra-Bayar · <strong className={effectiveLane === 'MERAH' ? (isLight ? 'text-rose-700 font-bold' : 'text-rose-400 font-bold') : effectiveLane === 'KUNING' ? (isLight ? 'text-amber-700 font-bold' : 'text-amber-300 font-bold') : (isLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')}>Jalur {effectiveLane}</strong></span>
             </span>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded border tabular-nums ${isLight ? 'text-slate-600 bg-slate-100 border-slate-200' : 'text-white/60 bg-white/5 border-white/10'}`}>
               SEP: {currentCase.sep}
@@ -298,7 +416,13 @@ export default function CaseInvestigation({
                 Skor Anomali
               </span>
               <div className="flex items-baseline justify-center gap-1 mt-0.5">
-                <span className={`text-2xl font-bold font-mono leading-none tabular-nums ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+                <span className={`text-2xl font-bold font-mono leading-none tabular-nums ${
+                  effectiveLane === 'MERAH'
+                    ? (isLight ? 'text-rose-700' : 'text-rose-400')
+                    : effectiveLane === 'KUNING'
+                    ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                    : (isLight ? 'text-emerald-700' : 'text-emerald-400')
+                }`}>
                   {totalScore}
                 </span>
                 <span className={`text-[10px] font-bold tabular-nums ${isLight ? 'text-slate-400' : 'text-white/40'}`}>/ 100</span>
@@ -479,6 +603,45 @@ export default function CaseInvestigation({
         </div>
       </div>
 
+      {/* JEJAK PENYARINGAN 4 TAHAP KLAIM INI (DECISION TRACE) */}
+      <div className={`${isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/85 border-white/10'} border rounded-2xl p-4 space-y-2.5`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Cara Sistem Menyaring Klaim Ini (Jejak Keputusan 4 Tahap · Skala 0 - 100)
+          </span>
+          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+            effectiveLane === 'MERAH'
+              ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30')
+              : effectiveLane === 'KUNING'
+              ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30')
+              : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
+          }`}>
+            Hasil Akhir: Jalur {effectiveLane} ({totalScore} / 100)
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2.5">
+          {screeningTraceSteps.map((st) => (
+            <div key={st.step} className={`p-3 rounded-xl border text-[11px] space-y-1 ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+            }`}>
+              <div className="flex items-center justify-between gap-1">
+                <span className="font-bold">{st.title}</span>
+              </div>
+              <span className={`inline-block text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                st.passed
+                  ? (isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300')
+                  : (isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-500/20 text-rose-300')
+              }`}>
+                {st.status}
+              </span>
+              <p className={`text-[10.5px] leading-snug ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                {st.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* LAST30DAYS TEMPORAL REGULATORY RADAR CARD */}
       <TemporalAlertCard
         claimId={currentCase.id}
@@ -505,7 +668,7 @@ export default function CaseInvestigation({
               </div>
             </div>
             <div className="text-right">
-              <span className={`text-xs font-bold font-mono tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>S1: {s1}</span>
+              <span className={`text-xs font-bold font-mono tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>S1: {effS1}</span>
               <span className={`text-[9.5px] block tabular-nums font-semibold ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Bobot 50% = +{weightedS1}</span>
             </div>
           </div>
@@ -514,15 +677,15 @@ export default function CaseInvestigation({
             <div className={`p-2.5 rounded-xl border space-y-1 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
               <div className="flex justify-between text-[11px]">
                 <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Lonjakan Volume:</span>
-                <span className={`font-semibold font-mono tabular-nums ${isLight ? 'text-slate-800' : 'text-white/90'}`}><strong className={isLight ? 'text-rose-700 font-bold' : 'text-rose-400 font-bold'}>8.5x</strong> Baseline Faskes</span>
+                <span className={`font-semibold font-mono tabular-nums ${isLight ? 'text-slate-800' : 'text-white/90'}`}><strong className={spikeRatio >= 3 ? (isLight ? 'text-rose-700 font-bold' : 'text-rose-400 font-bold') : (isLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-bold')}>{spikeRatio.toFixed(1)}x</strong> Baseline Faskes</span>
               </div>
               <div className="flex justify-between text-[11px]">
-                <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Rentang Waktu:</span>
-                <span className={`font-semibold font-mono tabular-nums ${isLight ? 'text-slate-900' : 'text-white/90'}`}>85 klaim dalam 48 jam</span>
+                <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Volume Klaster:</span>
+                <span className={`font-semibold font-mono tabular-nums ${isLight ? 'text-slate-900' : 'text-white/90'}`}>{clusterVolume} klaim / klaster</span>
               </div>
               <div className="flex justify-between text-[11px]">
                 <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Pola Episode:</span>
-                <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>Penagihan Massal Tanpa Jeda</span>
+                <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{isRepeatBilling ? 'Penagihan Berulang Episode' : isPhantomBilling ? 'Penagihan Massal Tanpa Jeda' : 'Layanan Terjadwal Wajar'}</span>
               </div>
             </div>
 
@@ -539,22 +702,24 @@ export default function CaseInvestigation({
                     Volume Harian vs Baseline
                   </span>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 whitespace-nowrap shrink-0 ${
-                    isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                    spikeRatio >= 3
+                      ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/10 text-rose-300 border-rose-500/30')
+                      : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30')
                   }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                    <span>8.5x Lonjakan</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${spikeRatio >= 3 ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                    <span>{spikeRatio.toFixed(1)}x Baseline</span>
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono whitespace-nowrap">
                     <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold">
-                      Baseline: 10 berkas
+                      Baseline: {baselineVol} berkas
                     </span>
                     <span className="text-slate-300 dark:text-white/20">·</span>
-                    <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                      14 Okt: 85 berkas
+                    <span className={`inline-flex items-center gap-1 font-bold ${spikeRatio >= 3 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${spikeRatio >= 3 ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'} shrink-0`} />
+                      Klaster: {clusterVolume} berkas
                     </span>
                   </div>
 
@@ -595,7 +760,7 @@ export default function CaseInvestigation({
                 <ResponsiveContainer width="100%" height="100%">
                   {volumeViewType === 'bar' ? (
                     <BarChart
-                      data={volumeChartData}
+                      data={dynamicVolumeData}
                       margin={{ top: 22, right: 10, left: -24, bottom: 2 }}
                     >
                       <defs>
@@ -625,8 +790,7 @@ export default function CaseInvestigation({
                       />
                       <YAxis
                         stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
-                        domain={[0, 95]}
-                        ticks={[0, 25, 50, 75, 100]}
+                        domain={[0, 'auto']}
                         tick={{
                           fontSize: 9,
                           fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
@@ -645,7 +809,7 @@ export default function CaseInvestigation({
                         barSize={30}
                         isAnimationActive={false}
                       >
-                        {volumeChartData.map((entry, index) => (
+                        {dynamicVolumeData.map((entry, index) => (
                           <Cell
                             key={`vol-cell-${index}`}
                             fill={
@@ -663,7 +827,7 @@ export default function CaseInvestigation({
                     </BarChart>
                   ) : (
                     <AreaChart
-                      data={volumeChartData}
+                      data={dynamicVolumeData}
                       margin={{ top: 22, right: 10, left: -24, bottom: 2 }}
                     >
                       <defs>
@@ -685,8 +849,7 @@ export default function CaseInvestigation({
                       />
                       <YAxis
                         stroke={isLight ? '#94a3b8' : 'rgba(255,255,255,0.3)'}
-                        domain={[0, 95]}
-                        ticks={[0, 25, 50, 75, 100]}
+                        domain={[0, 'auto']}
                         tick={{
                           fontSize: 9,
                           fill: isLight ? '#64748b' : 'rgba(255,255,255,0.4)',
@@ -761,19 +924,33 @@ export default function CaseInvestigation({
               </div>
             </div>
             <div className="text-right">
-              <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>S2: {s2}</span>
+              <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>S2: {effS2}</span>
               <span className={`text-[9.5px] block font-semibold ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Bobot 30% = +{weightedS2}</span>
             </div>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className={`p-2.5 rounded-xl space-y-1 border ${isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-white/5 border-white/10 shadow-xs'}`}>
-              <div className={`flex items-center space-x-1.5 font-bold text-[11px] ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
-                <AlertOctagon className={`w-4 h-4 shrink-0 ${isLight ? 'text-rose-600' : 'text-rose-400'}`} />
-                <span>HARD-TRIGGER: SIP DPJP Kedaluwarsa</span>
+              <div className={`flex items-center space-x-1.5 font-bold text-[11px] ${
+                sipStatus === 'EXPIRED' ? (isLight ? 'text-rose-700' : 'text-rose-400')
+                : sipStatus === 'UNSYNCED' ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                : (isLight ? 'text-emerald-700' : 'text-emerald-400')
+              }`}>
+                <AlertOctagon className="w-4 h-4 shrink-0" />
+                <span>
+                  {sipStatus === 'EXPIRED'
+                    ? 'HARD-TRIGGER: SIP DPJP Kedaluwarsa'
+                    : sipStatus === 'UNSYNCED'
+                    ? 'SINKRONISASI: Profil SDMK Belum Tersinkron (Jalur Kuning)'
+                    : 'VALID: SIP DPJP Terdaftar Aktif'}
+                </span>
               </div>
               <p className={`text-[10.5px] leading-relaxed font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                SATUSEHAT SDMK mendeteksi DPJP telah mutasi &amp; tidak aktif berpraktik pada tgl layanan.
+                {sipStatus === 'EXPIRED'
+                  ? 'SATUSEHAT SDMK mendeteksi SIP DPJP telah kedaluwarsa pada tgl layanan -> otomatis masuk prioritas Jalur Merah.'
+                  : sipStatus === 'UNSYNCED'
+                  ? 'Sinkronisasi SATUSEHAT SDMK tertunda; sistem melarang vonis fraud Merah dan mengalihkan ke klarifikasi Jalur Kuning.'
+                  : 'Izin praktik DPJP aktif pada tanggal layanan dan beban harian dalam koridor Permenkes 14/2021.'}
               </p>
             </div>
 
@@ -788,11 +965,15 @@ export default function CaseInvestigation({
               </div>
               <div className="flex justify-between">
                 <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Status SATUSEHAT:</span>
-                <span className={`font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}><span className={isLight ? 'text-rose-700' : 'text-rose-400'}>NON-AKTIF</span> (Mutasi)</span>
+                <span className={`font-bold ${
+                  sipStatus === 'EXPIRED' ? (isLight ? 'text-rose-700' : 'text-rose-400')
+                  : sipStatus === 'UNSYNCED' ? (isLight ? 'text-amber-700' : 'text-amber-300')
+                  : (isLight ? 'text-emerald-700' : 'text-emerald-400')
+                }`}>{sipStatus}</span>
               </div>
               <div className="flex justify-between font-mono">
-                <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Kapasitas Pelayanan:</span>
-                <span className={`font-bold ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>85 Pasien / Hari</span>
+                <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-white/60'}`}>Volume Klaster:</span>
+                <span className={`font-bold ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>{clusterVolume} Berkas</span>
               </div>
             </div>
 
@@ -825,7 +1006,7 @@ export default function CaseInvestigation({
             </div>
             <div className="text-right">
               <span className={`text-xs font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                S3: {s3}
+                S3: {effS3}
               </span>
               <span className={`text-[9.5px] block font-semibold ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Bobot 20% = +{weightedS3}</span>
             </div>
@@ -956,10 +1137,10 @@ export default function CaseInvestigation({
             </p>
           </div>
           <div className={`p-3 rounded-xl border ${isLight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
-            <div className="text-[10px] font-mono uppercase font-bold text-emerald-700 dark:text-emerald-300">Skor Fusi 4 Lapis (Quad)</div>
-            <div className={`text-lg font-extrabold mt-0.5 font-mono ${isLight ? 'text-emerald-900' : 'text-emerald-300'}`}>91.8 / 100</div>
+            <div className="text-[10px] font-mono uppercase font-bold text-emerald-700 dark:text-emerald-300">Skor Inti Tri-Layer (0 - 100)</div>
+            <div className={`text-lg font-extrabold mt-0.5 font-mono ${isLight ? 'text-emerald-900' : 'text-emerald-300'}`}>{totalScore} / 100</div>
             <p className={`text-[10.5px] mt-0.5 ${isLight ? 'text-emerald-800' : 'text-emerald-200/80'}`}>
-              0.35·L1 + 0.25·L2 + 0.20·L3 + 0.20·L4 (FRISTA) · Siap Cetak Berita Acara QR SHA-256.
+              0,50·S1 + 0,30·S2 + 0,20·S3 (+ Validasi FRISTA) · Jalur {effectiveLane} · Siap Cetak Berita Acara QR SHA-256.
             </p>
           </div>
         </div>
@@ -994,9 +1175,9 @@ export default function CaseInvestigation({
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
                   <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-emerald-800' : 'text-emerald-400'}`}>Lapis 1 (Pola)</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Analisis Klaster &amp; Repeat Billing</td>
-                  <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>85 klaim dalam 48 jam (8.5x lonjakan)</td>
+                  <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{clusterVolume} klaim ({spikeRatio.toFixed(1)}x baseline) · S1={effS1}</td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>TINGGI</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${effS1 >= 70 ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{effS1 >= 70 ? 'TINGGI' : effS1 >= 45 ? 'SEDANG' : 'WAJAR'}</span>
                   </td>
                   <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-emerald-900' : 'text-[#FFCA40]'}`}>F3: FA0002.F1018 · NIST: DE.CM-01</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/60'}`}>Permenkes 26/2021</td>
@@ -1004,9 +1185,9 @@ export default function CaseInvestigation({
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
                   <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-emerald-800' : 'text-cyan-400'}`}>Lapis 2 (Jejak)</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Validasi SATUSEHAT &amp; Beban Kerja</td>
-                  <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>SIP Non-Aktif &amp; Beban 85 px/hari</td>
+                  <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>SIP {sipStatus} · S2={effS2}</td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>HARD-TRIGGER</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${sipStatus === 'EXPIRED' ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : sipStatus === 'UNSYNCED' ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{sipStatus === 'EXPIRED' ? 'HARD-TRIGGER' : sipStatus === 'UNSYNCED' ? 'KLARIFIKASI' : 'VALID'}</span>
                   </td>
                   <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-emerald-900' : 'text-cyan-300'}`}>ATT&amp;CK: T1078 · NIST: PR.AC-01</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>Permenkes No. 14/2021</td>

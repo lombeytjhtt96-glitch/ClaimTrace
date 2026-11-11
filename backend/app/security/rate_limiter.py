@@ -94,10 +94,10 @@ rate_limiter = RateLimiterRegistry()
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
     Middleware applying contextual rate limiting based on route criticality:
-    - Auth Routes: 15 req/min + Brute Force Lockout
-    - AI Reasoning Routes: 30 req/min
-    - DuckDB Analytics: 45 req/min
-    - General Endpoints: 180 req/min
+    - Auth Routes: 20 req/min + Brute Force Lockout
+    - AI Reasoning Routes: 35 req/min
+    - DuckDB Analytics: 50 req/min
+    - General Endpoints: 1200 req/min
     """
     def __init__(self, app: ASGIApp):
         super().__init__(app)
@@ -144,7 +144,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             limit, window = 50, 60
             key = f"duckdb:{client_ip}"
         else:
-            limit, window = 400, 60
+            limit, window = 1200, 60
             key = f"gen:{client_ip}"
 
         is_limited, remaining, retry_after = rate_limiter.is_rate_limited(key, limit, window)
