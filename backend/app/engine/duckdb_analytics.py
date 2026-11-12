@@ -79,10 +79,12 @@ class DuckDbAnalyticsEngine:
             )
             os.makedirs(default_db_dir, exist_ok=True)
             db_path = os.path.join(default_db_dir, "claimtrace_warehouse.duckdb")
+        self._is_memory_fallback = db_path == ":memory:"
         try:
             raw_con = duckdb.connect(db_path)
         except Exception:
-            # shortcut: in-memory DuckDB fallback on concurrent file lock, upgrade to DuckDB server or MotherDuck for multi-replica concurrency
+            # shortcut: in-memory DuckDB fallback on concurrent file lock; register Parquet VIEWs instead of RAM materialization
+            self._is_memory_fallback = True
             raw_con = duckdb.connect(":memory:")
         self.con = _ThreadSafeDuckDBConn(raw_con)
         self._privacy_lock = threading.RLock()
@@ -390,42 +392,29 @@ class DuckDbAnalyticsEngine:
 
         if os.path.exists(fkrtl_full_parquet):
             try:
-                if "bpjs_fkrtl_all" not in existing_tables or existing_tables.get("bpjs_fkrtl_all") == "VIEW":
-                    print("[DuckDB] Materializing bpjs_fkrtl_all base table (1.7M rows)...")
-                    self.con.execute("DROP VIEW IF EXISTS bpjs_fkrtl_all;")
-                    self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_fkrtl_all AS SELECT * FROM read_parquet('{fkrtl_full_parquet}');")
-                
-                if os.path.exists(kepesertaan_full_parquet):
-                    if "bpjs_kepesertaan_all" not in existing_tables or existing_tables.get("bpjs_kepesertaan_all") == "VIEW":
-                        print("[DuckDB] Materializing bpjs_kepesertaan_all base table (2.59M rows)...")
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_kepesertaan_all;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_kepesertaan_all AS SELECT * FROM read_parquet('{kepesertaan_full_parquet}');")
-
-                if os.path.exists(dxsekunder_full_parquet):
-                    if "bpjs_diagnosissekunder_all" not in existing_tables or existing_tables.get("bpjs_diagnosissekunder_all") == "VIEW":
-                        print("[DuckDB] Materializing bpjs_diagnosissekunder_all base table (1.96M rows)...")
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_diagnosissekunder_all;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_diagnosissekunder_all AS SELECT * FROM read_parquet('{dxsekunder_full_parquet}');")
-
-                if os.path.exists(icd10_dxmasuk_parquet):
-                    if "bpjs_icd10_dxmasuk" not in existing_tables or existing_tables.get("bpjs_icd10_dxmasuk") == "VIEW":
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_icd10_dxmasuk;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_icd10_dxmasuk AS SELECT * FROM read_parquet('{icd10_dxmasuk_parquet}');")
-
-                if os.path.exists(icd10_dxprimer_parquet):
-                    if "bpjs_icd10_dxprimer" not in existing_tables or existing_tables.get("bpjs_icd10_dxprimer") == "VIEW":
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_icd10_dxprimer;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_icd10_dxprimer AS SELECT * FROM read_parquet('{icd10_dxprimer_parquet}');")
-
-                if os.path.exists(icd10_fktp_parquet):
-                    if "bpjs_icd10_fktp" not in existing_tables or existing_tables.get("bpjs_icd10_fktp") == "VIEW":
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_icd10_fktp;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_icd10_fktp AS SELECT * FROM read_parquet('{icd10_fktp_parquet}');")
-
-                if os.path.exists(icd10_pnk_parquet):
-                    if "bpjs_icd10_pnk" not in existing_tables or existing_tables.get("bpjs_icd10_pnk") == "VIEW":
-                        self.con.execute("DROP VIEW IF EXISTS bpjs_icd10_pnk;")
-                        self.con.execute(f"CREATE TABLE IF NOT EXISTS bpjs_icd10_pnk AS SELECT * FROM read_parquet('{icd10_pnk_parquet}');")
+                parquet_sources = [
+                    ("bpjs_fkrtl_all", fkrtl_full_parquet, "1.7M rows"),
+                    ("bpjs_kepesertaan_all", kepesertaan_full_parquet, "2.59M rows"),
+                    ("bpjs_diagnosissekunder_all", dxsekunder_full_parquet, "1.96M rows"),
+                    ("bpjs_icd10_dxmasuk", icd10_dxmasuk_parquet, ""),
+                    ("bpjs_icd10_dxprimer", icd10_dxprimer_parquet, ""),
+                    ("bpjs_icd10_fktp", icd10_fktp_parquet, ""),
+                    ("bpjs_icd10_pnk", icd10_pnk_parquet, ""),
+                ]
+                for table_name, pq_path, row_hint in parquet_sources:
+                    if not os.path.exists(pq_path):
+                        continue
+                    if self._is_memory_fallback:
+                        self.con.execute(
+                            f"CREATE OR REPLACE VIEW {table_name} AS SELECT * FROM read_parquet('{pq_path}');"
+                        )
+                    elif table_name not in existing_tables or existing_tables.get(table_name) == "VIEW":
+                        if row_hint:
+                            print(f"[DuckDB] Materializing {table_name} base table ({row_hint})...")
+                        self.con.execute(f"DROP VIEW IF EXISTS {table_name};")
+                        self.con.execute(
+                            f"CREATE TABLE IF NOT EXISTS {table_name} AS SELECT * FROM read_parquet('{pq_path}');"
+                        )
 
                 # Summary View of Full 1.7M Claims Portfolio
                 self.con.execute("""

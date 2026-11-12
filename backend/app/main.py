@@ -46,6 +46,9 @@ from app.models.schemas import (
     WbsReportRecord,
     WbsReportResponse,
     WbsTrackResponse,
+    VedikaPlottingRequest,
+    VedikaFpkPullRequest,
+    ClaimSusulanResubmitRequest,
 )
 from app.engine.google_secops_engine import (
     PRECOMPILED_YARA_L_RULES,
@@ -67,6 +70,19 @@ from app.engine.cybersecurity_framework_engine import cybersecurity_engine
 from app.engine.scoring import evaluate_claim_triage, audit_logger
 from app.engine.operations_store import operations_store
 from app.data.synthetic_seed import get_initial_claims
+from app.engine.vedika_portal import (
+    VEDIKA_PENDING_CODES,
+    DISPUTE_SLA_TIERS,
+    VERIFICATOR_NAME_BY_NIP,
+    enrich_claim_vedika_defaults,
+    enrich_claims_map,
+    build_vedika_dossier,
+    build_verifier_workload,
+    build_bahv_recap_payload,
+    render_collective_fpk_bahv_html,
+    render_ba_pending_dispute_html,
+    resolve_service_type,
+)
 
 CLAIMS_STATE_FILE = Path(__file__).resolve().parent.parent / "data" / "claims_state.json"
 
@@ -77,10 +93,10 @@ def _load_persisted_claims() -> Dict[str, ClaimInput]:
                 raw_dict = json.load(f)
                 loaded = {cid: ClaimInput.model_validate(cdata) for cid, cdata in raw_dict.items()}
                 if loaded:
-                    return loaded
+                    return enrich_claims_map(loaded)
         except Exception as e:
             print(f"[ClaimStatePersistence] Warning loading persisted claims: {e}")
-    return get_initial_claims()
+    return enrich_claims_map(get_initial_claims())
 
 def _persist_claims_state(claims_map: Dict[str, ClaimInput]) -> None:
     if os.getenv("PYTEST_CURRENT_TEST"):
@@ -971,12 +987,35 @@ def list_demo_verificators():
     ]
 
 @app.get("/api/v1/claims")
-def list_triage_claims(lane: Optional[str] = Query(None, description="Filter by lane: HIJAU, KUNING, MERAH")):
+def list_triage_claims(
+    lane: Optional[str] = Query(None, description="Filter by lane: HIJAU, KUNING, MERAH"),
+    jenis_pelayanan: Optional[str] = Query(None, description="Filter by RJTL atau RITL"),
+    jenis_pengajuan: Optional[str] = Query(None, description="Filter by Reguler, Susulan, atau LUPIS"),
+    no_fpk: Optional[str] = Query(None, description="Filter by Nomor FPK"),
+    assigned_verifier_nip: Optional[str] = Query(None, description="Filter by NIP Verifikator atau UNASSIGNED"),
+):
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
     results = []
     for cid, claim in SYNTHETIC_CLAIMS_DATABASE.items():
         triage = evaluate_claim_triage(claim)
         if lane and triage.triage_lane.upper() != lane.upper():
             continue
+        if jenis_pelayanan and jenis_pelayanan.upper() != "ALL":
+            if resolve_service_type(claim) != jenis_pelayanan.upper():
+                continue
+        if jenis_pengajuan and jenis_pengajuan.upper() != "ALL":
+            if (getattr(claim, "jenis_pengajuan", "Reguler") or "Reguler").upper() != jenis_pengajuan.upper():
+                continue
+        if no_fpk and no_fpk.upper() != "ALL":
+            if (getattr(claim, "no_fpk", "") or "").upper() != no_fpk.upper():
+                continue
+        if assigned_verifier_nip and assigned_verifier_nip.upper() != "ALL":
+            cur_nip = getattr(claim, "assigned_verifier_nip", None)
+            if assigned_verifier_nip.upper() == "UNASSIGNED":
+                if cur_nip:
+                    continue
+            elif cur_nip != assigned_verifier_nip:
+                continue
         results.append({
             "claim": claim,
             "triage": triage,
@@ -994,13 +1033,17 @@ def export_claims_csv():
     Exports all active triaged claims as an RFC 4180 CSV spreadsheet
     for official audit documentation and Rekapitulasi Klaim Nasional.
     """
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "claim_id", "nama_faskes", "kelas_rs", "tanggal_layanan", 
+        "claim_id", "nama_faskes", "kelas_rs", "tanggal_layanan",
         "ina_cbg_code", "deskripsi_cbg", "icd10_primary", "nilai_klaim_rp",
-        "triage_lane", "final_priority_score", "s1_integritas_dpjp", 
-        "s2_kesesuaian_klinis", "s3_presensi_mobile_jkn", "tindakan_rekomendasi"
+        "triage_lane", "final_priority_score", "s1_integritas_dpjp",
+        "s2_kesesuaian_klinis", "s3_presensi_mobile_jkn", "tindakan_rekomendasi",
+        "no_fpk", "jenis_pelayanan", "jenis_pengajuan", "fkl47_biaya_tagih",
+        "fkl48_biaya_verifikasi", "ina_cbg_verified", "assigned_verifier_name",
+        "status_verifikasi"
     ])
     for cid, claim in SYNTHETIC_CLAIMS_DATABASE.items():
         triage = evaluate_claim_triage(claim)
@@ -1018,7 +1061,15 @@ def export_claims_csv():
             triage.score_breakdown.s1_value,
             triage.score_breakdown.s2_value,
             triage.score_breakdown.s3_value,
-            triage.rekomendasi_sop
+            triage.rekomendasi_sop,
+            claim.no_fpk or "-",
+            resolve_service_type(claim),
+            claim.jenis_pengajuan,
+            claim.fkl47_biaya_tagih or claim.nilai_klaim_rp,
+            claim.fkl48_biaya_verifikasi if claim.fkl48_biaya_verifikasi is not None else claim.nilai_klaim_rp,
+            claim.ina_cbg_verified or claim.ina_cbg_code,
+            claim.assigned_verifier_name or "Belum Di-plot",
+            claim.status_verifikasi or "OTOMATIS_ANTRIAN"
         ])
     return Response(
         content=output.getvalue(),
@@ -1510,6 +1561,22 @@ def simulate_mobile_jkn_response(
         "latest_audit_entry": audit_entry
     }
 
+def _apply_decision_adjustments(claim: ClaimInput, decision: str, tarif_verifikasi_rp: Optional[int], ina_cbg_verified: Optional[str], dispute_level: Optional[str]) -> None:
+    """Apply uniform FKL48 tariff adjustments, verified INA-CBG coding, and Dispute SLA tier."""
+    if tarif_verifikasi_rp is not None:
+        claim.fkl48_biaya_verifikasi = tarif_verifikasi_rp
+    elif decision in ("LOLOSKAN_KLAIM", "LAYAK_BAYAR") and claim.fkl48_biaya_verifikasi is None:
+        claim.fkl48_biaya_verifikasi = claim.fkl47_biaya_tagih or claim.nilai_klaim_rp
+    elif decision in ("TIDAK_LAYAK_FRAUD", "AUDIT_LAPANGAN"):
+        claim.fkl48_biaya_verifikasi = 0
+    if ina_cbg_verified:
+        claim.ina_cbg_verified = ina_cbg_verified.strip().upper()
+    if dispute_level:
+        claim.dispute_level = dispute_level
+    elif decision == "DISPUTE_TKMKB" and not getattr(claim, "dispute_level", None):
+        claim.dispute_level = "CABANG"
+
+
 @app.post("/api/v1/claims/{claim_id}/decision")
 def record_verifier_decision(
     claim_id: str, 
@@ -1545,6 +1612,7 @@ def record_verifier_decision(
     claim.catatan_verifikator = req.catatan_verifikator
     claim.tanggal_verifikasi = datetime.now(timezone.utc).isoformat()
     claim.adjudicated_by = subject.nip
+    _apply_decision_adjustments(claim, req.decision, req.tarif_verifikasi_rp, req.ina_cbg_verified, req.dispute_level)
 
     if req.pending_reasons:
         operations_store.save_pending_reasons(SYNTHETIC_CLAIMS_DATABASE, claim_id, req.pending_reasons)
@@ -1565,6 +1633,9 @@ def record_verifier_decision(
             "decision": req.decision,
             "notes": req.catatan_verifikator,
             "pending_reasons": req.pending_reasons,
+            "fkl48_biaya_verifikasi": claim.fkl48_biaya_verifikasi,
+            "ina_cbg_verified": claim.ina_cbg_verified,
+            "dispute_level": claim.dispute_level,
             "actor_role": subject.role,
             "actor_name": subject.name,
             "triage_score_at_decision": current_triage.final_priority_score,
@@ -1630,6 +1701,7 @@ def record_batch_verifier_decision(
         claim.catatan_verifikator = req.catatan_verifikator
         claim.tanggal_verifikasi = now_iso
         claim.adjudicated_by = subject.nip
+        _apply_decision_adjustments(claim, req.decision, req.tarif_verifikasi_rp, req.ina_cbg_verified, req.dispute_level)
         if req.pending_reasons:
             operations_store.save_pending_reasons(SYNTHETIC_CLAIMS_DATABASE, cid, req.pending_reasons)
         audit_logger.record_event(
@@ -1640,6 +1712,9 @@ def record_batch_verifier_decision(
                 "decision": req.decision,
                 "triage_lane": triage.triage_lane,
                 "triage_score": triage.final_priority_score,
+                "fkl48_biaya_verifikasi": claim.fkl48_biaya_verifikasi,
+                "ina_cbg_verified": claim.ina_cbg_verified,
+                "dispute_level": claim.dispute_level,
                 "notes": req.catatan_verifikator,
             }
         )
@@ -1795,7 +1870,21 @@ def ingest_and_screen_claim(req: ClaimIngestSimulateRequest):
         fkl02_id_kunjungan=f"260{int(datetime.now(timezone.utc).timestamp()) % 1000000}",
         fkl47_biaya_tagih=req.nilai_klaim_rp,
         fkl48_biaya_verifikasi=req.nilai_klaim_rp,
+        no_fpk=req.no_fpk or f"FPK-0114-{date.today().strftime('%Y%m')}-SIM",
+        bulan_pelayanan=date.today().strftime("%Y-%m"),
+        jenis_pengajuan=req.jenis_pengajuan,
+        jenis_pelayanan=req.jenis_pelayanan,
+        fkl10_tingkat_layanan=f"{req.jenis_pelayanan} / Simulasi Pra-Bayar",
+        hak_kelas=req.hak_kelas,
+        kelas_ditempati=req.kelas_ditempati,
+        naik_kelas_flag=(req.kelas_ditempati != req.hak_kelas and req.kelas_ditempati in ("1", "2", "VIP")),
+        los_hari=req.los_hari if req.los_hari is not None else (4 if req.jenis_pelayanan == "RITL" else 0),
+        tarif_rs_riil=req.tarif_rs_riil,
+        penjaminan_khusus=req.penjaminan_khusus or "JKN Murni",
+        frista_verified=req.frista_verified,
+        tte_dpjp_valid=req.tte_dpjp_valid,
     )
+    enrich_claim_vedika_defaults(new_claim)
 
     triage = evaluate_claim_triage(new_claim)
     if req.add_to_queue:
@@ -2007,7 +2096,7 @@ def reset_to_initial_seed(
     verify_privilege(subject, Privilege.ADMIN, action_name="SYSTEM_RESET_SEED")
 
     global SYNTHETIC_CLAIMS_DATABASE
-    SYNTHETIC_CLAIMS_DATABASE = get_initial_claims()
+    SYNTHETIC_CLAIMS_DATABASE = enrich_claims_map(get_initial_claims())
     _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
     duckdb_engine.sync_claims_warehouse(SYNTHETIC_CLAIMS_DATABASE)
     operations_store.state = {}
@@ -4290,70 +4379,434 @@ def get_anomaly_screening_pipeline_summary():
 def get_bahv_recapitulation():
     """
     Rekapitulasi Berita Acara Hasil Verifikasi (BAHV) FPK Pra-Bayar dalam 4 status resmi VEDIKA BPJS:
-    LAYAK, PENDING, DISPUTE, TIDAK_LAYAK_FRAUD beserta nilai finansial & SLA 10 Hari Kerja.
+    LAYAK, PENDING, DISPUTE, TIDAK_LAYAK_FRAUD beserta rincian RJTL vs RITL, nilai FKL47/FKL48, dan SLA 10 Hari Kerja.
     """
-    buckets = {
-        "LAYAK": {"label": "Layak Bayar (ACC Pra-Bayar / VIDI)", "count": 0, "claimed_rp": 0, "approved_rp": 0, "held_rp": 0, "items": []},
-        "PENDING": {"label": "Pending / Klarifikasi Faskes (SLA 10 HK)", "count": 0, "claimed_rp": 0, "approved_rp": 0, "held_rp": 0, "items": []},
-        "DISPUTE": {"label": "Dispute Klinis / Koding (Eskalasi TKMKB)", "count": 0, "claimed_rp": 0, "approved_rp": 0, "held_rp": 0, "items": []},
-        "TIDAK_LAYAK": {"label": "Tidak Layak / Hold Audit Khusus PK-JKN", "count": 0, "claimed_rp": 0, "approved_rp": 0, "held_rp": 0, "items": []},
-    }
-    total_claimed_rp = 0
-    total_approved_rp = 0
-    total_held_rp = 0
+    return build_bahv_recap_payload(
+        SYNTHETIC_CLAIMS_DATABASE,
+        evaluate_claim_triage,
+        operations_store,
+        duckdb_engine.tool_screening_pipeline_summary().get("stages", {}),
+    )
 
-    for cid, claim in SYNTHETIC_CLAIMS_DATABASE.items():
-        triage = evaluate_claim_triage(claim)
-        raw_status = claim.status_verifikasi
-        if raw_status in ("LOLOSKAN_KLAIM", "LAYAK_BAYAR", "DISETUJUI"):
-            bucket_key = "LAYAK"
-        elif raw_status in ("KLARIFIKASI_FASKES", "PENDING_KLARIFIKASI"):
-            bucket_key = "PENDING"
-        elif raw_status == "DISPUTE_TKMKB":
-            bucket_key = "DISPUTE"
-        elif raw_status in ("AUDIT_LAPANGAN", "TIDAK_LAYAK_FRAUD", "DITOLAK", "TOLAK_KLAIM"):
-            bucket_key = "TIDAK_LAYAK"
-        else:
-            bucket_key = "LAYAK" if triage.triage_lane == "HIJAU" else ("PENDING" if triage.triage_lane == "KUNING" else "TIDAK_LAYAK")
 
-        claimed_rp = int(claim.nilai_klaim_rp or 0)
-        approved_rp = claimed_rp if bucket_key == "LAYAK" else 0
-        held_rp = claimed_rp - approved_rp
-
-        total_claimed_rp += claimed_rp
-        total_approved_rp += approved_rp
-        total_held_rp += held_rp
-
-        b = buckets[bucket_key]
-        b["count"] += 1
-        b["claimed_rp"] += claimed_rp
-        b["approved_rp"] += approved_rp
-        b["held_rp"] += held_rp
-        b["items"].append({
-            "claim_id": cid,
-            "sep": claim.fkl02_id_kunjungan or cid,
-            "hospital": claim.nama_faskes,
-            "cbg": claim.ina_cbg_code,
-            "claimed_rp": claimed_rp,
-            "triage_lane": triage.triage_lane,
-            "score": triage.final_priority_score,
-            "recorded_decision": raw_status or f"REKOMENDASI_{triage.triage_lane}",
-            "adjudicated_by": claim.adjudicated_by,
-            "sla_days": triage.sla_deadline_days,
-            "pending_reasons": operations_store.get_pending_reasons(SYNTHETIC_CLAIMS_DATABASE, cid),
-        })
-
+@app.get("/api/v1/vedika/pending-codes")
+def get_vedika_pending_codes():
+    """Mengembalikan katalog alasan Pending/Penolakan baku 3 Pilar BA Kesepakatan & SLA Dispute SE Diryan 51/2016."""
     return {
         "status": "success",
-        "period_label": "Periode FPK Pra-Bayar Aktif (SLA 10 Hari Kerja · Perpres 82/2018)",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "total_claims_in_queue": len(SYNTHETIC_CLAIMS_DATABASE),
-        "total_claimed_rp": total_claimed_rp,
-        "total_approved_rp": total_approved_rp,
-        "total_held_rp": total_held_rp,
-        "buckets": buckets,
-        "national_duckdb_context": duckdb_engine.tool_screening_pipeline_summary().get("stages", {}),
+        "codes": VEDIKA_PENDING_CODES,
+        "dispute_sla_tiers": DISPUTE_SLA_TIERS,
     }
+
+
+@app.get("/api/v1/vedika/workload")
+def get_vedika_verifier_workload():
+    """Mengembalikan beban antrean Plotting Verifikator aktif beserta jumlah klaim belum di-plot."""
+    verifs = list_demo_verificators()
+    return {
+        "status": "success",
+        **build_verifier_workload(SYNTHETIC_CLAIMS_DATABASE, evaluate_claim_triage, verifs),
+    }
+
+
+@app.post("/api/v1/vedika/plotting")
+def assign_vedika_plotting(
+    req: VedikaPlottingRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
+    """Plotting / distribusi beban berkas FPK ke Verifikator Medis atau Analis yang bertugas."""
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="VEDIKA_PLOTTING_VERIFICATOR")
+
+    target_name = VERIFICATOR_NAME_BY_NIP.get(req.verifier_nip)
+    if not target_name:
+        raise HTTPException(status_code=404, detail=f"NIP verifikator '{req.verifier_nip}' tidak terdaftar pada direktori VEDIKA.")
+
+    updated_ids: List[str] = []
+    missing_ids: List[str] = []
+    for cid in req.claim_ids:
+        claim = SYNTHETIC_CLAIMS_DATABASE.get(cid)
+        if not claim:
+            missing_ids.append(cid)
+            continue
+        claim.assigned_verifier_nip = req.verifier_nip
+        claim.assigned_verifier_name = target_name
+        operations_store.update_case(
+            SYNTHETIC_CLAIMS_DATABASE,
+            cid,
+            actor=subject.nip,
+            assigned_to=target_name,
+            notes=req.catatan or f"Plotting berkas ke {target_name}",
+        )
+        audit_logger.record_event(
+            event_type="VEDIKA_PLOTTING_ASSIGNED",
+            claim_id=cid,
+            actor=subject.nip,
+            payload={
+                "assigned_verifier_nip": req.verifier_nip,
+                "assigned_verifier_name": target_name,
+                "notes": req.catatan,
+            }
+        )
+        updated_ids.append(cid)
+
+    if not updated_ids:
+        raise HTTPException(status_code=404, detail="Tidak ada berkas klaim valid yang ditemukan untuk di-plot.")
+
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
+    return {
+        "status": "success",
+        "assigned_verifier_nip": req.verifier_nip,
+        "assigned_verifier_name": target_name,
+        "updated_count": len(updated_ids),
+        "updated_ids": updated_ids,
+        "missing_ids": missing_ids,
+    }
+
+
+@app.post("/api/v1/vedika/fpk-pull")
+def pull_fpk_batch_and_prapurifikasi(
+    req: VedikaFpkPullRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
+    """Tarik Data Klaim / FPK kolektif dari VClaim FKRTL + jalankan Pra-Purifikasi Tri-Lapis otomatis."""
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="VEDIKA_FPK_BATCH_PULL")
+
+    fpk_no = req.no_fpk or f"FPK-0114-{req.bulan_pelayanan.replace('-', '')}-{100 + len(SYNTHETIC_CLAIMS_DATABASE)}"
+    templates = [
+        {
+            "faskes": req.nama_faskes or "RSUP Nasional Cipta Husada",
+            "kelas": "A",
+            "svc": "RITL",
+            "cbg": "I-4-10-II",
+            "desc": "Angina Pektoris & Perawatan Kardiovaskular Berat (Severity II)",
+            "icd10": "I20.0 (Unstable angina)",
+            "icd9": "88.56 (Coronary arteriography)",
+            "rp": 21400000,
+            "los": 5,
+            "s1": 78.0,
+            "s2": 32.0,
+            "s3": 45.0,
+            "sip": "ACTIVE",
+            "frista": True,
+            "tte": False,
+        },
+        {
+            "faskes": req.nama_faskes or "RSU Daerah Sentosa",
+            "kelas": "B",
+            "svc": "RJTL",
+            "cbg": "H-2-10-0",
+            "desc": "Prosedur Rawat Jalan Mata & Evaluasi Pasca-Operasi",
+            "icd10": "H25.9 (Senile cataract)",
+            "icd9": "13.41 (Phacoemulsification)",
+            "rp": 9200000,
+            "los": 0,
+            "s1": 18.0,
+            "s2": 14.0,
+            "s3": 12.0,
+            "sip": "ACTIVE",
+            "frista": True,
+            "tte": True,
+        },
+        {
+            "faskes": req.nama_faskes or "RS Swasta Harapan Bunda",
+            "kelas": "B",
+            "svc": "RITL",
+            "cbg": "K-4-14-III",
+            "desc": "Infeksi Saluran Cerna Akut & Syok Hipovolemik",
+            "icd10": "A09.0 (Gastroenteritis of infectious origin)",
+            "icd9": "99.18 (Infusion of electrolytes)",
+            "rp": 18750000,
+            "los": 6,
+            "s1": 86.0,
+            "s2": 68.0,
+            "s3": 74.0,
+            "sip": "UNSYNCED",
+            "frista": False,
+            "tte": True,
+        },
+        {
+            "faskes": req.nama_faskes or "Klinik Utama Pratama JKN",
+            "kelas": "C",
+            "svc": "RJTL",
+            "cbg": "N-3-10-0",
+            "desc": "Hemodialisa Rawat Jalan Terjadwal",
+            "icd10": "N18.5 (Chronic kidney disease stage 5)",
+            "icd9": "39.95 (Hemodialysis)",
+            "rp": 4100000,
+            "los": 0,
+            "s1": 24.0,
+            "s2": 15.0,
+            "s3": 10.0,
+            "sip": "ACTIVE",
+            "frista": True,
+            "tte": True,
+        },
+        {
+            "faskes": req.nama_faskes or "RS Mitra Medika Nusantara",
+            "kelas": "B",
+            "svc": "RITL",
+            "cbg": "M-1-04-II",
+            "desc": "Prosedur Ortopedi & Pemasangan Implant Khusus",
+            "icd10": "S72.0 (Fracture of neck of femur)",
+            "icd9": "79.35 (Open reduction of fracture with internal fixation)",
+            "rp": 26500000,
+            "los": 7,
+            "s1": 62.0,
+            "s2": 22.0,
+            "s3": 38.0,
+            "sip": "ACTIVE",
+            "frista": True,
+            "tte": True,
+        },
+    ]
+
+    pulled: List[Dict[str, Any]] = []
+    lane_counts = {"HIJAU": 0, "KUNING": 0, "MERAH": 0}
+    verifier_nips = ["198704202011012001", "198501012010011001"]
+
+    for i in range(req.jumlah_klaim):
+        tpl = templates[i % len(templates)]
+        svc = tpl["svc"] if req.jenis_pelayanan == "ALL" else req.jenis_pelayanan
+        suffix = len(SYNTHETIC_CLAIMS_DATABASE) + 8901 + i
+        cid = f"CLM-2026-FPK{suffix}"
+        while cid in SYNTHETIC_CLAIMS_DATABASE:
+            suffix += 1
+            cid = f"CLM-2026-FPK{suffix}"
+
+        assigned_nip = verifier_nips[i % len(verifier_nips)] if req.auto_plot else None
+        mobile_denied = 4 if tpl["s3"] >= 70 else 0
+        mobile_hadir = 8 if mobile_denied == 0 else 4
+        new_claim = ClaimInput(
+            claim_id=cid,
+            faskes_id=f"FSK-FPK-{10 + i}",
+            nama_faskes=tpl["faskes"],
+            kelas_rs=tpl["kelas"],
+            peserta_token_aes=f"AES256_{hashlib.sha256(cid.encode()).hexdigest()[:12]}",
+            tanggal_layanan=date.today(),
+            ina_cbg_code=tpl["cbg"],
+            deskripsi_cbg=tpl["desc"],
+            icd10_primary=tpl["icd10"],
+            icd9cm_procedure=tpl["icd9"],
+            nilai_klaim_rp=tpl["rp"],
+            s1_score=tpl["s1"],
+            s2_score=tpl["s2"],
+            s3_score=tpl["s3"],
+            episode_meta=EpisodeFingerprint(
+                cluster_id=f"CLS-{fpk_no[-3:]}-{i + 1}",
+                jumlah_klaim_klaster=4 if tpl["s1"] >= 75 else 1,
+                rasio_lonjakan_baseline=3.4 if tpl["s1"] >= 75 else 1.1,
+                indikasi_repeat_billing=(tpl["s1"] >= 80),
+            ),
+            dpjp_meta=DPJPValidation(
+                dpjp_id_hash=f"SDMK-FPK-{100 + i}",
+                nama_dpjp_alias="dr. DPJP Casemix, Sp.PD",
+                sip_status=tpl["sip"],
+                sip_expiry_date=date(2028, 12, 31),
+                jam_praktik_valid=(tpl["sip"] == "ACTIVE"),
+                faskes_terdaftar=tpl["faskes"],
+                catatan_sdmk="Sinkronisasi VClaim - VEDIKA" if tpl["sip"] == "ACTIVE" else "Perlu konfirmasi SIP",
+            ),
+            mobile_meta=MobileJKNConfirmation(
+                sampel_terkirim=mobile_hadir + mobile_denied,
+                respon_tidak_hadir=mobile_denied,
+                respon_hadir=mobile_hadir,
+                status_konfirmasi="ANOMALY_DENIED" if mobile_denied > 0 else "VERIFIED_ATTENDED",
+            ),
+            fkl02_id_kunjungan=f"0114R001{suffix}",
+            fkl10_tingkat_layanan=f"{svc} / FPK Tarik Massal",
+            fkl47_biaya_tagih=tpl["rp"],
+            fkl48_biaya_verifikasi=tpl["rp"],
+            no_fpk=fpk_no,
+            bulan_pelayanan=req.bulan_pelayanan,
+            jenis_pengajuan=req.jenis_pengajuan,
+            jenis_pelayanan=svc,
+            los_hari=0 if svc == "RJTL" else max(3, tpl["los"]),
+            frista_verified=tpl["frista"],
+            tte_dpjp_valid=tpl["tte"],
+            assigned_verifier_nip=assigned_nip,
+            assigned_verifier_name=VERIFICATOR_NAME_BY_NIP.get(assigned_nip) if assigned_nip else None,
+        )
+        enrich_claim_vedika_defaults(new_claim)
+        triage = evaluate_claim_triage(new_claim)
+        lane_counts[triage.triage_lane] = lane_counts.get(triage.triage_lane, 0) + 1
+        SYNTHETIC_CLAIMS_DATABASE[cid] = new_claim
+        pulled.append({
+            "claim_id": cid,
+            "nama_faskes": new_claim.nama_faskes,
+            "jenis_pelayanan": svc,
+            "nilai_klaim_rp": new_claim.nilai_klaim_rp,
+            "triage_lane": triage.triage_lane,
+            "score": triage.final_priority_score,
+            "assigned_verifier_name": new_claim.assigned_verifier_name or "Belum Di-plot",
+        })
+
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
+    duckdb_engine.sync_claims_warehouse(SYNTHETIC_CLAIMS_DATABASE)
+    audit_logger.record_event(
+        event_type="FPK_BATCH_PULLED_PRAPURIFIKASI",
+        claim_id=fpk_no,
+        actor=subject.nip,
+        payload={
+            "no_fpk": fpk_no,
+            "jenis_pengajuan": req.jenis_pengajuan,
+            "pulled_count": len(pulled),
+            "lane_counts": lane_counts,
+        }
+    )
+    return {
+        "status": "success",
+        "no_fpk": fpk_no,
+        "bulan_pelayanan": req.bulan_pelayanan,
+        "jenis_pengajuan": req.jenis_pengajuan,
+        "pulled_count": len(pulled),
+        "lane_counts": lane_counts,
+        "pulled_claims": pulled,
+    }
+
+
+@app.get("/api/v1/claims/{claim_id}/vedika-dossier")
+def get_claim_vedika_dossier(claim_id: str):
+    """Mengembalikan berkas digital VEDIKA lengkap, i-Care lintas faskes, komparasi billing RS vs CBG, dan riwayat Susulan."""
+    claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    if not claim:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+    triage = evaluate_claim_triage(claim)
+    checklist_data = operations_store.get_claim_checklist(SYNTHETIC_CLAIMS_DATABASE, claim_id)
+    pending_reasons = operations_store.get_pending_reasons(SYNTHETIC_CLAIMS_DATABASE, claim_id)
+    return {
+        "status": "success",
+        "dossier": build_vedika_dossier(claim, triage, checklist_data, pending_reasons),
+    }
+
+
+@app.post("/api/v1/claims/{claim_id}/resubmit-susulan")
+def resubmit_faskes_susulan(
+    claim_id: str,
+    req: ClaimSusulanResubmitRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
+    """Mencatat umpan balik/klarifikasi FKRTL dan mengajukan ulang berkas sebagai Klaim Susulan VEDIKA."""
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="FASKES_SUSULAN_RESUBMIT")
+
+    claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    if not claim:
+        raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
+
+    claim.resubmission_count = int(getattr(claim, "resubmission_count", 0) or 0) + 1
+    claim.jenis_pengajuan = req.jenis_pengajuan
+    if req.perbaikan_icd10:
+        claim.icd10_primary = req.perbaikan_icd10.strip()
+    if req.perbaikan_cbg:
+        claim.ina_cbg_code = req.perbaikan_cbg.strip().upper()
+        claim.ina_cbg_verified = claim.ina_cbg_code
+    if req.tarif_revisi_rp is not None:
+        claim.nilai_klaim_rp = req.tarif_revisi_rp
+        claim.fkl47_biaya_tagih = req.tarif_revisi_rp
+        claim.fkl48_biaya_verifikasi = req.tarif_revisi_rp
+    # Faskes uploading additional evidence resolves missing FRISTA/TTE blocks
+    if any("FRISTA" in d.upper() or "SEP" in d.upper() for d in req.dokumen_tambahan):
+        claim.frista_verified = True
+    if any("TTE" in d.upper() or "RESUME" in d.upper() for d in req.dokumen_tambahan):
+        claim.tte_dpjp_valid = True
+
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "actor": f"Umpan Balik FKRTL (Diterima Verifikator {subject.name})",
+        "action": f"RESUBMIT_{req.jenis_pengajuan.upper()}_#{claim.resubmission_count}",
+        "notes": req.catatan_faskes,
+        "dokumen_tambahan": req.dokumen_tambahan,
+        "tarif_revisi_rp": req.tarif_revisi_rp,
+    }
+    history = list(getattr(claim, "faskes_feedback_history", []) or [])
+    history.insert(0, entry)
+    claim.faskes_feedback_history = history
+    claim.status_verifikasi = None
+    claim.catatan_verifikator = f"Klaim Susulan #{claim.resubmission_count} diajukan ulang untuk verifikasi VEDIKA: {req.catatan_faskes}"
+
+    operations_store.update_case(
+        SYNTHETIC_CLAIMS_DATABASE,
+        claim_id,
+        actor=subject.nip,
+        status="in_progress",
+        notes=claim.catatan_verifikator,
+    )
+    log_entry = audit_logger.record_event(
+        event_type="FASKES_SUSULAN_RESUBMITTED",
+        claim_id=claim_id,
+        actor=subject.nip,
+        payload=entry,
+    )
+    _persist_claims_state(SYNTHETIC_CLAIMS_DATABASE)
+    duckdb_engine.sync_claims_warehouse(SYNTHETIC_CLAIMS_DATABASE)
+    return {
+        "status": "success",
+        "claim_id": claim_id,
+        "resubmission_count": claim.resubmission_count,
+        "claim": claim,
+        "audit_entry": log_entry,
+    }
+
+
+@app.get("/api/v1/vedika/fpk-bahv-printable")
+def get_collective_fpk_bahv_printable(
+    no_fpk: Optional[str] = Query(None),
+    signer_name: str = Query("dr. Siti Rahma, Sp.PK"),
+    signer_nip: str = Query("198704202011012001"),
+):
+    """Menghasilkan dokumen cetak BAHV & Rekapitulasi FPK Kolektif (RJTL vs RITL) bertanda segel SHA-256."""
+    filtered_map = (
+        {cid: c for cid, c in SYNTHETIC_CLAIMS_DATABASE.items() if getattr(c, "no_fpk", None) == no_fpk}
+        if no_fpk and no_fpk.upper() != "ALL"
+        else SYNTHETIC_CLAIMS_DATABASE
+    )
+    recap = build_bahv_recap_payload(
+        filtered_map,
+        evaluate_claim_triage,
+        operations_store,
+        duckdb_engine.tool_screening_pipeline_summary().get("stages", {}),
+    )
+    return render_collective_fpk_bahv_html(recap, signer_name=signer_name, signer_nip=signer_nip, no_fpk_filter=no_fpk)
+
+
+@app.get("/api/v1/vedika/ba-pending-printable")
+def get_ba_pending_dispute_printable(
+    signer_name: str = Query("dr. Siti Rahma, Sp.PK"),
+    signer_nip: str = Query("198704202011012001"),
+):
+    """Menghasilkan dokumen cetak Berita Acara Pending & Dispute Klaim beserta kode alasan baku 3 pilar."""
+    recap = build_bahv_recap_payload(
+        SYNTHETIC_CLAIMS_DATABASE,
+        evaluate_claim_triage,
+        operations_store,
+    )
+    return render_ba_pending_dispute_html(recap, signer_name=signer_name, signer_nip=signer_nip)
 
 
 @app.get("/api/v1/system/sidebar-badges")

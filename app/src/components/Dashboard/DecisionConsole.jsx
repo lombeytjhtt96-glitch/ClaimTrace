@@ -133,6 +133,12 @@ export default function DecisionConsole({
   ));
   const [bahvRecap, setBahvRecap] = useState(null);
   const [loadingRecap, setLoadingRecap] = useState(false);
+  const [pendingCodeCatalog, setPendingCodeCatalog] = useState([]);
+  const [disputeSlaTiers, setDisputeSlaTiers] = useState({});
+  const [selectedPillar, setSelectedPillar] = useState('ALL');
+  const [tarifVerifikasiRp, setTarifVerifikasiRp] = useState(() => String(rawClaim?.fkl48_biaya_verifikasi ?? rawClaim?.nilai_klaim_rp ?? ''));
+  const [inaCbgVerified, setInaCbgVerified] = useState(() => rawClaim?.ina_cbg_verified || currentCase.code || '');
+  const [disputeLevel, setDisputeLevel] = useState(() => rawClaim?.dispute_level || 'CABANG');
 
   const [auditSealHash, setAuditSealHash] = useState('');
   const [sealTimestamp, setSealTimestamp] = useState('');
@@ -157,7 +163,23 @@ export default function DecisionConsole({
     );
     setDecisionError(null);
     setSuccessToast(false);
-  }, [currentCase?.id]);
+    setTarifVerifikasiRp(String(rawClaim?.fkl48_biaya_verifikasi ?? rawClaim?.nilai_klaim_rp ?? ''));
+    setInaCbgVerified(rawClaim?.ina_cbg_verified || currentCase.code || '');
+    setDisputeLevel(rawClaim?.dispute_level || 'CABANG');
+  }, [currentCase?.id, rawClaim?.fkl48_biaya_verifikasi, rawClaim?.nilai_klaim_rp, rawClaim?.ina_cbg_verified, rawClaim?.dispute_level, currentCase.code]);
+
+  useEffect(() => {
+    let active = true;
+    authFetch(`${API_BASE_URL}/api/v1/vedika/pending-codes`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!active || !data) return;
+        if (Array.isArray(data.codes)) setPendingCodeCatalog(data.codes);
+        if (data.dispute_sla_tiers) setDisputeSlaTiers(data.dispute_sla_tiers);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (currentUser?.name || currentUser?.nip) {
@@ -249,6 +271,40 @@ export default function DecisionConsole({
       }
     }
     window.print();
+  };
+
+  const handlePrintVedikaDocument = async (path, fallbackFilename) => {
+    try {
+      const q = new URLSearchParams({
+        signer_name: verifierInfo.name || 'dr. Siti Rahma, Sp.PK',
+        signer_nip: verifierInfo.nip || '198704202011012001',
+      });
+      const res = await authFetch(`${API_BASE_URL}${path}?${q.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const htmlStr = data?.html_printable;
+      if (!htmlStr) return;
+      const win = typeof window !== 'undefined' ? window.open('', '_blank', 'width=1024,height=780') : null;
+      if (win) {
+        win.document.open();
+        win.document.write(htmlStr);
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 250);
+        return;
+      }
+      const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fallbackFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      window.print();
+    }
   };
 
   // GSAP 60fps animation on action change
@@ -367,6 +423,9 @@ export default function DecisionConsole({
           pending_reasons: (backendDecision === 'PENDING_KLARIFIKASI' || backendDecision === 'DISPUTE_TKMKB' || backendDecision === 'TIDAK_LAYAK_FRAUD')
             ? pendingReasons
             : [],
+          tarif_verifikasi_rp: tarifVerifikasiRp !== '' ? Number(tarifVerifikasiRp) : null,
+          ina_cbg_verified: inaCbgVerified?.trim() || null,
+          dispute_level: backendDecision === 'DISPUTE_TKMKB' ? disputeLevel : null,
         }),
       });
       if (!res.ok) {
@@ -518,7 +577,7 @@ export default function DecisionConsole({
                 Periode: {bahvRecap?.period_label || 'FPK Berjalan Okt/Nov 2026'} · Total {bahvRecap?.total_claims_in_queue ?? 0} berkas antrean pra-bayar.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={loadBahvRecap}
@@ -531,11 +590,21 @@ export default function DecisionConsole({
               </button>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => handlePrintVedikaDocument('/api/v1/vedika/ba-pending-printable', 'BA_Pending_Dispute_VEDIKA.html')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+                  isLight ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900' : 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-200'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Cetak BA Pending &amp; Dispute</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePrintVedikaDocument('/api/v1/vedika/fpk-bahv-printable', 'BAHV_FPK_Kolektif_VEDIKA.html')}
                 className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer inline-flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Cetak Rekap BAHV FPK</span>
+                <span>Cetak BAHV &amp; FPK Kolektif</span>
               </button>
             </div>
           </div>
@@ -578,7 +647,7 @@ export default function DecisionConsole({
                     <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-1 max-h-40 overflow-y-auto">
                       {bucketItems.map((bc) => (
                         <div key={bc.claim_id} className="text-[10.5px] flex items-center justify-between gap-2 font-mono">
-                          <span className="truncate font-bold">{bc.claim_id} · {bc.hospital || bc.nama_faskes}</span>
+                          <span className="truncate font-bold">{bc.claim_id} ({bc.jenis_pelayanan || 'RITL'}) · {bc.hospital || bc.nama_faskes}</span>
                           <span className="shrink-0">Rp {Number(bc.claimed_rp || 0).toLocaleString('id-ID')}</span>
                         </div>
                       ))}
@@ -588,6 +657,66 @@ export default function DecisionConsole({
               );
             })}
           </div>
+
+          {/* TABEL KONSOLIDASI BAHV RESMI VEDIKA: SPLIT RJTL vs RITL */}
+          {bahvRecap?.service_breakdown && (
+            <div className={`rounded-2xl p-4 border space-y-3 ${
+              isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/85 border-white/10'
+            }`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Tabel Rekapitulasi BAHV / FPK Resmi (Rawat Jalan RJTL vs Rawat Inap RITL)
+                  </h4>
+                  <p className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                    Acuan pembayaran BOA SLA maks. 15 hari sejak FPK lengkap (denda 1%/bulan) &amp; batas daluwarsa 6 bulan Perpres 82/2018.
+                  </p>
+                </div>
+                <span className={`text-[10.5px] font-mono font-bold px-2.5 py-1 rounded-lg border ${
+                  isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                }`}>
+                  Pencegahan Pra-Bayar: {bahvRecap.prevention_efficiency_pct ?? 0}% (Rp {Number(bahvRecap.total_held_rp || 0).toLocaleString('id-ID')})
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className={`text-[10px] uppercase font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-black/35 text-white/70'}`}>
+                    <tr>
+                      <th className="py-2 px-3 border border-slate-200 dark:border-white/10">Status Verifikasi</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Kasus / Lbr</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Biaya Tagih</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Kasus / Hari</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Biaya Tagih</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Disetujui (FKL48)</th>
+                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Tertahan / Koreksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y font-mono text-[11px] ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/85'}`}>
+                    {[
+                      { k: 'LAYAK', label: '1. Layak Bayar' },
+                      { k: 'PENDING', label: '2. Pending / Klarifikasi' },
+                      { k: 'DISPUTE', label: '3. Dispute TKMKB' },
+                      { k: 'TIDAK_LAYAK', label: '4. Tidak Layak' },
+                    ].map(({ k, label }) => {
+                      const row = bahvRecap.service_breakdown[k];
+                      if (!row) return null;
+                      return (
+                        <tr key={k}>
+                          <td className="py-2 px-3 border border-slate-200 dark:border-white/10 font-sans font-bold">{label}</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">{row.RJTL.kasus} / {row.RJTL.hari_lbr}</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Rp {Number(row.RJTL.biaya_tagih_rp || 0).toLocaleString('id-ID')}</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">{row.RITL.kasus} / {row.RITL.hari_lbr} hr</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Rp {Number(row.RITL.biaya_tagih_rp || 0).toLocaleString('id-ID')}</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right font-bold text-emerald-700 dark:text-emerald-300">Rp {Number(row.TOTAL.biaya_disetujui_rp || 0).toLocaleString('id-ID')}</td>
+                          <td className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right font-bold text-amber-700 dark:text-amber-300">Rp {Number(row.TOTAL.selisih_rp || 0).toLocaleString('id-ID')}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
       /* SCROLLABLE MAIN DECISION WORKSPACE */
@@ -853,29 +982,106 @@ export default function DecisionConsole({
               </button>
             </div>
 
-            {/* ALASAN PENGEMBALIAN / DISPUTE / AUDIT VEDIKA */}
-            <div className="pt-2 space-y-1.5">
-              <div className={`text-[10.5px] font-bold flex items-center justify-between ${
+            {/* KOREKSI TARIF FKL48, KODING INA-CBG & TIER DISPUTE SLA */}
+            <div className={`p-3 rounded-xl border grid grid-cols-1 sm:grid-cols-3 gap-2.5 ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/25 border-white/10'
+            }`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                  Tarif Disetujui FKL48 (Rp)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  aria-label="Koreksi Tarif Disetujui FKL48"
+                  value={tarifVerifikasiRp}
+                  onChange={(e) => setTarifVerifikasiRp(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-mono ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                  Kode INA-CBG Terverifikasi
+                </label>
+                <input
+                  type="text"
+                  aria-label="Kode INA-CBG Terverifikasi"
+                  value={inaCbgVerified}
+                  onChange={(e) => setInaCbgVerified(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-mono ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                  Tier Dispute SLA (SE Diryan 51/2016)
+                </label>
+                <select
+                  aria-label="Tier Dispute SLA"
+                  value={disputeLevel}
+                  onChange={(e) => setDisputeLevel(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg border text-xs ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
+                  }`}
+                >
+                  <option value="CABANG">Cabang (Koding 5 HK / Medis 14 HK)</option>
+                  <option value="KEDEPUTIAN">Kedeputian (Koding 5 HK / Medis 14 HK)</option>
+                  <option value="PUSAT_TKMKB">Pusat / TKMKB (Koding 14 HK / Medis 21 HK)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* ALASAN PENGEMBALIAN / DISPUTE / AUDIT VEDIKA (BA KESEPAKATAN 3 PILAR) */}
+            <div className="pt-2 space-y-2">
+              <div className={`text-[10.5px] font-bold flex flex-wrap items-center justify-between gap-2 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
-                <span>Daftar Alasan Baku Pending / Dispute / Penolakan VEDIKA ({pendingReasons.length} dipilih):</span>
+                <span>Kode Alasan Baku BA Kesepakatan 3 Pilar VEDIKA ({pendingReasons.length} dipilih):</span>
+                <div className="flex items-center gap-1">
+                  {['ALL', 'Administrasi', 'Koding INA-CBG', 'Pelayanan Medis'].map((pil) => (
+                    <button
+                      key={pil}
+                      type="button"
+                      onClick={() => setSelectedPillar(pil)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition cursor-pointer ${
+                        selectedPillar === pil
+                          ? (isLight ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-emerald-600 text-white border-emerald-500')
+                          : (isLight ? 'bg-white text-slate-600 border-slate-200' : 'bg-white/5 text-white/70 border-white/10')
+                      }`}
+                    >
+                      {pil === 'ALL' ? 'Semua 3 Pilar' : pil}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {VEDIKA_REASON_OPTIONS.map((reason) => {
-                  const selected = pendingReasons.includes(reason);
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                {(pendingCodeCatalog.length > 0
+                  ? pendingCodeCatalog.filter((c) => selectedPillar === 'ALL' || c.pillar === selectedPillar).map((c) => ({
+                      key: c.code,
+                      label: `${c.code} · ${c.title}`,
+                      pillar: c.pillar,
+                      desc: c.description,
+                    }))
+                  : VEDIKA_REASON_OPTIONS.map((r) => ({ key: r, label: r, pillar: 'Umum', desc: r }))
+                ).map((item) => {
+                  const selected = pendingReasons.includes(item.key);
                   return (
                     <button
-                      key={reason}
+                      key={item.key}
                       type="button"
-                      onClick={() => toggleReason(reason)}
-                      className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-semibold transition cursor-pointer ${
+                      title={`${item.pillar}: ${item.desc}`}
+                      onClick={() => toggleReason(item.key)}
+                      className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-semibold transition cursor-pointer text-left ${
                         selected
                           ? (isLight ? 'bg-amber-100 border-amber-400 text-amber-950' : 'bg-amber-500/25 border-amber-400/50 text-amber-200')
                           : (isLight ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-white/5 border-white/10 text-white/65 hover:bg-white/10')
                       }`}
                     >
                       {selected ? '[Dipilih] ' : '+ '}
-                      {reason}
+                      {item.label}
                     </button>
                   );
                 })}

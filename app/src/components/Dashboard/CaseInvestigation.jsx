@@ -7,7 +7,7 @@ import {
   Clock, Hospital, Stethoscope, UserCheck, AlertOctagon,
   TrendingUp, FileText, CheckCircle2, XCircle, Share2, 
   ExternalLink, Info, Activity, GitBranch, ArrowRight, Lock, Check,
-  Bot, Zap, ShieldAlert, Sparkles, Cpu
+  Bot, Zap, ShieldAlert, Sparkles, Cpu, Layers, History, Send, Receipt
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -237,6 +237,78 @@ export default function CaseInvestigation({
   };
 
   const checkedCount = VEDIKA_CHECKLIST_META.filter((m) => Boolean(caseChecklist[m.key])).length;
+
+  const [vedikaDossier, setVedikaDossier] = useState(() => getCachedJsonSync(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/vedika-dossier`)?.dossier || null);
+  const [vedikaSubTab, setVedikaSubTab] = useState('berkas'); // 'berkas' | 'icare' | 'billing' | 'susulan'
+  const [resubmitForm, setResubmitForm] = useState({
+    catatan_faskes: '',
+    perbaikan_icd10: '',
+    perbaikan_cbg: '',
+    tarif_revisi_rp: '',
+    dok_frista: false,
+    dok_tte: false,
+  });
+  const [resubmitBusy, setResubmitBusy] = useState(false);
+  const [resubmitMsg, setResubmitMsg] = useState(null);
+
+  const loadVedikaDossier = React.useCallback(async () => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/vedika-dossier`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.dossier) setVedikaDossier(json.dossier);
+      }
+    } catch {
+      // keep fallback UI clean
+    }
+  }, [currentCase.id]);
+
+  useEffect(() => {
+    let active = true;
+    setResubmitMsg(null);
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/vedika-dossier`).then((json) => {
+      if (active && json?.dossier) {
+        setVedikaDossier(json.dossier);
+      }
+    });
+    return () => { active = false; };
+  }, [currentCase.id]);
+
+  const handleSusulanResubmit = async (e) => {
+    e.preventDefault();
+    if (resubmitBusy || !resubmitForm.catatan_faskes.trim()) return;
+    setResubmitBusy(true);
+    setResubmitMsg(null);
+    const docs = [];
+    if (resubmitForm.dok_frista) docs.push('BUKTI_FRISTA_ESEP');
+    if (resubmitForm.dok_tte) docs.push('RESUME_MEDIS_TTE_DPJP');
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/resubmit-susulan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catatan_faskes: resubmitForm.catatan_faskes.trim(),
+          perbaikan_icd10: resubmitForm.perbaikan_icd10.trim() || null,
+          perbaikan_cbg: resubmitForm.perbaikan_cbg.trim() || null,
+          tarif_revisi_rp: resubmitForm.tarif_revisi_rp ? Number(resubmitForm.tarif_revisi_rp) : null,
+          dokumen_tambahan: docs,
+          jenis_pengajuan: 'Susulan',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setResubmitMsg({ tone: 'green', text: `Klaim Susulan #${data.resubmission_count} berhasil direkam ke antrean VEDIKA & audit SHA-256.` });
+        setResubmitForm({ catatan_faskes: '', perbaikan_icd10: '', perbaikan_cbg: '', tarif_revisi_rp: '', dok_frista: false, dok_tte: false });
+        await loadVedikaDossier();
+      } else {
+        setResubmitMsg({ tone: 'red', text: data.detail || 'Otoritas peran tidak mengizinkan perekaman Klaim Susulan.' });
+      }
+    } catch {
+      setResubmitMsg({ tone: 'red', text: 'Gagal terhubung ke endpoint Resubmit Susulan.' });
+    } finally {
+      setResubmitBusy(false);
+    }
+  };
 
   const clusterVolume = Number(rawClaim?.episode_meta?.jumlah_klaim_klaster ?? currentCase.claimCount ?? 85);
   const spikeRatio = Number(rawClaim?.episode_meta?.rasio_lonjakan_baseline ?? 8.5);
@@ -1350,6 +1422,284 @@ export default function CaseInvestigation({
           </div>
         </div>
       </div>
+
+      {/* PORTAL BERKAS DIGITAL VEDIKA, i-CARE LINTAS FASKES & KLAIM SUSULAN */}
+      {vedikaDossier && (
+        <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-white/10">
+            <div className="flex items-center gap-2">
+              <Layers className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-cyan-400'}`} />
+              <div>
+                <h3 className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Viewer Berkas Digital VEDIKA, Riwayat i-Care JKN &amp; Klaim Susulan
+                </h3>
+                <p className={`text-[10.5px] font-mono ${isLight ? 'text-slate-500' : 'text-white/55'}`}>
+                  {vedikaDossier.fpk_metadata?.no_fpk} · {vedikaDossier.fpk_metadata?.jenis_pelayanan} · {vedikaDossier.fpk_metadata?.jenis_pengajuan} · Hak Kelas {vedikaDossier.fpk_metadata?.hak_kelas} &rarr; Rawat {vedikaDossier.fpk_metadata?.kelas_ditempati} · Daluwarsa: {vedikaDossier.fpk_metadata?.daluwarsa_date} ({vedikaDossier.fpk_metadata?.days_until_daluwarsa} hari lagi)
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+              {[
+                { id: 'berkas', label: 'Berkas Digital (6)' },
+                { id: 'icare', label: 'Riwayat i-Care Lintas Faskes' },
+                { id: 'billing', label: 'Billing RS vs INA-CBG' },
+                { id: 'susulan', label: `Klaim Susulan (${vedikaDossier.resubmission_timeline?.resubmission_count || 0})` },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setVedikaSubTab(t.id)}
+                  className={`px-2.5 py-1.5 rounded-lg border transition cursor-pointer ${
+                    vedikaSubTab === t.id
+                      ? (isLight ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-emerald-600 text-white border-emerald-500')
+                      : (isLight ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' : 'bg-white/5 text-white/75 border-white/10 hover:bg-white/10')
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {vedikaSubTab === 'berkas' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+              {(vedikaDossier.dokumen_berkas_digital || []).map((doc) => (
+                <div
+                  key={doc.doc_code}
+                  className={`p-3 rounded-xl border space-y-1.5 ${
+                    doc.status === 'LENGKAP_VALID'
+                      ? (isLight ? 'bg-emerald-50/40 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/25')
+                      : doc.status === 'TIDAK_KONSISTEN'
+                      ? (isLight ? 'bg-rose-50/60 border-rose-200' : 'bg-rose-500/10 border-rose-500/30')
+                      : (isLight ? 'bg-amber-50/60 border-amber-200' : 'bg-amber-500/10 border-amber-500/30')
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{doc.doc_code}</span>
+                      <div className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{doc.title}</div>
+                    </div>
+                    <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold shrink-0 border ${
+                      doc.status === 'LENGKAP_VALID'
+                        ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35')
+                        : doc.status === 'TIDAK_KONSISTEN'
+                        ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/35')
+                        : (isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/35')
+                    }`}>
+                      {doc.status}
+                    </span>
+                  </div>
+                  <ul className={`text-[10.5px] space-y-0.5 ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+                    {(doc.highlights || []).map((hl, hIdx) => (
+                      <li key={hIdx}>• {hl}</li>
+                    ))}
+                  </ul>
+                  <div className={`text-[9.5px] font-mono pt-1 border-t truncate ${isLight ? 'border-slate-200/70 text-slate-500' : 'border-white/10 text-white/45'}`}>
+                    {doc.signed_by} · SHA: {doc.hash_sha256}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {vedikaSubTab === 'icare' && (
+            <div className="space-y-2">
+              <div className={`text-[11px] flex items-center gap-1.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                <History className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Riwayat kunjungan lintas FKTP/FKRTL ter-pseudonimisasi (i-Care JKN) untuk deteksi readmisi &lt;= 30 hari &amp; duplikasi episode.</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className={`text-[10px] uppercase font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-black/30 text-white/65'}`}>
+                    <tr>
+                      <th className="py-2 px-3">Tanggal</th>
+                      <th className="py-2 px-3">No. SEP / Rujukan</th>
+                      <th className="py-2 px-3">Faskes &amp; Tingkat Layanan</th>
+                      <th className="py-2 px-3">ICD-10 &amp; DPJP</th>
+                      <th className="py-2 px-3">Catatan Kontrol i-Care</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/85'}`}>
+                    {(vedikaDossier.icare_history || []).map((ev, eIdx) => (
+                      <tr key={eIdx}>
+                        <td className="py-2 px-3 font-mono font-semibold">{ev.visit_date}</td>
+                        <td className="py-2 px-3 font-mono">{ev.sep_no}</td>
+                        <td className="py-2 px-3">
+                          <div className="font-semibold">{ev.faskes}</div>
+                          <div className="text-[10px] opacity-70">{ev.service_level}</div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <div className="font-mono text-[11px]">{ev.icd10}</div>
+                          <div className="text-[10px] opacity-70">{ev.dpjp}</div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            ev.flag?.includes('RED FLAG') || ev.flag?.includes('ANOMALI')
+                              ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/35')
+                              : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35')
+                          }`}>
+                            {ev.flag}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {vedikaSubTab === 'billing' && vedikaDossier.billing_reconciliation && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs">
+              <div className={`p-3 rounded-xl border space-y-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/25 border-white/10'}`}>
+                <div className="flex items-center gap-1.5 font-bold">
+                  <Receipt className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Rincian Billing Riil FKRTL ({vedikaDossier.fpk_metadata?.jenis_pelayanan})</span>
+                </div>
+                <div className="space-y-1.5">
+                  {(vedikaDossier.billing_reconciliation.line_items || []).map((li, lIdx) => (
+                    <div key={lIdx} className="flex items-center justify-between text-[11px] border-b border-dashed border-slate-300/60 dark:border-white/10 pb-1">
+                      <span>{li.komponen}</span>
+                      <span className="font-mono font-bold">Rp {Number(li.nilai_rp || 0).toLocaleString('id-ID')}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between font-bold pt-1">
+                  <span>Total Tarif RS Riil</span>
+                  <span className="font-mono">Rp {Number(vedikaDossier.billing_reconciliation.tarif_rs_riil_rp || 0).toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+              <div className={`p-3 rounded-xl border space-y-2 ${isLight ? 'bg-emerald-50/40 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/25'}`}>
+                <div className="font-bold">Rekonsiliasi Grouping INA-CBG &amp; Special CMG</div>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>INA-CBG Diajukan vs Verified</span>
+                    <span className="font-mono font-bold">{vedikaDossier.billing_reconciliation.ina_cbg_diajukan} &rarr; {vedikaDossier.billing_reconciliation.ina_cbg_verified}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>FKL47 Biaya Tagih Paket INA-CBG</span>
+                    <span className="font-mono font-bold">Rp {Number(vedikaDossier.billing_reconciliation.fkl47_biaya_tagih_rp || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>FKL48 Tarif Disetujui Verifikator</span>
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">Rp {Number(vedikaDossier.billing_reconciliation.fkl48_biaya_verifikasi_rp || 0).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Selisih RS vs CBG / Koreksi VEDIKA</span>
+                    <span className="font-mono font-bold">
+                      Rp {Number(vedikaDossier.billing_reconciliation.selisih_rs_vs_cbg_rp || 0).toLocaleString('id-ID')} / Koreksi Rp {Number(vedikaDossier.billing_reconciliation.selisih_koreksi_verifikasi_rp || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="pt-1 border-t border-emerald-200/70 dark:border-white/10">
+                    <span className="font-semibold">Special CMG Top-Up (SA/SP/RR/SI/SD): </span>
+                    <span className="font-mono">
+                      {(vedikaDossier.billing_reconciliation.special_cmg_list || []).length > 0
+                        ? vedikaDossier.billing_reconciliation.special_cmg_list.join(', ')
+                        : 'Tidak ada komponen Special CMG'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {vedikaSubTab === 'susulan' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs">
+              <div className="space-y-2">
+                <div className="font-bold">Riwayat Umpan Balik FKRTL &amp; SLA Dispute ({vedikaDossier.resubmission_timeline?.dispute_sla?.label})</div>
+                <div className={`text-[11px] p-2.5 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-black/25 border-white/10 text-white/75'}`}>
+                  Batas SE Diryan 51/2016: Koding {vedikaDossier.resubmission_timeline?.dispute_sla?.koding_hk} HK · Medis {vedikaDossier.resubmission_timeline?.dispute_sla?.medis_hk} HK · Forum: {vedikaDossier.resubmission_timeline?.dispute_sla?.forum}.
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {(vedikaDossier.resubmission_timeline?.history || []).length === 0 ? (
+                    <div className={`text-[11px] italic ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                      Belum ada riwayat pengajuan ulang Klaim Susulan pada berkas ini.
+                    </div>
+                  ) : (vedikaDossier.resubmission_timeline?.history || []).map((h, hIdx) => (
+                    <div key={hIdx} className={`p-2.5 rounded-xl border text-[11px] ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                      <div className="flex justify-between font-mono font-bold text-[10px]">
+                        <span>{h.action}</span>
+                        <span>{String(h.timestamp || '').slice(0, 19).replace('T', ' ')}</span>
+                      </div>
+                      <p className="mt-1">{h.notes}</p>
+                      <div className="text-[10px] opacity-70 mt-0.5">{h.actor}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleSusulanResubmit} className={`p-3 rounded-xl border space-y-2.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/25 border-white/10'}`}>
+                <div className="font-bold flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Terima Tanggapan FKRTL &amp; Rekam Klaim Susulan</span>
+                </div>
+                {resubmitMsg && (
+                  <div className={`p-2 rounded-lg text-[11px] font-semibold border ${
+                    resubmitMsg.tone === 'green'
+                      ? (isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-emerald-500/20 border-emerald-500/35 text-emerald-100')
+                      : (isLight ? 'bg-rose-50 border-rose-300 text-rose-900' : 'bg-rose-500/20 border-rose-500/35 text-rose-100')
+                  }`}>
+                    {resubmitMsg.text}
+                  </div>
+                )}
+                <textarea
+                  required
+                  rows={2}
+                  value={resubmitForm.catatan_faskes}
+                  onChange={(e) => setResubmitForm({ ...resubmitForm, catatan_faskes: e.target.value })}
+                  placeholder="Catatan klarifikasi Tim Casemix RS & lampiran bukti klinis susulan..."
+                  className={`w-full px-2.5 py-2 rounded-lg border text-xs ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                  }`}
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={resubmitForm.perbaikan_icd10}
+                    onChange={(e) => setResubmitForm({ ...resubmitForm, perbaikan_icd10: e.target.value })}
+                    placeholder="Revisi ICD-10"
+                    className={`px-2 py-1.5 rounded-lg border text-[11px] font-mono ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15 text-white'}`}
+                  />
+                  <input
+                    type="text"
+                    value={resubmitForm.perbaikan_cbg}
+                    onChange={(e) => setResubmitForm({ ...resubmitForm, perbaikan_cbg: e.target.value })}
+                    placeholder="Revisi INA-CBG"
+                    className={`px-2 py-1.5 rounded-lg border text-[11px] font-mono ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15 text-white'}`}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    value={resubmitForm.tarif_revisi_rp}
+                    onChange={(e) => setResubmitForm({ ...resubmitForm, tarif_revisi_rp: e.target.value })}
+                    placeholder="Tarif Baru (Rp)"
+                    className={`px-2 py-1.5 rounded-lg border text-[11px] font-mono ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15 text-white'}`}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={resubmitForm.dok_frista} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_frista: e.target.checked })} />
+                      <span>Unggah FRISTA</span>
+                    </label>
+                    <label className="inline-flex items-center gap-1 cursor-pointer">
+                      <input type="checkbox" checked={resubmitForm.dok_tte} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_tte: e.target.checked })} />
+                      <span>TTE BSrE DPJP</span>
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={resubmitBusy}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold transition cursor-pointer disabled:opacity-50"
+                  >
+                    {resubmitBusy ? 'Merekam Susulan...' : 'Ajukan Ulang Klaim Susulan'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* KERTAS KERJA PEMERIKSAAN VERIFIKATOR (6 KAIDAH VEDIKA) */}
       <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>

@@ -80,6 +80,31 @@ class ClaimInput(BaseModel):
     catatan_verifikator: Optional[str] = None
     tanggal_verifikasi: Optional[str] = None
     adjudicated_by: Optional[str] = None
+    # VEDIKA Digital Verification Portal & FPK Operational Metadata
+    no_fpk: Optional[str] = None
+    bulan_pelayanan: Optional[str] = None
+    jenis_pengajuan: Literal["Reguler", "Susulan", "LUPIS"] = "Reguler"
+    jenis_pelayanan: Literal["RJTL", "RITL"] = "RITL"
+    hak_kelas: Optional[Literal["1", "2", "3"]] = "3"
+    kelas_ditempati: Optional[Literal["1", "2", "3", "VIP", "ICU"]] = "3"
+    naik_kelas_flag: bool = False
+    cara_masuk: Optional[str] = None
+    cara_pulang: Optional[str] = None
+    los_hari: Optional[int] = None
+    icd10_secondary: List[str] = Field(default_factory=list)
+    icd9_procedures: List[str] = Field(default_factory=list)
+    tarif_rs_riil: Optional[int] = None
+    special_cmg_list: List[str] = Field(default_factory=list)
+    penjaminan_khusus: Optional[str] = "JKN Murni"
+    frista_verified: bool = True
+    tte_dpjp_valid: bool = True
+    assigned_verifier_nip: Optional[str] = None
+    assigned_verifier_name: Optional[str] = None
+    ina_cbg_verified: Optional[str] = None
+    resubmission_count: int = 0
+    faskes_feedback_history: List[Dict[str, Any]] = Field(default_factory=list)
+    dispute_level: Optional[Literal["CABANG", "KEDEPUTIAN", "PUSAT_TKMKB"]] = None
+    daluwarsa_date: Optional[date] = None
 
 class AIAnomalyFeatureDriver(BaseModel):
     feature_name: str
@@ -154,6 +179,9 @@ class VerifierDecisionRequest(BaseModel):
     catatan_verifikator: str
     pending_reasons: List[str] = Field(default_factory=list)
     checklist_status: Optional[Dict[str, bool]] = None
+    tarif_verifikasi_rp: Optional[int] = Field(None, ge=0)
+    ina_cbg_verified: Optional[str] = None
+    dispute_level: Optional[Literal["CABANG", "KEDEPUTIAN", "PUSAT_TKMKB"]] = None
 
 
 class BatchDecisionRequest(BaseModel):
@@ -162,6 +190,9 @@ class BatchDecisionRequest(BaseModel):
     verifier_id: str = "198704202011012001"
     catatan_verifikator: str = "Disposisi massal verifikator pra-bayar sesuai kaidah VEDIKA & Perpres 82/2018."
     pending_reasons: List[str] = Field(default_factory=list)
+    tarif_verifikasi_rp: Optional[int] = Field(None, ge=0)
+    ina_cbg_verified: Optional[str] = None
+    dispute_level: Optional[Literal["CABANG", "KEDEPUTIAN", "PUSAT_TKMKB"]] = None
 
 
 class ClaimChecklistRequest(BaseModel):
@@ -196,6 +227,41 @@ class ClaimIngestSimulateRequest(BaseModel):
     s1_override: Optional[float] = Field(None, ge=0, le=100)
     s2_override: Optional[float] = Field(None, ge=0, le=100)
     s3_override: Optional[float] = Field(None, ge=0, le=100)
+    no_fpk: Optional[str] = None
+    jenis_pengajuan: Literal["Reguler", "Susulan", "LUPIS"] = "Reguler"
+    jenis_pelayanan: Literal["RJTL", "RITL"] = "RITL"
+    hak_kelas: Literal["1", "2", "3"] = "3"
+    kelas_ditempati: Literal["1", "2", "3", "VIP", "ICU"] = "3"
+    los_hari: Optional[int] = Field(None, ge=0, le=365)
+    tarif_rs_riil: Optional[int] = Field(None, ge=0)
+    penjaminan_khusus: Optional[str] = "JKN Murni"
+    frista_verified: bool = True
+    tte_dpjp_valid: bool = True
+
+
+class VedikaPlottingRequest(BaseModel):
+    claim_ids: List[str] = Field(..., min_length=1)
+    verifier_nip: str
+    catatan: Optional[str] = None
+
+
+class VedikaFpkPullRequest(BaseModel):
+    no_fpk: Optional[str] = None
+    bulan_pelayanan: str = "2026-11"
+    jenis_pengajuan: Literal["Reguler", "Susulan", "LUPIS"] = "Reguler"
+    jenis_pelayanan: Literal["ALL", "RJTL", "RITL"] = "ALL"
+    nama_faskes: Optional[str] = None
+    jumlah_klaim: int = Field(2, ge=1, le=5)
+    auto_plot: bool = True
+
+
+class ClaimSusulanResubmitRequest(BaseModel):
+    catatan_faskes: str = Field(..., min_length=5)
+    perbaikan_icd10: Optional[str] = None
+    perbaikan_cbg: Optional[str] = None
+    tarif_revisi_rp: Optional[int] = Field(None, ge=0)
+    dokumen_tambahan: List[str] = Field(default_factory=list)
+    jenis_pengajuan: Literal["Susulan", "Reguler"] = "Susulan"
 
 class AuditLogEntry(BaseModel):
     index: int

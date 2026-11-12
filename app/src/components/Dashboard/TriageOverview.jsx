@@ -3,7 +3,8 @@ import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '.
 import { motion } from 'motion/react';
 import { 
   AlertOctagon, CheckCircle2, Clock, ChevronRight, 
-  Search, ShieldCheck, CheckSquare, Square, PlusCircle, Download, Check, X
+  Search, ShieldCheck, CheckSquare, Square, PlusCircle, Download, Check, X,
+  UserCheck, Layers
 } from 'lucide-react';
 
 const SIMULATE_PRESETS = [
@@ -183,6 +184,18 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       checklist: checklist || null,
       pendingReasons: Array.isArray(pending_reasons) ? pending_reasons : [],
       slaDays: sla_deadline_days ?? triage?.sla_deadline_days ?? (laneCode === 'red' ? 3 : laneCode === 'yellow' ? 5 : 2),
+      noFpk: claim.no_fpk || 'FPK-2026-001',
+      bulanPelayanan: claim.bulan_pelayanan || String(claim.tanggal_layanan || '').slice(0, 7),
+      jenisPelayanan: claim.jenis_pelayanan || ((claim.fkl10_tingkat_layanan || '').toUpperCase().includes('RJTL') ? 'RJTL' : 'RITL'),
+      jenisPengajuan: claim.jenis_pengajuan || 'Reguler',
+      assignedVerifierNip: claim.assigned_verifier_nip || '',
+      assignedVerifierName: claim.assigned_verifier_name || 'Belum Di-plot',
+      fkl48BiayaVerifikasi: claim.fkl48_biaya_verifikasi ?? claim.nilai_klaim_rp,
+      inaCbgVerified: claim.ina_cbg_verified || claim.ina_cbg_code,
+      resubmissionCount: Number(claim.resubmission_count || 0),
+      fristaVerified: claim.frista_verified !== false,
+      tteDpjpValid: claim.tte_dpjp_valid !== false,
+      daluwarsaDate: claim.daluwarsa_date || '',
       rawClaim: claim,
       rawTriage: triage,
     };
@@ -191,12 +204,31 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const claimsUrl = `${API_BASE_URL}/api/v1/claims`;
   const statsUrl = `${API_BASE_URL}/api/v1/system/national-scale-metrics`;
   const pipelineUrl = `${API_BASE_URL}/api/v1/screening/pipeline-summary`;
+  const verifsUrl = `${API_BASE_URL}/api/v1/auth/verificators`;
   const cachedClaimsRaw = getCachedJsonSync(claimsUrl);
   const cachedStatsRaw = getCachedJsonSync(statsUrl);
   const cachedPipelineRaw = getCachedJsonSync(pipelineUrl);
 
   const [activeLane, setActiveLane] = useState('all'); // 'all' | 'red' | 'yellow' | 'green'
   const [activeModus, setActiveModus] = useState('all'); // 'all' | 'PHANTOM' | 'REPEAT' | 'SIP' | 'MOBILE' | 'UPCODING'
+  const [activeServiceLevel, setActiveServiceLevel] = useState('all'); // 'all' | 'RJTL' | 'RITL'
+  const [activeSubmissionType, setActiveSubmissionType] = useState('all'); // 'all' | 'Reguler' | 'Susulan' | 'LUPIS'
+  const [activeFpkFilter, setActiveFpkFilter] = useState('all');
+  const [activePlottingFilter, setActivePlottingFilter] = useState('all');
+  const [verificatorsList, setVerificatorsList] = useState(() => getCachedJsonSync(verifsUrl) || []);
+  const [batchPlotNip, setBatchPlotNip] = useState('198704202011012001');
+  const [showFpkPullModal, setShowFpkPullModal] = useState(false);
+  const [fpkPullForm, setFpkPullForm] = useState({
+    no_fpk: '',
+    bulan_pelayanan: '2026-11',
+    jenis_pengajuan: 'Reguler',
+    jenis_pelayanan: 'ALL',
+    nama_faskes: '',
+    jumlah_klaim: 2,
+    auto_plot: true,
+  });
+  const [fpkPullSubmitting, setFpkPullSubmitting] = useState(false);
+  const [fpkPullResult, setFpkPullResult] = useState(null);
   const [showThresholdRules, setShowThresholdRules] = useState(false);
   const [showIngestModal, setShowIngestModal] = useState(false);
   const [ingestForm, setIngestForm] = useState(() => ({ ...SIMULATE_PRESETS[0].payload, add_to_queue: true }));
@@ -241,10 +273,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       cachedAuthGetJson(statsUrl).then((statsData) => {
         if (statsData && active) setPortfolioStats(statsData?.window_metrics || statsData?.portfolio_metrics || null);
       });
+      cachedAuthGetJson(verifsUrl).then((vList) => {
+        if (Array.isArray(vList) && active) setVerificatorsList(vList);
+      });
     };
     loadIndependent();
     return () => { active = false; };
-  }, [claimsUrl, statsUrl, pipelineUrl]);
+  }, [claimsUrl, statsUrl, pipelineUrl, verifsUrl]);
 
   useEffect(() => {
     if (!queueToast) return;
@@ -266,10 +301,17 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const yellowPct = totalQueueCount ? ((yellowCount / totalQueueCount) * 100).toFixed(1) : '0.0';
   const greenPct = totalQueueCount ? ((greenCount / totalQueueCount) * 100).toFixed(1) : '0.0';
   const uniqueFaskesOptions = Array.from(new Set(liveClaims.map(c => c.hospital).filter(Boolean)));
+  const uniqueFpkOptions = Array.from(new Set(liveClaims.map(c => c.noFpk).filter(Boolean))).sort();
 
   const filteredClaims = liveClaims.filter(c => {
     const matchesLane = activeLane === 'all' || c.lane === activeLane;
     const matchesFaskes = selectedFaskes === 'all' || c.hospital.toLowerCase().includes(selectedFaskes.toLowerCase());
+    const matchesService = activeServiceLevel === 'all' || c.jenisPelayanan === activeServiceLevel;
+    const matchesSubmission = activeSubmissionType === 'all' || c.jenisPengajuan === activeSubmissionType;
+    const matchesFpk = activeFpkFilter === 'all' || c.noFpk === activeFpkFilter;
+    const matchesPlotting =
+      activePlottingFilter === 'all' ||
+      (activePlottingFilter === 'UNASSIGNED' ? !c.assignedVerifierNip : c.assignedVerifierNip === activePlottingFilter);
     const joinedFlags = `${c.flags.join(' ')} ${(c.rawTriage?.kode_indikator || []).join(' ')}`.toUpperCase();
     const matchesModus =
       activeModus === 'all' ||
@@ -278,12 +320,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       (activeModus === 'SIP' && (joinedFlags.includes('SIP_EXPIRED') || joinedFlags.includes('IND-L2-SIP-EXP') || joinedFlags.includes('GEODIST') || joinedFlags.includes('SDMK'))) ||
       (activeModus === 'MOBILE' && (joinedFlags.includes('MOBILE_DENIED') || joinedFlags.includes('IND-L3-PRESENSI'))) ||
       (activeModus === 'UPCODING' && joinedFlags.includes('UPCODING'));
+    const q = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' || 
-      c.hospital.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.dpjp.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesLane && matchesModus && matchesFaskes && matchesSearch;
+      c.hospital.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q) ||
+      c.id.toLowerCase().includes(q) ||
+      c.noFpk.toLowerCase().includes(q) ||
+      c.dpjp.toLowerCase().includes(q);
+    return matchesLane && matchesModus && matchesFaskes && matchesService && matchesSubmission && matchesFpk && matchesPlotting && matchesSearch;
   });
 
   const allVisibleSelected =
@@ -345,6 +389,74 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       setQueueToast({ tone: 'red', message: 'Koneksi ke server verifikasi terputus.' });
     } finally {
       setBatchSubmitting(false);
+    }
+  };
+
+  const handleBatchPlotting = async () => {
+    if (!selectedIds.length || batchSubmitting || !batchPlotNip) return;
+    setBatchSubmitting(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/vedika/plotting`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          claim_ids: selectedIds,
+          verifier_nip: batchPlotNip,
+          catatan: 'Plotting berkas FPK VEDIKA dari antrean pra-bayar.',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await reloadClaimsQueue();
+        setSelectedIds([]);
+        setQueueToast({
+          tone: 'green',
+          message: `${data.updated_count} berkas FPK di-plot ke ${data.assigned_verifier_name}.`,
+        });
+      } else {
+        setQueueToast({
+          tone: 'red',
+          message: data.detail || 'Peran Anda tidak diizinkan mengubah plotting verifikator.',
+        });
+      }
+    } catch {
+      setQueueToast({ tone: 'red', message: 'Gagal menghubungi endpoint plotting VEDIKA.' });
+    } finally {
+      setBatchSubmitting(false);
+    }
+  };
+
+  const handleRunFpkPull = async (e) => {
+    e.preventDefault();
+    if (fpkPullSubmitting) return;
+    setFpkPullSubmitting(true);
+    setFpkPullResult(null);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/vedika/fpk-pull`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...fpkPullForm,
+          no_fpk: fpkPullForm.no_fpk.trim() || null,
+          nama_faskes: fpkPullForm.nama_faskes.trim() || null,
+          jumlah_klaim: Number(fpkPullForm.jumlah_klaim) || 2,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setFpkPullResult(data);
+        await reloadClaimsQueue();
+        setQueueToast({
+          tone: 'green',
+          message: `Tarik FPK ${data.no_fpk} selesai (${data.pulled_count} berkas masuk Pra-Purifikasi VEDIKA).`,
+        });
+      } else {
+        setQueueToast({ tone: 'red', message: data.detail || 'Gagal menarik FPK dari VClaim.' });
+      }
+    } catch {
+      setQueueToast({ tone: 'red', message: 'Koneksi ke endpoint FPK Pull VEDIKA terputus.' });
+    } finally {
+      setFpkPullSubmitting(false);
     }
   };
 
@@ -466,6 +578,21 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setFpkPullResult(null);
+              setShowFpkPullModal(true);
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+              isLight
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
+                : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border-cyan-500/35'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Tarik Data FPK (VClaim)</span>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -791,6 +918,70 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             <option value="UPCODING" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Upcoding INA-CBG</option>
           </select>
 
+          <select
+            aria-label="Filter jenis pelayanan VEDIKA"
+            value={activeServiceLevel}
+            onChange={(e) => setActiveServiceLevel(e.target.value)}
+            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+              isLight
+                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
+                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
+            }`}
+          >
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Layanan: Semua (RJTL+RITL)</option>
+            <option value="RJTL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RJTL (Rawat Jalan)</option>
+            <option value="RITL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RITL (Rawat Inap)</option>
+          </select>
+
+          <select
+            aria-label="Filter jenis pengajuan FPK"
+            value={activeSubmissionType}
+            onChange={(e) => setActiveSubmissionType(e.target.value)}
+            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+              isLight
+                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
+                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
+            }`}
+          >
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Pengajuan: Semua</option>
+            <option value="Reguler" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Klaim Reguler</option>
+            <option value="Susulan" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Klaim Susulan</option>
+            <option value="LUPIS" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>LUPIS / Non-Paket</option>
+          </select>
+
+          <select
+            aria-label="Filter Nomor FPK"
+            value={activeFpkFilter}
+            onChange={(e) => setActiveFpkFilter(e.target.value)}
+            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+              isLight
+                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
+                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
+            }`}
+          >
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua No. FPK ({uniqueFpkOptions.length})</option>
+            {uniqueFpkOptions.map((fpk) => (
+              <option key={fpk} value={fpk} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>{fpk}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label="Filter Plotting Verifikator"
+            value={activePlottingFilter}
+            onChange={(e) => setActivePlottingFilter(e.target.value)}
+            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+              isLight
+                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
+                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
+            }`}
+          >
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Plotting: Semua</option>
+            <option value="UNASSIGNED" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Belum Di-plot</option>
+            {verificatorsList.map((v) => (
+              <option key={v.nip} value={v.nip} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Plot: {v.name}</option>
+            ))}
+          </select>
+
           <select 
             value={selectedFaskes}
             onChange={(e) => setSelectedFaskes(e.target.value)}
@@ -894,6 +1085,33 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             >
               Pending Klarifikasi Massal
             </button>
+            <div className="inline-flex items-center gap-1.5">
+              <select
+                aria-label="Pilih verifikator untuk plotting massal"
+                value={batchPlotNip}
+                onChange={(e) => setBatchPlotNip(e.target.value)}
+                className={`text-[11px] px-2.5 py-1.5 rounded-xl border focus:outline-none cursor-pointer ${
+                  isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-[#00153A] border-white/20 text-white'
+                }`}
+              >
+                {(verificatorsList.length > 0 ? verificatorsList : [{ nip: '198704202011012001', name: 'dr. Siti Rahma, Sp.PK' }]).map((v) => (
+                  <option key={v.nip} value={v.nip} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={batchSubmitting}
+                onClick={handleBatchPlotting}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 ${
+                  isLight ? 'bg-cyan-700 hover:bg-cyan-800 text-white border-cyan-700' : 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40'
+                }`}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Plot Berkas</span>
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setSelectedIds([])}
@@ -914,14 +1132,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 shadow-2xl shadow-[#00081c]/50'
       }`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[920px]">
+          <table className="w-full text-left text-xs table-fixed min-w-[920px]">
             <thead className={`text-[10px] uppercase font-bold tracking-wider border-b ${
               isLight
                 ? 'bg-slate-100 text-slate-700 border-slate-200'
                 : 'bg-black/40 text-white/70 border-white/10'
             }`}>
               <tr>
-                <th className="py-3 pl-4 pr-2 w-10">
+                <th className="py-3 pl-3 pr-2 w-[4%]">
                   <button
                     type="button"
                     aria-label="Pilih semua berkas tampil"
@@ -935,15 +1153,15 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     {allVisibleSelected ? <Check className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                   </button>
                 </th>
-                <th className="py-3 px-3 w-[25%]">Klaim &amp; Faskes</th>
-                <th className="py-3 px-3 w-[18%]">Kode INA-CBG</th>
-                <th className="py-3 px-3 w-[16%]">DPJP (Dokter)</th>
-                <th className="py-3 px-2 text-center w-[5%]">S1</th>
-                <th className="py-3 px-2 text-center w-[5%]">S2</th>
-                <th className="py-3 px-2 text-center w-[5%]">S3</th>
-                <th className="py-3 px-2 text-center w-[7%]">Skor Fusi</th>
-                <th className="py-3 px-3 w-[12%]">Putusan &amp; SLA</th>
-                <th className="py-3 px-4 text-right w-[7%]">Aksi</th>
+                <th className="py-3 px-2.5 w-[26%]">Klaim &amp; Faskes</th>
+                <th className="py-3 px-2.5 w-[16%]">Kode INA-CBG</th>
+                <th className="py-3 px-2.5 w-[14%]">DPJP (Dokter)</th>
+                <th className="py-3 px-1.5 text-center w-[4%]">S1</th>
+                <th className="py-3 px-1.5 text-center w-[4%]">S2</th>
+                <th className="py-3 px-1.5 text-center w-[4%]">S3</th>
+                <th className="py-3 px-1.5 text-center w-[7%]">Skor Fusi</th>
+                <th className="py-3 px-2.5 w-[13%]">Putusan &amp; SLA</th>
+                <th className="py-3 px-3 text-right w-[8%]">Aksi</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${
@@ -957,7 +1175,16 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       <p className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Tidak ada klaim yang cocok dengan kriteria filter.</p>
                       <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Silakan ubah filter jalur triase atau kata kunci pencarian Anda.</p>
                       <button type="button"
-                        onClick={() => { setActiveLane('all'); setActiveModus('all'); setSelectedFaskes('all'); setSearchQuery(''); }}
+                        onClick={() => {
+                          setActiveLane('all');
+                          setActiveModus('all');
+                          setActiveServiceLevel('all');
+                          setActiveSubmissionType('all');
+                          setActiveFpkFilter('all');
+                          setActivePlottingFilter('all');
+                          setSelectedFaskes('all');
+                          setSearchQuery('');
+                        }}
                         className={`mt-2 text-xs font-bold px-3 py-1.5 rounded-lg border transition cursor-pointer ${
                           isLight
                             ? 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200'
@@ -1024,6 +1251,23 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                           <span className="font-semibold">{c.id}</span>
                           <span>•</span>
                           <span>{c.date}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border ${
+                            c.jenisPelayanan === 'RITL'
+                              ? (isLight ? 'bg-indigo-50 text-indigo-800 border-indigo-200' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30')
+                              : (isLight ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-sky-500/20 text-sky-200 border-sky-500/30')
+                          }`}>
+                            {c.jenisPelayanan}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border ${
+                            c.jenisPengajuan === 'Susulan'
+                              ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-200 border-amber-500/30')
+                              : c.jenisPengajuan === 'LUPIS'
+                              ? (isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-200 border-purple-500/30')
+                              : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/75 border-white/15')
+                          }`}>
+                            {c.jenisPengajuan}{c.resubmissionCount > 0 ? ` #${c.resubmissionCount}` : ''}
+                          </span>
+                          <span className="text-[10px] opacity-80">{c.noFpk}</span>
                           {c.flags.map((f, flagIdx) => (
                             <span key={`${c.id}-${f}-${flagIdx}`} className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                               f.includes('PHANTOM') || f.includes('REPEAT')
@@ -1072,8 +1316,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-3">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${
+                  <td className="py-3.5 px-2.5">
+                    <span className={`inline-block max-w-full truncate px-2 py-0.5 rounded text-[10px] font-bold border ${
                       statusBadge.tone === 'green'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                         : statusBadge.tone === 'amber'
@@ -1089,9 +1333,16 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     <div className={`text-[10px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                       SLA maks {c.slaDays} HK
                     </div>
+                    <div className={`text-[9.5px] font-mono mt-0.5 truncate max-w-full ${
+                      c.assignedVerifierNip
+                        ? (isLight ? 'text-cyan-800 font-semibold' : 'text-cyan-300')
+                        : (isLight ? 'text-amber-700 font-bold' : 'text-amber-300 font-bold')
+                    }`} title={`Plotting: ${c.assignedVerifierName}`}>
+                      Plot: {c.assignedVerifierName}
+                    </div>
                   </td>
 
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3.5 px-3 text-right">
                     <span className={`text-[11px] font-bold inline-flex items-center space-x-0.5 group-hover:translate-x-0.5 transition-transform ${
                       isLight ? 'text-emerald-700 group-hover:text-emerald-800' : 'text-cyan-300 group-hover:text-cyan-200'
                     }`}>
@@ -1356,6 +1607,166 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer disabled:opacity-50"
                 >
                   {ingestSubmitting ? 'Menghitung Skor Tri-Layer...' : 'Jalankan Uji Saring Tri-Layer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TARIK DATA FPK KOLEKTIF VCLAIM + PRA-PURIFIKASI VEDIKA */}
+      {showFpkPullModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
+          }`}>
+            <div className={`px-5 py-4 border-b flex items-center justify-between ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/10'
+            }`}>
+              <div>
+                <h3 className="text-sm font-bold">Tarik Data Klaim / FPK Kolektif (VClaim &rarr; VEDIKA)</h3>
+                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  Sinkronisasi batch FPK FKRTL + Pra-Purifikasi Tri-Lapis otomatis &amp; Plotting awal.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Tutup modal tarik FPK"
+                onClick={() => setShowFpkPullModal(false)}
+                className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                  isLight ? 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRunFpkPull} className="p-5 space-y-4 overflow-y-auto text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Nomor FPK (Opsional / Otomatis)</label>
+                  <input
+                    type="text"
+                    value={fpkPullForm.no_fpk}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, no_fpk: e.target.value })}
+                    placeholder="cth: FPK-0114-202611-202"
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-mono ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Bulan Pelayanan</label>
+                  <input
+                    type="text"
+                    value={fpkPullForm.bulan_pelayanan}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, bulan_pelayanan: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-mono ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Jenis Pelayanan (FKL10)</label>
+                  <select
+                    value={fpkPullForm.jenis_pelayanan}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, jenis_pelayanan: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
+                    }`}
+                  >
+                    <option value="ALL">Campuran (RJTL + RITL)</option>
+                    <option value="RJTL">RJTL (Rawat Jalan)</option>
+                    <option value="RITL">RITL (Rawat Inap)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Jenis Pengajuan Klaim</label>
+                  <select
+                    value={fpkPullForm.jenis_pengajuan}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, jenis_pengajuan: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
+                    }`}
+                  >
+                    <option value="Reguler">Reguler Bulanan</option>
+                    <option value="Susulan">Klaim Susulan / Revisi</option>
+                    <option value="LUPIS">LUPIS (Alat Bantu Khusus)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Filter FKRTL (Opsional)</label>
+                  <input
+                    type="text"
+                    value={fpkPullForm.nama_faskes}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, nama_faskes: e.target.value })}
+                    placeholder="Semua RS Rujukan Cabang"
+                    className={`w-full px-3 py-2 rounded-xl border text-xs ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Jumlah Berkas Ditarik (1–5)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={fpkPullForm.jumlah_klaim}
+                    onChange={(e) => setFpkPullForm({ ...fpkPullForm, jumlah_klaim: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-mono ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <label className="inline-flex items-center gap-2 cursor-pointer font-semibold">
+                <input
+                  type="checkbox"
+                  checked={Boolean(fpkPullForm.auto_plot)}
+                  onChange={(e) => setFpkPullForm({ ...fpkPullForm, auto_plot: e.target.checked })}
+                />
+                <span>Lakukan Auto-Plotting seimbang ke Verifikator Medis aktif</span>
+              </label>
+
+              {fpkPullResult && (
+                <div className={`p-3.5 rounded-xl border space-y-2 ${
+                  isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-emerald-500/15 border-emerald-500/35 text-emerald-100'
+                }`}>
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="font-mono">{fpkPullResult.no_fpk} ({fpkPullResult.pulled_count} berkas)</span>
+                    <span className="font-mono text-[11px]">
+                      Merah: {fpkPullResult.lane_counts?.MERAH || 0} · Kuning: {fpkPullResult.lane_counts?.KUNING || 0} · Hijau: {fpkPullResult.lane_counts?.HIJAU || 0}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {(fpkPullResult.pulled_claims || []).map((pc) => (
+                      <div key={pc.claim_id} className="flex items-center justify-between text-[11px] font-mono">
+                        <span>{pc.claim_id} ({pc.jenis_pelayanan}) · {pc.nama_faskes}</span>
+                        <span className="font-bold">{pc.triage_lane} ({Number(pc.score).toFixed(1)})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowFpkPullModal(false)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                    isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  Tutup
+                </button>
+                <button
+                  type="submit"
+                  disabled={fpkPullSubmitting}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer disabled:opacity-50"
+                >
+                  {fpkPullSubmitting ? 'Menarik & Pra-Purifikasi...' : 'Tarik FPK & Jalankan Pra-Purifikasi'}
                 </button>
               </div>
             </form>

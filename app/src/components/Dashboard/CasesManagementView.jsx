@@ -26,11 +26,10 @@ const QUICK_FILTERS = [
   { key: 'new', label: 'Berkas Baru', icon: AlertTriangle },
 ];
 
-const VERIFIKATOR_LIST = [
-  'dr. Nadia Kusuma, Sp.PK',
-  'dr. Hendra Wijaya, MARS',
-  'apt. Siti Rahmawati, M.Clin.Pharm',
-  'dr. Bima Santoso, Sp.PD',
+const DEFAULT_VERIFICATORS = [
+  { nip: '198704202011012001', name: 'dr. Siti Rahma, Sp.PK', role: 'Verifikator Medis Senior' },
+  { nip: '199208152015031002', name: 'Budi Santoso, S.Kom, M.TI', role: 'Analis Forensik Digital Anti-Fraud' },
+  { nip: '198501012010011001', name: 'Hendra Wijaya, S.Si, M.M', role: 'Administrator Kebijakan & Tata Kelola JKN' },
 ];
 
 function formatRelativeTime(iso) {
@@ -74,9 +73,42 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
   const casesUrl = `${API_BASE_URL}/api/v1/operations/cases`;
+  const verifsUrl = `${API_BASE_URL}/api/v1/auth/verificators`;
+  const workloadUrl = `${API_BASE_URL}/api/v1/vedika/workload`;
   const cachedCasesData = getCachedJsonSync(casesUrl);
+  const cachedVerifsData = getCachedJsonSync(verifsUrl);
+  const cachedWorkloadData = getCachedJsonSync(workloadUrl);
   const [cases, setCases] = useState(() => Array.isArray(cachedCasesData?.cases) ? cachedCasesData.cases : []);
   const [loadingCases, setLoadingCases] = useState(() => !Array.isArray(cachedCasesData?.cases));
+  const [verifiersDirectory, setVerifiersDirectory] = useState(() => {
+    const raw = Array.isArray(cachedVerifsData) ? cachedVerifsData : cachedVerifsData?.verificators;
+    const activeOnly = Array.isArray(raw)
+      ? raw.filter((v) => !String(v?.role || '').toLowerCase().includes('read-only'))
+      : [];
+    return activeOnly.length > 0 ? activeOnly : DEFAULT_VERIFICATORS;
+  });
+  const [vedikaWorkload, setVedikaWorkload] = useState(() => cachedWorkloadData || null);
+
+  const fetchVedikaWorkload = useCallback(async () => {
+    try {
+      const [verData, wlData] = await Promise.all([
+        cachedAuthGetJson(verifsUrl),
+        cachedAuthGetJson(workloadUrl),
+      ]);
+      const rawVerifs = Array.isArray(verData) ? verData : verData?.verificators;
+      if (Array.isArray(rawVerifs) && rawVerifs.length > 0) {
+        const assignable = rawVerifs.filter((v) => !String(v?.role || '').toLowerCase().includes('read-only'));
+        if (assignable.length > 0) {
+          setVerifiersDirectory(assignable);
+        }
+      }
+      if (wlData && Array.isArray(wlData.verifiers)) {
+        setVedikaWorkload(wlData);
+      }
+    } catch (err) {
+      console.error('Gagal memuat beban plotting verifikator VEDIKA:', err);
+    }
+  }, [verifsUrl, workloadUrl]);
 
   const fetchLiveCases = useCallback(async () => {
     if (!getCachedJsonSync(casesUrl)) setLoadingCases(true);
@@ -94,7 +126,8 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
 
   useEffect(() => {
     fetchLiveCases();
-  }, [fetchLiveCases]);
+    fetchVedikaWorkload();
+  }, [fetchLiveCases, fetchVedikaWorkload]);
   const [activeChip, setActiveChip] = useState('all');
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
@@ -160,7 +193,8 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
           c.user_hash.toLowerCase().includes(q) ||
           c.sep_no.toLowerCase().includes(q) ||
           c.summary_redacted.toLowerCase().includes(q) ||
-          c.hospital.toLowerCase().includes(q)
+          c.hospital.toLowerCase().includes(q) ||
+          (c.assigned_to && c.assigned_to.toLowerCase().includes(q))
       );
     }
 
@@ -390,6 +424,76 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
             <span className="text-rose-600 font-bold">{pageSlaBreached}</span>
           </div>
         </div>
+
+        {/* VEDIKA Plotting Workload Strip */}
+        <div className={`mt-4 ml-12 pt-3 border-t flex flex-wrap items-center gap-2 ${
+          isLight ? 'border-slate-200' : 'border-white/10'
+        }`}>
+          <span className={`text-[11px] font-bold uppercase tracking-wider mr-1 ${
+            isLight ? 'text-slate-500' : 'text-white/50'
+          }`}>
+            Plotting Beban Verifikator VEDIKA:
+          </span>
+          {(vedikaWorkload?.verifiers || verifiersDirectory.map((v) => ({
+            nip: v.nip,
+            name: v.name,
+            role: v.role,
+            assigned_total: cases.filter((c) => c.assigned_to === v.name).length,
+            open_count: cases.filter((c) => c.assigned_to === v.name && c.status !== 'resolved' && c.status !== 'closed').length,
+            merah_count: cases.filter((c) => c.assigned_to === v.name && c.severity === 'critical').length,
+          })))
+            .filter((v) => !String(v.role || '').toLowerCase().includes('read-only') || (v.assigned_total || 0) > 0)
+            .map((v) => {
+              const isSelectedVerifier = appliedSearch && appliedSearch.toLowerCase() === String(v.name || '').toLowerCase();
+              return (
+                <button
+                  key={v.nip || v.name}
+                  type="button"
+                  onClick={() => {
+                    if (isSelectedVerifier) {
+                      setSearchInput('');
+                      setAppliedSearch('');
+                    } else {
+                      setActiveChip('all');
+                      setAssignmentFilter('');
+                      setSearchInput(v.name);
+                      setAppliedSearch(v.name);
+                    }
+                    setPage(1);
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
+                    isSelectedVerifier
+                      ? (isLight
+                          ? 'bg-emerald-700 text-white border-emerald-700'
+                          : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/50')
+                      : (isLight
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-white/5 hover:bg-white/10 text-white/80 border-white/10')
+                  }`}
+                >
+                  <span className="font-bold">{v.name}</span>
+                  <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] ${
+                    isSelectedVerifier
+                      ? 'bg-black/20 text-white'
+                      : (isLight ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-[#00134A] text-[#FFCA40]')
+                  }`}>
+                    {v.assigned_total ?? 0} berkas · {v.open_count ?? 0} aktif
+                  </span>
+                </button>
+              );
+            })}
+          <button
+            type="button"
+            onClick={() => handleChipClick('unassigned')}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+              activeChip === 'unassigned'
+                ? (isLight ? 'bg-purple-700 text-white border-purple-700' : 'bg-purple-500/30 text-purple-200 border-purple-400/50')
+                : (isLight ? 'bg-purple-50 hover:bg-purple-100 text-purple-800 border-purple-200' : 'bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/30')
+            }`}
+          >
+            Belum Di-plot: {vedikaWorkload?.unassigned_count ?? pageUnassigned}
+          </button>
+        </div>
       </div>
 
       {/* Quick Filter Chips */}
@@ -615,20 +719,20 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
           : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 shadow-xl shadow-[#00081c]/50'
       }`}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y">
+          <table className="w-full text-left table-fixed min-w-[920px] divide-y">
             <thead className={`border-b ${
               isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/70'
             }`}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <th className="w-[7%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
                   SLA
                 </th>
                 <th
                   onClick={() => handleSortChange('severity')}
-                  className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
+                  className="w-[7%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
                 >
                   <span className="inline-flex items-center gap-1">
-                    <span>Tingkat Risiko</span>
+                    <span>Risiko</span>
                     {sortBy === 'severity' ? (
                       sortOrder === 'asc' ? (
                         <ChevronUp className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`} />
@@ -640,26 +744,26 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                     )}
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <th className="w-[12%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-                  Hash Peserta / SEP
+                <th className="w-[15%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
+                  Peserta / SEP
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-                  Ringkasan Temuan Audit
+                <th className="w-[18%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
+                  Ringkasan Temuan
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <th className="w-[13%] px-2.5 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
                   Ditugaskan Ke
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-                  Skor Risiko
+                <th className="w-[5%] px-2 py-3 text-left text-[11px] font-bold uppercase tracking-wider truncate">
+                  Skor
                 </th>
                 <th
                   onClick={() => handleSortChange('created_at')}
-                  className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
+                  className="w-[7%] px-2 py-3 text-left text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
                 >
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-0.5">
                     <span>Diajukan</span>
                     {sortBy === 'created_at' ? (
                       sortOrder === 'asc' ? (
@@ -674,9 +778,9 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                 </th>
                 <th
                   onClick={() => handleSortChange('updated_at')}
-                  className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
+                  className="w-[7%] px-2 py-3 text-left text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap"
                 >
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-0.5">
                     <span>Diperbarui</span>
                     {sortBy === 'updated_at' ? (
                       sortOrder === 'asc' ? (
@@ -689,7 +793,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                     )}
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                <th className="w-[9%] px-2.5 py-3 text-right text-[11px] font-bold uppercase tracking-wider truncate">
                   Aksi
                 </th>
               </tr>
@@ -720,44 +824,46 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                         isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'
                       }`}
                     >
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td className="px-2.5 py-3.5 whitespace-nowrap">
                         {getSLAIndicator(item.sla_status, item.minutes_until_breach)}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td className="px-2.5 py-3.5 whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-1 text-xs font-bold rounded-full border ${sev.cls}`}
+                          className={`inline-block px-2 py-0.5 text-[11px] font-bold rounded-full border ${sev.cls}`}
                         >
                           {sev.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td className="px-2.5 py-3.5 whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-1 text-xs font-bold rounded-full border ${st.cls}`}
+                          className={`inline-block max-w-full truncate px-2 py-0.5 text-[11px] font-bold rounded-full border ${st.cls}`}
                         >
                           {st.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        <div className={`text-xs font-mono font-bold ${
+                      <td className="px-2.5 py-3.5">
+                        <div className={`text-xs font-mono font-bold truncate ${
                           isLight ? 'text-slate-900' : 'text-[#FFCA40]'
-                        }`}>
+                        }`} title={item.user_hash}>
                           {item.user_hash}
                         </div>
-                        <div className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{item.hospital}</div>
+                        <div className={`text-[11px] truncate ${isLight ? 'text-slate-600' : 'text-white/60'}`} title={item.hospital}>
+                          {item.hospital}
+                        </div>
                       </td>
-                      <td className={`px-4 py-3.5 text-xs max-w-xs truncate ${
+                      <td className={`px-2.5 py-3.5 text-xs truncate ${
                         isLight ? 'text-slate-700' : 'text-white/80'
-                      }`}>
+                      }`} title={item.summary_redacted}>
                         {item.summary_redacted}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-xs">
+                      <td className="px-2.5 py-3.5 text-xs">
                         {item.assigned_to ? (
-                          <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white/90'}`}>{item.assigned_to}</span>
+                          <span className={`block truncate font-semibold ${isLight ? 'text-slate-900' : 'text-white/90'}`} title={item.assigned_to}>{item.assigned_to}</span>
                         ) : (
-                          <span className={`italic ${isLight ? 'text-slate-400' : 'text-white/40'}`}>Belum ditugaskan</span>
+                          <span className={`block truncate italic ${isLight ? 'text-slate-400' : 'text-white/40'}`}>Belum ditugaskan</span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-xs">
+                      <td className="px-2 py-3.5 whitespace-nowrap text-xs">
                         <span
                           className={`font-bold ${
                             item.risk_score >= 0.8
@@ -770,17 +876,17 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                           {(item.risk_score * 100).toFixed(0)}%
                         </span>
                       </td>
-                      <td className={`px-4 py-3.5 whitespace-nowrap text-xs ${
+                      <td className={`px-2 py-3.5 whitespace-nowrap text-xs truncate ${
                         isLight ? 'text-slate-500' : 'text-white/60'
                       }`}>
                         {formatRelativeTime(item.created_at)}
                       </td>
-                      <td className={`px-4 py-3.5 whitespace-nowrap text-xs ${
+                      <td className={`px-2 py-3.5 whitespace-nowrap text-xs truncate ${
                         isLight ? 'text-slate-500' : 'text-white/60'
                       }`}>
                         {formatRelativeTime(item.updated_at)}
                       </td>
-                      <td className="px-4 py-3.5 whitespace-nowrap text-xs">
+                      <td className="px-2.5 py-3.5 whitespace-nowrap text-right text-xs">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -964,6 +1070,22 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ assigned_to: nextAssignee }),
                         });
+                        const matchedVerifier = verifiersDirectory.find((v) => v.name === nextAssignee);
+                        if (matchedVerifier?.nip) {
+                          const plotRes = await authFetch(`${API_BASE_URL}/api/v1/vedika/plotting`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              claim_ids: [selectedCase.id],
+                              verifier_nip: matchedVerifier.nip,
+                              catatan: `Penugasan Plotting dari Berkas Klaim ke ${matchedVerifier.name}`,
+                            }),
+                          });
+                          if (!plotRes.ok && plotRes.status !== 404) {
+                            console.warn('Sinkronisasi plotting VEDIKA tidak dapat diterapkan:', plotRes.status);
+                          }
+                        }
+                        fetchVedikaWorkload();
                       } catch (err) {
                         console.error('Gagal menugaskan verifikator:', err);
                       }
@@ -975,9 +1097,9 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                     }`}
                   >
                     <option value="">-- Belum Ditugaskan --</option>
-                    {VERIFIKATOR_LIST.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
+                    {verifiersDirectory.map((v) => (
+                      <option key={v.nip || v.name} value={v.name}>
+                        {v.name} ({v.role})
                       </option>
                     ))}
                   </select>

@@ -633,7 +633,7 @@ class OperationsStore:
                     "ai_anomaly_type": (triage.kode_indikator[0][:65] + "...") if triage.kode_indikator else "Verifikasi Rutin",
                     "ai_anomaly_score": triage.final_priority_score,
                     "risk_score": round(triage.final_priority_score / 100.0, 2),
-                    "assigned_to": ov.get("assigned_to"),
+                    "assigned_to": ov.get("assigned_to") if "assigned_to" in ov else getattr(claim, "assigned_verifier_name", None),
                     "dpjp": claim.dpjp_meta.nama_dpjp_alias,
                     "s1": claim.s1_score,
                     "s2": claim.s2_score,
