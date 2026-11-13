@@ -1,0 +1,9 @@
+{
+  "name": "claimtrace-jkn-browser-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node run_all_gates.js"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "total_verifiers": 4,
+  "verifiers": [
+    {
+      "nip": "198704202011012001",
+      "name": "dr. Siti Rahma, Sp.PK",
+      "role": "Verifikator Medis Senior",
+      "assigned_claims_count": 6,
+      "pending_claims_count": 2,
+      "dispute_claims_count": 1,
+      "red_lane_claims_count": 2,
+      "total_value_assigned_rp": 45745000,
+      "sla_compliance_pct": 94.2
+    },
+    {
+      "nip": "199208152015031002",
+      "name": "Budi Santoso, S.Kom",
+      "role": "Analis Forensik Anti-Fraud",
+      "assigned_claims_count": 0,
+      "pending_claims_count": 0,
+      "dispute_claims_count": 0,
+      "red_lane_claims_count": 0,
+      "total_value_assigned_rp": 0,
+      "sla_compliance_pct": 100.0
+    },
+    {
+      "nip": "198501012010011001",
+      "name": "Hendra Wijaya, SE, Ak",
+      "role": "Administrator Kebijakan",
+      "assigned_claims_count": 2,
+      "pending_claims_count": 0,
+      "dispute_claims_count": 0,
+      "red_lane_claims_count": 0,
+      "total_value_assigned_rp": 12500000,
+      "sla_compliance_pct": 98.0
+    },
+    {
+      "nip": "199003152018011005",
+      "name": "dr. Andi Pratama, MARS",
+      "role": "Auditor Pengawasan (Read-Only)",
+      "assigned_claims_count": 0,
+      "pending_claims_count": 0,
+      "dispute_claims_count": 0,
+      "red_lane_claims_count": 0,
+      "total_value_assigned_rp": 0,
+      "sla_compliance_pct": 100.0
+    }
+  ],
+  "unassigned_pool_count": 14
+}

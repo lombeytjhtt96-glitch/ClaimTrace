@@ -1,0 +1,8 @@
+{
+  "status": "healthy",
+  "audit_chain_length": 7,
+  "audit_integrity_valid": true,
+  "active_claims_count": 6,
+  "framework": "FastAPI (Python 3.14)",
+  "security_compliance": "UU PDP No. 27/2022 & Perpres 82/2018"
+}

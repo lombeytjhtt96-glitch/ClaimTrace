@@ -1,0 +1,196 @@
+{
+  "timestamp": "2026-11-13T21:41:51.792Z",
+  "baseUrl": "http://127.0.0.1:8001",
+  "totalScenarios": 6,
+  "passed": 6,
+  "failed": 0,
+  "durationMs": 32801,
+  "scenarios": [
+    {
+      "id": "01_Login_SSO_Directory",
+      "name": "Scenario 01: Login & SSO NIP Directory",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "pageName": "Login & SSO NIP Directory",
+        "gates": {
+          "theme": {
+            "status": "PASSED",
+            "details": "Light/Dark toggled successfully, localStorage verified, WCAG AA contrast passed, reload persisted."
+          },
+          "console": {
+            "status": "PASSED",
+            "details": "Zero console errors, zero uncaught exceptions, zero console warnings."
+          },
+          "http": {
+            "status": "PASSED",
+            "details": "All asset and API responses returned HTTP 2xx/3xx."
+          },
+          "overflow": {
+            "status": "PASSED",
+            "details": "Zero horizontal overflow at width 1440px. All tables compliant."
+          },
+          "emojis": {
+            "status": "PASSED",
+            "details": "Zero emojis detected across all DOM text nodes, attributes, and document title."
+          }
+        },
+        "consoleErrorsCount": 0,
+        "consoleWarningsCount": 0,
+        "httpErrorsCount": 0
+      },
+      "durationMs": 2759
+    },
+    {
+      "id": "02_Cockpit_Screening_Funnel",
+      "name": "Scenario 02: Cockpit Executive & Screening Funnel",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "pageName": "Cockpit Executive & Screening Funnel",
+        "gates": {
+          "theme": {
+            "status": "PASSED",
+            "details": "Light/Dark toggled successfully, localStorage verified, WCAG AA contrast passed, reload persisted."
+          },
+          "console": {
+            "status": "PASSED",
+            "details": "Zero console errors, zero uncaught exceptions, zero console warnings."
+          },
+          "http": {
+            "status": "PASSED",
+            "details": "All asset and API responses returned HTTP 2xx/3xx."
+          },
+          "overflow": {
+            "status": "PASSED",
+            "details": "Zero horizontal overflow at width 1440px. All tables compliant."
+          },
+          "emojis": {
+            "status": "PASSED",
+            "details": "Zero emojis detected across all DOM text nodes, attributes, and document title."
+          }
+        },
+        "consoleErrorsCount": 0,
+        "consoleWarningsCount": 0,
+        "httpErrorsCount": 0
+      },
+      "durationMs": 4923
+    },
+    {
+      "id": "03_Vedika_Queue_Plotting",
+      "name": "Scenario 03: VEDIKA Antrean FPK & Plotting Queue",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "pageName": "VEDIKA Antrean FPK & Plotting Queue",
+        "gates": {
+          "theme": {
+            "status": "PASSED",
+            "details": "Light/Dark toggled successfully, localStorage verified, WCAG AA contrast passed, reload persisted."
+          },
+          "console": {
+            "status": "PASSED",
+            "details": "Zero console errors, zero uncaught exceptions, zero console warnings."
+          },
+          "http": {
+            "status": "PASSED",
+            "details": "All asset and API responses returned HTTP 2xx/3xx."
+          },
+          "overflow": {
+            "status": "PASSED",
+            "details": "Zero horizontal overflow at width 1440px. All tables compliant."
+          },
+          "emojis": {
+            "status": "PASSED",
+            "details": "Zero emojis detected across all DOM text nodes, attributes, and document title."
+          }
+        },
+        "consoleErrorsCount": 0,
+        "consoleWarningsCount": 0,
+        "httpErrorsCount": 0
+      },
+      "durationMs": 5205
+    },
+    {
+      "id": "04_Dossier_Investigation_4Layer",
+      "name": "Scenario 04: Bedah Investigasi & Dossier Digital",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "pageName": "Bedah Investigasi & Dossier Digital",
+        "gates": {
+          "theme": {
+            "status": "PASSED",
+            "details": "Light/Dark toggled successfully, localStorage verified, WCAG AA contrast passed, reload persisted."
+          },
+          "console": {
+            "status": "PASSED",
+            "details": "Zero console errors, zero uncaught exceptions, zero console warnings."
+          },
+          "http": {
+            "status": "PASSED",
+            "details": "All asset and API responses returned HTTP 2xx/3xx."
+          },
+          "overflow": {
+            "status": "PASSED",
+            "details": "Zero horizontal overflow at width 1440px. All tables compliant."
+          },
+          "emojis": {
+            "status": "PASSED",
+            "details": "Zero emojis detected across all DOM text nodes, attributes, and document title."
+          }
+        },
+        "consoleErrorsCount": 0,
+        "consoleWarningsCount": 0,
+        "httpErrorsCount": 0
+      },
+      "durationMs": 4337
+    },
+    {
+      "id": "05_Decision_Console_Ledger",
+      "name": "Scenario 05: Konsol Putusan 4-Status & BAHV Ledger",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "pageName": "Konsol Putusan 4-Status & BAHV Ledger",
+        "gates": {
+          "theme": {
+            "status": "PASSED",
+            "details": "Light/Dark toggled successfully, localStorage verified, WCAG AA contrast passed, reload persisted."
+          },
+          "console": {
+            "status": "PASSED",
+            "details": "Zero console errors, zero uncaught exceptions, zero console warnings."
+          },
+          "http": {
+            "status": "PASSED",
+            "details": "All asset and API responses returned HTTP 2xx/3xx."
+          },
+          "overflow": {
+            "status": "PASSED",
+            "details": "Zero horizontal overflow at width 1440px. All tables compliant."
+          },
+          "emojis": {
+            "status": "PASSED",
+            "details": "Zero emojis detected across all DOM text nodes, attributes, and document title."
+          }
+        },
+        "consoleErrorsCount": 0,
+        "consoleWarningsCount": 0,
+        "httpErrorsCount": 0
+      },
+      "durationMs": 5017
+    },
+    {
+      "id": "06_Official_Printable_Reports",
+      "name": "Scenario 06: Official Printable Reports (BAHV/BA/SP1)",
+      "status": "PASSED",
+      "errors": [],
+      "gateResults": {
+        "status": "PASSED",
+        "details": "All 3 official printable reports validated in screen and print media."
+      },
+      "durationMs": 10015
+    }
+  ]
+}
