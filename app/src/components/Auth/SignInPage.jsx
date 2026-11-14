@@ -207,6 +207,38 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
               allowedRoles: ["VERIFICATOR_MEDIS", "TRIAGE_OFFICER", "BAKB_SIGNER"]
             }
           };
+        } else if ((idClean === '197509122002011003' || idClean === 'haryanto@bpjs-kesehatan.go.id') && password === 'Password123!') {
+          data = {
+            status: "success",
+            token: `token-sec-${Date.now()}`,
+            user: {
+              nip: "197509122002011003",
+              email: "haryanto@bpjs-kesehatan.go.id",
+              name: "drg. Haryanto, MARS",
+              role: "Manajer Utilisasi & FPK",
+              roleTitle: "Manajer Pengendalian Klaim",
+              unit: "Kedeputian Wilayah · Bidang Manajemen Mutu Faskes",
+              avatar: "HY",
+              isMfaVerified: false,
+              allowedRoles: ["UTILIZATION_MANAGER", "BAKB_SIGNER"]
+            }
+          };
+        } else if ((idClean === '199208042016022004' || idClean === 'amanda@bpjs-kesehatan.go.id') && password === 'Password123!') {
+          data = {
+            status: "success",
+            token: `token-sec-${Date.now()}`,
+            user: {
+              nip: "199208042016022004",
+              email: "amanda@bpjs-kesehatan.go.id",
+              name: "Amanda Putri, S.H., M.H.",
+              role: "Tim Hukum & Kepatuhan JKN",
+              roleTitle: "Spesialis Kepatuhan Regulasi",
+              unit: "Kedeputian Hukum, Komunikasi Publik dan Kepatuhan",
+              avatar: "AP",
+              isMfaVerified: false,
+              allowedRoles: ["LEGAL_COMPLIANCE", "AUDITOR"]
+            }
+          };
         } else {
           throw new Error('Kredensial tidak valid: NIP/Email atau Kata Sandi salah.');
         }
@@ -287,86 +319,134 @@ export default function SignInPage({ onLoginSuccess, onGoToLanding, initialOpenM
             </motion.div>
           )}
 
-          {/* DIREKTORI OTORISASI CEPAT SSO */}
-          <div className={`p-2.5 rounded-xl border text-[11px] space-y-1.5 ${
+          {/* DIREKTORI OTORISASI CEPAT SSO (4 PERSONA KEDINASAN BPJS) */}
+          <div className={`p-3 rounded-2xl border text-[11px] space-y-2 ${
             effectiveIsLight
-              ? 'bg-slate-50/80 border-slate-200 text-slate-800'
-              : 'bg-white/5 border-white/10 text-white'
+              ? 'bg-slate-50/90 border-slate-200 text-slate-800 shadow-xs'
+              : 'bg-slate-900/60 border-slate-800 text-white shadow-md'
           }`}>
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              Otorisasi Cepat SSO Direktori Verifikator Resmi:
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Pilih Persona Verifikator (SSO 1-Klik):
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 font-bold">
+                BPJS AUTH
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentifier('admin.fraud@bpjs-kesehatan.go.id');
-                    setPassword('Password123!');
-                    setErrorMsg('');
-                    setRecaptchaToken('');
-                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
-                      try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
-                    }
-                  }}
-                  className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
-                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : effectiveIsLight
-                        ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800'
-                        : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
-                  }`}
-                >
-                  <span className={`font-bold truncate ${
-                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
-                      ? 'text-white'
-                      : 'text-emerald-700 dark:text-emerald-300'
-                  }`}>
-                    Super Admin (BS)
-                  </span>
-                  <span className={`text-[9px] truncate ${
-                    identifier === 'admin.fraud@bpjs-kesehatan.go.id' || identifier === '199208152015031002'
-                      ? 'text-white/80'
-                      : 'text-slate-500 dark:text-slate-400'
-                  }`}>
-                    Budi Santoso, S.Kom
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentifier('siti.rahma@bpjs-kesehatan.go.id');
-                    setPassword('Password123!');
-                    setErrorMsg('');
-                    setRecaptchaToken('');
-                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
-                      try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
-                    }
-                  }}
-                  className={`px-2 py-1.5 rounded-lg border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
-                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : effectiveIsLight
-                        ? 'bg-white hover:bg-emerald-100/50 border-emerald-200 text-slate-800'
-                        : 'bg-slate-900/60 hover:bg-emerald-900/40 border-emerald-500/30 text-white'
-                  }`}
-                >
-                  <span className={`font-bold truncate ${
-                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
-                      ? 'text-white'
-                      : 'text-emerald-700 dark:text-emerald-300'
-                  }`}>
-                    Verifikator (SR)
-                  </span>
-                  <span className={`text-[9px] truncate ${
-                    identifier === 'siti.rahma@bpjs-kesehatan.go.id' || identifier === '198704202011012001'
-                      ? 'text-white/80'
-                      : 'text-slate-500 dark:text-slate-400'
-                  }`}>
-                    dr. Siti Rahma, Sp.PK
-                  </span>
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                data-nip="198704202011012001"
+                onClick={() => {
+                  setIdentifier('198704202011012001');
+                  setPassword('Password123!');
+                  setErrorMsg('');
+                  setRecaptchaToken('verified-test-token');
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                  }
+                }}
+                className={`p-2 rounded-xl border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                  identifier === '198704202011012001' || identifier === 'siti.rahma@bpjs-kesehatan.go.id'
+                    ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                    : effectiveIsLight
+                      ? 'bg-white hover:bg-emerald-50 border-slate-200 hover:border-emerald-300 text-slate-800'
+                      : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-emerald-500/50 text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">dr. Siti Rahma</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-black/20 text-white font-bold">SR</span>
+                </div>
+                <span className="text-[9px] opacity-80 mt-0.5">Verifikator Medis</span>
+                <span className="text-[8.5px] font-mono opacity-70">198704202011012001</span>
+              </button>
+
+              <button
+                type="button"
+                data-nip="199208152015031002"
+                onClick={() => {
+                  setIdentifier('199208152015031002');
+                  setPassword('Password123!');
+                  setErrorMsg('');
+                  setRecaptchaToken('verified-test-token');
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                  }
+                }}
+                className={`p-2 rounded-xl border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                  identifier === '199208152015031002' || identifier === 'admin.fraud@bpjs-kesehatan.go.id'
+                    ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                    : effectiveIsLight
+                      ? 'bg-white hover:bg-emerald-50 border-slate-200 hover:border-emerald-300 text-slate-800'
+                      : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-emerald-500/50 text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">Budi Santoso</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-black/20 text-white font-bold">BS</span>
+                </div>
+                <span className="text-[9px] opacity-80 mt-0.5">Tim Anti-Fraud</span>
+                <span className="text-[8.5px] font-mono opacity-70">199208152015031002</span>
+              </button>
+
+              <button
+                type="button"
+                data-nip="197509122002011003"
+                onClick={() => {
+                  setIdentifier('197509122002011003');
+                  setPassword('Password123!');
+                  setErrorMsg('');
+                  setRecaptchaToken('verified-test-token');
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                  }
+                }}
+                className={`p-2 rounded-xl border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                  identifier === '197509122002011003' || identifier === 'haryanto@bpjs-kesehatan.go.id'
+                    ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                    : effectiveIsLight
+                      ? 'bg-white hover:bg-emerald-50 border-slate-200 hover:border-emerald-300 text-slate-800'
+                      : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-emerald-500/50 text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">drg. Haryanto</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-black/20 text-white font-bold">HY</span>
+                </div>
+                <span className="text-[9px] opacity-80 mt-0.5">Manajer Utilisasi</span>
+                <span className="text-[8.5px] font-mono opacity-70">197509122002011003</span>
+              </button>
+
+              <button
+                type="button"
+                data-nip="199208042016022004"
+                onClick={() => {
+                  setIdentifier('199208042016022004');
+                  setPassword('Password123!');
+                  setErrorMsg('');
+                  setRecaptchaToken('verified-test-token');
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    try { window.grecaptcha.reset(recaptchaWidgetId.current); } catch {}
+                  }
+                }}
+                className={`p-2 rounded-xl border text-left transition-all text-[10px] flex flex-col justify-between cursor-pointer ${
+                  identifier === '199208042016022004' || identifier === 'amanda@bpjs-kesehatan.go.id'
+                    ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                    : effectiveIsLight
+                      ? 'bg-white hover:bg-emerald-50 border-slate-200 hover:border-emerald-300 text-slate-800'
+                      : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-emerald-500/50 text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">Amanda Putri</span>
+                  <span className="text-[9px] font-mono px-1 rounded bg-black/20 text-white font-bold">AP</span>
+                </div>
+                <span className="text-[9px] opacity-80 mt-0.5">Legal &amp; Kepatuhan</span>
+                <span className="text-[8.5px] font-mono opacity-70">199208042016022004</span>
+              </button>
             </div>
+          </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">

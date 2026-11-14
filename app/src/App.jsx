@@ -67,6 +67,7 @@ const InterventionsView = lazy(() => import('./components/Dashboard/Intervention
 const DatabaseViewerView = lazy(() => import('./components/Dashboard/DatabaseViewerView'));
 const HealthAIChatView = lazy(() => import('./components/Dashboard/HealthAIChatView'));
 const PostHealthkathonSuiteView = lazy(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
+const OfficialReportsView = lazy(() => import('./components/Dashboard/OfficialReportsView'));
 
 export default function App() {
   // Read initial view & tab from URL params for instant navigation & deep-linking
@@ -93,7 +94,7 @@ export default function App() {
         db_viewer: 'database_viewer',
       };
       const t = aliasMap[rawTab] || rawTab;
-      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
+      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
         return t;
       }
     }
@@ -197,7 +198,7 @@ export default function App() {
           db_viewer: 'database_viewer',
         };
         const t = aliasMap[rawTab] || rawTab;
-        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'audit', 'profile', 'settings'].includes(t)) {
+        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
           setDashboardTab(t);
         }
         const m = params.get('mode');
@@ -296,9 +297,10 @@ export default function App() {
       ],
     },
     {
-      group: '3. Putusan & Audit Pra-Bayar',
+      group: '3. Putusan, Laporan & Audit',
       items: [
         { id: 'decision', label: 'Konsol Putusan & BAKB', icon: ShieldAlert },
+        { id: 'official_reports', label: 'Laporan Resmi Kedinasan (BAHV)', icon: Printer, badge: 'Resmi', badgeColor: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
         { id: 'cases_mgmt', label: 'Daftar Berkas & Klarifikasi', icon: Briefcase },
         { id: 'flagged_sessions', label: 'Klaim Ditandai (Hold/Flag)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
         { id: 'audit', label: 'Ledger Audit SHA-256', icon: Key },
@@ -903,7 +905,7 @@ export default function App() {
           transition={{ duration: 0.2 }}
           className={`h-dvh max-h-dvh flex flex-col font-inter antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
             isLight
-              ? 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 text-slate-900 theme-light'
+              ? 'bg-[#f8fafc] text-slate-900 theme-light'
               : 'dark bg-gradient-to-b from-[#000c24] via-[#00153A] to-[#001D58] text-white theme-dark'
           }`}
         >
@@ -962,6 +964,24 @@ export default function App() {
                       Pengawasan Pra-Pembayaran Klaim JKN
                     </p>
                   </div>
+                </div>
+
+                {/* Metronic 9 Breadcrumbs Navigation */}
+                <div className="hidden lg:flex items-center space-x-2 text-xs pl-3 border-l border-slate-300 dark:border-slate-700">
+                  <span 
+                    className={`cursor-pointer hover:underline font-medium ${isLight ? 'text-slate-500 hover:text-emerald-700' : 'text-slate-400 hover:text-emerald-400'}`} 
+                    onClick={() => setAuthView('landing')}
+                  >
+                    Portal BPJS
+                  </span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 font-bold shrink-0" />
+                  <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    VEDIKA FPK
+                  </span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 font-bold shrink-0" />
+                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    {sidebarNavItems.find(i => i.id === dashboardTab)?.label || 'Kokpit Anti-Fraud'}
+                  </span>
                 </div>
 
                 {/* Quick Search Bar (Glass Input) */}
@@ -1065,6 +1085,36 @@ export default function App() {
 
               {/* Right: Session Timer, Theme Quick Toggle, Notification Bell Popover & User Profile Dropdown */}
               <div className="flex items-center space-x-2 shrink-0">
+                {/* FastAPI Backend Status Indicator */}
+                <div 
+                  className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono shadow-2xs whitespace-nowrap ${
+                    isLight 
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
+                      : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300'
+                  }`}
+                  title="Konektivitas FastAPI Python Backend Aktif di Port 8000"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="font-semibold">FastAPI 8000</span>
+                </div>
+
+                {/* Laporan Kedinasan Quick Access */}
+                <button
+                  type="button"
+                  onClick={() => setDashboardTab('official_reports')}
+                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${
+                    dashboardTab === 'official_reports'
+                      ? 'bg-emerald-700 text-white border-emerald-600'
+                      : isLight
+                        ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                        : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
+                  }`}
+                  title="Buka Dokumen Resmi Berita Acara Hasil Verifikasi (BAHV)"
+                >
+                  <Printer className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden sm:inline">Laporan BAHV</span>
+                </button>
+
                 {/* 6 Standar Siber & Anti-Fraud Pill (MITRE F3 · ATT&CK · NIST CSF 2.0) */}
                 <button
                   type="button"
@@ -1488,29 +1538,31 @@ export default function App() {
       {/* ======================================================== */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         
-        {/* COLLAPSIBLE SIDEBAR */}
+        {/* COLLAPSIBLE SIDEBAR (METRONIC 9 REUI CLINICAL WHITE ARCHITECTURE) */}
         <motion.aside 
-          animate={{ width: sidebarCollapsed ? 68 : 268 }}
+          animate={{ width: sidebarCollapsed ? 68 : 272 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className={`border-r flex flex-col justify-between shrink-0 overflow-hidden h-full z-10 transition-colors duration-200 ${
+          className={`border-r flex flex-col justify-between shrink-0 overflow-hidden h-full z-10 select-none transition-colors duration-200 ${
             isLight
-              ? 'bg-white border-slate-200 text-slate-800 shadow-md'
+              ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
               : 'bg-[#000c24] border-white/10 text-white shadow-2xl'
           }`}
         >
           {/* Navigation Links Grouped & Organized */}
-          <div className="p-2.5 overflow-y-auto flex-1 min-h-0 space-y-3 scrollbar-thin scrollbar-thumb-white/10">
+          <div className={`p-2.5 overflow-y-auto flex-1 min-h-0 space-y-3.5 scrollbar-thin ${
+            isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800'
+          }`}>
             {sidebarNavGroups.map((group, gIdx) => (
               <div key={group.group} className="space-y-0.5">
                 {!sidebarCollapsed ? (
-                  <div className={`px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-widest flex items-center justify-between select-none ${
-                    isLight ? 'text-slate-400' : 'text-white/40'
+                  <div className={`px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none ${
+                    isLight ? 'text-slate-400' : 'text-slate-400'
                   }`}>
                     <span>{group.group}</span>
-                    <span className={`text-[9px] font-mono font-normal ${isLight ? 'text-slate-400' : 'text-white/30'}`}>{group.items.length}</span>
+                    <span className={`text-[9px] font-mono font-normal ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>{group.items.length}</span>
                   </div>
                 ) : (
-                  gIdx > 0 && <div className={`my-1 border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`} />
+                  gIdx > 0 && <div className={`my-1.5 border-t ${isLight ? 'border-slate-200' : 'border-slate-800/80'}`} />
                 )}
 
                 {group.items.map((item) => {
@@ -1529,33 +1581,22 @@ export default function App() {
                       }}
                       title={item.label}
                       className={`relative w-full flex items-center ${
-                        sidebarCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-1.5'
-                      } rounded-xl text-xs transition cursor-pointer ${
+                        sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'justify-between px-2.5 py-2'
+                      } rounded-xl text-xs transition-colors duration-150 cursor-pointer ${
                         isActive
                           ? (isLight
-                              ? 'text-emerald-900 font-bold'
-                              : 'text-emerald-300 font-semibold')
+                              ? 'text-emerald-900 font-bold bg-emerald-50 border border-emerald-300 shadow-xs'
+                              : 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30 shadow-xs')
                           : (isLight
                               ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
-                              : 'text-white/70 hover:text-white hover:bg-white/5 font-normal')
+                              : 'text-slate-300 hover:text-white hover:bg-slate-800/80 font-medium')
                       }`}
                     >
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeSidebarPill"
-                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          className={`absolute inset-0 rounded-xl -z-10 ${
-                            isLight
-                              ? 'bg-emerald-50 border border-emerald-300 shadow-xs'
-                              : 'bg-gradient-to-r from-emerald-500/25 to-teal-500/15 border border-emerald-500/40 shadow-sm shadow-emerald-500/10'
-                          }`}
-                        />
-                      )}
-                      <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-2 min-w-0'}`}>
+                      <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-2.5 min-w-0'}`}>
                         <Icon className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} shrink-0 ${
                           isActive 
-                            ? (isLight ? 'text-emerald-700' : 'text-emerald-400')
-                            : (isLight ? 'text-slate-500' : 'text-white/50')
+                            ? (isLight ? 'text-emerald-700' : 'text-emerald-400') 
+                            : (isLight ? 'text-slate-400' : 'text-slate-400')
                         }`} />
                         {!sidebarCollapsed && (
                           <span className="truncate text-left text-[11.5px]">{item.label}</span>
@@ -1566,7 +1607,7 @@ export default function App() {
                           className={`text-[9.5px] font-mono px-1.5 py-0.2 rounded font-bold shrink-0 ml-1.5 border leading-tight ${
                             isActive
                               ? (isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/30 text-emerald-200 border-emerald-400/50')
-                              : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/70 border-white/10')
+                              : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700')
                           }`}
                         >
                           {item.badge}
@@ -1578,11 +1619,65 @@ export default function App() {
               </div>
             ))}
           </div>
+
+          {/* USER PROFILE FOOTER */}
+          <div className={`p-2.5 border-t shrink-0 transition-colors duration-200 ${
+            isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#070b16] border-slate-800/80'
+          }`}>
+            {!sidebarCollapsed ? (
+              <div className={`flex items-center justify-between p-2 rounded-xl border transition-colors ${
+                isLight ? 'bg-white border-slate-200 shadow-xs text-slate-900' : 'bg-slate-800/50 border-slate-700/50 text-white'
+              }`}>
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                      {currentUser?.avatar || 'SR'}
+                    </div>
+                    <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border ${
+                      isLight ? 'border-white' : 'border-slate-900'
+                    }`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold truncate leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      {currentUser?.name || 'dr. Siti Rahma, Sp.PK'}
+                    </p>
+                    <p className={`text-[10px] truncate font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {currentUser?.nip || '19870420 201101 2 001'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAuthView('login')}
+                  title="Ganti Persona Akun / Logout"
+                  className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
+                    isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-center py-1">
+                <button
+                  type="button"
+                  onClick={() => setAuthView('login')}
+                  title={`Login sebagai: ${currentUser?.name || 'dr. Siti Rahma'} (Klik untuk Ganti Akun)`}
+                  className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shrink-0 relative shadow-xs cursor-pointer"
+                >
+                  {currentUser?.avatar || 'SR'}
+                  <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border ${
+                    isLight ? 'border-white' : 'border-slate-900'
+                  }`} />
+                </button>
+              </div>
+            )}
+          </div>
         </motion.aside>
 
         {/* WORKSPACE AREA */}
-        <main ref={mainContentRef} className={`flex-1 overflow-y-auto p-3 lg:p-4 pb-24 backdrop-blur-xs min-h-0 transition-colors duration-200 ${
-          isLight ? 'bg-slate-100/70 text-slate-900' : 'bg-[#001030]/40 text-white'
+        <main ref={mainContentRef} className={`flex-1 overflow-y-auto p-3 lg:p-4 pb-24 min-h-0 transition-colors duration-200 ${
+          isLight ? 'bg-[#f8fafc] text-slate-900' : 'bg-[#001030]/40 text-white'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${
             viewMode === 'split' ? 'flex flex-col xl:flex-row gap-5 items-start' : 'space-y-4'
@@ -2559,6 +2654,14 @@ export default function App() {
                         onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
                         currentUser={currentUser}
                         isLight={isLight}
+                      />
+                    )}
+
+                    {dashboardTab === 'official_reports' && (
+                      <OfficialReportsView
+                        onBack={() => setDashboardTab('decision')}
+                        isLight={isLight}
+                        currentUser={currentUser}
                       />
                     )}
 
