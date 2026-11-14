@@ -40,43 +40,30 @@ design-skills/
 .ua/.trash-*/
 .ua/tmp/
 .ua/diff-overlay.json
-docs/*
-!docs/agents/
-!docs/agents/*
-!docs/adr/
-!docs/adr/*
-!docs/architecture/
-!docs/architecture/*
-!docs/UA_ONBOARDING.md
-!docs/ENTERPRISE_ARCHITECTURE_DOSSIER.md
-!docs/SOP_VERIFIKATOR_MEDIS_BPJS.md
-!docs/GO_NO_GO_PRODUCTION_READINESS_REPORT.md
 
 # Internal documentation and generator scripts
 AGENTS.md
 !DESIGN.md
-!PRODUCT.md
 .impeccable/*
 !.impeccable/config.json
 */AGENTS.md
 */DESIGN.md
-build_final_deck.py
-export_final_deck_to_pdf.py
 start_all.bat
 start_all.sh
 *.bat
 *.sh
 
-# Competition Submission, Decks, Video Scripts & Metadata (Private - Do NOT track in Git)
+# Large Submission Binaries & Media (Private - Do NOT track in Git)
 *.pptx
 *.pdf
 *.zip
 *.webm
 *.mp4
 *.mkv
-ClaimTrace_Healthkathon_*
-PANDUAN_RECORDING_VIDEO_DEMO.md
-RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
-METADATA_SUBMISI_HEALTHKATHON.txt
-SUBMISSION_HEALTHKATHON_*
+submissions/**/*.pptx
+submissions/**/*.pdf
+submissions/**/*.zip
+submissions/**/*.mp4
+submissions/**/*.webm
+submissions/**/*.mkv
 app/scripts/record_*.js
