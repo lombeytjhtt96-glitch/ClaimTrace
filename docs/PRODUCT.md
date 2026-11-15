@@ -16,7 +16,7 @@ ClaimTrace JKN adalah Sistem Pendukung Keputusan (*Decision Support System* / DS
 
 ## Positioning
 
-Solusi penapisan klaim anomali pra-bayar berbasis **Fusi Deterministik 3 Lapis (`S = 0,50*S1 + 0,30*S2 + 0,20*S3` pada skala `0 - 100`: Hijau `0-49,9`, Kuning `50,0-74,9`, Merah `75,0-100` + Hard Trigger)** yang dipadukan dengan gudang data DuckDB (`6.264.346` baris dari `1.699.219` klaim FKRTL), ChromaDB semantic matching, rute geovelocity OSRM, arsitektur Zero-PHI (UU PDP 27/2022), dan ledger SHA-256 tahan manipulasi.
+Solusi penapisan klaim anomali pra-bayar berbasis **Fusi Deterministik 3 Lapis (`S = 0,50*S1 + 0,30*S2 + 0,20*S3` pada skala `0 - 100`: Hijau `0-49,9`, Kuning `50,0-74,9`, Merah `75,0-100` + Hard Trigger)** yang dipadukan dengan gudang data analitik OLAP (`6.264.346` baris dari `1.699.219` klaim FKRTL), ChromaDB semantic matching, rute geovelocity OSRM, arsitektur Zero-PHI (UU PDP 27/2022), dan ledger SHA-256 tahan manipulasi.
 
 ## Operating Context
 
@@ -26,24 +26,24 @@ Solusi penapisan klaim anomali pra-bayar berbasis **Fusi Deterministik 3 Lapis (
 
 ## Capabilities and Constraints
 
-- Kokpit terfokus dalam 3 alur pengendalian fraud inti (Ringkasan Fraud & DuckDB SQL, Pipeline & Bedah Saring Klaim 4-Tahap, dan Konsol Putusan/BAKB/Ledger), dilengkapi simulasi Dual View Mobile JKN.
-- Engine backend FastAPI terintegrasi DuckDB OLAP SIMD (`6.264.346` baris), Scikit-Learn Isolation Forest, ChromaDB MiniLM, dan OSRM geovelocity.
-- Antarmuka frontend React 18 + Vite + Tailwind CSS dengan SWR cache dan navigasi terpusat pada pengendalian kecurangan.
+- Kokpit terfokus dalam 3 kelompok navigasi inti (`Alur Kerja Utama`, `Alat Investigasi`, `Laporan & Audit`) termasuk Ringkasan Eksekutif & Basis Data Analitik, Antrean & Bedah Saring Klaim 4-Lapis, Cek Dokumen RS, Peringkat Faskes, serta Konsol Putusan/BAHV/Ledger, dilengkapi simulasi Dual View Mobile JKN.
+- Engine backend FastAPI (`197` endpoint API) terintegrasi gudang data analitik OLAP SIMD (`6.264.346` baris), Scikit-Learn Isolation Forest, ChromaDB MiniLM, dan OSRM geovelocity.
+- Antarmuka frontend React 18 + Vite + Tailwind CSS dengan SWR cache, otentikasi Fail-Closed (reCAPTCHA 3 lapis + MFA 3-tahap), dan navigasi terpusat pada pengendalian kecurangan.
 - Zero-PHI: Data identitas pasien terlindungi penuh sesuai Pasal 34 UU PDP No. 27/2022.
-- Terverifikasi oleh `244` uji backend (`backend/tests/`) dan `112` uji E2E (`tests_e2e/`).
+- Terverifikasi oleh `300` uji backend (`backend/tests/`) dan `112` uji E2E (`tests_e2e/`).
 
 ## Brand Commitments
 
 - Nama resmi: ClaimTrace JKN.
-- Identitas visual: Clean White Enterprise (Slate 50 canvas, pure white elevation, Sky 600/700 brand accents, Emerald/Amber/Rose state indicators).
-- Tipografi: Inter untuk teks fungsional dan JetBrains Mono untuk metadata, hash SHA-256, dan kode ICD-10/INA-CBG.
+- Identitas visual: Clinical Precision Light-First (`#F7F8FA` neutral canvas, `#FFFFFF` structured elevation, `#061B31` cool slate ink, `#047857` Clinical Emerald accents, `#00134A` institutional navy header banners, plus optional Obsidian Dark mode inside cockpit workspace; auth login/reset locked light mode).
+- Tipografi: `Geist` / `Inter` untuk teks fungsional dan `Geist Mono` / `JetBrains Mono` untuk metadata, hash SHA-256, dan kode ICD-10/INA-CBG; `IBM Plex Serif` untuk dokumen BAHV resmi.
 - Bahasa: Bahasa Indonesia baku berorientasi institusional perbankan dan kesehatan.
-- Larangan: Bebas em-dash, bebas emoji, dan bebas motif AI generik (neon glow gelap, blob partikel, kartu bertingkat acak).
+- Larangan: Bebas em-dash, bebas emoji, bebas kebocoran merek vendor DBMS/AI di UI, dan bebas motif AI generik.
 
 ## Evidence on Hand
 
 - Basis hukum operasional: UU No. 27/2022 tentang Perlindungan Data Pribadi, Perpres No. 82/2018 tentang Jaminan Kesehatan, dan Permenkes No. 26/2021 tentang Pencegahan Fraud JKN.
-- Test suite: 113 unit dan integration test (`pytest tests/`) berstatus 100% lulus.
+- Test suite: `412` unit, integration, dan E2E test (`300` di `backend/tests/` + `112` di `tests_e2e/`) serta `16/16` cek stack internal berstatus 100% lulus.
 - Knowledge graph arsitektur: 474 node, 491 edge, 6 layer hierarki, dan 7 langkah onboarding interaktif.
 
 ## Product Principles

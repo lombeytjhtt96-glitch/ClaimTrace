@@ -19,10 +19,11 @@
 ### 1.2 Deskripsi Singkat
 ClaimTrace adalah Decision Support System (DSS) berbasis Artificial Intelligence yang dirancang untuk memperkuat fungsi pengawasan verifikator BPJS Kesehatan pada tahap pra-bayar (pre-payment screening). Sistem ini menggabungkan machine learning Isolation Forest untuk deteksi anomali statistik volume/biaya, ChromaDB vector embeddings (all-MiniLM-L6-v2) untuk mendeteksi kesamaan resume medis lintas pasien, serta penelusuran graf relasi untuk mendeteksi klaim berulang (Repeat Billing) dan mustahil jarak tempuh fisik DPJP.
 
-Keunggulan utama sistem ini terletak pada **Matriks Bukti 3 Lapis (Triangulation Evidence Matrix)**:
-1. **Lapis 1 (Analitik Pola Klaim Spatiotemporal & AI):** Menganalisis lonjakan klaster klaim serentak, anomali rasio prosedur terhadap diagnosis utama, serta kesamaan semantik berkas medis.
-2. **Lapis 2 (Validasi Jejak Eksternal SATUSEHAT SDMK):** Memverifikasi keaktifan Surat Izin Praktik (SIP) dokter penanggung jawab pelayanan (DPJP) dan batas wajar kapasitas pelayanan harian dokter secara lintas instansi melalui Kemenkes SATUSEHAT.
-3. **Lapis 3 (Telemetri & Konfirmasi Mandiri Peserta Mobile JKN):** Mengonfirmasi kehadiran dan penerimaan layanan langsung ke ponsel peserta JKN yang bersangkutan melalui push notification interaktif berotentikasi.
+Keunggulan utama sistem ini terletak pada **Arsitektur Quad-Triangulation (4 Sinyal Independen pada Ekosistem BEA C01-S06)**:
+1. **Lapis 1 (Analitik Pola Klaim Spatiotemporal, Semantic Embeddings & Isolation Forest):** Menganalisis lonjakan klaster klaim serentak (`>= 3,0x` baseline), *Episode Fingerprint* klaim ganda hari sama/berulang (`<= 30` hari), deteksi *upcoding* keparahan INA-CBG (`FKL23` vs `FKL24`), pengecualian adil terapi kronis PRB/Hemodialisis (`Z49.1`)/Kemoterapi (`Z51.1`), serta kesamaan semantik berkas medis (`cosine similarity`).
+2. **Lapis 2 (Validasi Jejak Eksternal SATUSEHAT SDMK & OSRM Geovelocity):** Memverifikasi keaktifan Surat Izin Praktik (SIP) dokter penanggung jawab pelayanan (DPJP) pada tanggal layanan (`EXPIRED` memicu *Hard Trigger* Jalur Merah; `UNSYNCED` diarahkan ke klarifikasi Jalur Kuning), beban pasien `> 40`/hari, serta kecepatan perpindahan antar-RS yang tidak mungkin secara fisik (`> 110 km/jam`).
+3. **Lapis 3 (Telemetri & Konfirmasi Mandiri Peserta Mobile JKN - Zero-PHI):** Mengirimkan notifikasi biner 1-klik (`Hadir` / `Tidak Pernah`) langsung ke aplikasi Mobile JKN peserta tanpa membocorkan diagnosis ICD-10 (kepatuhan UU PDP No. 27/2022).
+4. **Lapis 4 (Verifikasi Biometrik FRISTA & Audit RME-TTE):** Mengaitkan log presensi biometrik wajah FRISTA di faskes dengan koherensi RME-TTE serta mensintesis draf Berita Acara Hasil Verifikasi / Klarifikasi Bersama (BAHV/BAKB) QR SHA-256 tahan manipulasi.
 
 ### 1.3 Tujuan Strategis Terukur
 1. **Mendeteksi anomali klaim secara otomatis sebelum klaim dibayarkan:** Menghentikan kebocoran dana amanat umat di gerbang pra-bayar tanpa membebani proses verifikasi rutin.
@@ -43,9 +44,9 @@ Program Jaminan Kesehatan Nasional (JKN) yang diselenggarakan BPJS Kesehatan mel
 
 | Indikator Evaluasi | Kondisi Saat Ini (Tanpa ClaimTrace) | Dengan Implementasi ClaimTrace | Peningkatan Kinerja |
 | :--- | :--- | :--- | :--- |
-| **Durasi Telaah Klaim Anomali** | 15 – 25 menit per berkas kasus | **&lt; 4,2 menit per berkas kasus** | **Efisiensi Waktu 72%** |
-| **Penyelamatan Dana JKN Regional** | Kebocoran baru terdeteksi audit pasca-bayar | **Estimasi Rp 34,2 Miliar / tahun** dicegah sebelum keluar kas | **Mitigasi Risiko Pra-Bayar 100%** |
-| **False Positive Rate (Jalur Merah)** | &gt; 12% (Klaim sah sering tertahan) | **0,00%** (Uji dataset holdout 3.002 klaim) | **Akurasi Triase Sempurna** |
+| **Durasi Telaah Klaim Anomali** | 15 - 25 menit per berkas kasus | **< 2 menit per klaster kasus** | **Menjaga SLA 10 Hari Kerja Perpres 82/2018** |
+| **Penyelamatan Dana & Eksposur Empiris** | Kebocoran baru terdeteksi audit pasca-bayar | **Rp 34,66 Miliar terdeteksi** di gudang data (`Rp 32,59 M` klaim ganda + `Rp 2,07 M` selisih tarif) | **Mitigasi Kebocoran Pra-Bayar** |
+| **Ketepatan & Keadilan Triase (HKEval)** | > 12% klaim sah tertahan (*alert fatigue*) | **Precision@50 = 86,0%** (`43/50`, Lift `43,0x`), **0,00% FPR Hard-Negative** (`Z49.1`/`Z51.1`/`I69.3`), **99,90% lolos cepat** | **Zero-Friction bagi Faskes Patuh** |
 | **Integritas Jejak Audit Telaah** | Catatan manual di spreadsheet / form internal | **Ledger Kriptografi SHA-256 Anti-Tamper** | **Kekuatan Bukti Hukum Anti-Repudiasi** |
 | **Keterlibatan Peserta (Citizen Audit)**| Pasif, hanya menerima layanan | **Aktif via Notifikasi Reaktif Mobile JKN** | **Audit Partisipatif Multi-Pihak** |
 
@@ -60,13 +61,13 @@ Sistem ClaimTrace tidak mengandalkan aturan statis (if-else tunggal), melainkan 
 - **Graph Sequence Traversal (NetworkX):** Memetakan relasi jaringan antara Nomor Peserta, Kode Faskes, dan Nomor SIP DPJP. Mengidentifikasi kondisi impossible physical travel (dokter tercatat melayani di dua faskes berjarak >30 km dalam selang waktu <30 menit) serta siklus klaim berulang (#11 Repeat Billing).
 - **Explainable AI (XAI) Attribution:** Setiap hasil pemindaian AI menyertakan dekomposisi kontribusi fitur penyebab anomali, memberikan rekomendasi investigasi klinis yang jelas bagi verifikator.
 
-### 3.2 Matriks Bukti 3 Lapis (Triangulation Matrix)
-Model fusi risiko menggabungkan probabilitas anomali dari tiga sumber independen:
-$$\text{RiskScore} = w_1 \cdot S_{\text{AI}} + w_2 \cdot S_{\text{SATUSEHAT}} + w_3 \cdot S_{\text{MobileJKN}}$$
-Dengan kalibrasi bobot empiris ($w_1 = 0.35, w_2 = 0.35, w_3 = 0.30$), skor diklasifikasikan ke dalam 3 jalur penanganan:
-- **Jalur Hijau (Skor &lt; 35):** Tingkat anomali rendah, klaim lolos verifikasi pra-bayar secara otomatis.
-- **Jalur Kuning (Skor 35 – 70):** Indikasi ketidaksesuaian administratif (misal: SIP dokter dalam proses perpanjangan), faskes diberikan waktu klarifikasi digital tanpa penolakan sepihak.
-- **Jalur Merah (Skor &gt; 70):** Indikasi kuat anomali kritis (misal: pasien menyangkal menerima layanan + SIP dokter tidak sah + lonjakan klaster 40+ pasien), klaim dialihkan ke audit investigasi forensik.
+### 3.2 Formula Fusi Risiko Deterministik (Skala 0 - 100)
+Model fusi risiko menggabungkan skor dari tiga komponen sinyal inti menjadi skor komposit terkalibrasi (`0 - 100`):
+$$S = 0{,}50 \cdot S_1 + 0{,}30 \cdot S_2 + 0{,}20 \cdot S_3$$
+Dengan pembobotan resmi ($w_1 = 0,50$ Pola Klinis & Episode, $w_2 = 0,30$ Legalitas SIP SATUSEHAT & Geovelocity, $w_3 = 0,20$ Telemetri Mobile JKN + Penguatan Biometrik FRISTA Lapis 4), klaim dipilah ke dalam 3 jalur penanganan:
+- **Jalur Hijau (Skor 0,0 - 49,9):** Tingkat anomali rendah, klaim lolos verifikasi pra-bayar secara cepat (*Fast-Track* < 24 jam).
+- **Jalur Kuning (Skor 50,0 - 74,9 atau Status DPJP `UNSYNCED`):** Indikasi ketidaksinkronan administratif atau perlunya klarifikasi berkas; faskes diberikan ruang klarifikasi digital tanpa vonis sepihak.
+- **Jalur Merah (Skor 75,0 - 100,0 atau *Hard Trigger* `SIP EXPIRED`):** Indikasi kuat anomali kritis atau pelanggaran SIP kedaluwarsa (`EXPIRED` memaksa skor minimal `75,0`), klaim ditunda pembayarannya (`HOLD_BAKB`) dan dialihkan ke audit investigasi dengan Berita Acara QR SHA-256.
 
 ### 3.3 Keamanan Data & Kepatuhan Hukum
 - **Kepatuhan Penuh UU PDP No. 27/2022:** Menerapkan asas minimasi data dan perlindungan data pribadi kesehatan spesifik. NIK dan Nomor Kartu JKN dipseudonimisasi menggunakan salted cryptographic hashing sebelum diproses mesin analitik.
@@ -77,17 +78,17 @@ Dengan kalibrasi bobot empiris ($w_1 = 0.35, w_2 = 0.35, w_3 = 0.30$), skor dikl
 
 ## 4. KESIAPAN PRODUK & BUKTI PENGUJIAN SISTEM (KRITERIA 1)
 
-### 4.1 Status Kesiapan Produk
-- **Produksi Aktif di Cloud:** Web application telah berjalan live pada platform serverless Vercel Edge Network di alamat: `https://claimtrace-healthkathon.vercel.app/` dengan proteksi HTTPS penuh.
-- **Backend API:** Dibangun dengan Python FastAPI, DuckDB analytical columnar store, scikit-learn, ChromaDB, dan FHIR-compliant schema.
-- **Dual Cockpit Frontend:** Mengintegrasikan Dashboard Verifikator BPJS resolusi tinggi berdampingan dengan Mobile JKN Simulator interaktif yang terhubung melalui WebSocket/reaktif state.
+### 4.1 Status Kesiapan Produk & Keamanan
+- **Arsitektur Production-Grade On-Premise & Hybrid:** Mendukung pengoperasian penuh secara lokal/on-premise di infrastruktur BPJS Kesehatan serta demonstrasi publik (`https://claimtrace-healthkathon.vercel.app/`).
+- **Backend API & Basis Data Analitik:** Dibangun dengan Python FastAPI (`197` endpoint API), gudang data analitik OLAP kolumnar in-memory terintegrasi (`6.264.346` total baris, `1.699.219` klaim FKRTL), scikit-learn Isolation Forest, ChromaDB semantic embeddings, OSRM geovelocity, FHIR R4, serta autentikasi **Fail-Closed NIP + reCAPTCHA 3 Lapis (v2, v3, Enterprise) + MFA 3-Tahap**.
+- **Cockpit Verifikator Clinical Precision & Mobile JKN Simulator:** Mengintegrasikan 9 modul kerja terstruktur (`Alur Kerja Utama`, `Alat Investigasi`, `Laporan & Audit`) berdampingan dengan Mobile JKN Simulator interaktif.
 
-### 4.2 Hasil Uji Validasi Dataset Holdout
-Pengujian dilakukan secara empiris terhadap dataset sintetis terkalibrasi berukuran 3.002 transaksi klaim fisioterapi FKRTL dengan hasil:
-- **Precision@100 = 100%:** Pada 100 kasus teratas yang direkomendasikan sistem untuk audit mendalam, 100% terbukti mengandung unsur Phantom Billing atau Repeat Billing.
-- **False Positive Rate (FPR) ke Jalur Merah = 0,00%:** Nol kasus klaim sah dari faskes patuh yang salah dimasukkan ke jalur penolakan kritis.
-- **Recall Antrean (Kuning + Merah) = 100%:** Seluruh kasus anomali berhasil dijaring ke dalam antrean telaah verifikator.
-- **Automated Test Suite Integrity:** 106 unit test dan integration test telah dieksekusi secara otomatis dengan status **106 Passed (100% Green)** mencakup engine AI, audit ledger, analitik DuckDB, dan kepatuhan FHIR.
+### 4.2 Hasil Uji Benchmark HKEval & Integritas Suite Otomatis
+Evaluasi dilakukan secara empiris pada benchmark **HKEval (`4.341` klaim holdout dengan `2%` prevalensi anomali realistis)** dan gudang data terintegrasi (`1.699.219` klaim FKRTL across `2.091` faskes):
+- **Precision@50 = 86,0% (`43/50`) | Lift Ratio = 43,0x | PR-AUC = 0,884:** Kemampuan sistem memusatkan perhatian verifikator pada klaster anomali paling berisiko di urutan teratas.
+- **Rupiah Recall@50 = 66,3% (`k=100`: 91,4%) & Holdout Recall@87 = 95,4%:** Menangkap mayoritas nilai kerugian potensial sebelum keluar kas DJS.
+- **FairGuard Hard-Negative FPR = 0,00%:** Terbukti tidak menghukum klaim sah berbiaya tinggi yang berulang secara terprogram (Kemoterapi `Z51.1`, Hemodialisis `Z49.1`, Rehab Pasca-Stroke `I69.3`, baksos resmi, maupun DPJP `UNSYNCED`).
+- **Automated Test Suite Integrity (412/412 Passed):** `300` uji unit & integrasi backend (`backend/tests/`) + `112` uji end-to-end Tier 1-4 (`tests_e2e/`) serta verifikasi internal stack `16/16` berstatus **100% Lulus (0 gagal)**.
 
 ---
 
@@ -97,7 +98,7 @@ Pengujian dilakukan secara empiris terhadap dataset sintetis terkalibrasi beruku
 ClaimTrace tidak menuntut penggantian sistem core BPJS yang sedang berjalan. Sistem ini diposisikan sebagai middleware analitik yang bertindak sebagai jembatan antara VClaim API dan antarmuka verifikator eksisting. Faskes tetap mengajukan klaim seperti biasa tanpa perlu mengubah alur operasional internal faskes.
 
 ### 5.2 Analisis Biaya dan Manfaat (Cost-Benefit Analysis)
-- **Biaya Komputasi Infrastruktur:** Berbasis arsitektur serverless microservices dengan konsumsi komputasi rata-rata < 150 ms per transaksi, estimasi biaya cloud berada di bawah **Rp 120 per berkas klaim**.
+- **Biaya Komputasi Infrastruktur:** Berbasis arsitektur *on-premise / hybrid microservices* dengan latensi inferensi model ML terkompilasi `< 15 ms` dan total pipeline `< 1 detik`, menjaga jejak komputasi tetap efisien tanpa ketergantungan API AI publik berbiaya tinggi.
 - **Nilai Penyelamatan:** Dibandingkan dengan potensi kerugian satu kasus klaim fiktif atau penagihan berulang yang berkisar antara **Rp 3,5 juta hingga Rp 25 juta per episode rawat jalan/inap**, rasio Return on Investment (ROI) melampaui 1:2.000.
 
 ### 5.3 Roadmap Implementasi Bertahap (Post-Healthkathon)

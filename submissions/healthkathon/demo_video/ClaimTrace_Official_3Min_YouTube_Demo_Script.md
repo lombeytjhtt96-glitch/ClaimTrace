@@ -60,8 +60,8 @@ Keempat, **Biometrik Terminal FRISTA**, validasi presensi fisik wajah peserta di
 
 *(Khalaf Faith Pradyatama - Cursor menunjuk ringkasan triase dan tabel klaim)*:
 "Mari kita saksikan sistem yang telah beroperasi 100% ini.
-Di Command Center Verifikator, ClaimTrace memindai 4.341 berkas klaim nasional.
-Sistem secara otomatis mengklasifikasikan 3.892 klaim bersih ke Jalur Hijau untuk pembayaran cepat tanpa friksi.
+Di Command Center Verifikator, ClaimTrace mengindeks 1.699.219 klaim FKRTL nasional serta meninjau 4.341 sampel benchmark HKEval secara otomatis.
+Pada antrean kohort aktif tersebut, sistem mengklasifikasikan 3.892 klaim bersih ke Jalur Hijau untuk pembayaran cepat tanpa friksi.
 
 Namun, radar mendeteksi 85 berkas prioritas di Jalur Merah dengan potensi kebocoran Rp 72.450.000,-, salah satunya klaster baksos fisioterapi di RS Khusus Mitra Husada.
 Saat kita klik berkas klaim terkait, sistem langsung menyajikan Berkas Telaah Siap-Audit yang mengungkap lonjakan klaim 8,5 kali lipat baseline dan SIP dokter penanggung jawab yang tercatat non-aktif di SATUSEHAT Kemenkes."

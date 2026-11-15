@@ -18,7 +18,7 @@
 2. Pemetaan Proses Bisnis BPJS Kesehatan: AS-IS vs TO-BE
 3. Arsitektur Quad-Triangulation: 4 Sinyal Triase Independen
 4. Matriks Kepatuhan Regulasi & Pembuktian Yuridis Sengketa Klaim
-5. Analisis Dampak Finansial & Solvabilitas Dana JKN (Basis 4.341 Klaim)
+5. Analisis Dampak Finansial & Solvabilitas Dana JKN (4.341 Sampel HKEval & 1.699.219 Klaim Gudang Data)
 6. Tata Kelola Keamanan Data, Zero-PHI Masking, & Kontrol Akses Terverifikasi
 7. Lembar Jawaban Pertanyaan Kritis Sesi Mentoring (Mentor FAQ Defense Sheet)
 8. Roadmap Rancang Bangun & Integrasi Bertahap di BPJS Kesehatan
@@ -39,7 +39,7 @@
   2. **Tahap 2 — Aturan Pola, Lonjakan & Klaim Ganda:** Flag lonjakan klaster `>= 3,0x` baseline tanpa izin baksos resmi, koreksi tarif langsung (`1.631` berkas), dan klaim ganda hari sama (`4.876` pasang / `9.555` berkas senilai `Rp 32,59 Miliar`).
   3. **Tahap 3 — Validasi SDMK SATUSEHAT, OSRM & Semantik NLP:** Uji status SIP (`EXPIRED` = Hard Trigger Merah; `UNSYNCED` = Kuning), rute antar-kota DPJP (`> 120 km/jam` dalam < 45 menit), beban `> 40` pasien/hari, serta kemiripan teks resume medis ChromaDB (`cosine similarity >= 90%`) dan Isolation Forest.
   4. **Tahap 4 — Konfirmasi Mobile JKN (Zero-PHI) & Fusi `0-100`:** Kirim konfirmasi kehadiran Ya/Tidak tanpa diagnosis medis ke peserta -> hitung skor akhir -> eksekusi putusan Human-in-the-Loop.
-- **Data Live di Gudang Data DuckDB (`claimtrace_warehouse.db`, Total `6.264.346` Baris):**
+- **Data Live di Gudang Data Analitik OLAP (Total `6.264.346` Baris):**
   - `1.699.219` klaim FKRTL (Rp `1,536` Triliun; rata-rata `4.643`/hari, puncak `7.870`/hari) across `2.091` RS di `496` Kab/Kota (`38` Provinsi).
   - `2.590.751` master peserta (`bpjs_kepesertaan_all`), `1.967.670` diagnosis sekunder (`bpjs_diagnosissekunder_all`), `6.706` ICD-10.
   - Antrean Triase Aktif End-to-End: 6 kasus representatif (`CLM-2026-8801` s/d `8806`) untuk membedah jalur Hijau, Kuning (`UNSYNCED`), dan Merah (*Phantom*, *Repeat*, *Geovelocity*, *Upcoding*).
@@ -111,7 +111,7 @@ flowchart TD
 ```
 
 **Nilai Tambah Alur TO-BE bagi BPJS Kesehatan:**
-1. **Zero Friction bagi Klaim Faskes Patuh:** Pada data gudang DuckDB (`1.699.219` klaim FKRTL), `99,90%` (`1.697.588` berkas) disetujui penuh dan diarahkan ke Jalur Hijau (*Fast-Track* < 24 jam) sehingga arus kas RS patuh tetap lancar.
+1. **Zero Friction bagi Klaim Faskes Patuh:** Pada data gudang analitik OLAP (`1.699.219` klaim FKRTL), `99,90%` (`1.697.588` berkas) disetujui penuh dan diarahkan ke Jalur Hijau (*Fast-Track* < 24 jam) sehingga arus kas RS patuh tetap lancar.
 2. **Fokus Tajam pada Klaim Anomali Kritis:** Verifikator tidak mengalami *alert fatigue* memeriksa berkas rutin, melainkan memusatkan audit pra-bayar pada klaster anomali berisiko tinggi (seperti `4.876` pasang klaim ganda hari sama senilai `Rp 32,59 Miliar` dan `1.631` koreksi tarif langsung senilai `Rp 2,07 Miliar`).
 3. **Pencegahan Sejak Pintu Masuk:** Penyelamatan dana dilakukan sebelum pencairan kas (*pre-payment avoidance*), menghilangkan risiko gagal tagih pasca-bayar.
 
@@ -127,7 +127,7 @@ flowchart TD
 | **Lapis 4: Terminal Biometrik** | Log Sistem Face Match FRISTA Faskes | Multimodal Biometric Verification Log & Terminal Integrity | Memverifikasi bahwa peserta benar-benar hadir secara fisik di mesin perekam wajah faskes pada jam pelayanan, menggagalkan manipulasi tanda tangan absensi kertas. |
 
 ### Formula Fusi Skor Risiko Gabungan (Composite Risk Score, Skala 0 - 100)
-Skor inti dihitung secara matematis dengan bobot deterministik terkalibrasi (mengacu pada [`scoring.py`](backend/app/engine/scoring.py)):
+Skor inti dihitung secara matematis dengan bobot deterministik terkalibrasi (mengacu pada [`scoring.py`](../../../backend/app/engine/scoring.py)):
 \[
 S_{\text{total}} = 0,50 \cdot S_1 + 0,30 \cdot S_2 + 0,20 \cdot S_3
 \]
@@ -161,8 +161,8 @@ Salah satu titik rawan sengketa klaim adalah ketiadaan bukti rantai pengawasan (
 
 ## 5. ANALISIS DAMPAK DATA EMPIRIS & SOLVABILITAS DANA JKN
 
-### 5.1 Hasil Audit Empiris Gudang Data DuckDB (1.699.219 Klaim FKRTL · 2.091 RS)
-Eksekusi mesin kolumnar DuckDB OLAP pada dataset terintegrasi (`6.264.346` total baris) menunjukkan sebaran konkret sebagai berikut:
+### 5.1 Hasil Audit Empiris Gudang Data Analitik OLAP (1.699.219 Klaim FKRTL · 2.091 RS)
+Eksekusi mesin kolumnar OLAP in-memory pada dataset terintegrasi (`6.264.346` total baris) menunjukkan sebaran konkret sebagai berikut:
 
 | Indikator / Kategori Saring | Volume Tercatat | Nilai Finansial | Tindakan Sistem |
 | :--- | :--- | :--- | :--- |
@@ -212,7 +212,7 @@ Eksekusi mesin kolumnar DuckDB OLAP pada dataset terintegrasi (`6.264.346` total
 
 ### Q5: "Seberapa siap sistem ini diintegrasikan ke dalam ekosistem IT BPJS Kesehatan yang sudah ada?"
 **Jawaban Defensif:**
-"ClaimTrace dirancang dengan pendekatan modular non-disruptif. Sistem dapat beroperasi sebagai sidecar gateway yang menerima stream data JSON klaim dari VClaim dan SATUSEHAT melalui standar HL7 FHIR R4. Prototipe ini telah 100% selesai dibangun dengan 113 unit uji otomatis yang lulus sempurna, backend berkinerja tinggi FastAPI, dan frontend cockpit verifikator interaktif yang saat ini berjalan aktif di lingkungan lokal kami."
+"ClaimTrace dirancang dengan pendekatan modular non-disruptif. Sistem dapat beroperasi sebagai sidecar gateway yang menerima stream data JSON klaim dari VClaim dan SATUSEHAT melalui standar HL7 FHIR R4. Sistem final telah selesai dibangun dengan 412 uji otomatis (300 uji backend dan 112 uji E2E) yang lulus 100%, 197 endpoint API FastAPI dengan otorisasi Fail-Closed + reCAPTCHA 3 lapis + MFA, dan frontend cockpit verifikator interaktif yang berjalan on-premise maupun lokal."
 
 ---
 
