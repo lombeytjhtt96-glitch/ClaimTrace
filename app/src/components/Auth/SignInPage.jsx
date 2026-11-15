@@ -3,11 +3,9 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Check,
   CheckCircle2,
   ArrowLeft,
   RefreshCw,
-  ShieldCheck,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
@@ -19,15 +17,9 @@ const GOOGLE_RECAPTCHA_V2_SITE_KEY =
 const GOOGLE_RECAPTCHA_V3_SITE_KEY =
   (import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY || '').trim() ||
   '6LeEjSEuAAAAAPXb9p-mI1zU62h1d83aHzqLrEW2';
-const GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY =
-  (import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY || '').trim() ||
-  '6Lc2NSEuAAAAADW7f9jk2eC16oSjNfNnmwcvv5QE';
 
 function getRecaptchaSdk() {
   if (typeof window === 'undefined' || !window.grecaptcha) return null;
-  if (window.grecaptcha.enterprise && typeof window.grecaptcha.enterprise.render === 'function') {
-    return window.grecaptcha.enterprise;
-  }
   if (typeof window.grecaptcha.render === 'function') {
     return window.grecaptcha;
   }
@@ -53,17 +45,12 @@ export default function SignInPage({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Google reCAPTCHA multi-layer state (v2 Checkbox + v3 Score + Enterprise)
+  // Google reCAPTCHA v2 Checkbox (tampil) + v3 (invisible saat kirim)
   const [recaptchaToken, setRecaptchaToken] = useState('');
-  const [recaptchaEnterpriseToken, setRecaptchaEnterpriseToken] = useState('');
   const [recaptchaV2Ready, setRecaptchaV2Ready] = useState(false);
-  const [recaptchaEnterpriseReady, setRecaptchaEnterpriseReady] = useState(false);
-  const [recaptchaV3Status, setRecaptchaV3Status] = useState('idle');
   const [recaptchaLoadError, setRecaptchaLoadError] = useState(false);
   const recaptchaV2ContainerRef = useRef(null);
-  const recaptchaEnterpriseContainerRef = useRef(null);
   const recaptchaV2WidgetIdRef = useRef(null);
-  const recaptchaEnterpriseWidgetIdRef = useRef(null);
 
   // Feedback & submit state
   const [errorMsg, setErrorMsg] = useState('');
@@ -101,20 +88,16 @@ export default function SignInPage({
 
   const resetRecaptchaWidget = useCallback(() => {
     setRecaptchaToken('');
-    setRecaptchaEnterpriseToken('');
-    setRecaptchaV3Status('idle');
     const sdk = getRecaptchaSdk();
     if (!sdk || typeof sdk.reset !== 'function') return;
-    [recaptchaV2WidgetIdRef.current, recaptchaEnterpriseWidgetIdRef.current].forEach((widgetId) => {
-      if (widgetId !== null) {
-        try {
-          sdk.reset(widgetId);
-        } catch {}
-      }
-    });
+    if (recaptchaV2WidgetIdRef.current !== null) {
+      try {
+        sdk.reset(recaptchaV2WidgetIdRef.current);
+      } catch {}
+    }
   }, []);
 
-  // Load unified Enterprise script once (for v2 Checkbox + v3 Score + Enterprise Checkbox)
+  // Load Google reCAPTCHA script once (v2 Checkbox visible + v3 invisible execution on submit)
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const needsWidget = mode === 'login' || (mode === 'forgot' && !forgotSubmitted);
@@ -125,13 +108,9 @@ export default function SignInPage({
     let pollTimer = null;
     let timeoutTimer = null;
     setRecaptchaToken('');
-    setRecaptchaEnterpriseToken('');
     setRecaptchaV2Ready(false);
-    setRecaptchaEnterpriseReady(false);
-    setRecaptchaV3Status('idle');
     setRecaptchaLoadError(false);
     recaptchaV2WidgetIdRef.current = null;
-    recaptchaEnterpriseWidgetIdRef.current = null;
 
     const clearTimers = () => {
       if (initTimer) {
@@ -178,12 +157,20 @@ export default function SignInPage({
 
     const renderWidgets = () => {
       if (cancelled) return false;
-      const sdk = getRecaptchaSdk();
-      if (!sdk) return false;
+      const grecaptcha = typeof window !== 'undefined' ? window.grecaptcha : null;
+      if (!grecaptcha) return false;
+      if (typeof grecaptcha.render !== 'function') {
+        if (typeof grecaptcha.ready === 'function') {
+          grecaptcha.ready(() => {
+            if (!cancelled) renderWidgets();
+          });
+        }
+        return false;
+      }
 
       try {
         const v2Ok = renderCheckboxSlot(
-          sdk,
+          grecaptcha,
           recaptchaV2ContainerRef,
           recaptchaV2WidgetIdRef,
           GOOGLE_RECAPTCHA_V2_SITE_KEY,
@@ -191,16 +178,7 @@ export default function SignInPage({
           setRecaptchaToken,
           setRecaptchaV2Ready
         );
-        const entOk = renderCheckboxSlot(
-          sdk,
-          recaptchaEnterpriseContainerRef,
-          recaptchaEnterpriseWidgetIdRef,
-          GOOGLE_RECAPTCHA_ENTERPRISE_SITE_KEY,
-          { action: mode === 'forgot' ? 'FORGOT_PASSWORD' : 'LOGIN' },
-          setRecaptchaEnterpriseToken,
-          setRecaptchaEnterpriseReady
-        );
-        if (v2Ok && entOk) {
+        if (v2Ok) {
           clearTimers();
           setRecaptchaLoadError(false);
           return true;
@@ -218,7 +196,7 @@ export default function SignInPage({
     if (!document.getElementById('google-recaptcha-api-script')) {
       const script = document.createElement('script');
       script.id = 'google-recaptcha-api-script';
-      script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(
+      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(
         GOOGLE_RECAPTCHA_V3_SITE_KEY
       )}&onload=claimtraceRecaptchaCallback&hl=id`;
       script.async = true;
@@ -236,10 +214,7 @@ export default function SignInPage({
         renderWidgets();
       }, 200);
       timeoutTimer = setTimeout(() => {
-        if (
-          !cancelled &&
-          (recaptchaV2WidgetIdRef.current === null || recaptchaEnterpriseWidgetIdRef.current === null)
-        ) {
+        if (!cancelled && recaptchaV2WidgetIdRef.current === null) {
           setRecaptchaLoadError(true);
           clearTimers();
         }
@@ -250,7 +225,6 @@ export default function SignInPage({
       cancelled = true;
       clearTimers();
       recaptchaV2WidgetIdRef.current = null;
-      recaptchaEnterpriseWidgetIdRef.current = null;
     };
   }, [mode, forgotSubmitted]);
 
@@ -335,11 +309,11 @@ export default function SignInPage({
   };
 
   const executeRecaptchaV3Token = async (actionName) => {
-    const sdk = getRecaptchaSdk();
+    const sdk =
+      typeof window !== 'undefined' && window.grecaptcha ? window.grecaptcha : null;
     if (!sdk || typeof sdk.execute !== 'function') {
       throw new Error('SDK Google reCAPTCHA v3 belum siap.');
     }
-    setRecaptchaV3Status('running');
     const timeoutMs = 8000;
     const execPromise = new Promise((resolve, reject) => {
       const runExec = () => {
@@ -363,20 +337,15 @@ export default function SignInPage({
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Waktu verifikasi reCAPTCHA v3 habis.')), timeoutMs)
     );
-    const token = await Promise.race([execPromise, timeoutPromise]);
-    setRecaptchaV3Status('verified');
-    return token;
+    return Promise.race([execPromise, timeoutPromise]);
   };
 
-  const buildLayeredCaptchaPayload = async (flowType) => {
-    if (!recaptchaToken || !recaptchaEnterpriseToken) {
-      setErrorMsg(
-        'Selesaikan seluruh verifikasi Google reCAPTCHA (v2 Checkbox dan Enterprise Checkbox) terlebih dahulu.'
-      );
+  const buildCaptchaPayload = async (flowType) => {
+    if (!recaptchaToken) {
+      setErrorMsg('Selesaikan verifikasi Google reCAPTCHA terlebih dahulu.');
       return null;
     }
     const v3Action = flowType === 'forgot' ? 'forgot_password' : 'login';
-    const entAction = flowType === 'forgot' ? 'FORGOT_PASSWORD' : 'LOGIN';
     try {
       const v3Token = await executeRecaptchaV3Token(v3Action);
       return {
@@ -384,11 +353,8 @@ export default function SignInPage({
         recaptcha_v2_token: recaptchaToken,
         recaptcha_v3_token: v3Token,
         recaptcha_v3_action: v3Action,
-        recaptcha_enterprise_token: recaptchaEnterpriseToken,
-        recaptcha_enterprise_action: entAction,
       };
     } catch (v3Err) {
-      setRecaptchaV3Status('error');
       setErrorMsg(
         v3Err?.message
           ? `Verifikasi reCAPTCHA v3 gagal: ${v3Err.message}`
@@ -420,7 +386,7 @@ export default function SignInPage({
     }
 
     setIsSubmitting(true);
-    const captchaPayload = await buildLayeredCaptchaPayload('login');
+    const captchaPayload = await buildCaptchaPayload('login');
     if (!captchaPayload) {
       setIsSubmitting(false);
       return;
@@ -493,7 +459,7 @@ export default function SignInPage({
     }
 
     setIsSubmitting(true);
-    const captchaPayload = await buildLayeredCaptchaPayload('forgot');
+    const captchaPayload = await buildCaptchaPayload('forgot');
     if (!captchaPayload) {
       setIsSubmitting(false);
       return;
@@ -522,8 +488,6 @@ export default function SignInPage({
       );
       setForgotSubmitted(true);
       setRecaptchaToken('');
-      setRecaptchaEnterpriseToken('');
-      setRecaptchaV3Status('idle');
     } catch {
       setErrorMsg('Tidak dapat terhubung ke server autentikasi.');
       resetRecaptchaWidget();
@@ -582,109 +546,33 @@ export default function SignInPage({
   const labelClass = 'text-xs font-medium block text-slate-700';
 
   const renderRecaptchaBlock = () => {
-    const bothWidgetsReady = recaptchaV2Ready && recaptchaEnterpriseReady;
     return (
-      <div className="pt-1 space-y-2.5">
-        <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-3 space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#00733B]" />
-              <span>Verifikasi Keamanan Multi-Layer</span>
-            </div>
-            <div className="flex items-center gap-1 text-[10px] font-medium">
-              <span
-                className={`px-1.5 py-0.5 rounded border ${
-                  recaptchaToken
-                    ? 'bg-emerald-50 border-emerald-200 text-[#00733B]'
-                    : 'bg-white border-slate-200 text-slate-500'
-                }`}
-              >
-                v2 {recaptchaToken ? <Check className="w-3 h-3 inline ml-0.5" /> : <span className="ml-0.5">-</span>}
-              </span>
-              <span
-                className={`px-1.5 py-0.5 rounded border ${
-                  recaptchaEnterpriseToken
-                    ? 'bg-emerald-50 border-emerald-200 text-[#00733B]'
-                    : 'bg-white border-slate-200 text-slate-500'
-                }`}
-              >
-                Enterprise {recaptchaEnterpriseToken ? <Check className="w-3 h-3 inline ml-0.5" /> : <span className="ml-0.5">-</span>}
-              </span>
-              <span
-                className={`px-1.5 py-0.5 rounded border ${
-                  recaptchaV3Status === 'verified'
-                    ? 'bg-emerald-50 border-emerald-200 text-[#00733B]'
-                    : recaptchaV3Status === 'error'
-                    ? 'bg-rose-50 border-rose-200 text-rose-700'
-                    : 'bg-white border-slate-200 text-slate-500'
-                }`}
-              >
-                v3 {recaptchaV3Status === 'verified' ? <Check className="w-3 h-3 inline ml-0.5" /> : 'Auto'}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-[11px] font-medium text-slate-600">
-              1. Google reCAPTCHA v2 Checkbox
-            </p>
-            <div className="flex justify-center overflow-x-auto min-h-[78px]">
-              <div key={`${mode}-v2`} ref={recaptchaV2ContainerRef} />
-            </div>
-          </div>
-
-          <div className="space-y-1 pt-1 border-t border-slate-200/80">
-            <p className="text-[11px] font-medium text-slate-600">
-              2. Google reCAPTCHA Enterprise
-            </p>
-            <div className="flex justify-center overflow-x-auto min-h-[78px]">
-              <div key={`${mode}-ent`} ref={recaptchaEnterpriseContainerRef} />
-            </div>
-          </div>
-
-          <div className="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
-            <span className="font-medium text-slate-600">3. Google reCAPTCHA v3 (Score)</span>
-            <span
-              className={
-                recaptchaV3Status === 'verified'
-                  ? 'text-[#00733B] font-semibold'
-                  : recaptchaV3Status === 'error'
-                  ? 'text-rose-600 font-semibold'
-                  : 'text-slate-500'
-              }
-            >
-              {recaptchaV3Status === 'running'
-                ? 'Memverifikasi skor...'
-                : recaptchaV3Status === 'verified'
-                ? 'Skor terverifikasi'
-                : recaptchaV3Status === 'error'
-                ? 'Gagal dijalankan'
-                : 'Otomatis saat kirim'}
-            </span>
-          </div>
-
-          {!bothWidgetsReady && !recaptchaLoadError && (
-            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 py-1">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Memuat Google reCAPTCHA v2, v3 & Enterprise...</span>
-            </div>
-          )}
-
-          {recaptchaLoadError && (
-            <div className="text-center space-y-1.5 py-1">
-              <p className="text-xs text-rose-600">
-                Gagal memuat widget Google reCAPTCHA.
-              </p>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="text-xs font-medium text-[#00733B] underline cursor-pointer"
-              >
-                Muat ulang halaman
-              </button>
-            </div>
-          )}
+      <div className="pt-1 space-y-2">
+        <div className="flex justify-center overflow-x-auto min-h-[78px]">
+          <div key={`${mode}-v2`} ref={recaptchaV2ContainerRef} />
         </div>
+
+        {!recaptchaV2Ready && !recaptchaLoadError && (
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 py-1">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            <span>Memuat Google reCAPTCHA...</span>
+          </div>
+        )}
+
+        {recaptchaLoadError && (
+          <div className="text-center space-y-1.5 py-1">
+            <p className="text-xs text-rose-600">
+              Gagal memuat widget Google reCAPTCHA.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="text-xs font-medium text-[#00733B] underline cursor-pointer"
+            >
+              Muat ulang halaman
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -820,7 +708,7 @@ export default function SignInPage({
 
               <button
                 type="submit"
-                disabled={isSubmitting || !recaptchaToken || !recaptchaEnterpriseToken}
+                disabled={isSubmitting || !recaptchaToken}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting && (
@@ -903,7 +791,7 @@ export default function SignInPage({
 
                   <button
                     type="submit"
-                    disabled={isSubmitting || !recaptchaToken || !recaptchaEnterpriseToken}
+                    disabled={isSubmitting || !recaptchaToken}
                     className="w-full py-2.5 px-4 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting && (

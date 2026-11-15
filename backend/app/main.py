@@ -1308,15 +1308,13 @@ def _verify_google_recaptcha(
 ) -> None:
     is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
     enforce_in_test = os.getenv("CLAIMTRACE_ENFORCE_RECAPTCHA_IN_TEST") == "1"
-    enforce_all_layers = os.getenv("RECAPTCHA_ENFORCE_ALL_LAYERS", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }
+    enforce_mode = os.getenv("RECAPTCHA_ENFORCE_ALL_LAYERS", "").strip().lower()
+    enforce_v2_v3 = enforce_mode in {"v2_v3", "v2+v3", "2"}
+    enforce_enterprise = enforce_mode in {"1", "true", "yes"}
 
     primary_v2_raw = v2_token if (v2_token or "").strip() else recaptcha_token
 
-    if not enforce_all_layers:
+    if not (enforce_v2_v3 or enforce_enterprise):
         clean_tok = _validate_captcha_token_presence(
             primary_v2_raw,
             "Google reCAPTCHA",
@@ -1354,7 +1352,7 @@ def _verify_google_recaptcha(
             )
         return
 
-    # Layered verification: enforce v2 Checkbox + v3 Score + Enterprise in sequence
+    # Layered verification: enforce v2 Checkbox + v3 Score (invisible) and optionally Enterprise
     clean_v2 = _validate_captcha_token_presence(
         primary_v2_raw,
         "Google reCAPTCHA v2 Checkbox",
@@ -1371,13 +1369,17 @@ def _verify_google_recaptcha(
         enforce_in_test=enforce_in_test,
         require_token_in_test=require_token_in_test,
     )
-    clean_ent = _validate_captcha_token_presence(
-        enterprise_token,
-        "Google reCAPTCHA Enterprise",
-        client_ip,
-        is_pytest=is_pytest,
-        enforce_in_test=enforce_in_test,
-        require_token_in_test=require_token_in_test,
+    clean_ent = (
+        _validate_captcha_token_presence(
+            enterprise_token,
+            "Google reCAPTCHA Enterprise",
+            client_ip,
+            is_pytest=is_pytest,
+            enforce_in_test=enforce_in_test,
+            require_token_in_test=require_token_in_test,
+        )
+        if enforce_enterprise
+        else "skip"
     )
     if clean_v2 is None or clean_v3 is None or clean_ent is None:
         return
@@ -1415,19 +1417,27 @@ def _verify_google_recaptcha(
                 min_score=v3_min_score,
                 expected_action=resolved_v3_action,
             )
-            _verify_enterprise_assessment_layer(
-                http_client,
-                token=clean_ent,
-                client_ip=client_ip,
-                actor_label=actor_label,
-                expected_action=resolved_ent_action,
-            )
-            audit_logger.record_event(
-                event_type="RECAPTCHA_ALL_LAYERS_VERIFIED",
-                claim_id="SEC-AUTH",
-                actor=actor_label,
-                payload={"layers": ["v2", "v3", "enterprise"]},
-            )
+            if enforce_enterprise:
+                _verify_enterprise_assessment_layer(
+                    http_client,
+                    token=clean_ent,
+                    client_ip=client_ip,
+                    actor_label=actor_label,
+                    expected_action=resolved_ent_action,
+                )
+                audit_logger.record_event(
+                    event_type="RECAPTCHA_ALL_LAYERS_VERIFIED",
+                    claim_id="SEC-AUTH",
+                    actor=actor_label,
+                    payload={"layers": ["v2", "v3", "enterprise"]},
+                )
+            else:
+                audit_logger.record_event(
+                    event_type="RECAPTCHA_V2_V3_VERIFIED",
+                    claim_id="SEC-AUTH",
+                    actor=actor_label,
+                    payload={"layers": ["v2", "v3"]},
+                )
     except HTTPException:
         raise
     except Exception as net_err:

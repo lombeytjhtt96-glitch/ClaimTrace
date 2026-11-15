@@ -780,3 +780,71 @@ def test_all_recaptcha_layers_v2_v3_enterprise_enforced(monkeypatch, tmp_path):
     )
     assert ok_forgot.status_code == 200
     assert len(forgot_calls) == 3
+
+
+def test_recaptcha_v2_and_invisible_v3_enforced_without_enterprise(monkeypatch, tmp_path):
+    monkeypatch.setenv("CLAIMTRACE_ENFORCE_RECAPTCHA_IN_TEST", "1")
+    monkeypatch.setenv("RECAPTCHA_ENFORCE_ALL_LAYERS", "v2_v3")
+    monkeypatch.setenv("RECAPTCHA_V2_SECRET_KEY", "sec-v2")
+    monkeypatch.setenv("RECAPTCHA_V3_SECRET_KEY", "sec-v3")
+    monkeypatch.setenv("RECAPTCHA_V3_MIN_SCORE", "0.5")
+    monkeypatch.setenv("RECAPTCHA_ENTERPRISE_API_KEY", "")
+    monkeypatch.setenv("RECAPTCHA_ENTERPRISE_SECRET_KEY", "")
+
+    base_login = {
+        "username": "siti.rahma",
+        "email": "siti.rahma@bpjs-kesehatan.go.id",
+        "nip": "198704202011012001",
+        "password": "Password123!",
+    }
+
+    # 1. Missing v3 token must be rejected with 400
+    assert (
+        client.post("/api/v1/auth/login", json={**base_login, "recaptcha_v2_token": "tok-v2"}).status_code
+        == 400
+    )
+
+    # 2. Low v3 score is rejected with 400 without requiring Enterprise
+    _mock_multilayer_recaptcha_client(monkeypatch, v3_score=0.2)
+    full_v2_v3_payload = {
+        **base_login,
+        "recaptcha_token": "tok-v2",
+        "recaptcha_v2_token": "tok-v2",
+        "recaptcha_v3_token": "tok-v3",
+        "recaptcha_v3_action": "login",
+    }
+    assert client.post("/api/v1/auth/login", json=full_v2_v3_payload).status_code == 400
+
+    # 3. Valid v2 + invisible v3 succeeds with exactly 2 siteverify calls (no Enterprise call)
+    calls = []
+    _mock_multilayer_recaptcha_client(monkeypatch, captured_calls=calls)
+    ok_login = client.post("/api/v1/auth/login", json=full_v2_v3_payload)
+    assert ok_login.status_code == 200
+    assert ok_login.json()["next_stage"] == "PIN_REQUIRED"
+    assert len(calls) == 2
+    assert "siteverify" in calls[0]["url"] and calls[0]["data"]["secret"] == "sec-v2"
+    assert "siteverify" in calls[1]["url"] and calls[1]["data"]["secret"] == "sec-v3"
+
+    # 4. Forgot-password also enforces v2 + invisible v3 without Enterprise
+    spool_path = tmp_path / "reset_spool_v2_v3.json"
+    monkeypatch.setattr(main_mod, "PASSWORD_RESET_SPOOL_FILE", spool_path)
+    forgot_calls = []
+    _mock_multilayer_recaptcha_client(
+        monkeypatch,
+        v3_action="forgot_password",
+        captured_calls=forgot_calls,
+    )
+    ok_forgot = client.post(
+        "/api/v1/auth/forgot-password",
+        json={
+            "username": "siti.rahma",
+            "email": "siti.rahma@bpjs-kesehatan.go.id",
+            "nip": "198704202011012001",
+            "recaptcha_token": "tok-v2",
+            "recaptcha_v2_token": "tok-v2",
+            "recaptcha_v3_token": "tok-v3",
+            "recaptcha_v3_action": "forgot_password",
+        },
+    )
+    assert ok_forgot.status_code == 200
+    assert len(forgot_calls) == 2
