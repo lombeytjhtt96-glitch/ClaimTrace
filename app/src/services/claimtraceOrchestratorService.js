@@ -305,7 +305,7 @@ export async function callClaimTraceGenerateContent({
     const timeoutId = setTimeout(() => controller.abort(), 20000);
     let res;
     try {
-      res = await fetch(`${apiBase}/api/v1/claimtrace-ai/generate`, {
+      res = await authFetch(`${apiBase}/api/v1/claimtrace-ai/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

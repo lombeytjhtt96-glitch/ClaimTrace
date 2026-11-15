@@ -671,8 +671,8 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                           <a
                             href={getWhatsAppLink(user.phone, user)}
                             target="_blank"
-                            rel="noreferrer"
-                            className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+                            rel="noopener noreferrer"
+                            className={`inline-flex items-center justify-center min-w-[36px] min-h-[36px] p-2 rounded-lg border transition-colors cursor-pointer ${
                               isLight
                                 ? 'bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border-slate-200 hover:border-emerald-300'
                                 : 'bg-white/5 hover:bg-emerald-500/20 text-white/70 hover:text-emerald-300 border-white/10 hover:border-emerald-500/30'
@@ -988,7 +988,7 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                         <a
                           href={getWhatsAppLink(selectedUser.phone, selectedUser)}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="flex-1 text-center py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm keep-white"
                         >
                           <Phone className="w-3.5 h-3.5" />

@@ -26,6 +26,26 @@ function getRecaptchaSdk() {
   return null;
 }
 
+const _inflightResetValidateMap = new Map();
+
+function fetchResetTokenValidationOnce(url) {
+  if (_inflightResetValidateMap.has(url)) {
+    return _inflightResetValidateMap.get(url);
+  }
+  const reqPromise = fetch(url, { method: 'GET', cache: 'no-store' })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      return { ok: res.ok, status: res.status, data };
+    })
+    .finally(() => {
+      setTimeout(() => {
+        _inflightResetValidateMap.delete(url);
+      }, 1500);
+    });
+  _inflightResetValidateMap.set(url, reqPromise);
+  return reqPromise;
+}
+
 export default function SignInPage({
   onLoginSuccess,
   sessionNotice,
@@ -247,13 +267,12 @@ export default function SignInPage({
     const validateToken = async () => {
       setResetValidating(true);
       try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/v1/auth/reset-password/validate?token=${encodeURIComponent(resetToken.trim())}`,
-          { method: 'GET', cache: 'no-store' }
-        );
-        const data = await res.json().catch(() => ({}));
+        const validateUrl = `${API_BASE_URL}/api/v1/auth/reset-password/validate?token=${encodeURIComponent(
+          resetToken.trim()
+        )}`;
+        const { ok, data } = await fetchResetTokenValidationOnce(validateUrl);
         if (!active) return;
-        if (!res.ok) {
+        if (!ok) {
           setResetInvalidMsg(data.detail || 'Tautan ubah password tidak valid atau sudah kedaluwarsa.');
           return;
         }
@@ -275,6 +294,8 @@ export default function SignInPage({
 
   const switchMode = (nextMode) => {
     setErrorMsg('');
+    setShowPassword(false);
+    setShowNewPassword(false);
     setForgotSubmitted(false);
     setForgotMessage('');
     setResetInvalidMsg('');
@@ -548,8 +569,12 @@ export default function SignInPage({
   const renderRecaptchaBlock = () => {
     return (
       <div className="pt-1 space-y-2">
-        <div className="flex justify-center overflow-x-auto min-h-[78px]">
-          <div key={`${mode}-v2`} ref={recaptchaV2ContainerRef} />
+        <div className="flex items-center justify-center min-h-[78px] w-full overflow-hidden">
+          <div
+            key={`${mode}-v2`}
+            ref={recaptchaV2ContainerRef}
+            className="origin-center transition-transform max-[390px]:scale-[0.9] max-[340px]:scale-[0.76]"
+          />
         </div>
 
         {!recaptchaV2Ready && !recaptchaLoadError && (
@@ -567,7 +592,7 @@ export default function SignInPage({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="text-xs font-medium text-[#00733B] underline cursor-pointer"
+              className="inline-flex items-center min-h-[28px] px-2 py-1 rounded-md text-xs font-medium text-[#00733B] underline cursor-pointer"
             >
               Muat ulang halaman
             </button>
@@ -605,7 +630,7 @@ export default function SignInPage({
           )}
         </div>
 
-        <div className={`rounded-2xl border p-6 sm:p-7 space-y-4 ${cardSurface}`}>
+        <div className={`rounded-2xl border p-4 sm:p-7 space-y-4 ${cardSurface}`}>
           {errorMsg && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-rose-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -623,7 +648,7 @@ export default function SignInPage({
                   id="login-username"
                   type="text"
                   autoComplete="username"
-                  placeholder="Masukan Username"
+                  placeholder="Masukkan Username"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
@@ -641,7 +666,7 @@ export default function SignInPage({
                   id="login-email"
                   type="email"
                   autoComplete="email"
-                  placeholder="Masukan Email" onBlur={handleEmailBlur}
+                  placeholder="Masukkan Email" onBlur={handleEmailBlur}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -660,7 +685,7 @@ export default function SignInPage({
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
-                  placeholder="Masukan NIP" pattern="[0-9]*"
+                  placeholder="Masukkan NIP" pattern="[0-9]*"
                   value={nip}
                   onChange={handleNipChange}
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono focus:outline-none transition ${inputSurface}`}
@@ -675,7 +700,7 @@ export default function SignInPage({
                   <button
                     type="button"
                     onClick={() => switchMode('forgot')}
-                    className="text-xs font-medium cursor-pointer hover:underline text-[#00733B]"
+                    className="inline-flex items-center min-h-[28px] px-1.5 -mr-1.5 py-1 rounded-md text-xs font-medium cursor-pointer hover:underline text-[#00733B]"
                   >
                     Lupa Password?
                   </button>
@@ -685,18 +710,18 @@ export default function SignInPage({
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
-                    placeholder="Masukkan password"
+                    placeholder="Masukkan Password"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (errorMsg) setErrorMsg('');
                     }}
-                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
+                    className={`w-full pl-3.5 pr-11 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
                     aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -708,7 +733,7 @@ export default function SignInPage({
 
               <button
                 type="submit"
-                disabled={isSubmitting || !recaptchaToken}
+                disabled={isSubmitting}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting && (
@@ -745,7 +770,7 @@ export default function SignInPage({
                     <input
                       id="forgot-username"
                       type="text"
-                      placeholder="Masukan Username"
+                      placeholder="Masukkan Username"
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);
@@ -762,7 +787,7 @@ export default function SignInPage({
                     <input
                       id="forgot-email"
                       type="email"
-                      placeholder="Masukan Email" onBlur={handleEmailBlur}
+                      placeholder="Masukkan Email" onBlur={handleEmailBlur}
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -780,7 +805,7 @@ export default function SignInPage({
                       id="forgot-nip"
                       type="text"
                       inputMode="numeric"
-                      placeholder="Masukan NIP" pattern="[0-9]*"
+                      placeholder="Masukkan NIP" pattern="[0-9]*"
                       value={nip}
                       onChange={handleNipChange}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-mono focus:outline-none transition ${inputSurface}`}
@@ -791,7 +816,7 @@ export default function SignInPage({
 
                   <button
                     type="submit"
-                    disabled={isSubmitting || !recaptchaToken}
+                    disabled={isSubmitting}
                     className="w-full py-2.5 px-4 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting && (
@@ -883,12 +908,12 @@ export default function SignInPage({
                           setNewPassword(e.target.value);
                           if (errorMsg) setErrorMsg('');
                         }}
-                        className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
+                        className={`w-full pl-3.5 pr-11 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
                         aria-label={showNewPassword ? 'Sembunyikan password' : 'Lihat password'}
                       >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

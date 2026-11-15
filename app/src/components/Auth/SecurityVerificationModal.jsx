@@ -403,7 +403,8 @@ export default function SecurityVerificationModal({
                 <button
                   type="button"
                   onClick={() => setShowPinDigits((v) => !v)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg cursor-pointer"
+                  aria-label={showPinDigits ? 'Sembunyikan digit PIN' : 'Tampilkan digit PIN'}
                   title={showPinDigits ? 'Sembunyikan digit PIN' : 'Tampilkan digit PIN'}
                 >
                   {showPinDigits ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -433,7 +434,7 @@ export default function SecurityVerificationModal({
                 <button
                   type="button"
                   onClick={handleHardAbort}
-                  className={`text-xs font-medium cursor-pointer ${
+                  className={`min-h-[32px] px-2 inline-flex items-center rounded-lg text-xs font-medium cursor-pointer ${
                     effectiveIsLight ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -497,7 +498,7 @@ export default function SecurityVerificationModal({
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || stageLockedOut}
-                  className={`text-xs font-medium flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                  className={`min-h-[32px] px-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
                     effectiveIsLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -508,7 +509,7 @@ export default function SecurityVerificationModal({
                   <button
                     type="button"
                     onClick={handleHardAbort}
-                    className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                    className="min-h-[32px] px-2 inline-flex items-center rounded-lg text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
                     Batal
                   </button>
@@ -616,7 +617,7 @@ export default function SecurityVerificationModal({
                 <button
                   type="button"
                   onClick={handleHardAbort}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                  className="min-h-[32px] px-2 inline-flex items-center rounded-lg text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 >
                   Batalkan Login
                 </button>

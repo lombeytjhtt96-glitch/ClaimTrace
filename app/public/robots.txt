@@ -34,6 +34,7 @@ Allow: /
 
 # Sitemap & LLMs Guidance
 Sitemap: https://claimtrace.bpjs-kesehatan.go.id/sitemap.xml
-# LLMs Machine-Readable Summary
+# LLMs & ARD Machine-Readable Summary
 # llms.txt: https://claimtrace.bpjs-kesehatan.go.id/llms.txt
 # llms-full.txt: https://claimtrace.bpjs-kesehatan.go.id/llms-full.txt
+# ard: /.well-known/ard.json

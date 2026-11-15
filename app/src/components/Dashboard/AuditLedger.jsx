@@ -563,8 +563,20 @@ export default function AuditLedger({ isLight: propIsLight }) {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportDossierCsv = () => {
-    window.open('/api/v1/dossier/export/csv', '_blank');
+  const handleExportDossierCsv = async () => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/dossier/export/csv`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `claimtrace_dossier_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn('Export dossier CSV error:', e);
+    }
   };
 
   const handleDownloadBahp = (baNo) => {

@@ -1,0 +1,25 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:bpjs-kesehatan:claimtrace:dss-portal",
+      "displayName": "ClaimTrace DSS Portal Verifikator FKRTL",
+      "type": "application/vnd.claimtrace.web-portal+json",
+      "url": "https://claimtrace.bpjs-kesehatan.go.id/llms-full.txt",
+      "description": "Sistem Pendukung Keputusan Deteksi Dini Anomali Klaim FKRTL BPJS Kesehatan pra-pembayaran berbasis Tri-Layer AI, DuckDB SIMD OLAP, interoperabilitas HL7 FHIR R4, dan kepatuhan Zero-PHI UU PDP No. 27/2022.",
+      "version": "1.0.0",
+      "tags": [
+        "bpjs-kesehatan",
+        "fkrtl",
+        "ina-cbg",
+        "clinical-audit",
+        "hl7-fhir",
+        "fraud-detection"
+      ],
+      "representativeQueries": [
+        "Bagaimana cara audit anomali klaim FKRTL BPJS Kesehatan di ClaimTrace?",
+        "Apa saja indikator forensik Benford, Gini, dan Rule MB1-MB5 pada ClaimTrace DSS?",
+        "Bagaimana spesifikasi integrasi HL7 FHIR R4 Claim/$submit di portal ClaimTrace?"
+      ]
+    }
+  ]
+}

@@ -6,13 +6,15 @@ import App from './App.jsx'
 import './index.css'
 import './styles/clinical-precision.css'
 
-// Initialize Speed Insights telemetry
-injectSpeedInsights()
-
 // Disable Service Worker on localhost to avoid stale Vite chunk caches; keep enabled in remote prod
 const isLocalHost =
   typeof window !== 'undefined' &&
   ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+
+// Initialize Speed Insights telemetry only in deployed production builds
+if (import.meta.env.PROD && !isLocalHost) {
+  injectSpeedInsights();
+}
 
 if ('serviceWorker' in navigator) {
   if (isLocalHost) {

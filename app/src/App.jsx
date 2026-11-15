@@ -1592,9 +1592,10 @@ export default function App() {
             <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
             <span className="font-semibold">{toastMessage}</span>
             <button 
+              type="button"
               onClick={() => setToastMessage('')} 
               aria-label="Tutup notifikasi"
-              className={`ml-2 cursor-pointer p-0.5 rounded transition ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+              className={`ml-2 cursor-pointer p-1.5 min-w-[26px] min-h-[26px] flex items-center justify-center rounded transition ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -2208,7 +2209,12 @@ export default function App() {
                                   </span>
                                 </div>
                               </div>
-                              <button onClick={() => setShowModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                              <button
+                                type="button"
+                                onClick={() => setShowModal(false)}
+                                aria-label="Tutup modal konfirmasi layanan"
+                                className="p-1.5 min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                              >
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -2368,7 +2374,7 @@ export default function App() {
                             onClick={() => setSelectedCase(null)}
                             aria-label="Lepas berkas aktif"
                             title="Lepas berkas aktif"
-                            className={`p-0.5 rounded transition cursor-pointer ${
+                            className={`p-1.5 min-w-[26px] min-h-[26px] flex items-center justify-center rounded transition cursor-pointer ${
                               isLight ? 'text-slate-600 hover:bg-rose-100 hover:text-rose-700' : 'text-slate-300 hover:bg-rose-500/20 hover:text-rose-300'
                             }`}
                           >
@@ -3094,7 +3100,9 @@ export default function App() {
     </AnimatePresence>
 
     {/* RUNTIME WEB ANALYTICS */}
-    <Analytics />
+    {import.meta.env.PROD &&
+      typeof window !== 'undefined' &&
+      !['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) && <Analytics />}
   </>
   );
 }
