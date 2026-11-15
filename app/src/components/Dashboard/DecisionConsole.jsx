@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import SanggahanAppealsPanel from './SanggahanAppealsPanel';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1657,6 +1658,14 @@ export default function DecisionConsole({
         </AnimatePresence>,
         document.body
       )}
+
+      {/* FORMAL CLAIMS APPEALS & 15-DAY SLA TRACKER */}
+      <SanggahanAppealsPanel
+        activeClaimId={currentCase.id}
+        faskesName={currentCase.hospital}
+        canAdjudicate={activeUserCanAdjudicate}
+        isLight={isLight}
+      />
 
       {/* FOOTER ACTIONS */}
       <div className={`flex items-center justify-between p-3 rounded-2xl border ${

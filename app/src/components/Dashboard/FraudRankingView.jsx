@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import WarehouseCohortPanel from './WarehouseCohortPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
@@ -431,6 +432,20 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{selectedFaskesDetail.kepedutian_wilayah}</p>
                   <p className="text-xs text-slate-500">{selectedFaskesDetail.kantor_cabang} · Akreditasi: {selectedFaskesDetail.accreditation_status}</p>
                 </div>
+
+                {selectedFaskesDetail.cohort_hhi_specialty != null && (
+                  <div className="p-3 rounded-lg border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/40 dark:bg-emerald-950/20 text-xs space-y-1.5 tabular-nums">
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 uppercase font-bold">
+                      Benchmark Kohort Gudang Data ({selectedFaskesDetail.warehouse_cohort_id})
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      <span>HHI Poli: <strong>{selectedFaskesDetail.cohort_hhi_specialty}</strong></span>
+                      <span>Rasio RITL: <strong>{selectedFaskesDetail.cohort_inpatient_ratio_pct}%</strong></span>
+                      <span>ALOS (CV): <strong>{selectedFaskesDetail.cohort_avg_los_days}h ({selectedFaskesDetail.cohort_los_uniformity_cv})</strong></span>
+                      <span>Klaim/Pasien: <strong>{selectedFaskesDetail.cohort_claims_per_patient}x</strong></span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ACTION BUTTONS */}
@@ -453,6 +468,9 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
           )}
         </div>
       </div>
+
+      {/* LIVE WAREHOUSE COHORT PROFILING (1.699M ROWS) */}
+      <WarehouseCohortPanel isLight={isLight} kelasFilter={selectedKelas} />
     </div>
   );
 }

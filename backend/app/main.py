@@ -3,6 +3,7 @@ import io
 import csv
 import json
 import asyncio
+import anyio
 import secrets
 import httpx
 import re
@@ -433,6 +434,10 @@ app.add_middleware(
 
 # Native FHIR R4 Router (Kemenkes SATUSEHAT & Healthcare Interoperability)
 app.include_router(fhir_router)
+
+# ClaimTrace Modular Pillar Upgrade Router (Warehouse Profiler, ICD-10 MB1-MB5, Appeals)
+from app.routers.pillar_upgrade_router import pillar_router
+app.include_router(pillar_router)
 
 class MobileResponsePayload(BaseModel):
     attended: bool
@@ -2344,6 +2349,15 @@ def list_triage_claims(
     results.sort(key=lambda x: x["triage"].final_priority_score, reverse=True)
     return results
 
+def _escape_csv_formula(val: Any) -> Any:
+    """Neutralize spreadsheet formula injection payloads on exported CSV text fields."""
+    if not isinstance(val, str) or not val or val == "-":
+        return val
+    if val[0] in ("=", "+", "@", "\t", "\r") or (val[0] == "-" and len(val) > 1):
+        return "'" + val
+    return val
+
+
 @app.get("/api/v1/claims/export-csv")
 def export_claims_csv():
     """
@@ -2364,7 +2378,7 @@ def export_claims_csv():
     ])
     for cid, claim in SYNTHETIC_CLAIMS_DATABASE.items():
         triage = evaluate_claim_triage(claim)
-        writer.writerow([
+        raw_row = [
             claim.claim_id,
             claim.nama_faskes,
             claim.kelas_rs,
@@ -2387,7 +2401,8 @@ def export_claims_csv():
             claim.ina_cbg_verified or claim.ina_cbg_code,
             claim.assigned_verifier_name or "Belum Di-plot",
             claim.status_verifikasi or "OTOMATIS_ANTRIAN"
-        ])
+        ]
+        writer.writerow([_escape_csv_formula(cell) for cell in raw_row])
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
@@ -4387,8 +4402,8 @@ async def run_onpremise_clinical_synthesis(req: ClaimTraceSynthesisRequest):
 
     is_json_mode = any(k in (safe_user_prompt + (req.system_instruction or "")).lower() for k in ["respons json", "skema di atas", "objek json", "format json", "application/json"])
 
-    # 100% Local On-Premise Sovereign Engine (Tanpa API Eksternal / Zero Cloud Violation)
-    return generate_local_claimtrace_engine(safe_user_prompt, is_json_mode)
+    # 100% Local On-Premise Sovereign Engine offloaded to worker thread (Zero event-loop blocking)
+    return await anyio.to_thread.run_sync(generate_local_claimtrace_engine, safe_user_prompt, is_json_mode)
 
 # =========================================================================
 # DEEP CLINICAL & FINANCIAL RULES AUDIT ("MEMPERTEBAL LAPISAN")

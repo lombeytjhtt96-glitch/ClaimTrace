@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RealBundleMorbidityPanel from './RealBundleMorbidityPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -545,6 +546,13 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
           )}
         </div>
       </div>
+
+      {/* RULE MB1-MB5, FORNAS & REAL BUNDLE SUBMISSION */}
+      <RealBundleMorbidityPanel
+        activeClaimId={activeClaimId}
+        isLight={isLight}
+        onBundleAudited={(report) => setAuditReport(report)}
+      />
     </div>
   );
 }

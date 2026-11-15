@@ -231,7 +231,7 @@ export default function App() {
           db_viewer: 'database_viewer',
         };
         const t = aliasMap[rawTab] || rawTab;
-        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
+        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings', 'document_checker', 'fraud_ranking'].includes(t)) {
           setDashboardTab(t);
         }
         const m = params.get('mode');
@@ -1580,6 +1580,9 @@ export default function App() {
                   return (
                     <div key={item.id} className="relative group">
                       <motion.button
+                        type="button"
+                        aria-label={item.label}
+                        aria-current={isActive ? 'page' : undefined}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setDashboardTab(item.id);

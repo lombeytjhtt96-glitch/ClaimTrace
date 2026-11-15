@@ -11,7 +11,25 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
-      }
+      },
+      '/fhir': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    }
+  },
+  preview: {
+    port: 3000,
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/fhir': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
     }
   },
   build: {
@@ -21,6 +39,17 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('recharts')) {
               return 'charts-recharts';
+            }
+            if (
+              id.includes('@reduxjs') ||
+              id.includes('/redux/') ||
+              id.includes('/react-redux/') ||
+              id.includes('/reselect/') ||
+              id.includes('/immer/') ||
+              id.includes('/es-toolkit/') ||
+              id.includes('victory-vendor')
+            ) {
+              return 'charts-vendor';
             }
             if (id.includes('d3-')) {
               return 'charts-d3';

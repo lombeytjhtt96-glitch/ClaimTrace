@@ -383,6 +383,17 @@ def create_fhir_resource(resource_type: str, payload: Dict[str, Any]):
                         "expression": ["Condition.code.coding"]
                     })
 
+    from app.engine.fhir_extensions import (
+        validate_fhir_resource_payload,
+        store_custom_fhir_resource,
+        merge_custom_fhir_resources,
+        extract_claim_audit_context,
+        build_claim_response,
+    )
+
+    if resource_type in ("Bundle", "MedicationRequest", "Claim"):
+        validation_issues.extend(validate_fhir_resource_payload(resource_type, payload))
+
     if validation_issues:
         return JSONResponse(
             status_code=422,
@@ -392,13 +403,106 @@ def create_fhir_resource(resource_type: str, payload: Dict[str, Any]):
             }
         )
 
-    payload["resourceType"] = resource_type
-    if "id" not in payload:
-        payload["id"] = f"{resource_type.lower()}-{uuid.uuid4().hex[:10]}"
-        
+    stored = store_custom_fhir_resource(resource_type, payload)
+    if resource_type == "Bundle":
+        for entry in payload.get("entry", []):
+            res = (entry or {}).get("resource") if isinstance(entry, dict) else None
+            if isinstance(res, dict) and res.get("resourceType"):
+                store_custom_fhir_resource(str(res["resourceType"]), res)
+
     return JSONResponse(
-        content=payload,
+        content=stored,
         status_code=201,
-        headers={"Location": f"/fhir/{resource_type}/{payload['id']}"}
+        headers={"Location": f"/fhir/{resource_type}/{stored['id']}"}
+    )
+
+
+_orig_get_all_fhir_resources = get_all_fhir_resources
+
+
+def get_all_fhir_resources() -> Dict[str, Any]:
+    from app.engine.fhir_extensions import merge_custom_fhir_resources
+
+    return merge_custom_fhir_resources(_orig_get_all_fhir_resources())
+
+
+@fhir_router.post("/Claim/$submit")
+def submit_fhir_claim_operation(payload: Dict[str, Any]):
+    """
+    SATUSEHAT HL7 FHIR R4 Claim/$submit operation.
+    Validates either a FHIR Claim (with optional contained resources) or a full FHIR Bundle,
+    runs ICD-10 Rule MB1-MB5, Fornas compliance, and DeepClaimAuditEngine adjudication,
+    returning HTTP 201 ClaimResponse or HTTP 422 OperationOutcome.
+    """
+    from app.engine.fhir_extensions import (
+        validate_fhir_resource_payload,
+        store_custom_fhir_resource,
+        extract_claim_audit_context,
+        build_claim_response,
+    )
+    from app.engine.icd10_morbidity_auditor import audit_morbidity_rules, audit_fornas_compliance
+    from app.engine.rule_engine import DeepClaimAuditEngine
+
+    if not isinstance(payload, dict):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "resourceType": "OperationOutcome",
+                "issue": [{"severity": "error", "code": "structure", "diagnostics": "Payload must be a JSON object."}],
+            },
+        )
+
+    rtype = payload.get("resourceType", "Claim")
+    issues = validate_fhir_resource_payload(rtype, payload)
+    if issues:
+        return JSONResponse(
+            status_code=422,
+            content={"resourceType": "OperationOutcome", "issue": issues},
+        )
+
+    store_custom_fhir_resource(rtype, payload)
+    ctx = extract_claim_audit_context(payload)
+    claim_obj = ctx.get("claim") or {}
+    total_rp = float(((claim_obj.get("total") or {}).get("value")) or 0.0)
+    ina_cbg_code = ""
+    for item in claim_obj.get("item", []):
+        for c in ((item or {}).get("productOrService") or {}).get("coding", []):
+            if "ina-cbg" in str((c or {}).get("system", "")).lower():
+                ina_cbg_code = str(c.get("code", "")).upper()
+
+    morbidity_report = audit_morbidity_rules(
+        primary_icd10=ctx.get("primary_icd10", ""),
+        secondary_icd10s=ctx.get("secondary_icd10s", []),
+        procedure_icd9cm=ctx.get("procedures", []),
+        tarif_klaim_rp=total_rp,
+    )
+    fornas_report = audit_fornas_compliance(
+        medications=ctx.get("medications", []),
+        all_icd10_codes=ctx.get("all_icd10s", []),
+    )
+    deep_report = DeepClaimAuditEngine.audit_claim_clinical_validity(
+        {
+            "claim_id": claim_obj.get("id", "CLM-FHIR-SUBMIT"),
+            "ina_cbg_code": ina_cbg_code or "Z-3-12-0",
+            "tariff_rupiah": total_rp,
+            "diagnosis_primer": ctx.get("primary_icd10", ""),
+            "diagnosis_sekunder": ctx.get("secondary_icd10s", []),
+            "procedure_codes": ctx.get("procedures", []),
+            "clinical_notes": " ".join(ctx.get("medications", [])),
+        }
+    )
+
+    claim_response = build_claim_response(
+        request_payload=payload,
+        context=ctx,
+        morbidity_report=morbidity_report,
+        fornas_report=fornas_report,
+        deep_audit_report=deep_report,
+    )
+    store_custom_fhir_resource("ClaimResponse", claim_response)
+    return JSONResponse(
+        content=claim_response,
+        status_code=201,
+        headers={"Location": f"/fhir/ClaimResponse/{claim_response['id']}"},
     )
 

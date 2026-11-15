@@ -218,6 +218,35 @@ class FraudRankingEngine:
         min_risk_score: float = 0.0,
         sort_by: str = "risk_score"  # risk_score, potential_loss, volume, upcoding_rate
     ) -> Dict[str, Any]:
+        result = self._compute_national_fraud_rankings(
+            wilayah_filter=wilayah_filter,
+            kelas_filter=kelas_filter,
+            min_risk_score=min_risk_score,
+            sort_by=sort_by,
+        )
+        try:
+            from app.engine.warehouse_fraud_profiler import warehouse_fraud_profiler
+
+            wh_meta = warehouse_fraud_profiler.enrich_rankings_with_warehouse(
+                result.get("rankings", [])
+            )
+            result["warehouse_available"] = wh_meta.get("warehouse_available", False)
+            result["warehouse_rows_scanned"] = wh_meta.get("total_rows_scanned", 0)
+            result["warehouse_query_elapsed_ms"] = wh_meta.get("query_elapsed_ms", 0.0)
+            result["live_warehouse_clusters"] = wh_meta.get("live_warehouse_clusters", [])
+        except Exception as exc:
+            result["warehouse_available"] = False
+            result["warehouse_error"] = str(exc)
+            result["live_warehouse_clusters"] = []
+        return result
+
+    def _compute_national_fraud_rankings(
+        self,
+        wilayah_filter: Optional[str] = None,
+        kelas_filter: Optional[str] = None,
+        min_risk_score: float = 0.0,
+        sort_by: str = "risk_score"  # risk_score, potential_loss, volume, upcoding_rate
+    ) -> Dict[str, Any]:
         """
         Menghasilkan papan peringkat risiko kecurangan rumah sakit.
         """
