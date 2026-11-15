@@ -3,13 +3,34 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light dark;
+    --scrollbar-thumb: #94a3b8;
+    --scrollbar-track: #001030;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+
+    &:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+      --scrollbar-thumb: #64748b;
+      --scrollbar-track: #001030;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+    &:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+      --scrollbar-thumb: #cbd5e1;
+      --scrollbar-track: #f8fafc;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+  }
+
   html {
-    color-scheme: light;
     scroll-behavior: smooth;
     overflow-x: clip;
   }
   body {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'DM Sans', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.55;
     background-color: #f8fafc;
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
@@ -18,41 +39,41 @@
     overflow-x: clip;
   }
 
-  /* Hallmark Data-Viz: Tabular numerals for financial and telemetry alignment */
-  .tabular-nums, table, th, td, [data-numeric="true"], .num {
-    font-variant-numeric: tabular-nums;
+  /* Modern Health-Fintech Typography Hierarchy */
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.022em;
+    line-height: 1.24;
   }
 
-  /* Hallmark Reflex 26b: Tactile active affordance for actionable controls */
+  button, [role="button"], th {
+    font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, sans-serif;
+  }
+
+  code, pre, kbd, samp, .font-mono, [data-mono="true"] {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+
+  /* Data-Viz: Tabular numerals for financial and telemetry alignment */
+  .tabular-nums, table, th, td, [data-numeric="true"], .num {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "zero" 0;
+  }
+
+  /* Tactile active affordance for actionable controls */
   button:active:not(:disabled),
   [role="button"]:active:not([aria-disabled="true"]) {
-    transform: translateY(1px);
+    transform: scale(0.985) translateY(0.5px);
   }
 
-  /* Universal Font Family Consistency: 100% Inter across all elements without exception */
-  *, *::before, *::after, input, button, select, textarea, optgroup, code, pre, .font-mono, [data-mono="true"] {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-feature-settings: "zero" 0;
-  }
-
-  /* Universal Font Weight Normalization: Standardize all emphasized text & headings to consistent 600 weight so nothing looks overly heavy ("nge-bold") */
-  strong, b, .font-bold, [class*="font-bold"],
-  .font-extrabold, [class*="font-extrabold"],
-  .font-black, [class*="font-black"] {
-    font-weight: 600 !important;
-  }
-
-  /* Prevent micro-labels and badges from appearing bloated and heavy */
+  /* Clean subtle micro-label spacing */
   .text-\[9px\], .text-\[9\.5px\], .text-\[10px\], .text-\[10\.5px\], .text-\[11px\] {
-    letter-spacing: 0.01em;
+    letter-spacing: 0.015em;
   }
 
-  /* Standardize Heading Font Weights & Proportions to clean 600 */
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: 600 !important;
-  }
-
-  /* Accessibility & Baseline UI: Keyboard-first visible focus ring (UI/UX Pro Max) */
+  /* Accessibility & Baseline UI: Keyboard-first visible focus ring */
   :focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -60,16 +81,16 @@
   textarea:focus-visible,
   [role="button"]:focus-visible,
   [tabindex]:focus-visible {
-    outline: 2px solid #059669 !important;
+    outline: 2px solid #00733B !important;
     outline-offset: 2px !important;
   }
 
-  /* Emil Kowalski Mobile Native: Eliminate gray/blue tap highlight flash */
+  /* Mobile Native: Eliminate gray/blue tap highlight flash */
   *, *::before, *::after {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Emil Kowalski Design Engineering: Remove 300ms tap delay & prevent accidental text selection on interactive controls */
+  /* Design Engineering: Remove 300ms tap delay & prevent accidental text selection on controls */
   button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary, select, a {
     touch-action: manipulation;
   }
@@ -78,22 +99,16 @@
     -webkit-user-select: none;
   }
 
-  /* Emil Kowalski Mobile Native: Prevent iOS automatic viewport zoom on form input focus */
+  /* Mobile Native: Prevent iOS automatic viewport zoom on form input focus */
   @media (max-width: 768px) {
     input, select, textarea {
       font-size: 16px !important;
     }
   }
 
-  /* UI/UX Pro Max: Consistent pointer affordance on all interactive triggers */
+  /* Consistent pointer affordance on all interactive triggers */
   button, [role="button"], [type="button"], [type="submit"], [type="reset"], summary, select {
     cursor: pointer;
-  }
-
-  /* Baseline UI Typography: Tabular numbers for all numbers, tables, codes & currencies */
-  table, td, th, [data-tabular="true"], .tabular-nums, code, pre, .font-mono {
-    font-variant-numeric: tabular-nums lining-nums;
-    font-feature-settings: "tnum" 1, "zero" 0;
   }
 
   /* Text balancing for headings and pretty wrapping for paragraphs */
@@ -106,7 +121,7 @@
   }
 }
 
-/* UI Skills: Restrained micro-shadows & elevation per DESIGN.md */
+/* Executive Surface Elevation, Gradients & Precision Borders */
 @layer utilities {
   .shadow-2xs {
     box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
@@ -115,10 +130,22 @@
     box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   }
   .shadow-soft {
-    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+    box-shadow: 0 4px 16px -4px rgba(11, 31, 58, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  }
+  .shadow-exec {
+    box-shadow: 0 10px 30px -10px rgba(11, 31, 58, 0.10), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
   }
   .ring-line-default {
     --tw-ring-color: #e2e8f0;
+  }
+  .hero-navy-banner {
+    background: linear-gradient(125deg, #071931 0%, #0b2649 52%, #00381D 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(46, 158, 104, 0.28) !important;
+  }
+  .surface-dot-grid {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
 }
 
@@ -132,20 +159,28 @@
   }
 }
 
-/* Clean White Enterprise Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Modern standard scrollbar properties (Baseline) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
-::-webkit-scrollbar-track {
-  background: #f8fafc;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+/* Legacy fallback for WebKit/Blink browsers wrapped in @supports not */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
 
 /* ======================================================== */
@@ -226,7 +261,7 @@
 #cockpit-root.theme-light [class*="bg-rose-600"] [class*="bg-white/"],
 #cockpit-root.theme-light [class*="bg-rose-700"] [class*="bg-white/"],
 #cockpit-root.theme-light [class*="bg-blue-600"] [class*="bg-white/"] {
-  background-color: rgba(6, 78, 59, 0.55) !important;
+  background-color: rgba(0, 56, 29, 0.55) !important;
   border-color: rgba(255, 255, 255, 0.35) !important;
   color: #ffffff !important;
 }
@@ -272,8 +307,8 @@
 #cockpit-root.theme-light span.bg-emerald-100 svg:not(button *),
 #cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) svg:not(button *),
 #cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) svg:not(button *) {
-  stroke: #059669 !important;
-  color: #059669 !important;
+  stroke: #00733B !important;
+  color: #00733B !important;
 }
 
 #cockpit-root.theme-light span.bg-emerald-50 p:not(button *),
@@ -284,14 +319,14 @@
 #cockpit-root.theme-light div.bg-emerald-50:not([class*="hover:"]):not(button) span:not(button *):not([class*="bg-white"]):not(.keep-white),
 #cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) p:not(button *),
 #cockpit-root.theme-light div.bg-emerald-100:not([class*="hover:"]):not(button) span:not(button *):not([class*="bg-white"]):not(.keep-white) {
-  color: #064e3b !important;
+  color: #00381D !important;
 }
 
 #cockpit-root.theme-light span.bg-emerald-50 span[class*="bg-white"],
 #cockpit-root.theme-light span.bg-emerald-100 span[class*="bg-white"] {
   background-color: #ffffff !important;
-  color: #064e3b !important;
-  border-color: #a7f3d0 !important;
+  color: #00381D !important;
+  border-color: #A9D9C1 !important;
 }
 
 #cockpit-root.theme-light .text-white\/75,
@@ -348,7 +383,7 @@
 #cockpit-root.theme-light [class*="text-[#FFD700]"],
 #cockpit-root.theme-light .text-\[\#ffd566\],
 #cockpit-root.theme-light .text-amber-300 {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 /* Links and Action Text in Light Mode: Hijau Zamrud Medis */
@@ -361,12 +396,12 @@
 #cockpit-root.theme-light tr button,
 #cockpit-root.theme-light button:has(svg.lucide-external-link),
 #cockpit-root.theme-light .hover\:text-\[\#FFE08C\]:hover {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 #cockpit-root.theme-light button[class*="text-[#FFCA40]"]:hover,
 #cockpit-root.theme-light a[class*="text-[#FFCA40]"]:hover,
 #cockpit-root.theme-light td button:hover {
-  color: #065f46 !important;
+  color: #004A26 !important;
 }
 
 /* Monospace Case IDs, SEP Identifiers, and Audit Codes: Clean dark slate */
@@ -400,9 +435,9 @@
 /* Solid #FFCA40 buttons and active chips in Light Mode: mapped to Hijau Zamrud */
 #cockpit-root.theme-light .bg-\[\#FFCA40\],
 #cockpit-root.theme-light [class*="bg-[#FFCA40]"]:not([class*="/"]):not([class*="hover"]) {
-  background-color: #059669 !important;
+  background-color: #00733B !important;
   color: #ffffff !important;
-  border-color: #047857 !important;
+  border-color: #005E30 !important;
 }
 #cockpit-root.theme-light .bg-\[\#FFCA40\] *,
 #cockpit-root.theme-light [class*="bg-[#FFCA40]"]:not([class*="/"]):not([class*="hover"]) * {
@@ -422,7 +457,7 @@
 #cockpit-root.theme-light .text-emerald-400,
 #cockpit-root.theme-light .text-green-300,
 #cockpit-root.theme-light .text-green-400 {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 #cockpit-root.theme-light .bg-emerald-500\/10,
@@ -434,9 +469,9 @@
 #cockpit-root.theme-light .bg-emerald-400\/20,
 #cockpit-root.theme-light .bg-green-500\/10,
 #cockpit-root.theme-light .bg-green-500\/20 {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  color: #004A26 !important;
+  border-color: #A9D9C1 !important;
 }
 
 /* Cyan / Sky Accents in Light Mode: Hijau Zamrud / Teal */
@@ -448,7 +483,7 @@
 #cockpit-root.theme-light .text-sky-300,
 #cockpit-root.theme-light .text-sky-400,
 #cockpit-root.theme-light .text-sky-500 {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 #cockpit-root.theme-light .bg-cyan-500\/10,
@@ -457,9 +492,9 @@
 #cockpit-root.theme-light .bg-cyan-500\/25,
 #cockpit-root.theme-light .bg-sky-500\/10,
 #cockpit-root.theme-light .bg-sky-500\/20 {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  color: #004A26 !important;
+  border-color: #A9D9C1 !important;
 }
 
 /* Red / Rose Accents */
@@ -527,9 +562,9 @@
 #cockpit-root.theme-light input:focus,
 #cockpit-root.theme-light select:focus,
 #cockpit-root.theme-light textarea:focus {
-  border-color: #059669 !important;
+  border-color: #00733B !important;
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(0, 115, 59, 0.2) !important;
 }
 
 /* Explicit exemption for transparent/borderless search bars and chat inputs */
@@ -637,7 +672,7 @@
   border-color: #fde68a !important;
 }
 #cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-emerald-500\/30"] {
-  border-color: #a7f3d0 !important;
+  border-color: #A9D9C1 !important;
 }
 #cockpit-root.theme-light div[class*="rounded-2xl"][class*="border-white\/10"] {
   border-color: #e2e8f0 !important;
@@ -704,34 +739,34 @@
 #cockpit-root.theme-light aside button[class*="bg-emerald"],
 #cockpit-root.theme-light aside nav button[class*="text-emerald"],
 #cockpit-root.theme-light aside button[class*="text-emerald"] {
-  background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
-  color: #065f46 !important;
+  background-color: #ECF7F1 !important;
+  border-color: #A9D9C1 !important;
+  color: #004A26 !important;
 }
 #cockpit-root.theme-light aside nav button[class*="bg-emerald"] *,
 #cockpit-root.theme-light aside button[class*="bg-emerald"] *,
 #cockpit-root.theme-light aside nav button[class*="text-emerald"] *,
 #cockpit-root.theme-light aside button[class*="text-emerald"] * {
-  color: #065f46 !important;
+  color: #004A26 !important;
 }
 #cockpit-root.theme-light aside nav button[class*="bg-emerald"] svg,
 #cockpit-root.theme-light aside button[class*="bg-emerald"] svg {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 #cockpit-root.theme-light aside nav button[class*="bg-emerald"] span[class*="font-mono"],
 #cockpit-root.theme-light aside button[class*="bg-emerald"] span[class*="font-mono"] {
-  background-color: #d1fae5 !important;
-  color: #065f46 !important;
-  border-color: #6ee7b7 !important;
+  background-color: #D4ECE0 !important;
+  color: #004A26 !important;
+  border-color: #72BF9A !important;
 }
 
 /* Action button "Buat Laporan" and "Buat Berkas Audit" adapted for Light Mode (Zamrud Medis) */
 #cockpit-root.theme-light button[class*="from-health-blue-dark"],
 #cockpit-root.theme-light [class*="from-health-blue-dark"] {
-  background-image: linear-gradient(to right, #059669, #047857) !important;
-  border-color: #059669 !important;
+  background-image: linear-gradient(to right, #00733B, #005E30) !important;
+  border-color: #00733B !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.25) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 115, 59, 0.25) !important;
 }
 #cockpit-root.theme-light button[class*="from-health-blue-dark"] *,
 #cockpit-root.theme-light [class*="from-health-blue-dark"] * {
@@ -767,16 +802,16 @@
 /* Primary Action Buttons ("Cari", "Buat Berkas Audit", etc.) in Light Mode (Zamrud Medis) */
 #cockpit-root.theme-light button[type="submit"],
 #cockpit-root.theme-light button[type="submit"][class*="from-health-blue"] {
-  background-image: linear-gradient(135deg, #059669, #047857) !important;
-  background-color: #059669 !important;
-  border: 1px solid #059669 !important;
+  background-image: linear-gradient(135deg, #00733B, #005E30) !important;
+  background-color: #00733B !important;
+  border: 1px solid #00733B !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.35) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 115, 59, 0.35) !important;
 }
 #cockpit-root.theme-light button[type="submit"]:hover,
 #cockpit-root.theme-light button[type="submit"][class*="from-health-blue"]:hover {
-  background-image: linear-gradient(135deg, #047857, #065f46) !important;
-  border-color: #047857 !important;
+  background-image: linear-gradient(135deg, #005E30, #004A26) !important;
+  border-color: #005E30 !important;
   color: #ffffff !important;
 }
 #cockpit-root.theme-light button[type="submit"] *,
@@ -789,28 +824,28 @@
   background-color: #ffffff !important;
   background-image: none !important;
   border: 1px solid #cbd5e1 !important;
-  color: #047857 !important;
+  color: #005E30 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 #cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]):hover {
   background-color: #f8fafc !important;
   border-color: #94a3b8 !important;
-  color: #065f46 !important;
+  color: #004A26 !important;
 }
 #cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]) * {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 #cockpit-root.theme-light button[class*="from-health-blue"]:not([type="submit"]):not([class*="active-chip"]) svg {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 /* Quick Filter Active Chip ("Semua Berkas") in Light Mode (Zamrud Medis) */
 #cockpit-root.theme-light div.flex.items-center.gap-2.flex-wrap button[class*="from-health-blue"] {
-  background-color: #059669 !important;
+  background-color: #00733B !important;
   background-image: none !important;
-  border-color: #047857 !important;
+  border-color: #005E30 !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 6px -1px rgba(5, 150, 105, 0.3) !important;
+  box-shadow: 0 2px 6px -1px rgba(0, 115, 59, 0.3) !important;
 }
 #cockpit-root.theme-light div.flex.items-center.gap-2.flex-wrap button[class*="from-health-blue"] * {
   color: #ffffff !important;
@@ -821,11 +856,11 @@
 
 /* Pagination Active Page Pill ("Halaman 1") in Light Mode */
 #cockpit-root.theme-light div.rounded-xl[class*="from-health-blue"] {
-  background-color: #059669 !important;
+  background-color: #00733B !important;
   background-image: none !important;
-  border-color: #047857 !important;
+  border-color: #005E30 !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 4px 0 rgba(5, 150, 105, 0.25) !important;
+  box-shadow: 0 2px 4px 0 rgba(0, 115, 59, 0.25) !important;
 }
 #cockpit-root.theme-light div.rounded-xl[class*="from-health-blue"] * {
   color: #ffffff !important;
@@ -840,11 +875,11 @@
 #cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-folder-open),
 #cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg.text-\[\#FFCA40\]),
 #cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg[class*="text-[#FFCA40]"]) {
-  background-color: #ecfdf5 !important;
+  background-color: #ECF7F1 !important;
   background-image: none !important;
-  border: 1px solid #a7f3d0 !important;
-  color: #047857 !important;
-  box-shadow: 0 1px 2px 0 rgba(5, 150, 105, 0.08) !important;
+  border: 1px solid #A9D9C1 !important;
+  color: #005E30 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 115, 59, 0.08) !important;
 }
 #cockpit-root.theme-light div[class*="from-[#00134A]"][class*="to-[#001D58]"] svg,
 #cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.text-\[\#FFCA40\]) svg,
@@ -854,15 +889,15 @@
 #cockpit-root.theme-light div[class*="w-10"][class*="h-10"]:has(> svg.lucide-folder-open) svg,
 #cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg.text-\[\#FFCA40\]) svg,
 #cockpit-root.theme-light div[class*="p-2"][class*="rounded-xl"]:has(> svg[class*="text-[#FFCA40]"]) svg {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 /* Flagged sessions total count badge ("5 total") in Light Mode */
 #cockpit-root.theme-light span[class*="rounded-full"][class*="bg-[#FFCA40]"],
 #cockpit-root.theme-light span[class*="rounded-full"][class*="bg-[#FFCA40]/20"] {
-  background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
-  color: #047857 !important;
+  background-color: #ECF7F1 !important;
+  border-color: #A9D9C1 !important;
+  color: #005E30 !important;
 }
 
 /* Light Mode Pastel Badges & Category Tags: Deep High-Contrast Colors on Soft Tinted Backgrounds */
@@ -872,29 +907,29 @@
 #cockpit-root.theme-light span[class*="bg-sky-50"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-blue-100"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-sky-100"]:not([class*="hover:"]) {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  color: #004A26 !important;
+  border-color: #A9D9C1 !important;
 }
 
 /* Cyan Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis */
 #cockpit-root.theme-light span[class*="bg-cyan-50"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-cyan-100"]:not([class*="hover:"]) {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  color: #004A26 !important;
+  border-color: #A9D9C1 !important;
 }
 
 /* Emerald Pastel Badges & Tints in Light Mode */
 #cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) {
-  background-color: #ecfdf5 !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  color: #004A26 !important;
+  border-color: #A9D9C1 !important;
 }
 #cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]) *,
 #cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) * {
-  color: #065f46 !important;
+  color: #004A26 !important;
 }
 
 /* Rose / Red Pastel Badges & Tints in Light Mode */
@@ -988,10 +1023,10 @@
 /* Action & Refresh Buttons with gradient from-[#FFCA40] in Light Mode (Zamrud Medis) */
 #cockpit-root.theme-light button[class*="from-[#FFCA40]"],
 #cockpit-root.theme-light [class*="from-[#FFCA40]"] {
-  background-image: linear-gradient(to right, #059669, #047857) !important;
-  border-color: #059669 !important;
+  background-image: linear-gradient(to right, #00733B, #005E30) !important;
+  border-color: #00733B !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px -2px rgba(5, 150, 105, 0.25) !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 115, 59, 0.25) !important;
 }
 #cockpit-root.theme-light button[class*="from-[#FFCA40]"] *,
 #cockpit-root.theme-light [class*="from-[#FFCA40]"] * {
@@ -1033,11 +1068,11 @@
   color: #ffffff !important;
 }
 #cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-health-blue"] {
-  background-color: #059669 !important;
+  background-color: #00733B !important;
   background-image: none !important;
-  border-color: #047857 !important;
+  border-color: #005E30 !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.2) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 115, 59, 0.2) !important;
 }
 #cockpit-root.theme-light div.flex.rounded-xl.p-1 button[class*="from-health-blue"] * {
   color: #ffffff !important;
@@ -1068,23 +1103,23 @@
   box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
 }
 #cockpit-root.theme-light .grid button[class*="ring-emerald-500"] {
-  border-color: #059669 !important;
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.25) !important;
+  border-color: #00733B !important;
+  box-shadow: 0 0 0 2px rgba(0, 115, 59, 0.25) !important;
 }
 #cockpit-root.theme-light .grid button .text-\[\#FFCA40\] {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 /* CMA Workflow info banner in Light Mode (Zamrud Medis) */
 #cockpit-root.theme-light div[class*="bg-[#FFCA40]"]:has(> svg) {
-  background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
+  background-color: #ECF7F1 !important;
+  border-color: #A9D9C1 !important;
 }
 #cockpit-root.theme-light div[class*="bg-[#FFCA40]"]:has(> svg) svg {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 #cockpit-root.theme-light span.text-\[\#FFCA40\].font-bold {
-  color: #047857 !important;
+  color: #005E30 !important;
 }
 
 /* Tables & Rows in Light Mode: Clean White with left border indicators, NO full-row candy striping */
@@ -1126,26 +1161,34 @@
 
 /* SVG Graph Text contrast in Light Mode */
 #cockpit-root.theme-light svg text[fill="#FDA4AF"] { fill: #9f1239 !important; }
-#cockpit-root.theme-light svg text[fill="#7DD3FC"] { fill: #047857 !important; }
+#cockpit-root.theme-light svg text[fill="#7DD3FC"] { fill: #005E30 !important; }
 #cockpit-root.theme-light svg text[fill="#FFE082"] { fill: #92400e !important; }
-#cockpit-root.theme-light svg text[fill="#6EE7B7"] { fill: #065f46 !important; }
+#cockpit-root.theme-light svg text[fill="#6EE7B7"] { fill: #004A26 !important; }
 #cockpit-root.theme-light svg text[fill="#FFFFFF"],
 #cockpit-root.theme-light svg text[fill="#ffffff"],
 #cockpit-root.theme-light svg text[fill="white"] { fill: #0f172a !important; }
 #cockpit-root.theme-light svg text[fill="#94A3B8"] { fill: #334155 !important; }
-#cockpit-root.theme-light svg text[fill="#A5B4FC"] { fill: #047857 !important; }
-#cockpit-root.theme-light svg text[fill="#818CF8"] { fill: #047857 !important; }
+#cockpit-root.theme-light svg text[fill="#A5B4FC"] { fill: #005E30 !important; }
+#cockpit-root.theme-light svg text[fill="#818CF8"] { fill: #005E30 !important; }
 
-/* Scrollbar styling in Light Mode */
-#cockpit-root.theme-light ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+/* Standard Scrollbar styling in Light Mode */
+#cockpit-root.theme-light {
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: #f1f5f9;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
-#cockpit-root.theme-light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
-}
-#cockpit-root.theme-light ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+@supports not (scrollbar-color: auto) {
+  #cockpit-root.theme-light ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+  #cockpit-root.theme-light ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  #cockpit-root.theme-light ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
 
 /* Mobile JKN phone frame isolation */
@@ -1197,7 +1240,7 @@
 }
 
 /* ==========================================================================
-   VERCEL AGENT SKILLS: REACT VIEW TRANSITIONS & BEST PRACTICES
+   CLAIMTRACE REACT VIEW TRANSITIONS & RENDERING OPTIMIZATIONS
    ========================================================================== */
 :root {
   --vt-duration-exit: 150ms;
@@ -1246,13 +1289,115 @@
   }
 }
 
-/* Vercel React Best Practices: rendering-content-visibility for deferred off-screen list rendering */
+/* Deferred off-screen list rendering optimization */
 .content-visibility-auto,
 [data-virtual-row="true"],
 .claim-row-lazy {
   content-visibility: auto;
   contain-intrinsic-size: 0 48px;
 }
+
+/* ==========================================================================
+   CLAIMTRACE COCKPIT DESIGN SYSTEM: 3-LAYER TOKEN ARCHITECTURE
+   Layer 1: Primitive Tokens (Raw Palette, Spacing, Radius)
+   Layer 2: Semantic Tokens (Light & Dark Mode)
+   Layer 3: Component Tokens (Buttons, Cards, Tickets, Badges, Tables)
+   ========================================================================== */
+:root {
+  /* Layer 1: Primitive Tokens */
+  --ct-ui-indigo: #6c5ce7;
+  --ct-ui-emerald: #00733B;
+  --ct-ui-cyan: #00cec9;
+  --ct-ui-rose: #ff7675;
+  --ct-ui-amber: #f59e0b;
+  --ct-ui-blue: #3b82f6;
+
+  /* Layer 2: Semantic Tokens (Default Light Mode) */
+  --ct-ui-canvas: #f4f7f7;
+  --ct-ui-surface: #ffffff;
+  --ct-ui-surface-subtle: #f8fafc;
+  --ct-ui-border: #e2e8f0;
+  --ct-ui-border-subtle: #f1f5f9;
+  --ct-ui-text-primary: #1e293b;
+  --ct-ui-text-secondary: #64748b;
+  --ct-ui-text-muted: #94a3b8;
+  
+  /* Layer 3: Component Tokens */
+  --ct-ui-card-bg: var(--ct-ui-surface);
+  --ct-ui-card-border: var(--ct-ui-border);
+  --ct-ui-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --ct-ui-card-radius: 0.75rem;
+  
+  --ct-ui-header-bg: rgba(255, 255, 255, 0.95);
+  --ct-ui-sidebar-bg: #ffffff;
+  --ct-ui-sidebar-border: #e2e8f0;
+  
+  --ct-ui-ticket-total: var(--ct-ui-indigo);
+  --ct-ui-ticket-pending: var(--ct-ui-emerald);
+  --ct-ui-ticket-closed: var(--ct-ui-cyan);
+  --ct-ui-ticket-hold: var(--ct-ui-rose);
+}
+
+.dark,
+.theme-dark {
+  /* Layer 2: Semantic Tokens (Cockpit Dark Mode) */
+  --ct-ui-canvas: #18202c;
+  --ct-ui-surface: #222b38;
+  --ct-ui-surface-subtle: #1e2530;
+  --ct-ui-border: #2d3748;
+  --ct-ui-border-subtle: rgba(255, 255, 255, 0.08);
+  --ct-ui-text-primary: #f8fafc;
+  --ct-ui-text-secondary: #cbd5e1;
+  --ct-ui-text-muted: #94a3b8;
+  
+  /* Layer 3: Component Tokens (Dark Mode) */
+  --ct-ui-card-bg: #222b38;
+  --ct-ui-card-border: #2d3748;
+  --ct-ui-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  
+  --ct-ui-header-bg: rgba(30, 37, 48, 0.95);
+  --ct-ui-sidebar-bg: #1e2530;
+  --ct-ui-sidebar-border: #2d3748;
+}
+
+/* Preserve Navy-to-Emerald Executive Hero Banner Contrast in Light Mode */
+#cockpit-root.theme-light .hero-navy-banner {
+  background: linear-gradient(125deg, #071931 0%, #0b2649 52%, #00381D 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(46, 158, 104, 0.32) !important;
+  box-shadow: 0 12px 32px -8px rgba(7, 25, 49, 0.25) !important;
+}
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner.hero-navy-banner h1,
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner.hero-navy-banner h2,
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner.hero-navy-banner h3,
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner.hero-navy-banner .text-white {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner .hero-sub {
+  color: rgba(226, 232, 240, 0.88) !important;
+}
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner .hero-chip {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+#cockpit-root.theme-light .hero-navy-banner.hero-navy-banner .hero-chip-emerald {
+  background-color: rgba(46, 158, 104, 0.2) !important;
+  border-color: rgba(52, 211, 153, 0.45) !important;
+  color: #A9D9C1 !important;
+}
+
+#cockpit-root.theme-light .keep-dark-surface.keep-dark-surface.keep-dark-surface,
+#cockpit-root.theme-light .keep-dark-surface.keep-dark-surface.keep-dark-surface .text-white {
+  color: #ffffff !important;
+}
+#cockpit-root.theme-light .keep-dark-surface.keep-dark-surface.keep-dark-surface [class*="bg-white/15"],
+#cockpit-root.theme-light .keep-dark-surface.keep-dark-surface.keep-dark-surface [class*="bg-white/20"] {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  color: #ffffff !important;
+}
+
 
 
 

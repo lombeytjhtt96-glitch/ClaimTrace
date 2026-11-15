@@ -802,7 +802,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => onInspectCase && onInspectCase(selectedCase)}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-900/20 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-[#00733B] to-[#005E30] hover:from-[#008A47] hover:to-[#00733B] text-white font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-900/20 cursor-pointer"
                   >
                     <span>Buka Investigasi Kasus #{selectedCase.peserta_id}</span>
                     <ArrowRight className="w-3.5 h-3.5" />

@@ -4,10 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
   ExternalLink, TrendingUp, Building2, MapPin, CheckCircle2, 
-  XCircle, Clock, ChevronRight, AlertOctagon, Activity, X, Sparkles
+  XCircle, Clock, ChevronRight, AlertOctagon, Activity, X
 } from 'lucide-react';
-import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
-import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
   const [isLight, setIsLight] = useState(() => {
@@ -38,24 +36,41 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
   const [faskesAiAudit, setFaskesAiAudit] = useState({});
   const [faskesAiLoading, setFaskesAiLoading] = useState(false);
 
-  const handleRunFaskesAiAudit = async (faskes) => {
+  const handleRunFaskesAiAudit = (faskes) => {
     if (!faskes || faskesAiLoading) return;
     setFaskesAiLoading(true);
     try {
-      const prompt = `Susun telaah pengawasan dan rekomendasi intervensi audit untuk Fasilitas Kesehatan berikut (maksimal 4 poin tajam):\n- Nama Faskes: ${faskes.name} (${faskes.id}) - ${faskes.type}, ${faskes.city}\n- Direktur: ${faskes.director}\n- Indeks Risiko Faskes (FRI): ${faskes.friScore}/100 (${faskes.riskLevel})\n- Total Klaim Bulan Ini: ${faskes.totalClaimsMonth} berkas (${faskes.totalRupiahMonth}) | Klaim Anomali: ${faskes.anomalyCount} berkas (Rasio Lonjakan: ${faskes.spikeRatio})\n- Status Biometrik FRISTA: ${faskes.fristaStatus}\n- Temuan Utama: ${faskes.primaryFinding}\n- Rekam Jejak AAK & VPK: ${faskes.historyAudit}\n\nBerikan analisis risiko kecurangan JKN (Permenkes No. 16/2019, Perpres No. 82/2018) dan langkah tindak lanjut konkrit bagi Verifikator & Tim Pencegahan Kecurangan BPJS Kesehatan tanpa menggunakan emoji.`;
-      const res = await callClaimTraceGenerateContent({
-        prompt,
-        systemInstruction: 'Anda adalah Analis Surveilans Risiko Faskes (Facility Risk Index) BPJS Kesehatan (ClaimTrace AI). Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji.',
-        temperature: 0.25,
-      });
+      const friVal = Number(faskes.friScore || 0);
+      const isCritical = friVal >= 70;
+      const findings = [
+        {
+          label: 'Indeks Risiko Faskes (FRI)',
+          value: `${faskes.friScore}/100 (${faskes.riskLevel})`,
+          rule: 'Permenkes RI No. 16 Tahun 2019 (Pencegahan Kecurangan JKN)',
+        },
+        {
+          label: 'Volume & Rasio Anomali',
+          value: `${faskes.anomalyCount} berkas anomali dari ${faskes.totalClaimsMonth} klaim/bulan (Lonjakan ${faskes.spikeRatio})`,
+          rule: 'Perpres RI No. 82 Tahun 2018 Ps. 75-76 (SLA 10 Hari Kerja)',
+        },
+        {
+          label: 'Status Biometrik FRISTA & Temuan',
+          value: `${faskes.fristaStatus} - ${faskes.primaryFinding}`,
+          rule: 'Audit Kredensial & Presensi Multi-Lapis FKRTL',
+        },
+      ];
+      const recommendedStep = isCritical
+        ? 'Tunda pembayaran klaim berisiko pada Berita Acara Kelengkapan Berkas (BAKB), wajibkan klarifikasi RME bertanda tangan asli, dan eskalasi ke Tim Pencegahan Kecurangan Kantor Cabang.'
+        : 'Lakukan uji petik kelengkapan dokumen RME-TTE pada klaim bertanda kuning dan pantau kepatuhan aktivasi FRISTA di loket SEP.';
+
       setFaskesAiAudit((prev) => ({
         ...prev,
-        [faskes.id]: res.text,
-      }));
-    } catch {
-      setFaskesAiAudit((prev) => ({
-        ...prev,
-        [faskes.id]: `Berdasarkan Facility Risk Index (**${faskes.friScore}/100**) pada **${faskes.name}**, ditemukan ${faskes.anomalyCount} berkas beranomali (${faskes.primaryFinding}). Disarankan penerbitan Berita Acara Klarifikasi Bersama (BAKB) dan audit kepatuhan aktivasi biometrik FRISTA.`,
+        [faskes.id]: {
+          findings,
+          recommendedStep,
+          historyAudit: faskes.historyAudit,
+          humanGate: 'Wajib verifikasi dan tanda tangan Pejabat Verifikator / Wasrik BPJS Kesehatan.',
+        },
       }));
     } finally {
       setFaskesAiLoading(false);
@@ -102,7 +117,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
         spikeRatio,
         primaryFinding: t.ringkasan_bukti_audit || `Skor perilaku faskes ${p.skor_risiko_perilaku_faskes}/100 (${p.kategori_risiko_faskes}).`,
         fristaStatus: isExpired ? 'ANOMALI HARD-TRIGGER' : numericFri >= 40 ? 'KLARIFIKASI AKTIF' : 'AKTIF TERVERIFIKASI',
-        historyAudit: t.rekomendasi_sop || `Pemantauan DuckDB real-time atas ${p.total_klaim} berkas klaim & ${p.total_dpjp_unik} DPJP unik.`,
+        historyAudit: t.rekomendasi_sop || `Pemantauan Basis Data real-time atas ${p.total_klaim} berkas klaim & ${p.total_dpjp_unik} DPJP unik.`,
       };
     });
   };
@@ -541,16 +556,16 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   </div>
                 </div>
 
-                {/* Live AI Facility Surveillance Synthesis */}
-                <div className={`p-3 rounded-xl border space-y-2 ${
+                {/* Deterministic Rule Engine & BEA Matrix Evaluation */}
+                <div className={`p-3 rounded-xl border space-y-2.5 ${
                   isLight ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white/5 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-[11px] font-bold flex items-center gap-1.5 ${
                       isLight ? 'text-emerald-800' : 'text-[#FFCA40]'
                     }`}>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Rekomendasi Intervensi Faskes (ClaimTrace AI)</span>
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Matriks Evaluasi Kepatuhan Faskes (Rule Engine)</span>
                     </span>
                     <button
                       type="button"
@@ -562,15 +577,62 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                           : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24]'
                       }`}
                     >
-                      <Sparkles className="w-3 h-3" />
-                      <span>{faskesAiLoading ? 'Menyusun...' : 'Analisis AI Faskes'}</span>
+                      <ShieldCheck className="w-3 h-3" />
+                      <span>{faskesAiLoading ? 'Mengevaluasi...' : 'Evaluasi Matriks Intervensi Faskes'}</span>
                     </button>
                   </div>
-                  {faskesAiAudit[selectedFaskesDetail.id] && (
-                    <div className={`text-xs leading-relaxed pt-1 border-t ${
+                  {faskesAiAudit[selectedFaskesDetail.id] && typeof faskesAiAudit[selectedFaskesDetail.id] === 'object' && (
+                    <div className={`space-y-2.5 pt-2 border-t text-xs ${
                       isLight ? 'border-emerald-200/80 text-slate-800' : 'border-white/10 text-white/90'
                     }`}>
-                      <MarkdownRenderer content={faskesAiAudit[selectedFaskesDetail.id]} isLight={isLight} />
+                      {Array.isArray(faskesAiAudit[selectedFaskesDetail.id].findings) && (
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {faskesAiAudit[selectedFaskesDetail.id].findings.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className={`p-2 rounded-lg border flex flex-col gap-0.5 ${
+                                isLight ? 'bg-white border-emerald-100' : 'bg-[#000c24]/70 border-white/10'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className={`font-bold text-[11px] ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                  {item.label}
+                                </span>
+                                <span className={`font-mono font-bold text-[11px] ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
+                                  {item.value}
+                                </span>
+                              </div>
+                              {item.rule && (
+                                <span className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                                  Dasar Aturan: {item.rule}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {faskesAiAudit[selectedFaskesDetail.id].recommendedStep && (
+                        <div className={`p-2 rounded-lg border ${
+                          isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                        }`}>
+                          <span className="font-bold">Langkah Intervensi: </span>
+                          <span>{faskesAiAudit[selectedFaskesDetail.id].recommendedStep}</span>
+                        </div>
+                      )}
+                      {faskesAiAudit[selectedFaskesDetail.id].historyAudit && (
+                        <div className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/75'}`}>
+                          <span className="font-semibold">Jejak Audit Faskes: </span>
+                          <span>{faskesAiAudit[selectedFaskesDetail.id].historyAudit}</span>
+                        </div>
+                      )}
+                      {faskesAiAudit[selectedFaskesDetail.id].humanGate && (
+                        <div className={`p-2 rounded-lg border text-[11px] font-semibold flex items-start gap-1.5 ${
+                          isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
+                        }`}>
+                          <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>{faskesAiAudit[selectedFaskesDetail.id].humanGate}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

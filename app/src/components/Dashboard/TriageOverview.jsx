@@ -98,9 +98,72 @@ const SIMULATE_PRESETS = [
       mobile_respon_tidak_hadir: 5,
     },
   },
+  {
+    id: 'hard_negative_hd',
+    label: 'Hemodialisis Rutin RS Kelas A (Z49.1 · FairGuard -> HIJAU)',
+    payload: {
+      nama_faskes: 'RSUPN Dr. Cipto Mangunkusumo',
+      kelas_rs: 'A',
+      ina_cbg_code: 'N-3-15-0',
+      deskripsi_cbg: 'Prosedur Hemodialisis Kronis Terjadwal RS Rujukan',
+      icd10_primary: 'Z49.1 (Extracorporeal dialysis)',
+      icd9cm_procedure: '39.95 (Hemodialysis)',
+      nilai_klaim_rp: 2950000,
+      dpjp_name: 'dr. Hartono, Sp.PD-KGH',
+      sip_status: 'ACTIVE',
+      rasio_lonjakan_baseline: 3.1,
+      jumlah_klaim_klaster: 48,
+      terdaftar_baksos_resmi: false,
+      indikasi_repeat_billing: false,
+      mobile_sampel_terkirim: 10,
+      mobile_respon_hadir: 10,
+      mobile_respon_tidak_hadir: 0,
+    },
+  },
+  {
+    id: 'hard_negative_kemo',
+    label: 'Kemoterapi Terjadwal RS Tipe B (Z51.1 · FairGuard -> HIJAU)',
+    payload: {
+      nama_faskes: 'RS Kanker Dharmais Regional',
+      kelas_rs: 'B',
+      ina_cbg_code: 'C-4-11-I',
+      deskripsi_cbg: 'Sesi Kemoterapi Neoadjuvan Terjadwal',
+      icd10_primary: 'Z51.1 (Antineoplastic chemotherapy)',
+      icd9cm_procedure: '99.25 (Injection of chemotherapeutic substance)',
+      nilai_klaim_rp: 8400000,
+      dpjp_name: 'dr. Ratna Sari, Sp.PD-KHOM',
+      sip_status: 'ACTIVE',
+      rasio_lonjakan_baseline: 2.8,
+      jumlah_klaim_klaster: 24,
+      terdaftar_baksos_resmi: false,
+      indikasi_repeat_billing: false,
+      mobile_sampel_terkirim: 8,
+      mobile_respon_hadir: 8,
+      mobile_respon_tidak_hadir: 0,
+    },
+  },
 ];
 
-const formatDecisionStatus = (statusCode) => {
+const formatDecisionStatus = (statusCode, lane = 'green') => {
+  if (lane === 'red') {
+    if (statusCode === 'override' || statusCode === 'DISETUJUI_DENGAN_CATATAN') {
+      return { label: 'DISETUJUI (BAHV)', tone: 'green' };
+    }
+    if (statusCode === 'TIDAK_LAYAK_FRAUD' || statusCode === 'AUDIT_LAPANGAN' || statusCode === 'DITOLAK') {
+      return { label: 'TAHAN FRAUD', tone: 'red' };
+    }
+    if (statusCode === 'PENDING_KLARIFIKASI' || statusCode === 'KLARIFIKASI_FASKES') {
+      return { label: 'PENDING', tone: 'amber' };
+    }
+    if (statusCode === 'DISPUTE_TKMKB') {
+      return { label: 'DISPUTE TKMKB', tone: 'purple' };
+    }
+    return { label: 'TAHAN FRAUD', tone: 'red' };
+  }
+  if (!statusCode) {
+    if (lane === 'yellow') return { label: 'PERLU KLARIFIKASI', tone: 'amber' };
+    return { label: 'SIAP VERIFIKASI', tone: 'slate' };
+  }
   switch (statusCode) {
     case 'LAYAK_BAYAR':
     case 'LOLOSKAN_KLAIM':
@@ -170,7 +233,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       hospital: claim.nama_faskes,
       date: claim.tanggal_layanan,
       code: claim.ina_cbg_code,
-      description: claim.deskripsi_cbg,
+      description: (claim.deskripsi_cbg || '').replace(/\s*\(Permenkes[^)]*\)/gi, '').trim(),
       dpjp: claim.dpjp_meta?.nama_dpjp_alias || '-',
       tariff: `Rp ${Number(claim.nilai_klaim_rp || 0).toLocaleString('id-ID')}`,
       claimCount: claim.episode_meta?.jumlah_klaim_klaster || 1,
@@ -231,9 +294,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const [fpkPullResult, setFpkPullResult] = useState(null);
   const [showThresholdRules, setShowThresholdRules] = useState(false);
   const [showIngestModal, setShowIngestModal] = useState(false);
-  const [ingestForm, setIngestForm] = useState(() => ({ ...SIMULATE_PRESETS[0].payload, add_to_queue: true }));
+  const [ingestForm, setIngestForm] = useState(() => ({ ...SIMULATE_PRESETS[0].payload, add_to_queue: true, simulate_llm_timeout: false }));
   const [ingestSubmitting, setIngestSubmitting] = useState(false);
   const [ingestResult, setIngestResult] = useState(null);
+  const [capVerifiers, setCapVerifiers] = useState(1);
+  const [capPerDay, setCapPerDay] = useState(5);
+  const [capacityPriorityOnly, setCapacityPriorityOnly] = useState(false);
+  const [capacityReport, setCapacityReport] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
   const [queueToast, setQueueToast] = useState(null);
@@ -280,6 +347,19 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     loadIndependent();
     return () => { active = false; };
   }, [claimsUrl, statsUrl, pipelineUrl, verifsUrl]);
+
+  useEffect(() => {
+    let active = true;
+    const safeV = Math.max(1, Math.min(50, Number(capVerifiers) || 1));
+    const safeC = Math.max(1, Math.min(50, Number(capPerDay) || 5));
+    authFetch(`${API_BASE_URL}/api/v1/healthkathon/credible-evidence?verifiers=${safeV}&cases_per_day=${safeC}&working_days=10`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setCapacityReport(data);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [capVerifiers, capPerDay]);
 
   useEffect(() => {
     if (!queueToast) return;
@@ -330,8 +410,15 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     return matchesLane && matchesModus && matchesFaskes && matchesService && matchesSubmission && matchesFpk && matchesPlotting && matchesSearch;
   });
 
+  const capacityBudgetK = Math.max(1, (Number(capVerifiers) || 1) * (Number(capPerDay) || 5) * 10);
+  const displayedClaims = capacityPriorityOnly
+    ? [...filteredClaims]
+        .sort((a, b) => (b.totalScore - a.totalScore) || (Number(b.rawClaim?.nilai_klaim_rp || 0) - Number(a.rawClaim?.nilai_klaim_rp || 0)))
+        .slice(0, capacityBudgetK)
+    : filteredClaims;
+
   const allVisibleSelected =
-    filteredClaims.length > 0 && filteredClaims.every((c) => selectedIds.includes(c.id));
+    displayedClaims.length > 0 && displayedClaims.every((c) => selectedIds.includes(c.id));
 
   const toggleSelectClaim = (claimId) => {
     setSelectedIds((prev) =>
@@ -341,10 +428,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
 
   const toggleSelectAllVisible = () => {
     if (allVisibleSelected) {
-      const visibleSet = new Set(filteredClaims.map((c) => c.id));
+      const visibleSet = new Set(displayedClaims.map((c) => c.id));
       setSelectedIds((prev) => prev.filter((id) => !visibleSet.has(id)));
     } else {
-      const merged = new Set([...selectedIds, ...filteredClaims.map((c) => c.id)]);
+      const merged = new Set([...selectedIds, ...displayedClaims.map((c) => c.id)]);
       setSelectedIds(Array.from(merged));
     }
   };
@@ -359,10 +446,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         body: JSON.stringify({
           claim_ids: selectedIds,
           decision: decisionCode,
-          verifier_id: 'VERIF-VEDIKA-01',
+          verifier_id: 'VERIF-CLAIMTRACE-01',
           catatan_verifikator:
             decisionCode === 'LAYAK_BAYAR'
-              ? 'Putusan kolektif Layak Bayar pasca-screening Fast-Track VEDIKA.'
+              ? 'Putusan kolektif Layak Bayar pasca-screening Fast-Track Pra-Bayar.'
               : 'Putusan kolektif Pending Klarifikasi FPK (kelengkapan SEP/resume medis).',
           pending_reasons:
             decisionCode === 'PENDING_KLARIFIKASI'
@@ -396,13 +483,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     if (!selectedIds.length || batchSubmitting || !batchPlotNip) return;
     setBatchSubmitting(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/vedika/plotting`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/portal/plotting`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           claim_ids: selectedIds,
           verifier_nip: batchPlotNip,
-          catatan: 'Plotting berkas FPK VEDIKA dari antrean pra-bayar.',
+          catatan: 'Plotting berkas FPK dari antrean pra-bayar.',
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -420,7 +507,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         });
       }
     } catch {
-      setQueueToast({ tone: 'red', message: 'Gagal menghubungi endpoint plotting VEDIKA.' });
+      setQueueToast({ tone: 'red', message: 'Gagal menghubungi endpoint plotting verifikator.' });
     } finally {
       setBatchSubmitting(false);
     }
@@ -432,7 +519,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     setFpkPullSubmitting(true);
     setFpkPullResult(null);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/vedika/fpk-pull`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/portal/fpk-pull`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -448,13 +535,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         await reloadClaimsQueue();
         setQueueToast({
           tone: 'green',
-          message: `Tarik FPK ${data.no_fpk} selesai (${data.pulled_count} berkas masuk Pra-Purifikasi VEDIKA).`,
+          message: `Tarik FPK ${data.no_fpk} selesai (${data.pulled_count} berkas masuk Pra-Purifikasi ClaimTrace).`,
         });
       } else {
         setQueueToast({ tone: 'red', message: data.detail || 'Gagal menarik FPK dari VClaim.' });
       }
     } catch {
-      setQueueToast({ tone: 'red', message: 'Koneksi ke endpoint FPK Pull VEDIKA terputus.' });
+      setQueueToast({ tone: 'red', message: 'Koneksi ke endpoint FPK Pull terputus.' });
     } finally {
       setFpkPullSubmitting(false);
     }
@@ -477,7 +564,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setQueueToast({ tone: 'green', message: 'Berkas CSV rekap FPK VEDIKA berhasil diunduh.' });
+      setQueueToast({ tone: 'green', message: 'Berkas CSV rekap FPK berhasil diunduh.' });
     } catch {
       setQueueToast({ tone: 'red', message: 'Terjadi gangguan jaringan saat ekspor CSV.' });
     }
@@ -489,34 +576,81 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     setIngestSubmitting(true);
     setIngestResult(null);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/ingest-simulate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...ingestForm,
-          nilai_klaim_rp: Number(ingestForm.nilai_klaim_rp) || 0,
-          rasio_lonjakan_baseline: Number(ingestForm.rasio_lonjakan_baseline) || 1,
-          jumlah_klaim_klaster: Number(ingestForm.jumlah_klaim_klaster) || 1,
-          mobile_sampel_terkirim: Number(ingestForm.mobile_sampel_terkirim) || 0,
-          mobile_respon_hadir: Number(ingestForm.mobile_respon_hadir) || 0,
-          mobile_respon_tidak_hadir: Number(ingestForm.mobile_respon_tidak_hadir) || 0,
+      const cleanIcd = String(ingestForm.icd10_primary || 'M54.5').split(' ')[0].trim();
+      const cbgParts = String(ingestForm.ina_cbg_code || 'Z-3-12-0').split('-');
+      const sevToken = cbgParts[3] || '0';
+      const sampelTotal = Math.max(1, Number(ingestForm.mobile_sampel_terkirim) || 10);
+      const deniedTotal = Number(ingestForm.mobile_respon_tidak_hadir) || 0;
+
+      const ingestPayload = {
+        nama_faskes: ingestForm.nama_faskes,
+        kelas_rs: ingestForm.kelas_rs,
+        ina_cbg_code: ingestForm.ina_cbg_code,
+        deskripsi_cbg: ingestForm.deskripsi_cbg,
+        icd10_primary: ingestForm.icd10_primary,
+        icd9cm_procedure: ingestForm.icd9cm_procedure,
+        nilai_klaim_rp: Number(ingestForm.nilai_klaim_rp) || 0,
+        dpjp_name: ingestForm.dpjp_name,
+        sip_status: ingestForm.sip_status,
+        rasio_lonjakan_baseline: Number(ingestForm.rasio_lonjakan_baseline) || 1,
+        jumlah_klaim_klaster: Number(ingestForm.jumlah_klaim_klaster) || 1,
+        terdaftar_baksos_resmi: Boolean(ingestForm.terdaftar_baksos_resmi),
+        indikasi_repeat_billing: Boolean(ingestForm.indikasi_repeat_billing),
+        klaim_episode_sebelumnya_id: ingestForm.klaim_episode_sebelumnya_id,
+        selisih_hari_admisi: ingestForm.selisih_hari_admisi,
+        mobile_sampel_terkirim: Number(ingestForm.mobile_sampel_terkirim) || 0,
+        mobile_respon_hadir: Number(ingestForm.mobile_respon_hadir) || 0,
+        mobile_respon_tidak_hadir: deniedTotal,
+        add_to_queue: Boolean(ingestForm.add_to_queue),
+      };
+
+      const verifyPayload = {
+        hospital_name: ingestForm.nama_faskes,
+        fkl09_kelas_rs: `Kelas ${ingestForm.kelas_rs || 'B'}`,
+        fkl17_icd10_primer: cleanIcd,
+        fkl30_icd9_procedure: String(ingestForm.icd9cm_procedure || '93.39').split(' ')[0].trim(),
+        fkl19_inacbg_code: ingestForm.ina_cbg_code,
+        fkl23_severity_level: sevToken,
+        fkl47_claimed_amount: Math.max(100000, Number(ingestForm.nilai_klaim_rp) || 100000),
+        fkl32_standard_tariff: Math.max(100000, Math.round((Number(ingestForm.nilai_klaim_rp) || 1000000) * 0.45)),
+        cluster_spike_ratio: Number(ingestForm.rasio_lonjakan_baseline) || 1.0,
+        repeat_interval_days: ingestForm.indikasi_repeat_billing ? Number(ingestForm.selisih_hari_admisi ?? 0) : 30,
+        terdaftar_baksos_resmi: Boolean(ingestForm.terdaftar_baksos_resmi),
+        sip_status: ingestForm.sip_status,
+        mobile_jkn_denied_ratio: Math.min(1.0, Math.max(0.0, deniedTotal / sampelTotal)),
+        simulate_llm_timeout: Boolean(ingestForm.simulate_llm_timeout),
+      };
+
+      const [res, verifyRes] = await Promise.all([
+        authFetch(`${API_BASE_URL}/api/v1/claims/ingest-simulate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ingestPayload),
         }),
-      });
+        authFetch(`${API_BASE_URL}/api/v1/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...verifyPayload }),
+        }).catch(() => null),
+      ]);
+
       const data = await res.json();
+      const verifyData = verifyRes && verifyRes.ok ? await verifyRes.json().catch(() => null) : null;
+
       if (res.ok && data?.claim && data?.triage) {
-        setIngestResult(data);
+        setIngestResult({ ...data, verify_pipeline: verifyData });
         if (data.added_to_queue) {
           await reloadClaimsQueue();
         }
         setQueueToast({
           tone: data.triage.triage_lane === 'MERAH' ? 'red' : data.triage.triage_lane === 'KUNING' ? 'amber' : 'green',
-          message: `Uji Saring FPK ${data.claim.claim_id} selesai: Jalur ${data.triage.triage_lane} (Skor ${Number(data.triage.final_priority_score).toFixed(1)}).`,
+          message: `Verifikasi Pra-Bayar ${data.claim.claim_id} selesai: Jalur ${data.triage.triage_lane} (Skor ${Number(data.triage.final_priority_score).toFixed(1)}).`,
         });
       } else {
-        setQueueToast({ tone: 'red', message: data?.detail || 'Gagal menjalankan simulasi uji saring FPK.' });
+        setQueueToast({ tone: 'red', message: data?.detail || 'Gagal menjalankan verifikasi berkas FPK.' });
       }
     } catch {
-      setQueueToast({ tone: 'red', message: 'Gagal menghubungi mesin Tri-Layer FastAPI.' });
+      setQueueToast({ tone: 'red', message: 'Gagal menghubungi mesin verifikasi Lapis 1-4 FastAPI.' });
     } finally {
       setIngestSubmitting(false);
     }
@@ -547,36 +681,24 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           stage: 4,
           name: 'Tahap 4 · Konfirmasi Mobile JKN & Fusi (0 - 100)',
           rule: 'Skor = 0,50*S1 + 0,30*S2 + 0,20*S3 -> Hijau (<50), Kuning (50-74,9), Merah (>=75 / Hard Trigger).',
-          metric_label: 'Keputusan tetap Human-in-the-Loop + BAKB SHA-256',
+          metric_label: 'Keputusan verifikator medis + BAHV Bersegel Elektronik BSrE',
         },
       ];
   const thresholdList = pipelineSummary?.scoring_spec?.thresholds || [];
 
   return (
-    <div className={`space-y-4 font-inter pb-16 sm:pb-20 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-      {/* HEADER STRIP */}
-      <div className={`w-full px-4 py-3.5 rounded-2xl border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 text-white shadow-2xl shadow-[#00081c]/50'
-      }`}>
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Pipeline Penyaringan Klaim Anomali Pra-Bayar
-            </h2>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-              isLight 
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                : 'bg-white/5 text-[#FFCA40] border-white/10'
-            }`}>
-              Skala Resmi 0 - 100 · S = 0,50·S1 + 0,30·S2 + 0,20·S3
-            </span>
-          </div>
-          <p className={`text-[11px] ${isLight ? 'text-slate-600 font-medium' : 'text-white/65'}`}>
-            Tujuan tunggal: mengendalikan kecurangan #6 Phantom Billing, #11 Repeat Billing, dan Upcoding pra-bayar. Rentang sistem: <strong className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>Hijau 0–49,9</strong> · <strong className={isLight ? 'text-amber-700' : 'text-amber-300'}>Kuning 50,0–74,9</strong> · <strong className={isLight ? 'text-rose-700' : 'text-rose-400'}>Merah 75,0–100 (+ Hard Trigger)</strong>.
+    <div className={`space-y-4 font-sans pb-16 sm:pb-20 ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
+      {/* TOP TITLE & ACTIONS BAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className={`text-lg sm:text-xl font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
+            Antrean Berkas Klaim (FPK)
+          </h1>
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Penyaringan klaim pra-pembayaran JKN berdasarkan prioritas anomali dan batas waktu verifikasi SLA 10 HK.
           </p>
         </div>
+
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
@@ -584,14 +706,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               setFpkPullResult(null);
               setShowFpkPullModal(true);
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer inline-flex items-center gap-1.5 ${
               isLight
-                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
-                : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border-cyan-500/35'
+                ? 'bg-white hover:bg-[#F3F5F8] text-[#061B31] border-[#061B31]/15'
+                : 'bg-[#161A22] hover:bg-white/[0.06] text-[#F3F5F8] border-white/[0.1]'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Tarik Data FPK (VClaim)</span>
+            <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Tarik Data FPK</span>
           </button>
           <button
             type="button"
@@ -599,37 +721,26 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               setIngestResult(null);
               setShowIngestModal(true);
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer inline-flex items-center gap-1.5 ${
               isLight
-                ? 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 shadow-xs'
+                ? 'bg-[#00733B] hover:bg-[#005E30] text-white border-[#00733B]'
                 : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/40'
             }`}
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>Uji Saring / Input FPK Baru</span>
+            <span>Input Berkas Baru</span>
           </button>
           <button
             type="button"
             onClick={handleExportCsv}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer inline-flex items-center gap-1.5 ${
               isLight
-                ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300'
-                : 'bg-white/5 hover:bg-white/10 text-white border-white/15'
+                ? 'bg-white hover:bg-[#F3F5F8] text-[#061B31] border-[#061B31]/15'
+                : 'bg-[#161A22] hover:bg-white/[0.06] text-[#F3F5F8] border-white/[0.1]'
             }`}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Ekspor CSV FPK</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowThresholdRules((v) => !v)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
-              isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-white/10 hover:bg-white/15 text-white border-white/15'
-            }`}
-          >
-            {showThresholdRules ? 'Tutup Detail Ambang Saring' : 'Lihat Parameter & Ambang Saring'}
+            <span>Ekspor CSV</span>
           </button>
         </div>
       </div>
@@ -649,187 +760,97 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         </div>
       )}
 
-      {/* 4-TAHAP CORONG PENYARINGAN KLAIM ANOMALI (CARA SISTEM MENYARING) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        {screeningStages.map((st) => (
-          <div
-            key={st.stage}
-            className={`rounded-2xl border p-3.5 space-y-1.5 transition-all ${
-              isLight
-                ? 'bg-white border-slate-200 text-slate-900 shadow-xs'
-                : 'bg-[#00153A]/75 border-white/10 text-white'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${
-                st.stage === 4
-                  ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30')
-                  : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
-              }`}>
-                TAHAP {st.stage}
-              </span>
-              <span className={`text-[10px] font-mono font-semibold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Pra-Bayar Gate
-              </span>
-            </div>
-            <h3 className={`text-xs font-bold leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {st.name.replace(/^Tahap \d+ · /, '')}
-            </h3>
-            <p className={`text-[10.5px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/65'}`}>
-              {st.rule}
-            </p>
-            <div className={`pt-1.5 border-t text-[10.5px] font-mono font-bold ${
-              isLight ? 'border-slate-100 text-emerald-700' : 'border-white/10 text-[#FFCA40]'
-            }`}>
-              {st.metric_label}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {showThresholdRules && thresholdList.length > 0 && (
-        <div className={`rounded-2xl border p-4 space-y-2.5 ${
-          isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#001336]/90 border-white/15 text-white'
+      {/* COCKPIT 4 SUMMARY CARDS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: TOTAL ANTREAN */}
+        <div className={`rounded-2xl p-4 border transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
         }`}>
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider">
-              Acuan Parameter Saring &amp; Ambang Batas Resmi (Audit Rule Engine)
-            </h3>
-            <span className="text-[10px] font-mono opacity-75">Skala Skor: 0 - 100</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {thresholdList.map((th) => (
-              <div key={th.key} className={`p-2.5 rounded-xl border text-[11px] ${
-                isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'
-              }`}>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="font-bold">{th.label}</span>
-                  <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                    {th.signal}
-                  </span>
-                </div>
-                <p className={isLight ? 'text-slate-600' : 'text-white/70'}>{th.limit}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* KPI METRIC CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          whileHover={{ y: -2 }}
-          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
-            isLight
-              ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
-              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
-          }`}
-        >
-          <div className="flex items-center justify-between relative z-10">
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Total Antrean Aktif ({totalQueueCount} Berkas)
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              Total Antrean
             </span>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${
-              isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-cyan-300 border-white/10'
+              isLight ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
             }`}>
-              LIVE DUCKDB + ENGINE
+              Aktif
             </span>
           </div>
-          <div className={`text-3xl font-bold mt-1 tabular-nums relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            {portfolioStats?.claims_volume ? Number(portfolioStats.claims_volume).toLocaleString('id-ID') : totalQueueCount.toLocaleString('id-ID')}
+          <div className="text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight">
+            {totalQueueCount.toLocaleString('id-ID')}
           </div>
-          <p className={`text-[11px] mt-0.5 relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-            {portfolioStats?.claims_volume ? `Total klaim FKRTL nasional (${totalQueueCount} berkas triase aktif)` : 'Berkas antrean triase pra-bayar aktif'}
+          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Berkas klaim siap diproses verifikator
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.05 }}
-          whileHover={{ y: -2 }}
-          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
-            isLight
-              ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
-              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
-          }`}
-        >
-          <div className="flex items-center justify-between relative z-10">
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
-              isLight ? 'text-emerald-800' : 'text-emerald-300'
-            }`}>
-              Jalur Hijau (Fast-Track)
+        {/* Card 2: JALUR MERAH (RISIKO TINGGI) */}
+        <div className={`rounded-2xl p-4 border transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+              Jalur Merah (Risiko Tinggi)
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
-              isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'
-            }`}>{greenPct}%</span>
+              isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'text-rose-300 bg-rose-500/20 border-rose-500/30'
+            }`}>{redPct}%</span>
           </div>
-          <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
-            isLight ? 'text-emerald-600' : 'text-emerald-400'
-          }`}>{greenCount.toLocaleString('id-ID')}</div>
-          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-            {portfolioStats?.full_approved_count ? `${Number(portfolioStats.full_approved_count).toLocaleString('id-ID')} lolos nasional` : 'Klaim wajar terverifikasi sah'}
+          <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-rose-600' : 'text-rose-400'}`}>
+            {redCount.toLocaleString('id-ID')}
+          </div>
+          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Indikasi anomali berat &amp; wajib telaah
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
-          whileHover={{ y: -2 }}
-          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
-            isLight
-              ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
-              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
-          }`}
-        >
-          <div className="flex items-center justify-between relative z-10">
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
-              isLight ? 'text-amber-800' : 'text-amber-300'
-            }`}>
+        {/* Card 3: JALUR KUNING (KLARIFIKASI) */}
+        <div className={`rounded-2xl p-4 border transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
               Jalur Kuning (Klarifikasi)
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
-              isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'text-amber-300 bg-amber-500/15 border-amber-500/30'
+              isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'text-amber-300 bg-amber-500/20 border-amber-500/30'
             }`}>{yellowPct}%</span>
           </div>
-          <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
-            isLight ? 'text-amber-600' : 'text-amber-400'
-          }`}>{yellowCount.toLocaleString('id-ID')}</div>
-          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Memerlukan berkas penunjang</p>
-        </motion.div>
+          <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>
+            {yellowCount.toLocaleString('id-ID')}
+          </div>
+          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Konfirmasi dokumen penunjang faskes
+          </p>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: 0.15 }}
-          whileHover={{ y: -2 }}
-          className={`rounded-2xl p-4 border transition-all relative overflow-hidden group ${
-            isLight
-              ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-slate-300'
-              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 shadow-xl shadow-[#00081c]/40 hover:border-white/20'
-          }`}
-        >
-          <div className="flex items-center justify-between relative z-10">
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider text-balance ${
-              isLight ? 'text-rose-800' : 'text-rose-300'
-            }`}>
-              Jalur Merah (Telaah Pra-Bayar)
+        {/* Card 4: JALUR HIJAU (LAYAK) */}
+        <div className={`rounded-2xl p-4 border transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
+        }`}>
+          <div className="flex items-center justify-between">
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+              Jalur Hijau (Layak Lolos)
             </span>
             <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
-              isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'text-rose-300 bg-rose-500/15 border-rose-500/30'
-            }`}>{redPct}%</span>
+              isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'text-emerald-300 bg-emerald-500/20 border-emerald-500/30'
+            }`}>{greenPct}%</span>
           </div>
-          <div className={`text-3xl font-bold mt-1 tabular-nums tracking-tight relative z-10 ${
-            isLight ? 'text-rose-600' : 'text-rose-400'
-          }`}>{redCount.toLocaleString('id-ID')}</div>
-          <p className={`text-[11px] mt-0.5 text-pretty relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-            {portfolioStats?.severity_distribution?.Kritis ? `${Number(portfolioStats.severity_distribution.Kritis).toLocaleString('id-ID')} kritis historis` : 'Indikasi Phantom / Repeat Billing'}
+          <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>
+            {greenCount.toLocaleString('id-ID')}
+          </div>
+          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Klaim wajar tanpa indikasi kecurangan
           </p>
-        </motion.div>
+        </div>
       </div>
 
       {/* FILTER CONTROLS STRIP */}
@@ -898,91 +919,25 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </motion.button>
         </div>
 
-        {/* Faceted Dropdowns & Search */}
+        {/* Clean, Focused Filter Controls */}
         <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
           <select
-            aria-label="Filter berdasarkan modus anomali"
-            value={activeModus}
-            onChange={(e) => setActiveModus(e.target.value)}
+            aria-label="Filter jenis pelayanan klaim"
+            value={activeServiceLevel}
+            onChange={(e) => setActiveServiceLevel(e.target.value)}
             className={`text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
               isLight
                 ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
             }`}
           >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Saringan Modus</option>
-            <option value="PHANTOM" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>#6 Phantom / Lonjakan &gt;= 3x</option>
-            <option value="REPEAT" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>#11 Repeat Billing</option>
-            <option value="SIP" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Hard-Trigger SIP / Geovelocity</option>
-            <option value="MOBILE" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Bantahan Mobile JKN</option>
-            <option value="UPCODING" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Upcoding INA-CBG</option>
-          </select>
-
-          <select
-            aria-label="Filter jenis pelayanan VEDIKA"
-            value={activeServiceLevel}
-            onChange={(e) => setActiveServiceLevel(e.target.value)}
-            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
-                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
-            }`}
-          >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Layanan: Semua (RJTL+RITL)</option>
-            <option value="RJTL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RJTL (Rawat Jalan)</option>
-            <option value="RITL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>RITL (Rawat Inap)</option>
-          </select>
-
-          <select
-            aria-label="Filter jenis pengajuan FPK"
-            value={activeSubmissionType}
-            onChange={(e) => setActiveSubmissionType(e.target.value)}
-            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
-                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
-            }`}
-          >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Pengajuan: Semua</option>
-            <option value="Reguler" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Klaim Reguler</option>
-            <option value="Susulan" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Klaim Susulan</option>
-            <option value="LUPIS" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>LUPIS / Non-Paket</option>
-          </select>
-
-          <select
-            aria-label="Filter Nomor FPK"
-            value={activeFpkFilter}
-            onChange={(e) => setActiveFpkFilter(e.target.value)}
-            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
-                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
-            }`}
-          >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua No. FPK ({uniqueFpkOptions.length})</option>
-            {uniqueFpkOptions.map((fpk) => (
-              <option key={fpk} value={fpk} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>{fpk}</option>
-            ))}
-          </select>
-
-          <select
-            aria-label="Filter Plotting Verifikator"
-            value={activePlottingFilter}
-            onChange={(e) => setActivePlottingFilter(e.target.value)}
-            className={`text-xs px-2.5 py-2 rounded-xl border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
-                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
-            }`}
-          >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Plotting: Semua</option>
-            <option value="UNASSIGNED" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Belum Di-plot</option>
-            {verificatorsList.map((v) => (
-              <option key={v.nip} value={v.nip} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Plot: {v.name}</option>
-            ))}
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Layanan (RJTL & RITL)</option>
+            <option value="RJTL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Rawat Jalan (RJTL)</option>
+            <option value="RITL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Rawat Inap (RITL)</option>
           </select>
 
           <select 
+            aria-label="Filter Fasilitas Kesehatan"
             value={selectedFaskes}
             onChange={(e) => setSelectedFaskes(e.target.value)}
             className={`text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
@@ -991,13 +946,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
             }`}
           >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Faskes ({uniqueFaskesOptions.length})</option>
+            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Fasilitas Kesehatan</option>
             {uniqueFaskesOptions.map((hosp) => (
               <option key={hosp} value={hosp} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>{hosp}</option>
             ))}
           </select>
 
-          <div className="relative min-w-[220px]">
+          <div className="relative min-w-[240px]">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
@@ -1005,7 +960,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari SEP, DPJP, Faskes..."
+              placeholder="Cari Klaim, SEP, DPJP..."
               className={`w-full rounded-xl pl-9 pr-3 py-2 text-xs transition focus:outline-none ${
                 isLight
                   ? 'bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
@@ -1016,47 +971,80 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         </div>
       </div>
 
-      {/* Contextual Cluster Banner */}
-      <div className={`rounded-xl px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2 shadow-xs border transition-all ${
-        activeLane === 'red'
-          ? (isLight ? 'bg-rose-50 text-rose-950 border-rose-300' : 'bg-rose-500/15 border-rose-500/30 text-rose-200')
-          : activeLane === 'yellow'
-          ? (isLight ? 'bg-amber-50 text-amber-950 border-amber-300' : 'bg-amber-500/15 border-amber-500/30 text-amber-200')
-          : (isLight ? 'bg-emerald-50 text-emerald-950 border-emerald-300' : 'bg-emerald-500/15 border-emerald-400/30 text-emerald-200')
+      {/* KAPASITAS TIM CABANG & PRIORITAS TOP-K PRA-BAYAR (C03.04 -> S06 HOLD) */}
+      <div className={`rounded-2xl px-4 py-2.5 border flex flex-wrap items-center justify-between gap-3 text-xs ${
+        isLight
+          ? 'bg-slate-50/90 border-slate-200 text-slate-800'
+          : 'bg-[#00153A]/70 border-white/10 text-white/90'
       }`}>
-        <div className="flex items-center gap-2">
-          <ShieldCheck className={`w-4 h-4 shrink-0 ${
-            activeLane === 'red'
-              ? (isLight ? 'text-rose-700' : 'text-rose-400')
-              : activeLane === 'yellow'
-              ? (isLight ? 'text-amber-700' : 'text-amber-400')
-              : (isLight ? 'text-emerald-700' : 'text-emerald-400')
-          }`} />
-          <span>
-            {activeLane === 'all' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas prioritas</strong> dari <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{totalQueueCount} antrean triase live</strong> (Basis Nasional: {portfolioStats?.claims_volume ? Number(portfolioStats.claims_volume).toLocaleString('id-ID') : '-'} klaim).</>
-            )}
-            {activeLane === 'red' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-rose-900' : 'text-white'}`}>{filteredClaims.length} berkas telaah investigasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>{redCount} anomali Jalur Merah</strong> aktif pra-bayar.</>
-            )}
-            {activeLane === 'yellow' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-amber-900' : 'text-white'}`}>{filteredClaims.length} berkas klarifikasi dokumen</strong> dari total <strong className={`font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>{yellowCount} klaim Jalur Kuning</strong> aktif.</>
-            )}
-            {activeLane === 'green' && (
-              <>Menampilkan <strong className={`font-bold ${isLight ? 'text-emerald-900' : 'text-white'}`}>{filteredClaims.length} berkas fast-track terverifikasi</strong> dari total <strong className={`font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{greenCount} klaim wajar Jalur Hijau</strong> aktif.</>
-            )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+            Alokasi Kapasitas SLA 10 HK:
           </span>
+          <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+            <span>Verifikator</span>
+            <input
+              aria-label="Jumlah Verifikator"
+              type="number"
+              min="1"
+              max="50"
+              value={capVerifiers}
+              onChange={(e) => setCapVerifiers(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+              className={`w-14 px-2 py-1 rounded-lg border text-xs font-mono font-bold text-center ${
+                isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/10 border-white/20 text-white'
+              }`}
+            />
+          </label>
+          <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+            <span>Berkas/Hari</span>
+            <input
+              aria-label="Berkas per Hari per Verifikator"
+              type="number"
+              min="1"
+              max="50"
+              value={capPerDay}
+              onChange={(e) => setCapPerDay(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+              className={`w-14 px-2 py-1 rounded-lg border text-xs font-mono font-bold text-center ${
+                isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/10 border-white/20 text-white'
+              }`}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setCapacityPriorityOnly((prev) => !prev)}
+            className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer ${
+              capacityPriorityOnly
+                ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                : (isLight
+                    ? 'bg-white hover:bg-emerald-50 text-emerald-900 border-emerald-300'
+                    : 'bg-white/5 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/35')
+            }`}
+          >
+            {capacityPriorityOnly ? `Fokus Top-${capacityBudgetK} Prioritas Aktif` : `Prioritaskan Top-${capacityBudgetK} Berkas`}
+          </button>
         </div>
-        <span className={`text-[11px] font-semibold font-mono shrink-0 ${
-          activeLane === 'red'
-            ? (isLight ? 'text-rose-800' : 'text-rose-300')
-            : activeLane === 'yellow'
-            ? (isLight ? 'text-amber-800' : 'text-amber-300')
-            : (isLight ? 'text-emerald-800' : 'text-emerald-300')
-        }`}>
-          Klaster Faskes Rujukan Nasional · Kepatuhan SLA 10 HK
-        </span>
+
+        <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
+          <span>
+            Target <strong className={isLight ? 'text-slate-900' : 'text-white'}>k = {capacityBudgetK}</strong>
+          </span>
+          {capacityReport?.baseline_benchmark_metrics && (
+            <>
+              <span className={isLight ? 'text-emerald-700 font-bold' : 'text-emerald-300 font-bold'}>
+                Precision@k: {capacityReport.baseline_benchmark_metrics.precision_at_k_pct}%
+              </span>
+              <span className={isLight ? 'text-cyan-800 font-bold' : 'text-cyan-300 font-bold'}>
+                Rupiah Recall@k: {capacityReport.baseline_benchmark_metrics.rupiah_recall_at_k_pct}%
+              </span>
+              <span className={isLight ? 'text-amber-800 font-bold' : 'text-[#FFCA40] font-bold'}>
+                Lift: {capacityReport.baseline_benchmark_metrics.lift_over_random}x
+              </span>
+            </>
+          )}
+        </div>
       </div>
+
+
 
       {selectedIds.length > 0 && (
         <div className={`rounded-2xl px-4 py-3 border flex flex-wrap items-center justify-between gap-3 shadow-sm ${
@@ -1126,17 +1114,17 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
       )}
 
       {/* TRIAGE QUEUE TABLE */}
-      <div className={`rounded-2xl overflow-hidden border ${
+      <div className={`rounded-xl overflow-hidden border ${
         isLight
-          ? 'bg-white border-slate-200 shadow-sm'
-          : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 shadow-2xl shadow-[#00081c]/50'
+          ? 'bg-white border-[#061B31]/[0.08] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
+          : 'bg-[#11141A] border-white/[0.08]'
       }`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs table-fixed min-w-[920px]">
-            <thead className={`text-[10px] uppercase font-bold tracking-wider border-b ${
+            <thead className={`text-[10px] uppercase font-semibold tracking-wider border-b ${
               isLight
-                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                : 'bg-black/40 text-white/70 border-white/10'
+                ? 'bg-[#F3F5F8] text-slate-600 border-[#061B31]/[0.08]'
+                : 'bg-[#161A22] text-slate-400 border-white/[0.08]'
             }`}>
               <tr>
                 <th className="py-3 pl-3 pr-2 w-[4%]">
@@ -1153,23 +1141,22 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     {allVisibleSelected ? <Check className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                   </button>
                 </th>
-                <th className="py-3 px-2.5 w-[26%]">Klaim &amp; Faskes</th>
-                <th className="py-3 px-2.5 w-[16%]">Kode INA-CBG</th>
-                <th className="py-3 px-2.5 w-[14%]">DPJP (Dokter)</th>
-                <th className="py-3 px-1.5 text-center w-[4%]">S1</th>
-                <th className="py-3 px-1.5 text-center w-[4%]">S2</th>
-                <th className="py-3 px-1.5 text-center w-[4%]">S3</th>
-                <th className="py-3 px-1.5 text-center w-[7%]">Skor Fusi</th>
-                <th className="py-3 px-2.5 w-[13%]">Putusan &amp; SLA</th>
-                <th className="py-3 px-3 text-right w-[8%]">Aksi</th>
+                <th className="py-3 px-3 w-[13%]">No. Klaim</th>
+                <th className="py-3 px-3 w-[20%]">Fasilitas Kesehatan</th>
+                <th className="py-3 px-3 w-[18%]">Layanan &amp; Diagnosis</th>
+                <th className="py-3 px-3 w-[11%]">Dokter DPJP</th>
+                <th className="py-3 px-3 w-[11%]">Nilai Tagihan</th>
+                <th className="py-3 px-2 text-center w-[6%]">Risiko</th>
+                <th className="py-3 px-3 w-[8%]">Status</th>
+                <th className="py-3 pl-2 pr-4 text-right w-[9%]">Aksi</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${
               isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/90'
             }`}>
-              {filteredClaims.length === 0 && (
+              {displayedClaims.length === 0 && (
                 <tr>
-                  <td colSpan="10" className="py-12 text-center text-slate-500">
+                  <td colSpan="9" className="py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <AlertOctagon className="w-8 h-8 text-slate-400" />
                       <p className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Tidak ada klaim yang cocok dengan kriteria filter.</p>
@@ -1183,6 +1170,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                           setActiveFpkFilter('all');
                           setActivePlottingFilter('all');
                           setSelectedFaskes('all');
+                          setCapacityPriorityOnly(false);
                           setSearchQuery('');
                         }}
                         className={`mt-2 text-xs font-bold px-3 py-1.5 rounded-lg border transition cursor-pointer ${
@@ -1197,9 +1185,9 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   </td>
                 </tr>
               )}
-              {filteredClaims.map((c) => {
+              {displayedClaims.map((c) => {
                 const isChecked = selectedIds.includes(c.id);
-                const statusBadge = formatDecisionStatus(c.statusVerifikasi);
+                const statusBadge = formatDecisionStatus(c.statusVerifikasi, c.lane);
                 return (
                 <motion.tr
                   layout
@@ -1208,14 +1196,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   onClick={() => onSelectCase(c)}
                   className={`group cursor-pointer transition-colors duration-150 ${
                     c.lane === 'red' 
-                      ? (isLight ? 'bg-rose-50/50 hover:bg-rose-100/60 border-l-2 border-l-rose-500' : 'bg-rose-500/10 hover:bg-rose-500/20 border-l-2 border-l-rose-500')
+                      ? (isLight ? 'bg-rose-500/[0.025] hover:bg-rose-500/[0.05] border-l-2 border-l-rose-500' : 'bg-rose-500/[0.05] hover:bg-rose-500/[0.09] border-l-2 border-l-rose-500')
                       : c.lane === 'yellow'
-                      ? (isLight ? 'bg-amber-50/50 hover:bg-amber-100/60 border-l-2 border-l-amber-500' : 'bg-amber-500/10 hover:bg-amber-500/20 border-l-2 border-l-amber-500')
-                      : (isLight ? 'hover:bg-slate-50 border-l-2 border-l-emerald-600' : 'hover:bg-white/5 border-l-2 border-l-emerald-500')
+                      ? (isLight ? 'bg-amber-500/[0.025] hover:bg-amber-500/[0.05] border-l-2 border-l-amber-500' : 'bg-amber-500/[0.05] hover:bg-amber-500/[0.09] border-l-2 border-l-amber-500')
+                      : (isLight ? 'hover:bg-[#F7F8FA] border-l-2 border-l-emerald-600' : 'hover:bg-white/[0.03] border-l-2 border-l-emerald-500')
                   }`}
                 >
                   <td
-                    className="py-3.5 pl-4 pr-2 align-middle"
+                    className="py-3.5 pl-3 pr-2 align-middle"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleSelectClaim(c.id);
@@ -1234,96 +1222,97 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     </button>
                   </td>
 
+                  {/* 1. No. Klaim & Tanggal */}
                   <td className="py-3.5 px-3">
-                    <div className="flex items-center space-x-2.5">
+                    <div className="flex items-center space-x-2">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${
                         c.lane === 'red' ? 'bg-rose-500' : c.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
                       }`} />
-                      <div className="min-w-0">
-                        <div className={`font-bold transition truncate ${
-                          isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-cyan-300'
-                        }`}>
-                          {c.hospital}
-                        </div>
-                        <div className={`flex flex-wrap items-center gap-1.5 text-[10.5px] font-mono mt-0.5 ${
-                          isLight ? 'text-slate-500' : 'text-white/50'
-                        }`}>
-                          <span className="font-semibold">{c.id}</span>
-                          <span>•</span>
-                          <span>{c.date}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border ${
-                            c.jenisPelayanan === 'RITL'
-                              ? (isLight ? 'bg-indigo-50 text-indigo-800 border-indigo-200' : 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30')
-                              : (isLight ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-sky-500/20 text-sky-200 border-sky-500/30')
-                          }`}>
-                            {c.jenisPelayanan}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border ${
-                            c.jenisPengajuan === 'Susulan'
-                              ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-200 border-amber-500/30')
-                              : c.jenisPengajuan === 'LUPIS'
-                              ? (isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-200 border-purple-500/30')
-                              : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/75 border-white/15')
-                          }`}>
-                            {c.jenisPengajuan}{c.resubmissionCount > 0 ? ` #${c.resubmissionCount}` : ''}
-                          </span>
-                          <span className="text-[10px] opacity-80">{c.noFpk}</span>
-                          {c.flags.map((f, flagIdx) => (
-                            <span key={`${c.id}-${f}-${flagIdx}`} className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                              f.includes('PHANTOM') || f.includes('REPEAT')
-                                ? (isLight ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30')
-                                : (isLight ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'bg-white/10 text-white/70')
-                            }`}>
-                              {f}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
+                      <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {c.id}
+                      </span>
+                    </div>
+                    <div className={`text-[11px] font-mono mt-0.5 ml-4 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                      {c.date}
                     </div>
                   </td>
 
+                  {/* 2. Fasilitas Kesehatan */}
                   <td className="py-3.5 px-3">
-                    <span className={`font-mono font-bold text-xs block ${
-                      isLight ? 'text-emerald-700' : 'text-[#FFCA40]'
-                    }`}>{c.code}</span>
-                    <p className={`text-[10.5px] truncate ${isLight ? 'text-slate-600' : 'text-white/60'}`} title={c.description}>{c.description}</p>
+                    <div className={`font-bold transition truncate text-xs ${
+                      isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-cyan-300'
+                    }`} title={c.hospital}>
+                      {c.hospital}
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                      <span>{c.jenisPelayanan}</span>
+                      <span>·</span>
+                      <span>{c.jenisPengajuan}</span>
+                    </div>
                   </td>
 
+                  {/* 3. Layanan & Diagnosis */}
                   <td className="py-3.5 px-3">
-                    <div className={`font-medium truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{c.dpjp}</div>
-                    <span className={`text-[10.5px] font-mono block ${isLight ? 'text-slate-500 font-semibold' : 'text-white/50'}`}>{c.tariff}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`font-mono font-bold text-xs ${
+                        isLight ? 'text-emerald-700' : 'text-[#FFCA40]'
+                      }`}>
+                        {c.code}
+                      </span>
+                      {c.lane === 'red' && (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                          isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                        }`}>
+                          {c.flags.includes('SIP_EXPIRED') ? 'SIP Kedaluwarsa' : c.flags.includes('MOBILE_DENIED') ? 'Sangkalan Pasien' : c.flags.includes('REPEAT_BILLING') ? 'Klaim Berulang' : 'Anomali Berat'}
+                        </span>
+                      )}
+                      {c.lane === 'yellow' && (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                          isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        }`}>
+                          Klarifikasi Dokumen
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`} title={c.description}>
+                      {c.description}
+                    </p>
                   </td>
 
-                  <td className={`py-3.5 px-2 text-center font-mono font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                    {c.s1}
-                  </td>
-                  <td className={`py-3.5 px-2 text-center font-mono font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                    {c.s2}
-                  </td>
-                  <td className={`py-3.5 px-2 text-center font-mono font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                    {c.s3}
+                  {/* 4. Dokter DPJP */}
+                  <td className="py-3.5 px-3">
+                    <div className={`font-medium text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title={c.dpjp}>
+                      {c.dpjp}
+                    </div>
                   </td>
 
+                  {/* 5. Nilai Tagihan */}
+                  <td className="py-3.5 px-3">
+                    <span className={`font-mono font-semibold text-xs tabular-nums block ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
+                      {c.tariff}
+                    </span>
+                  </td>
+
+                  {/* 6. Tingkat Risiko */}
                   <td className="py-3.5 px-2 text-center">
-                    <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-bold font-mono shadow-xs border ${
+                    <span className={`text-sm font-semibold font-mono tabular-nums ${
                       c.lane === 'red'
-                        ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/40')
+                        ? (isLight ? 'text-rose-700' : 'text-rose-400')
                         : c.lane === 'yellow'
-                        ? (isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40')
-                        : (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40')
+                        ? (isLight ? 'text-amber-700' : 'text-amber-400')
+                        : (isLight ? 'text-emerald-700' : 'text-emerald-400')
                     }`}>
                       {Number(c.totalScore).toFixed(1)}
                     </span>
                   </td>
 
-                  <td className="py-3.5 px-2.5">
-                    <span className={`inline-block max-w-full truncate px-2 py-0.5 rounded text-[10px] font-bold border ${
+                  {/* 7. Status & SLA */}
+                  <td className="py-3.5 px-3">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${
                       statusBadge.tone === 'green'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                         : statusBadge.tone === 'amber'
                         ? (isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
-                        : statusBadge.tone === 'purple'
-                        ? (isLight ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30')
                         : statusBadge.tone === 'red'
                         ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
                         : (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/75 border-white/15')
@@ -1331,24 +1320,27 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       {statusBadge.label}
                     </span>
                     <div className={`text-[10px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      SLA maks {c.slaDays} HK
-                    </div>
-                    <div className={`text-[9.5px] font-mono mt-0.5 truncate max-w-full ${
-                      c.assignedVerifierNip
-                        ? (isLight ? 'text-cyan-800 font-semibold' : 'text-cyan-300')
-                        : (isLight ? 'text-amber-700 font-bold' : 'text-amber-300 font-bold')
-                    }`} title={`Plotting: ${c.assignedVerifierName}`}>
-                      Plot: {c.assignedVerifierName}
+                      SLA {c.slaDays} HK
                     </div>
                   </td>
 
-                  <td className="py-3.5 px-3 text-right">
-                    <span className={`text-[11px] font-bold inline-flex items-center space-x-0.5 group-hover:translate-x-0.5 transition-transform ${
-                      isLight ? 'text-emerald-700 group-hover:text-emerald-800' : 'text-cyan-300 group-hover:text-cyan-200'
-                    }`}>
-                      <span>Investigasi</span>
+                  {/* 8. Aksi */}
+                  <td className="py-3.5 pl-2 pr-4 text-right">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectCase(c);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1 whitespace-nowrap ${
+                        isLight
+                          ? 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 shadow-2xs'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 shadow-xs'
+                      }`}
+                    >
+                      <span>Telaah</span>
                       <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
+                    </button>
                   </td>
                 </motion.tr>
                 );
@@ -1370,12 +1362,12 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </div>
           <div className={`flex items-center space-x-1.5 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
             <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-            <span>Sistem Otentikasi Terintegrasi Smart Vedika</span>
+            <span>Sistem Otentikasi Terintegrasi Smart ClaimTrace</span>
           </div>
         </div>
       </div>
 
-      {/* SIMULATOR UJI SARING / INPUT FPK BARU MODAL */}
+      {/* INPUT & VERIFIKASI PRA-BAYAR FPK BARU (C03.04) MODAL */}
       {showIngestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
@@ -1385,14 +1377,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/10'
             }`}>
               <div>
-                <h3 className="text-sm font-bold">Uji Saring / Input Berkas FPK Pra-Bayar Baru</h3>
+                <h3 className="text-sm font-bold">Registrasi &amp; Verifikasi Pra-Bayar FPK Baru (C03.04)</h3>
                 <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Simulasi atau injeksi berkas klaim langsung melalui mesin 3-Lapis + fusi 0 - 100.
+                  Penyaringan VClaim/VIDI 6-tahap ML + Lapis 1-4 beserta FairGuard sebelum rilis pembayaran S06 (In-Monica).
                 </p>
               </div>
               <button
                 type="button"
-                aria-label="Tutup modal uji saring"
+                aria-label="Tutup modal input FPK"
                 onClick={() => setShowIngestModal(false)}
                 className={`p-1.5 rounded-lg border transition cursor-pointer ${
                   isLight ? 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10'
@@ -1405,7 +1397,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             <form onSubmit={handleRunIngestSimulate} className="p-5 space-y-4 overflow-y-auto text-xs">
               <div>
                 <div className={`text-[10.5px] font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Preset Kasus Uji VEDIKA
+                  Templat Kasus FPK Klinis &amp; FairGuard
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {SIMULATE_PRESETS.map((preset) => (
@@ -1413,7 +1405,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       key={preset.id}
                       type="button"
                       onClick={() => {
-                        setIngestForm((prev) => ({ ...preset.payload, add_to_queue: prev.add_to_queue }));
+                        setIngestForm((prev) => ({ ...preset.payload, add_to_queue: prev.add_to_queue, simulate_llm_timeout: prev.simulate_llm_timeout }));
                         setIngestResult(null);
                       }}
                       className={`text-left px-3 py-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
@@ -1443,7 +1435,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold mb-1">Kode INA-CBG</label>
+                    <label className="block text-[11px] font-bold mb-1">Kode INA-CBG (FKL19)</label>
                     <input
                       type="text"
                       required
@@ -1467,6 +1459,34 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       }`}
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Diagnosis Primer ICD-10 (FKL17)</label>
+                  <input
+                    type="text"
+                    required
+                    value={ingestForm.icd10_primary || ''}
+                    onChange={(e) => setIngestForm({ ...ingestForm, icd10_primary: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-mono ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold mb-1">Kelas RS (FKL09)</label>
+                  <select
+                    aria-label="Kelas Rumah Sakit"
+                    value={ingestForm.kelas_rs || 'B'}
+                    onChange={(e) => setIngestForm({ ...ingestForm, kelas_rs: e.target.value })}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-bold ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#001f4d] border-white/15 text-white'
+                    }`}
+                  >
+                    <option value="A">Kelas A (Rujukan Tersier)</option>
+                    <option value="B">Kelas B</option>
+                    <option value="C">Kelas C</option>
+                    <option value="D">Kelas D</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold mb-1">DPJP &amp; Status SIP SDMK</label>
@@ -1543,15 +1563,23 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
                   <input
                     type="checkbox"
+                    checked={Boolean(ingestForm.simulate_llm_timeout)}
+                    onChange={(e) => setIngestForm({ ...ingestForm, simulate_llm_timeout: e.target.checked })}
+                  />
+                  <span>Mode Cadangan Lokal (Fallback Deterministik)</span>
+                </label>
+                <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
+                  <input
+                    type="checkbox"
                     checked={Boolean(ingestForm.add_to_queue)}
                     onChange={(e) => setIngestForm({ ...ingestForm, add_to_queue: e.target.checked })}
                   />
-                  <span>Masukkan ke Antrean Live VEDIKA</span>
+                  <span>Masukkan ke Antrean Live Penapisan</span>
                 </label>
               </div>
 
               {ingestResult?.triage && (
-                <div className={`p-3.5 rounded-xl border space-y-1.5 ${
+                <div className={`p-3.5 rounded-xl border space-y-2 ${
                   ingestResult.triage.triage_lane === 'MERAH'
                     ? (isLight ? 'bg-rose-50 border-rose-300 text-rose-950' : 'bg-rose-500/15 border-rose-500/35 text-rose-100')
                     : ingestResult.triage.triage_lane === 'KUNING'
@@ -1567,6 +1595,29 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     </span>
                   </div>
                   <p className="text-[11px] leading-relaxed">{ingestResult.triage.ringkasan_bukti_audit}</p>
+                  {ingestResult.verify_pipeline && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-current/15 text-[10px] font-mono">
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 font-bold">
+                        ML Risk Prob: {(Number(ingestResult.verify_pipeline.stage_4_in_memory_ml_inference?.ml_fraud_probability || 0) * 100).toFixed(1)}%
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 font-bold">
+                        Latensi /verify: {Number(ingestResult.verify_pipeline.total_pipeline_latency_ms || 0).toFixed(1)} ms
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 font-bold">
+                        S06 Guard: {ingestResult.verify_pipeline.bea_integration_touchpoints?.s06_keuangan_guard}
+                      </span>
+                      {ingestResult.verify_pipeline.hard_negative_protected && (
+                        <span className="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold">
+                          FairGuard Hard-Negative AKTIF
+                        </span>
+                      )}
+                      {ingestResult.verify_pipeline.stage_5_and_6_llm_and_fallback?.fallback_active && (
+                        <span className="px-2 py-0.5 rounded bg-amber-600 text-white font-bold">
+                          Local Rule Fallback HTTP 200
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {ingestResult.added_to_queue && (
                     <div className="pt-1">
                       <button
@@ -1606,7 +1657,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   disabled={ingestSubmitting}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer disabled:opacity-50"
                 >
-                  {ingestSubmitting ? 'Menghitung Skor Tri-Layer...' : 'Jalankan Uji Saring Tri-Layer'}
+                  {ingestSubmitting ? 'Menjalankan Inferensi Lapis 1-4...' : 'Verifikasi & Daftarkan FPK'}
                 </button>
               </div>
             </form>
@@ -1614,7 +1665,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         </div>
       )}
 
-      {/* MODAL TARIK DATA FPK KOLEKTIF VCLAIM + PRA-PURIFIKASI VEDIKA */}
+      {/* MODAL TARIK DATA FPK KOLEKTIF VCLAIM + PRA-PURIFIKASI CLAIMTRACE */}
       {showFpkPullModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
@@ -1624,7 +1675,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/10'
             }`}>
               <div>
-                <h3 className="text-sm font-bold">Tarik Data Klaim / FPK Kolektif (VClaim &rarr; VEDIKA)</h3>
+                <h3 className="text-sm font-bold">Tarik Data Klaim / FPK Kolektif (VClaim &rarr; ClaimTrace)</h3>
                 <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                   Sinkronisasi batch FPK FKRTL + Pra-Purifikasi Tri-Lapis otomatis &amp; Plotting awal.
                 </p>
@@ -1707,7 +1758,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Jumlah Berkas Ditarik (1–5)</label>
+                  <label className="block text-[11px] font-bold mb-1">Jumlah Berkas Ditarik (1 - 5)</label>
                   <input
                     type="number"
                     min="1"

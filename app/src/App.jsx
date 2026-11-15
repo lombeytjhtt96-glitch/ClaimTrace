@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson, prefetchDashboardHotEndpoints } from './services/apiConfig';
+import {
+  API_BASE_URL,
+  authFetch,
+  getCachedJsonSync,
+  cachedAuthGetJson,
+  prefetchDashboardHotEndpoints,
+  getStoredAuthToken,
+  hasValidSessionStorage,
+  clearSessionStorage,
+  getDeviceFingerprint,
+  saveAuthenticatedSession,
+} from './services/apiConfig';
 import { Analytics } from '@vercel/analytics/react';
 import { 
   Bell, Search, Shield, ShieldCheck, AlertTriangle, CheckCircle, XCircle, 
@@ -8,21 +19,16 @@ import {
   HelpCircle, Home, Smartphone, Monitor, RefreshCw, Lock,
   Clock, Hospital, Stethoscope, AlertOctagon, Download, Eye, Check, X,
   Share2, Mail, Printer, QrCode, CreditCard, ChevronLeft, Info,
-  PhoneCall, Heart, ListFilter, GitBranch, Database, ShieldAlert,
-  Radio, Key, LayoutDashboard, Building2, UserCheck, Layers,
+  PhoneCall, Heart, ListFilter, Database, ShieldAlert,
+  Radio, Key, LayoutDashboard, Building2, UserCheck,
   ChevronDown, LogOut, PanelLeftClose, PanelLeft, ExternalLink, Bot,
   EyeOff, RotateCcw, Settings, Briefcase, Zap, Flag, Calendar,
-  Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon
+  Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon,
+  FileCheck2, Trophy
 } from 'lucide-react';
 
-// Public Components (Eager for immediate first paint on Landing)
-import LandingPage from './components/Public/LandingPage';
-import InstitutionalLegalModal from './components/Public/InstitutionalLegalModal';
-import CookieConsentBanner from './components/Public/CookieConsentBanner';
-
-// Auth Components (Lazy-loaded on auth transition)
-const SignInPage = lazy(() => import('./components/Auth/SignInPage'));
-const MfaStepUpPage = lazy(() => import('./components/Auth/MfaStepUpPage'));
+// Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
+import SignInPage from './components/Auth/SignInPage';
 const SignOutPage = lazy(() => import('./components/Auth/SignOutPage'));
 
 // Primary Cockpit Modules (Lazy-loaded for sub-second Landing LCP)
@@ -45,7 +51,6 @@ const BugarScreen = lazy(() => import('./components/MobileJKN/BugarScreen'));
 const ObatScreen = lazy(() => import('./components/MobileJKN/ObatScreen'));
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
-const GraphVisualizer = lazy(() => import('./components/Dashboard/GraphVisualizer'));
 const EmpiricalForensics = lazy(() => import('./components/Dashboard/EmpiricalForensics'));
 const FaskesSurveillance = lazy(() => import('./components/Dashboard/FaskesSurveillance'));
 const DpjpIntelligence = lazy(() => import('./components/Dashboard/DpjpIntelligence'));
@@ -68,19 +73,32 @@ const DatabaseViewerView = lazy(() => import('./components/Dashboard/DatabaseVie
 const HealthAIChatView = lazy(() => import('./components/Dashboard/HealthAIChatView'));
 const PostHealthkathonSuiteView = lazy(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
 const OfficialReportsView = lazy(() => import('./components/Dashboard/OfficialReportsView'));
+const DocumentCheckerView = lazy(() => import('./components/Dashboard/DocumentCheckerView'));
+const FraudRankingView = lazy(() => import('./components/Dashboard/FraudRankingView'));
 
 export default function App() {
-  // Read initial view & tab from URL params for instant navigation & deep-linking
+  // Fail-closed initial router: NEVER opens landing or unauthenticated dashboard
+  const getInitialResetToken = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token') || '';
+    }
+    return '';
+  };
+
   const getInitialView = () => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const v = params.get('view') || window.location.hash.replace('#', '');
-      if (v === 'health_ai') return 'dashboard';
-      if (['landing', 'login', 'mfa', 'logout', 'dashboard'].includes(v)) {
-        return v;
+      if (v === 'reset_password') return 'reset_password';
+      if (v === 'logout') return 'logout';
+      if (hasValidSessionStorage()) {
+        if (v === 'dashboard' || v === 'health_ai' || !v || v === 'login' || v === 'landing' || v === 'mfa') {
+          return v === 'login' ? 'login' : 'dashboard';
+        }
       }
     }
-    return 'landing';
+    return 'login';
   };
 
   const getInitialTab = () => {
@@ -94,15 +112,20 @@ export default function App() {
         db_viewer: 'database_viewer',
       };
       const t = aliasMap[rawTab] || rawTab;
-      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
+      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings', 'document_checker', 'fraud_ranking'].includes(t)) {
         return t;
       }
     }
     return 'executive';
   };
 
-  // Global View Router: 'landing' | 'login' | 'mfa' | 'logout' | 'dashboard'
+  // Global View Router: strictly 'login' | 'reset_password' | 'logout' | 'dashboard'
+  const [resetToken, setResetToken] = useState(getInitialResetToken);
   const [authView, setAuthView] = useState(getInitialView);
+  const [authStatusVerified, setAuthStatusVerified] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState('');
+  const [logoutReason, setLogoutReason] = useState('');
+  const [sessionIdleSeconds, setSessionIdleSeconds] = useState(null);
 
   // Mode tampilan dalam Cockpit: 'dashboard' (Full Cockpit) | 'split' (Dual View HP & Cockpit) | 'mobile' (Only Phone)
   const getInitialViewMode = () => {
@@ -115,82 +138,92 @@ export default function App() {
   };
   const [viewMode, setViewMode] = useState(getInitialViewMode);
   
-  // Tab aktif di Dashboard Cockpit (11 Modules):
-  // 'executive' | 'queue' | 'investigation' | 'agent_copilot' | 'graph' | 'empirical' | 'faskes' | 'dpjp' | 'mobile_bridge' | 'decision' | 'audit'
+  // Tab aktif di Dashboard Cockpit:
+  // 'executive' | 'queue' | 'investigation' | 'agent_copilot' | 'empirical' | 'faskes' | 'dpjp' | 'mobile_bridge' | 'decision' | 'audit'
   const [dashboardTab, setDashboardTab] = useState(getInitialTab);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
   const [selectedCase, setSelectedCase] = useState(null);
 
-  // Institutional Legal & Compliance Modal State (UU PDP, Terms, Security, SLA)
-  const getInitialLegalModal = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const m = params.get('modal') || params.get('legal');
-      if (['privacy', 'terms', 'security', 'sla'].includes(m)) {
-        return { isOpen: true, tab: m };
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobileViewport(mobile);
+      if (mobile) {
+        setSidebarCollapsed(true);
       }
-    }
-    return { isOpen: false, tab: 'privacy' };
-  };
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
-  const [legalModalOpen, setLegalModalOpen] = useState(() => getInitialLegalModal().isOpen);
-  const [legalModalTab, setLegalModalTab] = useState(() => getInitialLegalModal().tab);
-
-  const openLegalModal = (tab = 'privacy') => {
-    setLegalModalTab(tab);
-    setLegalModalOpen(true);
-  };
-
-  const navigateToLandingSection = (sectionId) => {
-    setAuthView('landing');
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 120);
-  };
-
-  // Sync state to URL for easy deep-linking and state preservation
+  // Sync state to URL while enforcing fail-closed login/dashboard boundaries
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.set('view', authView);
-      if (authView === 'dashboard') {
-        url.searchParams.set('tab', dashboardTab);
-        if (viewMode !== 'dashboard') {
-          url.searchParams.set('mode', viewMode);
-        } else {
-          url.searchParams.delete('mode');
-        }
-      } else {
+      const canShowDashboardUrl =
+        authView === 'dashboard' &&
+        (authStatusVerified || hasValidSessionStorage());
+      const safeUrlView = canShowDashboardUrl
+        ? 'dashboard'
+        : authView === 'reset_password'
+          ? 'reset_password'
+          : authView === 'logout'
+            ? 'logout'
+            : 'login';
+      if (safeUrlView === 'login') {
+        url.searchParams.delete('view');
         url.searchParams.delete('tab');
         url.searchParams.delete('mode');
+        url.searchParams.delete('token');
+        if (url.hash === '#login') {
+          url.hash = '';
+        }
+      } else {
+        url.searchParams.set('view', safeUrlView);
+        if (safeUrlView === 'dashboard') {
+          url.searchParams.set('tab', dashboardTab);
+          if (viewMode !== 'dashboard') {
+            url.searchParams.set('mode', viewMode);
+          } else {
+            url.searchParams.delete('mode');
+          }
+        } else {
+          url.searchParams.delete('tab');
+          url.searchParams.delete('mode');
+        }
+        if (safeUrlView === 'reset_password' && resetToken) {
+          url.searchParams.set('token', resetToken);
+        } else {
+          url.searchParams.delete('token');
+        }
       }
       window.history.replaceState(null, '', url.toString());
     }
-  }, [authView, dashboardTab, viewMode]);
+  }, [authView, dashboardTab, viewMode, authStatusVerified, resetToken]);
 
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      if (e.key === 'Escape' && legalModalOpen) {
-        setLegalModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [legalModalOpen]);
-
-  // Handle browser Back & Forward navigation buttons (popstate synchronization)
+  // Handle browser Back & Forward navigation buttons (fail-closed popstate synchronization)
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
-        const v = params.get('view') || window.location.hash.replace('#', '') || 'landing';
-        if (['landing', 'login', 'mfa', 'logout', 'dashboard'].includes(v)) {
-          setAuthView(v);
+        const v = params.get('view') || window.location.hash.replace('#', '') || 'login';
+        if (v === 'dashboard') {
+          if (hasValidSessionStorage()) {
+            setAuthView('dashboard');
+          } else {
+            setAuthStatusVerified(false);
+            setSessionNotice('Akses dasbor ditolak: sesi verifikator belum terautentikasi.');
+            setAuthView('login');
+            return;
+          }
+        } else if (v === 'reset_password') {
+          setResetToken(params.get('token') || '');
+          setAuthView('reset_password');
+        } else if (v === 'logout') {
+          setAuthView('logout');
+        } else {
+          setAuthView('login');
         }
         const rawTab = params.get('tab');
         const aliasMap = {
@@ -198,7 +231,7 @@ export default function App() {
           db_viewer: 'database_viewer',
         };
         const t = aliasMap[rawTab] || rawTab;
-        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'graph', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
+        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings'].includes(t)) {
           setDashboardTab(t);
         }
         const m = params.get('mode');
@@ -253,7 +286,7 @@ export default function App() {
   ));
 
   useEffect(() => {
-    if (authView !== 'dashboard') return;
+    if (authView !== 'dashboard' || !authStatusVerified) return;
     let active = true;
     const refreshBadges = async () => {
       try {
@@ -273,38 +306,32 @@ export default function App() {
       active = false;
       window.removeEventListener('claimtrace:operations-updated', handleOpsUpdated);
     };
-  }, [authView, badgesUrl]);
+  }, [authView, authStatusVerified, badgesUrl]);
 
-  // Navigasi Cockpit Sidebar Terfokus Penuh pada Pengendalian Kecurangan Pra-Bayar
+  // Navigasi Cockpit Sidebar Terstruktur & Terfokus (Alur Kerja Intuitif Tanpa Slop)
   const sidebarNavGroups = [
     {
-      group: '1. Pengendalian Fraud (Fokus Utama)',
+      group: 'Alur Kerja Utama',
       items: [
-        { id: 'executive', label: 'Kokpit Anti-Fraud Nasional', icon: LayoutDashboard },
-        { id: 'empirical', label: 'Peta Anomali 1,69 Juta Klaim', icon: Database },
-        { id: 'database_viewer', label: 'Gudang Data BPJS (SQL)', icon: Layers },
+        { id: 'executive', label: 'Dashboard Ringkasan', icon: LayoutDashboard },
+        { id: 'queue', label: 'Antrean Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
+        { id: 'investigation', label: 'Telaah Kasus', icon: FileText },
+        { id: 'decision', label: 'Konsol Putusan', icon: ShieldAlert },
       ],
     },
     {
-      group: '2. Penyaringan Klaim Anomali',
+      group: 'Alat Investigasi',
       items: [
-        { id: 'queue', label: 'Pipeline Penyaringan Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { id: 'investigation', label: 'Bedah Saring 3 Lapis (0-100)', icon: FileText, badge: 'Inti', badgeColor: 'bg-rose-100 text-rose-800 border-rose-200' },
-        { id: 'graph', label: 'Deteksi Sindikat & Klaim Ganda', icon: GitBranch },
-        { id: 'faskes', label: 'Profil Risiko Faskes (FRI)', icon: Building2 },
-        { id: 'dpjp', label: 'Validasi SIP & Geovelocity', icon: UserCheck },
-        { id: 'mobile_bridge', label: 'Konfirmasi Mobile JKN (S3)', icon: Radio },
+        { id: 'document_checker', label: 'Cek Dokumen RS', icon: FileCheck2 },
+        { id: 'fraud_ranking', label: 'Peringkat Risiko Faskes', icon: Building2 },
       ],
     },
     {
-      group: '3. Putusan, Laporan & Audit',
+      group: 'Laporan & Audit',
       items: [
-        { id: 'decision', label: 'Konsol Putusan & BAKB', icon: ShieldAlert },
-        { id: 'official_reports', label: 'Laporan Resmi Kedinasan (BAHV)', icon: Printer, badge: 'Resmi', badgeColor: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
-        { id: 'cases_mgmt', label: 'Daftar Berkas & Klarifikasi', icon: Briefcase },
-        { id: 'flagged_sessions', label: 'Klaim Ditandai (Hold/Flag)', icon: Flag, badge: sidebarBadges.flagged_count !== null ? String(sidebarBadges.flagged_count) : undefined, badgeColor: 'bg-amber-50 text-amber-800 border-amber-200' },
-        { id: 'audit', label: 'Ledger Audit SHA-256', icon: Key },
-        { id: 'settings', label: 'Tata Kelola & Kebijakan', icon: Settings },
+        { id: 'official_reports', label: 'Laporan Resmi (BAHV)', icon: Printer },
+        { id: 'audit', label: 'Jejak Audit Sistem', icon: Key },
+        { id: 'settings', label: 'Pengaturan', icon: Settings },
       ],
     },
   ];
@@ -320,48 +347,257 @@ export default function App() {
       .trim();
 
   const getInitialUser = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && hasValidSessionStorage()) {
       try {
         const stored = localStorage.getItem('claimtrace_user');
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed && (parsed.name || parsed.nip)) {
+          const nipVal = parsed?.nip || parsed?.sub;
+          if (parsed && parsed.isMfaVerified === true && (parsed.name || nipVal)) {
             return {
-              name: sanitizeOfficialField(parsed.name, 'dr. Siti Rahma, Sp.PK'),
-              email: sanitizeOfficialField(parsed.email, 'siti.rahma@bpjs-kesehatan.go.id'),
-              nip: sanitizeOfficialField(parsed.nip, '19870420 201101 2 001'),
-              role: sanitizeOfficialField(parsed.role || parsed.roleTitle, 'Verifikator Medis Senior'),
-              roleTitle: sanitizeOfficialField(parsed.roleTitle, 'Auditor Investigasi Klaim'),
+              name: sanitizeOfficialField(parsed.name, ''),
+              email: sanitizeOfficialField(parsed.email, ''),
+              nip: sanitizeOfficialField(nipVal, ''),
+              role: sanitizeOfficialField(parsed.role || parsed.roleTitle, 'Verifikator Medis'),
+              roleTitle: sanitizeOfficialField(parsed.roleTitle || parsed.role, 'Verifikator Medis'),
               unit: parsed.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-              avatar: parsed.avatar || (parsed.name ? parsed.name.slice(0, 2).toUpperCase() : 'SR'),
-              isMfaVerified: parsed.isMfaVerified ?? true,
-              allowedRoles: parsed.allowedRoles || ['FRAUD_INVESTIGATOR', 'ANALYST', 'SUPER_ADMIN']
+              avatar: parsed.avatar || (parsed.name ? parsed.name.slice(0, 2).toUpperCase() : 'VR'),
+              isMfaVerified: true,
+              idleTimeoutMinutes: parsed.idleTimeoutMinutes || 15,
+              sessionDurationMinutes: parsed.sessionDurationMinutes || 480,
+              allowedRoles: parsed.allowedRoles || ['VERIFICATOR_MEDIS'],
             };
           }
         }
       } catch {}
     }
-    return {
-      name: 'dr. Siti Rahma, Sp.PK',
-      email: 'siti.rahma@bpjs-kesehatan.go.id',
-      nip: '19870420 201101 2 001',
-      role: 'Verifikator Medis Senior',
-      unit: 'Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan',
-      avatar: 'SR',
-      isMfaVerified: true,
-      allowedRoles: ['VERIFICATOR_MEDIS', 'TRIAGE_OFFICER', 'BAKB_SIGNER']
-    };
+    return null;
   };
 
   const [currentUser, setCurrentUser] = useState(getInitialUser);
+  const [lastLoggedOutUser, setLastLoggedOutUser] = useState(null);
+  const lastServerTouchRef = useRef(0);
+  const lastUiResetRef = useRef(Date.now());
+  const idleLimitSecRef = useRef(900);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && currentUser) {
+    if (typeof window !== 'undefined' && currentUser?.isMfaVerified) {
       try {
         localStorage.setItem('claimtrace_user', JSON.stringify(currentUser));
       } catch {}
     }
   }, [currentUser]);
+
+  const handleLogout = async (revokeAll = false, customReason = '') => {
+    const token = getStoredAuthToken();
+    const userSnapshot = currentUser ? { ...currentUser } : null;
+    try {
+      if (token) {
+        await fetch(
+          `${API_BASE_URL}/api/v1/auth/logout?token=${encodeURIComponent(token)}${revokeAll ? '&revoke_all=true' : ''}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'X-BPJS-Token': token,
+              'X-Device-Fingerprint': getDeviceFingerprint(),
+            },
+          }
+        );
+      }
+    } catch {
+      // Tetap cabut sesi lokal meskipun koneksi backend terputus (fail-closed)
+    }
+    clearSessionStorage({ broadcast: true });
+    setLastLoggedOutUser(userSnapshot);
+    setCurrentUser(null);
+    setAuthStatusVerified(false);
+    setSessionIdleSeconds(null);
+    setProfileMenuOpen(false);
+    setAlertsMenuOpen(false);
+    setLogoutReason(
+      customReason ||
+        (revokeAll
+          ? 'Seluruh sesi perangkat aktif Anda telah dicabut dari server.'
+          : 'Sesi verifikator telah ditutup dan token akses berhasil dicabut.')
+    );
+    setAuthView('logout');
+  };
+
+  // Fail-closed strict backend session check on load, focus, and 30s interval
+  const verifySessionWithServer = React.useCallback(async (touch = false) => {
+    const token = getStoredAuthToken();
+    if (!token) {
+      setAuthStatusVerified(false);
+      setCurrentUser(null);
+      setSessionIdleSeconds(null);
+      setAuthView((prev) => {
+        if (prev === 'dashboard') {
+          setSessionNotice('Sesi belum terautentikasi. Silakan masuk melalui gerbang verifikator.');
+          return 'login';
+        }
+        return prev;
+      });
+      return false;
+    }
+
+    try {
+      if (touch) lastServerTouchRef.current = Date.now();
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/auth/verify-session?touch=${touch ? 1 : 0}&token=${encodeURIComponent(token)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-BPJS-Token': token,
+            'X-Device-Fingerprint': getDeviceFingerprint(),
+          },
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.status !== 'valid' || !data?.user) {
+        const errMsg =
+          data?.detail ||
+          data?.message ||
+          'Sesi tidak valid, kedaluwarsa, atau tidak cocok perangkat. Silakan masuk kembali.';
+        clearSessionStorage({ broadcast: true });
+        setAuthStatusVerified(false);
+        setCurrentUser(null);
+        setSessionIdleSeconds(null);
+        setSessionNotice(errMsg);
+        setAuthView((prev) => (prev === 'logout' || prev === 'reset_password' ? prev : 'login'));
+        return false;
+      }
+
+      const raw = data.user;
+      const nipVal = raw.nip || raw.sub || '';
+      const mfaDone = Boolean(raw.isMfaVerified ?? raw.mfa);
+      if (!mfaDone || !nipVal) {
+        clearSessionStorage({ broadcast: true });
+        setAuthStatusVerified(false);
+        setCurrentUser(null);
+        setSessionNotice('Otorisasi MFA berlapis wajib diselesaikan sebelum masuk ke dasbor.');
+        setAuthView((prev) => (prev === 'logout' || prev === 'reset_password' ? prev : 'login'));
+        return false;
+      }
+
+      setCurrentUser((prev) => {
+        const merged = {
+          ...(prev || {}),
+          ...raw,
+          nip: nipVal,
+          name: sanitizeOfficialField(raw.name || prev?.name, nipVal),
+          email: sanitizeOfficialField(raw.email || prev?.email, ''),
+          role: sanitizeOfficialField(raw.role || prev?.role, 'Verifikator Medis'),
+          roleTitle: sanitizeOfficialField(prev?.roleTitle || raw.roleTitle || raw.role, 'Verifikator Medis'),
+          unit: raw.unit || prev?.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
+          avatar: prev?.avatar || (raw.name ? raw.name.slice(0, 2).toUpperCase() : 'VR'),
+          isMfaVerified: true,
+          idleTimeoutMinutes: raw.idle_sec ? Math.round(raw.idle_sec / 60) : (prev?.idleTimeoutMinutes || 15),
+          allowedRoles: raw.allowedRoles || prev?.allowedRoles || ['VERIFICATOR_MEDIS'],
+        };
+        saveAuthenticatedSession(token, merged);
+        return merged;
+      });
+
+      const srvIdle = data.session_timings?.idle_remaining_seconds;
+      if (typeof srvIdle === 'number') {
+        idleLimitSecRef.current = raw.idle_sec ? Number(raw.idle_sec) : Math.max(idleLimitSecRef.current, srvIdle);
+        setSessionIdleSeconds(srvIdle);
+      }
+      setAuthStatusVerified(true);
+      setSessionNotice('');
+      return true;
+    } catch {
+      setAuthStatusVerified(false);
+      setSessionNotice('Gagal memverifikasi sesi keamanan dengan server ClaimTrace.');
+      setAuthView((prev) => (prev === 'logout' || prev === 'reset_password' ? prev : 'login'));
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    verifySessionWithServer(false);
+    const onFocusOrVisible = () => {
+      if (document.visibilityState === 'visible' && getStoredAuthToken()) {
+        verifySessionWithServer(false);
+      }
+    };
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+    const intervalId = setInterval(() => {
+      if (getStoredAuthToken()) {
+        verifySessionWithServer(false);
+      }
+    }, 30000);
+    return () => {
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
+      clearInterval(intervalId);
+    };
+  }, [verifySessionWithServer]);
+
+  // Client-side sliding idle countdown + automatic session lockout
+  useEffect(() => {
+    if (authView !== 'dashboard' || !authStatusVerified || !currentUser?.isMfaVerified) {
+      return;
+    }
+    const onUserActivity = () => {
+      const now = Date.now();
+      if (now - lastUiResetRef.current > 5000) {
+        lastUiResetRef.current = now;
+        setSessionIdleSeconds(idleLimitSecRef.current);
+      }
+      if (now - lastServerTouchRef.current > 45000) {
+        verifySessionWithServer(true);
+      }
+    };
+    const events = ['mousemove', 'keydown', 'pointerdown', 'scroll'];
+    events.forEach((evt) => window.addEventListener(evt, onUserActivity, { passive: true }));
+    const tickId = setInterval(() => {
+      setSessionIdleSeconds((prev) => (typeof prev === 'number' ? Math.max(0, prev - 1) : prev));
+    }, 1000);
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, onUserActivity));
+      clearInterval(tickId);
+    };
+  }, [authView, authStatusVerified, currentUser?.isMfaVerified, verifySessionWithServer]);
+
+  useEffect(() => {
+    if (authView === 'dashboard' && authStatusVerified && sessionIdleSeconds === 0) {
+      const token = getStoredAuthToken();
+      if (token) {
+        fetch(`${API_BASE_URL}/api/v1/auth/logout?token=${encodeURIComponent(token)}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'X-BPJS-Token': token, 'X-Device-Fingerprint': getDeviceFingerprint() },
+        }).catch(() => {});
+      }
+      clearSessionStorage({ broadcast: true });
+      setAuthStatusVerified(false);
+      setCurrentUser(null);
+      setSessionIdleSeconds(null);
+      setProfileMenuOpen(false);
+      setSessionNotice('Sesi dikunci otomatis karena batas waktu tidak ada aktivitas (Idle Timeout).');
+      setAuthView('login');
+    }
+  }, [authView, authStatusVerified, sessionIdleSeconds]);
+
+  // Multi-tab logout / revocation synchronization
+  useEffect(() => {
+    const onStorageSync = (e) => {
+      if (e.key === 'bpjs_auth_token' || e.key === 'claimtrace_session_revoked_at') {
+        if (!getStoredAuthToken()) {
+          setAuthStatusVerified(false);
+          setCurrentUser(null);
+          setSessionIdleSeconds(null);
+          setProfileMenuOpen(false);
+          setSessionNotice('Sesi autentikasi telah ditutup atau dicabut dari tab lain.');
+          setAuthView((prev) => (prev === 'logout' || prev === 'reset_password' ? prev : 'login'));
+        }
+      }
+    };
+    window.addEventListener('storage', onStorageSync);
+    return () => window.removeEventListener('storage', onStorageSync);
+  }, []);
 
   // Header Popover States (Alerts Bell & Admin Profile Dropdown
   const [profileMenuOpen, setProfileMenuOpen] = useState(() => {
@@ -393,7 +629,7 @@ export default function App() {
       id: 'ALT-02',
       severity: 'high',
       type: 'PERINGATAN SLA 10 HK',
-      title: 'Kepatuhan Batas Waktu Verifikasi VEDIKA',
+      title: 'Kepatuhan Batas Waktu Verifikasi Klaim',
       message: 'Pantau antrean klaim Jalur Kuning/Merah sebelum batas Perpres 82/2018.',
       time: 'Aktif',
       is_seen: false,
@@ -402,7 +638,7 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (authView !== 'dashboard') return;
+    if (authView !== 'dashboard' || !authStatusVerified) return;
     let active = true;
     cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims`).then((rawList) => {
       if (!active || !Array.isArray(rawList) || rawList.length === 0) return;
@@ -446,7 +682,7 @@ export default function App() {
       }
     }).catch(() => {});
     return () => { active = false; };
-  }, [authView]);
+  }, [authView, authStatusVerified]);
 
   // Layar aktif di Mobile JKN Simulator
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -468,10 +704,19 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
-  // Handle HTTP 401 Unauthorized Session Expiration Interceptor
+  // Handle HTTP 401 Unauthorized Session Expiration Interceptor (Fail-Closed)
   useEffect(() => {
     const handleSessionExpired = () => {
-      setToastMessage('Sesi login verifikator telah kedaluwarsa. Silakan masuk kembali.');
+      const msg = 'Sesi verifikator telah kedaluwarsa, tidak cocok perangkat, atau dicabut server. Silakan masuk kembali.';
+      clearSessionStorage({ broadcast: true });
+      setAuthStatusVerified(false);
+      setCurrentUser(null);
+      setSessionIdleSeconds(null);
+      setProfileMenuOpen(false);
+      setAlertsMenuOpen(false);
+      setSessionNotice(msg);
+      setToastMessage(msg);
+      setAuthView('login');
     };
     if (typeof window !== 'undefined') {
       window.addEventListener('claimtrace:session-expired', handleSessionExpired);
@@ -533,8 +778,9 @@ export default function App() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  const isAuthThemeLocked = authView === 'login' || authView === 'reset_password';
   const effectiveTheme = theme === 'system' ? (systemPrefersLight ? 'light' : 'dark') : theme;
-  const isLight = effectiveTheme === 'light';
+  const isLight = isAuthThemeLocked ? true : effectiveTheme === 'light';
 
   useEffect(() => {
     try {
@@ -546,6 +792,12 @@ export default function App() {
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
+      const scheme = isLight ? 'light' : 'dark';
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      if (meta) {
+        meta.content = scheme;
+      }
+      document.documentElement.style.colorScheme = scheme;
       if (isLight) {
         document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
@@ -657,219 +909,77 @@ export default function App() {
     return clean.slice(0, 2).toUpperCase();
   };
 
-  // Handler pergantian peran cepat untuk pengujian kedinasan
-  const switchRole = (roleName, userName, nip, unit) => {
-    setCurrentUser({
-      name: userName,
-      nip: nip,
-      role: roleName,
-      unit: unit,
-      avatar: getInitials(userName),
-      isMfaVerified: true
-    });
-  };
-
   // -------------------------------------------------------------
   // RENDER APP WITH MOTION ANIMATED PRESENCE
   // -------------------------------------------------------------
   return (
     <>
       <AnimatePresence mode="wait">
-      {authView === 'landing' && (
-        <motion.div 
-          key="landing"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className={`${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'} min-h-screen font-inter transition-colors duration-200`}
-        >
-          <LandingPage 
-            isLight={isLight}
-            onToggleTheme={() => setTheme((curr) => (curr === 'light' ? 'dark' : 'light'))}
-            onEnterCockpit={() => setAuthView('login')}
-            onExplore={() => setAuthView('dashboard')}
-            onGoToLogin={() => setAuthView('login')}
-            onGoToDemo={() => setAuthView('dashboard')}
-            onChangeView={(v) => setAuthView(v)}
-            onOpenLegal={openLegalModal}
-          />
-        </motion.div>
-      )}
-
-      {(authView === 'login' || authView === 'mfa') && (
+      {(authView === 'login' || authView === 'reset_password') && (
         <motion.div 
           key="login"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className={`${isLight ? 'bg-slate-50 text-slate-900' : 'bg-[#000c24] text-white'} fixed inset-0 h-dvh max-h-dvh flex flex-col font-inter overflow-hidden select-none z-40 transition-colors duration-200`}
+          className="bg-[#F7F8FA] text-[#061B31] fixed inset-0 h-dvh max-h-dvh flex flex-col font-sans overflow-y-auto z-40"
         >
-          {/* Top Header Navbar */}
-          <header className={`shrink-0 ${isLight ? 'bg-white/90 border-slate-200 text-slate-900 shadow-sm' : 'bg-[#000c24]/90 border-white/10 text-white shadow-xl'} backdrop-blur-xl border-b py-3 px-4 sm:px-6 lg:px-8 z-30 transition-colors duration-200`}>
+          {/* Top Header Navbar (Halaman Auth selalu Tema Terang, tanpa tombol tema gelap) */}
+          <header className="shrink-0 bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)] border-b py-3 px-4 sm:px-6 lg:px-8 z-30">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
               
-              {/* Left Section: Logo & Nav */}
+              {/* Left Section: Logo */}
               <div className="flex items-center gap-8">
                 {/* Logo with Circular Container */}
-                <div 
-                  onClick={() => setAuthView('landing')}
-                  className="flex items-center gap-3 group cursor-pointer"
-                >
-                  <div className={`relative w-9 h-9 overflow-hidden rounded-full border ${isLight ? 'border-slate-200 bg-slate-100 group-hover:border-emerald-500' : 'border-white/20 bg-white/10 group-hover:border-emerald-500'} transition-colors duration-300 shadow-lg backdrop-blur-sm p-1 flex items-center justify-center shrink-0`}>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-9 h-9 overflow-hidden rounded-full border border-slate-200 bg-slate-100 transition-colors duration-300 shadow-sm p-1 flex items-center justify-center shrink-0">
                     <img 
                       alt="BPJS Kesehatan" 
                       className="object-contain w-full h-full" 
                       src="/assets/images/bpjs_icon.png"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-base font-bold leading-none ${isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'} tracking-tight transition-colors`}>
-                        ClaimTrace
-                      </span>
-                      <span className={`text-[9px] font-bold ${isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'} px-1.5 py-0.5 rounded border`}>
-                        DSS
-                      </span>
-                    </div>
-                    <span className={`text-[9px] uppercase tracking-widest ${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold mt-1`}>
-                      Penapisan Risiko Klaim
+                  <div className="flex items-center">
+                    <span className="text-base font-bold leading-none text-slate-900 tracking-tight">
+                      ClaimTrace
                     </span>
                   </div>
                 </div>
-
-                {/* Desktop Nav Links (Identik Lengkap dengan Landing Page) */}
-                <nav className="hidden md:flex items-center gap-6">
-                  <button 
-                    type="button"
-                    onClick={() => navigateToLandingSection('landing')}
-                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
-                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-                    }`}
-                  >
-                    <span>Beranda</span>
-                  </button>
-
-                  <button 
-                    type="button"
-                    onClick={() => navigateToLandingSection('feature')}
-                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
-                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-                    }`}
-                  >
-                    <span>Fitur Unggulan</span>
-                  </button>
-
-                  <button 
-                    type="button"
-                    onClick={() => navigateToLandingSection('about')}
-                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
-                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-                    }`}
-                  >
-                    <span>Tentang Sistem</span>
-                  </button>
-
-                  <button 
-                    type="button"
-                    onClick={() => navigateToLandingSection('contact')}
-                    className={`text-sm font-semibold transition-colors py-1 relative group cursor-pointer ${
-                      isLight ? 'text-slate-600 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-                    }`}
-                  >
-                    <span>Kontak Resmi</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => openLegalModal('privacy')}
-                    className={`text-sm font-semibold transition-colors py-1 relative group flex items-center space-x-1 cursor-pointer ${
-                      isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
-                    }`}
-                  >
-                    <Shield className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                    <span>Regulasi &amp; PDP</span>
-                  </button>
-                </nav>
-              </div>
-
-              {/* Right Section: Theme Toggle & Back to Landing Pill Button */}
-              <div className="flex items-center gap-2.5">
-                {/* Quick Theme Toggle Button */}
-                <button
-                  type="button"
-                  onClick={() => setTheme((curr) => (curr === 'light' ? 'dark' : 'light'))}
-                  title={isLight ? 'Beralih ke Tema Gelap (Cosmic Obsidian)' : 'Beralih ke Tema Terang (Clinical White)'}
-                  className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center ${
-                    isLight
-                      ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 hover:text-slate-900 shadow-2xs'
-                      : 'bg-white/10 border-white/15 text-white/80 hover:bg-white/15 hover:text-white'
-                  }`}
-                >
-                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
-                </button>
-
-                <button
-                  onClick={() => setAuthView('landing')}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 shadow-sm cursor-pointer ${
-                    isLight
-                      ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-200'
-                      : 'text-white/80 hover:text-white bg-white/10 hover:bg-white/15 border-white/15 hover:border-emerald-500/40'
-                  }`}
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Kembali ke Beranda</span>
-                </button>
               </div>
 
             </div>
           </header>
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center py-20 text-xs text-slate-500">Memuat gerbang autentikasi BPJS Kesehatan...</div>}>
-            <SignInPage 
-              initialOpenModal={authView === 'mfa'}
-              isLight={isLight}
-              onLoginSuccess={(user) => {
-                if (user) setCurrentUser(user);
-                setAuthView('dashboard');
-              }}
-            />
-          </Suspense>
+          <SignInPage
+            sessionNotice={sessionNotice}
+            initialMode={authView === 'reset_password' ? 'reset' : 'login'}
+            resetToken={resetToken}
+            onExitReset={() => {
+              setResetToken('');
+              setAuthView('login');
+            }}
+            onLoginSuccess={(verifiedUser, meta) => {
+              if (!verifiedUser || !verifiedUser.isMfaVerified) return;
+              if (meta?.idleTimeoutSeconds) {
+                idleLimitSecRef.current = Number(meta.idleTimeoutSeconds);
+                setSessionIdleSeconds(Number(meta.idleTimeoutSeconds));
+              } else {
+                idleLimitSecRef.current = (verifiedUser.idleTimeoutMinutes || 15) * 60;
+                setSessionIdleSeconds(idleLimitSecRef.current);
+              }
+              lastUiResetRef.current = Date.now();
+              lastServerTouchRef.current = Date.now();
+              setCurrentUser(verifiedUser);
+              setAuthStatusVerified(true);
+              setSessionNotice('');
+              setAuthView('dashboard');
+            }}
+          />
 
-          {/* Official Institutional Footer BPJS Kesehatan */}
-          <footer className={`shrink-0 ${
-            isLight
-              ? 'bg-slate-100/95 border-slate-200 text-slate-600'
-              : 'bg-[#00081c]/95 border-white/10 text-white/60'
-          } backdrop-blur-md border-t py-2 px-4 sm:px-8 text-xs z-20 transition-colors duration-200`}>
-            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-              <div className="flex items-center space-x-2">
-                <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
-                  © 2026 BPJS Kesehatan · ClaimTrace DSS
-                </span>
-                <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Hak Cipta Dilindungi</span>
-              </div>
-              <p className={`text-[10px] sm:text-[10.5px] italic text-center ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Standar: UU PDP No. 27/2022 · Perpres No. 82/2018 · ISO/IEC 27001:2022
-              </p>
-              <div className={`flex items-center gap-2.5 text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                <button onClick={() => openLegalModal('privacy')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
-                  Privacy
-                </button>
-                <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('terms')} className={`transition cursor-pointer font-semibold ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
-                  Terms
-                </button>
-                <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('security')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
-                  Keamanan
-                </button>
-                <span className={isLight ? 'text-slate-400' : 'text-white/30'}>•</span>
-                <button onClick={() => openLegalModal('sla')} className={`transition cursor-pointer ${isLight ? 'hover:text-emerald-700' : 'hover:text-emerald-400'}`}>
-                  SLA 10 Hari
-                </button>
-              </div>
+          <footer className="shrink-0 bg-slate-100 border-slate-200 text-slate-600 border-t py-2.5 px-4 sm:px-8 text-xs z-20">
+            <div className="max-w-6xl mx-auto flex items-center justify-center">
+              <span className="font-medium text-slate-700">
+                © 2026 BPJS Kesehatan · ClaimTrace
+              </span>
             </div>
           </footer>
         </motion.div>
@@ -885,17 +995,23 @@ export default function App() {
         >
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-slate-500">Menutup sesi verifikator...</div>}>
             <SignOutPage 
-              onLoginAgain={() => setAuthView('login')}
-              onGoToLogin={() => setAuthView('login')}
-              onGoToLanding={() => setAuthView('landing')}
-              user={currentUser}
+              onLoginAgain={() => {
+                setSessionNotice('');
+                setAuthView('login');
+              }}
+              onGoToLogin={() => {
+                setSessionNotice('');
+                setAuthView('login');
+              }}
+              user={lastLoggedOutUser || currentUser}
+              reason={logoutReason}
               isLight={isLight}
             />
           </Suspense>
         </motion.div>
       )}
 
-      {authView === 'dashboard' && (
+      {authView === 'dashboard' && authStatusVerified && currentUser?.isMfaVerified ? (
         <motion.div 
           key="dashboard"
           id="cockpit-root"
@@ -903,19 +1019,19 @@ export default function App() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className={`h-dvh max-h-dvh flex flex-col font-inter antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
+          className={`h-dvh max-h-dvh flex flex-col font-sans antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
             isLight
-              ? 'bg-[#f8fafc] text-slate-900 theme-light'
-              : 'dark bg-gradient-to-b from-[#000c24] via-[#00153A] to-[#001D58] text-white theme-dark'
+              ? 'bg-[#f4f7f7] text-slate-900 theme-light'
+              : 'dark bg-[#18202c] text-[#f1f5f9] theme-dark'
           }`}
         >
           {/* ======================================================== */}
-          {/* UNIFIED ADMIN HEADER (FUTURISTIC COCKPIT)   */}
+          {/* UNIFIED HEADER (CLINICAL PRECISION)                    */}
           {/* ======================================================== */}
           <header className={`backdrop-blur-xl border-b px-4 py-2.5 shrink-0 z-40 transition-colors duration-200 ${
             isLight
-              ? 'bg-white/95 border-slate-200 text-slate-800 shadow-xs'
-              : 'bg-[#000c24]/90 border-white/10 text-white shadow-xl'
+              ? 'bg-white/95 border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.03)]'
+              : 'bg-[#0E1116]/95 border-white/[0.08] text-[#F3F5F8]'
           }`}>
             <div className="w-full flex items-center justify-between gap-3">
               
@@ -932,9 +1048,9 @@ export default function App() {
                 </button>
 
                 <div 
-                  onClick={() => setAuthView('landing')}
+                  onClick={() => setDashboardTab('executive')}
                   className="flex items-center space-x-2.5 cursor-pointer group"
-                  title="Kembali ke Beranda Publik"
+                  title="Dashboard Ringkasan Klaim JKN"
                 >
                   <div className={`h-8 w-8 rounded-full p-1 flex items-center justify-center shrink-0 border shadow-sm backdrop-blur-md ${
                     isLight 
@@ -949,42 +1065,24 @@ export default function App() {
                   </div>
                   <div className="hidden sm:block">
                     <div className="flex items-center space-x-1.5">
-                      <span className={`font-bold tracking-tight text-sm transition-colors ${
+                      <span className={`font-display font-bold tracking-tight text-sm transition-colors ${
                         isLight ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-400'
                       }`}>ClaimTrace</span>
-                      <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded border ${
+                      <span className={`text-[9.5px] font-mono font-semibold px-1.5 py-0.5 rounded-md border ${
                         isLight 
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                           : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                       }`}>
                         DSS JKN
                       </span>
                     </div>
-                    <p className={`text-[10px] hidden 2xl:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    <p className={`text-[10px] hidden 2xl:block whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-white/55'}`}>
                       Pengawasan Pra-Pembayaran Klaim JKN
                     </p>
                   </div>
                 </div>
 
-                {/* Metronic 9 Breadcrumbs Navigation */}
-                <div className="hidden lg:flex items-center space-x-2 text-xs pl-3 border-l border-slate-300 dark:border-slate-700">
-                  <span 
-                    className={`cursor-pointer hover:underline font-medium ${isLight ? 'text-slate-500 hover:text-emerald-700' : 'text-slate-400 hover:text-emerald-400'}`} 
-                    onClick={() => setAuthView('landing')}
-                  >
-                    Portal BPJS
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 font-bold shrink-0" />
-                  <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                    VEDIKA FPK
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 font-bold shrink-0" />
-                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    {sidebarNavItems.find(i => i.id === dashboardTab)?.label || 'Kokpit Anti-Fraud'}
-                  </span>
-                </div>
-
-                {/* Quick Search Bar (Glass Input) */}
+                {/* Quick Search Bar */}
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1004,32 +1102,34 @@ export default function App() {
                     } else if (ql.includes('dpjp') || ql.includes('sip') || ql.includes('geovelocity')) {
                       setDashboardTab('dpjp');
                     } else if (ql.includes('graf') || ql.includes('sindikat')) {
-                      setDashboardTab('graph');
+                      setDashboardTab('fraud_ranking');
                     } else {
                       setGlobalSearchQuery(q);
                       setDashboardTab('queue');
                     }
                   }}
-                  className={`hidden xl:flex items-center border rounded-xl px-2.5 py-1.5 w-48 2xl:w-64 relative ml-1 transition-colors ${
-                    isLight ? 'bg-slate-100/90 border-slate-300 text-slate-900' : 'bg-white/10 border-white/10 text-white'
+                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-60 xl:w-72 2xl:w-80 relative ml-2 transition-colors focus-within:ring-2 ${
+                    isLight
+                      ? 'bg-slate-50 border-slate-200 text-slate-900 focus-within:bg-white focus-within:border-emerald-500/60 focus-within:ring-emerald-500/20'
+                      : 'bg-white/10 border-white/15 text-white focus-within:border-emerald-400/60 focus-within:ring-emerald-400/20'
                   }`}
                 >
-                  <Search className={`w-3.5 h-3.5 mr-1.5 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
+                  <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/50'}`} />
                   <input
                     type="text"
-                    placeholder="Cari modul / SEP..."
+                    placeholder="Cari modul, No. SEP, Faskes..."
                     value={headerSearch}
                     onChange={(e) => setHeaderSearch(e.target.value)}
-                    className={`bg-transparent border-none outline-none text-xs w-full pr-12 pl-0.5 focus:ring-0 ${
-                      isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/40'
+                    className={`bg-transparent border-none outline-none text-xs w-full pr-14 pl-0.5 focus:ring-0 ${
+                      isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/45'
                     }`}
                   />
                   <button
                     type="submit"
-                    className={`absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2 py-0.5 text-[10px] font-bold border transition-colors cursor-pointer keep-white ${
+                    className={`absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md px-2 py-0.5 text-[11px] font-medium border transition-colors cursor-pointer ${
                       isLight 
-                        ? 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-600 shadow-xs' 
-                        : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500/50 shadow-xs'
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80' 
+                        : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
                     }`}
                   >
                     Cari
@@ -1037,111 +1137,23 @@ export default function App() {
                 </form>
               </div>
 
-              {/* Center: VIEW MODE CONTROLLER (LAYAR PENUH vs DUAL VIEW vs MOBILE JKN) */}
-              <div className={`flex items-center p-1 rounded-xl border text-xs font-semibold shrink-0 transition-colors ${
-                isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/70'
-              }`}>
-                <button
-                  onClick={() => setViewMode('dashboard')}
-                  aria-label="Beralih ke tampilan Cockpit layar penuh"
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
-                    viewMode === 'dashboard' 
-                      ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
-                      : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
-                  }`}
-                >
-                  <Monitor className="w-3.5 h-3.5 shrink-0" />
-                  <span>Layar Penuh</span>
-                </button>
-                <button
-                  onClick={() => setViewMode(viewMode === 'split' ? 'dashboard' : 'split')}
-                  aria-label="Beralih ke tampilan Dual View Mobile JKN dan Cockpit"
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
-                    viewMode === 'split' 
-                      ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
-                      : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
-                  }`}
-                  title={viewMode === 'split' ? "Tutup telemetri & kembali ke Layar Penuh" : "Buka telemetri Mobile JKN berdampingan dengan cockpit"}
-                >
-                  <Activity className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden 2xl:inline">Dual View (Mobile &amp; Cockpit)</span>
-                  <span className="2xl:hidden">Dual View</span>
-                </button>
-                <button
-                  onClick={() => setViewMode(viewMode === 'mobile' ? 'dashboard' : 'mobile')}
-                  aria-label="Beralih ke aplikasi Mobile JKN peserta"
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
-                    viewMode === 'mobile' 
-                      ? (isLight ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-300' : 'bg-white/15 text-white font-bold shadow-sm border border-white/20') 
-                      : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white')
-                  }`}
-                  title={viewMode === 'mobile' ? "Kembali ke Dashboard Cockpit" : "Buka aplikasi Mobile JKN peserta"}
-                >
-                  <Smartphone className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden 2xl:inline">Mobile JKN Peserta</span>
-                  <span className="hidden md:inline 2xl:hidden">Mobile JKN</span>
-                </button>
-              </div>
-
-              {/* Right: Session Timer, Theme Quick Toggle, Notification Bell Popover & User Profile Dropdown */}
+              {/* Center/Right: Clean Navigation Actions */}
               <div className="flex items-center space-x-2 shrink-0">
-                {/* FastAPI Backend Status Indicator */}
-                <div 
-                  className={`hidden md:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono shadow-2xs whitespace-nowrap ${
-                    isLight 
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800' 
-                      : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-300'
-                  }`}
-                  title="Konektivitas FastAPI Python Backend Aktif di Port 8000"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <span className="font-semibold">FastAPI 8000</span>
-                </div>
-
-                {/* Laporan Kedinasan Quick Access */}
+                {/* Dual View Toggle (Mobile Simulation) */}
                 <button
                   type="button"
-                  onClick={() => setDashboardTab('official_reports')}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition shadow-xs cursor-pointer ${
-                    dashboardTab === 'official_reports'
-                      ? 'bg-emerald-700 text-white border-emerald-600'
-                      : isLight
-                        ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
-                        : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
+                  onClick={() => setViewMode(viewMode === 'split' ? 'dashboard' : 'split')}
+                  aria-label="Beralih ke tampilan Dual View"
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer ${
+                    viewMode === 'split'
+                      ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold')
+                      : (isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/70')
                   }`}
-                  title="Buka Dokumen Resmi Berita Acara Hasil Verifikasi (BAHV)"
+                  title="Buka panel Mobile JKN berdampingan"
                 >
-                  <Printer className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline">Laporan BAHV</span>
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Panel Mobile JKN</span>
                 </button>
-
-                {/* 6 Standar Siber & Anti-Fraud Pill (MITRE F3 · ATT&CK · NIST CSF 2.0) */}
-                <button
-                  type="button"
-                  onClick={() => openLegalModal('frameworks')}
-                  className={`hidden xl:flex items-center space-x-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-mono shadow-xs transition cursor-pointer whitespace-nowrap ${
-                    isLight 
-                      ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800' 
-                      : 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300 shadow-emerald-500/10'
-                  }`}
-                  title="Lihat Kepatuhan 6 Kerangka Kerja Siber & Anti-Fraud (MITRE F3, ATT&CK, NIST CSF, ATLAS, D3FEND, AI RMF)"
-                  aria-label="Buka Kerangka Kerja Siber & Anti-Fraud MITRE F3, ATT&CK, NIST"
-                >
-                  <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-                  <span className="font-bold hidden 2xl:inline">MITRE F3 · ATT&amp;CK · NIST</span>
-                  <span className="font-bold 2xl:hidden">MITRE F3 · NIST</span>
-                </button>
-
-                {/* Jam Resmi Server BPJS Kesehatan (WIB) */}
-                <div 
-                  className={`hidden lg:flex items-center space-x-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-mono tabular-nums shadow-2xs select-none whitespace-nowrap ${
-                    isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80'
-                  }`}
-                  title="Waktu Resmi Server Terpusat BPJS Kesehatan (WIB)"
-                >
-                  <Clock className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                  <span className="font-semibold tracking-tight">{currentServerTime}</span>
-                </div>
 
                 {/* Quick Theme Toggle Button (Light / Dark) */}
                 <button
@@ -1149,14 +1161,14 @@ export default function App() {
                   onClick={() => {
                     const nextTheme = effectiveTheme === 'light' ? 'dark' : 'light';
                     setTheme(nextTheme);
-                    setToastMessage(nextTheme === 'light' ? 'Tema Terang (Clinical White) Aktif' : 'Tema Gelap (Cosmic Obsidian) Aktif');
+                    setToastMessage(nextTheme === 'light' ? 'Tema Terang Aktif' : 'Tema Gelap Aktif');
                   }}
                   className={`p-2 rounded-xl transition cursor-pointer flex items-center justify-center border ${
                     isLight 
                       ? 'border-slate-200 bg-slate-100 text-amber-600 hover:bg-slate-200' 
                       : 'border-white/10 bg-white/5 text-amber-400 hover:bg-white/10'
                   }`}
-                  title={effectiveTheme === 'light' ? "Beralih ke Tema Gelap (Cosmic Obsidian)" : "Beralih ke Tema Terang (Clinical White)"}
+                  title={effectiveTheme === 'light' ? "Beralih ke Tema Gelap" : "Beralih ke Tema Terang"}
                   aria-label="Ganti Mode Tema Dasbor"
                 >
                   {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-400" />}
@@ -1314,6 +1326,28 @@ export default function App() {
                 </div>
 
                 {/* 2. User Avatar + Name + Dropdown Menu */}
+                {typeof sessionIdleSeconds === 'number' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardTab('settings');
+                      setProfileMenuOpen(false);
+                    }}
+                    title="Sisa waktu batas inaktivitas (Idle Timeout) sesi terverifikasi"
+                    className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono font-semibold transition cursor-pointer ${
+                      sessionIdleSeconds <= 120
+                        ? (isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-500/15 border-amber-500/30 text-amber-300')
+                        : (isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300')
+                    }`}
+                  >
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      Sesi {String(Math.floor(sessionIdleSeconds / 60)).padStart(2, '0')}:
+                      {String(sessionIdleSeconds % 60).padStart(2, '0')}
+                    </span>
+                  </button>
+                )}
+
                 <div className="relative">
                   <button
                     type="button"
@@ -1331,11 +1365,11 @@ export default function App() {
                       isLight ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-300' : 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
                     }`}>
                       <span className="font-bold tracking-tight">
-                        {currentUser.avatar && currentUser.avatar !== 'dS' ? currentUser.avatar : getInitials(currentUser.name)}
+                        {currentUser?.avatar && currentUser.avatar !== 'dS' ? currentUser.avatar : getInitials(currentUser?.name || 'VR')}
                       </span>
                     </div>
                     <span className={`hidden md:inline-block ml-2 text-xs font-semibold max-w-[140px] 2xl:max-w-[200px] truncate ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
-                      {sanitizeOfficialField(currentUser.name, 'dr. Siti Rahma, Sp.PK')}
+                      {sanitizeOfficialField(currentUser?.name, 'Verifikator Terotentikasi')}
                     </span>
                     <ChevronDown
                       className={`hidden md:inline-block ml-1 transition-transform duration-150 w-3.5 h-3.5 ${
@@ -1351,16 +1385,16 @@ export default function App() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96, y: 6 }}
                         transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                        className={`absolute right-0 mt-2.5 w-64 origin-top-right border rounded-2xl shadow-2xl focus:outline-none py-1.5 z-50 backdrop-blur-xl ${
-                          isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#00153A] border-white/10 text-white'
+                        className={`absolute right-0 mt-2.5 w-68 origin-top-right border rounded-2xl shadow-2xl focus:outline-none py-1.5 z-50 backdrop-blur-xl ${
+                          isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#0E1116] border-white/10 text-white'
                         }`}
                       >
-                        <div className={`px-4 py-3 border-b ${isLight ? 'border-slate-200 bg-slate-50/70' : 'border-white/10 bg-[#001030]'}`}>
+                        <div className={`px-4 py-3 border-b ${isLight ? 'border-slate-200 bg-slate-50/70' : 'border-white/10 bg-[#141922]'}`}>
                           <p className={`text-sm font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                            {sanitizeOfficialField(currentUser.name, 'dr. Siti Rahma, Sp.PK')}
+                            {sanitizeOfficialField(currentUser?.name, 'Verifikator JKN')}
                           </p>
                           <p className={`text-xs truncate mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                            {sanitizeOfficialField(currentUser.email, 'siti.rahma@bpjs-kesehatan.go.id')}
+                            {sanitizeOfficialField(currentUser?.email, '-')}
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
@@ -1368,68 +1402,16 @@ export default function App() {
                                 ? 'bg-slate-100 text-slate-700 border-slate-200' 
                                 : 'bg-white/10 text-white/80 border-white/15'
                             }`}>
-                              {sanitizeOfficialField(currentUser.role, 'VERIFICATOR_MEDIS')}
+                              {sanitizeOfficialField(currentUser?.role, 'VERIFICATOR_MEDIS')}
                             </span>
                             <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                              NIP {sanitizeOfficialField(currentUser.nip, '198704202011012001')}
+                              NIP {sanitizeOfficialField(currentUser?.nip, '-')}
                             </span>
                           </div>
-                        </div>
-
-                        <div className={`px-3 py-2 border-b space-y-1 ${isLight ? 'border-slate-100 bg-slate-50/40' : 'border-white/10 bg-black/20'}`}>
-                          <div className={`text-[9.5px] font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                            Simulasi Ganti Peran RBAC (C03.04)
+                          <div className={`mt-2 flex items-center gap-1.5 text-[10px] font-medium ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                            <span>MFA &amp; Binding Perangkat Terverifikasi</span>
                           </div>
-                          {[
-                            { id: '198704202011012001', label: 'Verifikator Medis · dr. Siti Rahma' },
-                            { id: '198501012010011001', label: 'Admin Cabang · Hendra Wijaya' },
-                            { id: '199003152018011005', label: 'Auditor Wasrik (Read-Only) · dr. Andi' },
-                          ].map((roleOpt) => (
-                            <button
-                              key={roleOpt.id}
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      identifier: roleOpt.id,
-                                      password: 'Password123!',
-                                      recaptcha_token: 'local-verified',
-                                    }),
-                                  });
-                                  const data = await res.json();
-                                  if (res.ok && data?.token && data?.user) {
-                                    localStorage.setItem('claimtrace_token', data.token);
-                                    localStorage.setItem('bpjs_session_token', data.token);
-                                    const nextUser = {
-                                      name: data.user.name,
-                                      email: data.user.email,
-                                      nip: data.user.nip,
-                                      role: data.user.role,
-                                      roleTitle: data.user.roleTitle,
-                                      unit: data.user.unit,
-                                      avatar: data.user.avatar || data.user.name.slice(0, 2).toUpperCase(),
-                                      allowedRoles: data.user.allowedRoles || [],
-                                      isMfaVerified: true,
-                                    };
-                                    setCurrentUser(nextUser);
-                                    localStorage.setItem('claimtrace_user', JSON.stringify(nextUser));
-                                    setProfileMenuOpen(false);
-                                    setToastMessage(`Sesi RBAC aktif beralih ke ${data.user.name} (${data.user.role}).`);
-                                  }
-                                } catch {}
-                              }}
-                              className={`w-full text-left px-2 py-1 rounded text-[10.5px] font-semibold transition cursor-pointer ${
-                                String(currentUser.nip || '').replace(/\s+/g, '') === roleOpt.id
-                                  ? (isLight ? 'bg-emerald-100 text-emerald-900 font-bold' : 'bg-emerald-500/25 text-emerald-300 font-bold')
-                                  : (isLight ? 'text-slate-600 hover:bg-slate-200/70' : 'text-white/70 hover:bg-white/10')
-                              }`}
-                            >
-                              {roleOpt.label}
-                            </button>
-                          ))}
                         </div>
 
                         <div className="p-1 space-y-0.5">
@@ -1466,17 +1448,14 @@ export default function App() {
                             <Settings className={`mr-2.5 w-4 h-4 transition-colors ${
                               isLight ? 'text-slate-400 group-hover:text-slate-700' : 'text-white/40 group-hover:text-white'
                             }`} />
-                            <span>Pengaturan Sistem</span>
+                            <span>Pengaturan Sistem &amp; Sesi</span>
                           </button>
 
                           <div className={`my-1 border-t ${isLight ? 'border-slate-100' : 'border-white/10'}`} />
 
                           <button
                             type="button"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              setAuthView('logout');
-                            }}
+                            onClick={() => handleLogout(false)}
                             className={`w-full text-left flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer group ${
                               isLight 
                                 ? 'text-rose-600 hover:bg-rose-50 hover:text-rose-700' 
@@ -1487,6 +1466,21 @@ export default function App() {
                               isLight ? 'text-rose-500 group-hover:text-rose-600' : 'text-rose-400 group-hover:text-rose-300'
                             }`} />
                             <span>Keluar Sesi</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleLogout(true)}
+                            className={`w-full text-left flex items-center px-3 py-2 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer group ${
+                              isLight 
+                                ? 'text-amber-700 hover:bg-amber-50 hover:text-amber-800' 
+                                : 'text-amber-300 hover:bg-amber-500/15 hover:text-amber-200'
+                            }`}
+                          >
+                            <ShieldAlert className={`mr-2.5 w-3.5 h-3.5 transition-colors ${
+                              isLight ? 'text-amber-600 group-hover:text-amber-700' : 'text-amber-400 group-hover:text-amber-300'
+                            }`} />
+                            <span>Cabut Semua Sesi Perangkat</span>
                           </button>
                         </div>
                       </motion.div>
@@ -1536,20 +1530,35 @@ export default function App() {
       {/* ======================================================== */}
       {/* MAIN CONTAINER WITH SIDEBAR & WORKSPACE                  */}
       {/* ======================================================== */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex-1 flex overflow-hidden min-h-0 relative">
+
+        {/* Mobile Drawer Backdrop */}
+        {isMobileViewport && !sidebarCollapsed && (
+          <div
+            onClick={() => setSidebarCollapsed(true)}
+            className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-30 lg:hidden"
+            aria-hidden="true"
+          />
+        )}
         
-        {/* COLLAPSIBLE SIDEBAR (METRONIC 9 REUI CLINICAL WHITE ARCHITECTURE) */}
+        {/* COLLAPSIBLE SIDEBAR (ICON-VIEW & HOVER-MENU ARCHITECTURE) */}
         <motion.aside 
-          animate={{ width: sidebarCollapsed ? 68 : 272 }}
+          animate={{ width: sidebarCollapsed ? (isMobileViewport ? 0 : 68) : 244 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className={`border-r flex flex-col justify-between shrink-0 overflow-hidden h-full z-10 select-none transition-colors duration-200 ${
+          className={`flex flex-col justify-between shrink-0 h-full z-40 select-none transition-colors duration-200 ${
+            isMobileViewport && !sidebarCollapsed ? 'fixed left-0 top-[54px] bottom-0 shadow-2xl border-r' : ''
+          } ${
+            sidebarCollapsed && isMobileViewport ? 'border-r-0 overflow-hidden pointer-events-none' : sidebarCollapsed ? 'border-r overflow-visible' : 'border-r overflow-hidden'
+          } ${
             isLight
-              ? 'bg-white border-slate-200 text-slate-800 shadow-sm'
-              : 'bg-[#000c24] border-white/10 text-white shadow-2xl'
+              ? 'bg-white border-[#061B31]/[0.08] text-[#061B31]'
+              : 'bg-[#0E1116] border-white/[0.08] text-[#F3F5F8]'
           }`}
         >
           {/* Navigation Links Grouped & Organized */}
           <div className={`p-2.5 overflow-y-auto flex-1 min-h-0 space-y-3.5 scrollbar-thin ${
+            sidebarCollapsed ? 'overflow-visible' : ''
+          } ${
             isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800'
           }`}>
             {sidebarNavGroups.map((group, gIdx) => (
@@ -1569,120 +1578,93 @@ export default function App() {
                   const Icon = item.icon;
                   const isActive = dashboardTab === item.id;
                   return (
-                    <motion.button
-                      key={item.id}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setDashboardTab(item.id);
-                        if (mainContentRef.current) {
-                          mainContentRef.current.scrollTop = 0;
-                          mainContentRef.current.scrollLeft = 0;
-                        }
-                      }}
-                      title={item.label}
-                      className={`relative w-full flex items-center ${
-                        sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'justify-between px-2.5 py-2'
-                      } rounded-xl text-xs transition-colors duration-150 cursor-pointer ${
-                        isActive
-                          ? (isLight
-                              ? 'text-emerald-900 font-bold bg-emerald-50 border border-emerald-300 shadow-xs'
-                              : 'text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30 shadow-xs')
-                          : (isLight
-                              ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
-                              : 'text-slate-300 hover:text-white hover:bg-slate-800/80 font-medium')
-                      }`}
-                    >
-                      <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-2.5 min-w-0'}`}>
-                        <Icon className={`${sidebarCollapsed ? 'w-4 h-4' : 'w-3.5 h-3.5'} shrink-0 ${
-                          isActive 
-                            ? (isLight ? 'text-emerald-700' : 'text-emerald-400') 
-                            : (isLight ? 'text-slate-400' : 'text-slate-400')
-                        }`} />
-                        {!sidebarCollapsed && (
-                          <span className="truncate text-left text-[11.5px]">{item.label}</span>
+                    <div key={item.id} className="relative group">
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setDashboardTab(item.id);
+                          if (isMobileViewport) {
+                            setSidebarCollapsed(true);
+                          }
+                          if (mainContentRef.current) {
+                            mainContentRef.current.scrollTop = 0;
+                            mainContentRef.current.scrollLeft = 0;
+                          }
+                        }}
+                        className={`relative w-full flex items-center ${
+                          sidebarCollapsed ? 'justify-center px-0 py-2.5' : 'justify-between px-3 py-2'
+                        } rounded-xl text-xs transition-colors duration-150 cursor-pointer ${
+                          isActive
+                            ? (isLight
+                                ? 'text-emerald-950 font-semibold bg-emerald-50/95 border border-emerald-200/90 shadow-xs'
+                                : 'text-emerald-300 font-semibold bg-emerald-500/15 border border-emerald-500/35 shadow-xs')
+                            : (isLight
+                                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border border-transparent font-medium'
+                                : 'text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent font-medium')
+                        }`}
+                      >
+                        {isActive && !sidebarCollapsed && (
+                          <span className={`absolute left-1 top-2 bottom-2 w-1 rounded-full ${isLight ? 'bg-emerald-600' : 'bg-emerald-400'}`} />
                         )}
-                      </div>
-                      {!sidebarCollapsed && item.badge && (
-                        <span
-                          className={`text-[9.5px] font-mono px-1.5 py-0.2 rounded font-bold shrink-0 ml-1.5 border leading-tight ${
-                            isActive
-                              ? (isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/30 text-emerald-200 border-emerald-400/50')
-                              : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700')
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
+                        <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-2.5 min-w-0 pl-1'}`}>
+                          <Icon className={`${sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4'} shrink-0 ${
+                            isActive 
+                              ? (isLight ? 'text-emerald-700' : 'text-emerald-400') 
+                              : (isLight ? 'text-slate-400 group-hover:text-slate-600' : 'text-slate-400 group-hover:text-slate-200')
+                          }`} />
+                          {!sidebarCollapsed && (
+                            <span className="truncate text-left text-[12px] tracking-tight">{item.label}</span>
+                          )}
+                        </div>
+                        {!sidebarCollapsed && item.badge && (
+                          <span
+                            className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded-md font-semibold shrink-0 ml-1.5 border leading-none ${
+                              isActive
+                                ? (isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/30 text-emerald-200 border-emerald-400/50')
+                                : (isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700')
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </motion.button>
+
+                      {/* HOVER MENU FLYOUT (FOR ICON-VIEW / COLLAPSED SIDEBAR) */}
+                      {sidebarCollapsed && (
+                        <div className={`fixed left-[76px] -mt-9 px-3.5 py-2.5 rounded-xl shadow-2xl border pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 z-50 min-w-[210px] backdrop-blur-xl ${
+                          isLight 
+                            ? 'bg-white border-slate-200 text-slate-800 shadow-slate-300/60' 
+                            : 'bg-[#222b38] border-[#2d3748] text-white shadow-black/80'
+                        }`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-xs">{item.label}</span>
+                            {item.badge && (
+                              <span className={`text-[9.5px] font-mono px-1.5 py-0.2 rounded font-bold border ${item.badgeColor || 'bg-emerald-100 text-emerald-800'}`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {group.group}
+                          </p>
+                        </div>
                       )}
-                    </motion.button>
+                    </div>
                   );
                 })}
               </div>
             ))}
           </div>
-
-          {/* USER PROFILE FOOTER */}
-          <div className={`p-2.5 border-t shrink-0 transition-colors duration-200 ${
-            isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#070b16] border-slate-800/80'
-          }`}>
-            {!sidebarCollapsed ? (
-              <div className={`flex items-center justify-between p-2 rounded-xl border transition-colors ${
-                isLight ? 'bg-white border-slate-200 shadow-xs text-slate-900' : 'bg-slate-800/50 border-slate-700/50 text-white'
-              }`}>
-                <div className="flex items-center space-x-2.5 min-w-0">
-                  <div className="relative shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shadow-xs">
-                      {currentUser?.avatar || 'SR'}
-                    </div>
-                    <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border ${
-                      isLight ? 'border-white' : 'border-slate-900'
-                    }`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className={`text-xs font-bold truncate leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                      {currentUser?.name || 'dr. Siti Rahma, Sp.PK'}
-                    </p>
-                    <p className={`text-[10px] truncate font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {currentUser?.nip || '19870420 201101 2 001'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAuthView('login')}
-                  title="Ganti Persona Akun / Logout"
-                  className={`p-1.5 rounded-lg transition cursor-pointer shrink-0 ${
-                    isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-700'
-                  }`}
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-center py-1">
-                <button
-                  type="button"
-                  onClick={() => setAuthView('login')}
-                  title={`Login sebagai: ${currentUser?.name || 'dr. Siti Rahma'} (Klik untuk Ganti Akun)`}
-                  className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shrink-0 relative shadow-xs cursor-pointer"
-                >
-                  {currentUser?.avatar || 'SR'}
-                  <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border ${
-                    isLight ? 'border-white' : 'border-slate-900'
-                  }`} />
-                </button>
-              </div>
-            )}
-          </div>
         </motion.aside>
 
-        {/* WORKSPACE AREA */}
-        <main ref={mainContentRef} className={`flex-1 overflow-y-auto p-3 lg:p-4 pb-24 min-h-0 transition-colors duration-200 ${
-          isLight ? 'bg-[#f8fafc] text-slate-900' : 'bg-[#001030]/40 text-white'
+        {/* WORKSPACE AREA (COCKPIT LAYOUT) */}
+        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto p-3 lg:p-4 pb-24 min-h-0 transition-colors duration-200 ${
+          isLight ? 'bg-[#f4f7f7] text-slate-900' : 'bg-[#18202c] text-slate-100'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${
             viewMode === 'split' ? 'flex flex-col xl:flex-row gap-5 items-start' : 'space-y-4'
           }`}>
-            
+
             {/* ======================================================== */}
             {/* SISI KIRI: MOBILE JKN REBUILT ENGINE (SPLIT MODE)        */}
             {/* ======================================================== */}
@@ -2417,7 +2399,6 @@ export default function App() {
                         s3={selectedCase && patientResponse === null ? (selectedCase.s3 ?? s3) : s3}
                         patientResponse={patientResponse}
                         onBackToQueue={() => setDashboardTab('queue')}
-                        onOpenGraph={() => setDashboardTab('graph')}
                         onOpenDecision={() => setDashboardTab('decision')}
                         onOpenAgentCopilot={() => setDashboardTab('agent_copilot')}
                         onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
@@ -2445,16 +2426,6 @@ export default function App() {
                         onGoToCase={() => setDashboardTab('investigation')}
                         onGoToDecision={() => setDashboardTab('decision')}
                         onGoToAudit={() => setDashboardTab('audit')}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'graph' && (
-                      <GraphVisualizer 
-                        caseData={selectedCase}
-                        patientResponse={patientResponse}
-                        onBackToInvestigation={() => setDashboardTab('investigation')}
-                        onOpenDecision={() => setDashboardTab('decision')}
                         isLight={isLight}
                       />
                     )}
@@ -2524,6 +2495,22 @@ export default function App() {
                         }}
                         onSelectHospital={(h) => {
                           // View or filter hospital
+                        }}
+                      />
+                    )}
+
+                    {dashboardTab === 'document_checker' && (
+                      <DocumentCheckerView
+                        isLight={isLight}
+                        currentUser={currentUser}
+                      />
+                    )}
+
+                    {dashboardTab === 'fraud_ranking' && (
+                      <FraudRankingView
+                        isLight={isLight}
+                        onSelectFaskes={(fId) => {
+                          setDashboardTab('faskes');
                         }}
                       />
                     )}
@@ -2697,103 +2684,66 @@ export default function App() {
         </main>
       </div>
 
-      {/* FOOTER (FUTURISTIC STATUS & LEGAL STRIP) */}
-      <footer className={`py-2 px-4 flex flex-col sm:flex-row items-center justify-between text-xs gap-2 shrink-0 z-20 select-none transition-all ${
+      {/* FOOTER (CLEAN SINGLE-ROW ENTERPRISE STATUS STRIP) */}
+      <footer className={`py-2 px-4 flex flex-col lg:flex-row items-center justify-between text-[11px] gap-2 shrink-0 z-20 select-none transition-colors ${
         isLight
           ? 'bg-white/95 border-t border-slate-200 text-slate-600 shadow-xs'
-          : 'bg-[#000c24]/90 backdrop-blur-md border-t border-white/10 text-white/50'
+          : 'bg-[#000c24]/90 backdrop-blur-md border-t border-white/10 text-white/55'
       }`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>ClaimTrace © 2026</span>
-          <span className={isLight ? 'text-slate-300' : 'text-white/20'}>·</span>
-          <span className={isLight ? 'text-slate-600' : 'text-white/70'}>Sistem Deteksi Dini Anomali Klaim BPJS Kesehatan</span>
-          <span className={`hidden md:inline px-1.5 py-0.5 rounded text-[10px] font-mono border ${
-            isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/10 text-white/60 border-white/10'
+        <div className="flex items-center gap-2 min-w-0 flex-wrap lg:flex-nowrap">
+          <span className={`font-display font-bold whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white'}`}>ClaimTrace © 2026</span>
+          <span className={isLight ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <span className={`truncate ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Pengawasan Pra-Bayar Klaim BPJS Kesehatan</span>
+          <span className={`hidden xl:inline text-[11px] font-normal whitespace-nowrap ${
+            isLight ? 'text-slate-500' : 'text-white/50'
           }`}>
-            Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan
+            · Kedeputian Pengawasan &amp; Pemeriksaan
           </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5 text-[11px]">
-          <span className={isLight ? 'text-slate-500' : 'text-white/40'}>Kepatuhan:</span>
-          <button 
-            onClick={() => openLegalModal('privacy')} 
-            className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-            }`}
-          >
-            UU PDP No. 27/2022
-          </button>
-          <span className={isLight ? 'text-slate-300' : 'text-white/20'}>•</span>
-          <button 
-            onClick={() => openLegalModal('sla')} 
-            className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-            }`}
-          >
-            Perpres No. 82/2018 (SLA 10 Hari)
-          </button>
-          <span className={isLight ? 'text-slate-300' : 'text-white/20'}>•</span>
-          <button 
-            onClick={() => openLegalModal('terms')} 
-            className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-            }`}
-          >
-            Permenkes No. 14/2021
-          </button>
-          <span className={isLight ? 'text-slate-300' : 'text-white/20'}>•</span>
-          <button 
-            type="button"
-            onClick={() => openLegalModal('security')} 
-            className={`font-medium underline underline-offset-2 transition cursor-pointer ${
-              isLight ? 'text-slate-700 hover:text-emerald-700' : 'text-white/70 hover:text-emerald-400'
-            }`}
-          >
-            ISO 27001
-          </button>
-          <span className={isLight ? 'text-slate-300' : 'text-white/20'}>•</span>
-          <button 
-            type="button"
-            onClick={() => openLegalModal('frameworks')} 
-            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold underline underline-offset-2 transition cursor-pointer flex items-center gap-1"
-          >
-            <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400 inline" />
-            <span>MITRE F3 &amp; ATT&amp;CK</span>
-          </button>
         </div>
       </footer>
     </motion.div>
-      )}
+      ) : authView === 'dashboard' ? (
+        <motion.div
+          key="session-verifying"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className={`fixed inset-0 h-dvh flex flex-col items-center justify-center px-6 ${
+            isLight ? 'bg-[#F7F8FA] text-[#061B31]' : 'bg-[#090B0E] text-[#F3F5F8]'
+          }`}
+        >
+          <div className={`max-w-md w-full rounded-2xl border p-6 text-center shadow-sm ${
+            isLight ? 'bg-white border-slate-200' : 'bg-[#11141A] border-white/10'
+          }`}>
+            <div className={`w-11 h-11 rounded-full mx-auto mb-3.5 flex items-center justify-center border ${
+              isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+            }`}>
+              <ShieldCheck className="w-5 h-5 animate-pulse" />
+            </div>
+            <h2 className="text-sm font-bold tracking-tight">Memverifikasi Otoritas Sesi &amp; MFA</h2>
+            <p className={`text-xs mt-1.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              Mengonfirmasi token kriptografis, sidik perangkat kerja, dan masa aktif sesi ke server ClaimTrace JKN.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                clearSessionStorage({ broadcast: false });
+                setAuthStatusVerified(false);
+                setCurrentUser(null);
+                setAuthView('login');
+              }}
+              className={`mt-4 px-4 py-2 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                isLight ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
+              }`}
+            >
+              Kembali ke Halaman Login
+            </button>
+          </div>
+        </motion.div>
+      ) : null}
     </AnimatePresence>
 
-    {/* INSTITUTIONAL LEGAL & COMPLIANCE MODAL (UU PDP, TERMS, SECURITY, SLA) */}
-    <InstitutionalLegalModal 
-      isOpen={legalModalOpen}
-      onClose={() => setLegalModalOpen(false)}
-      initialTab={legalModalTab}
-      isLight={isLight}
-    />
-
-    {/* INSTITUTIONAL COOKIE & TELEMETRY CONSENT BANNER (UU PDP) */}
-    {authView === 'landing' && (
-      <CookieConsentBanner 
-        onOpenPrivacy={() => openLegalModal('privacy')}
-        isLight={isLight}
-      />
-    )}
-
-    {/* FLOATING ORCHESTRATOR ASISTEN AUDIT JKN (AI) WIDGET */}
-    {authView === 'dashboard' && dashboardTab !== 'health_ai_chat' && (
-      <Suspense fallback={null}>
-        <HealthAIChatWidget 
-          onOpenFullScreen={() => setDashboardTab('health_ai_chat')} 
-          onNavigateTab={(t) => setDashboardTab(t)} 
-          isLight={isLight}
-        />
-      </Suspense>
-    )}
-
-    {/* VERCEL WEB ANALYTICS */}
+    {/* RUNTIME WEB ANALYTICS */}
     <Analytics />
   </>
   );

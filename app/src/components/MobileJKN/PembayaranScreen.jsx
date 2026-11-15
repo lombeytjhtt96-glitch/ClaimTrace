@@ -36,7 +36,7 @@ export default function PembayaranScreen({ onNavigate }) {
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {/* Card Tagihan Bulan Berjalan */}
-        <div className="bg-gradient-to-tr from-[#0288D1] to-[#01A65A] text-white p-4 rounded-3xl shadow-xs space-y-2">
+        <div className="bg-gradient-to-tr from-[#0288D1] to-[#00733B] text-white p-4 rounded-3xl shadow-xs space-y-2">
           <div className="flex justify-between items-center text-xs">
             <span className="opacity-80">Tagihan Bulan Oktober 2026</span>
             <span className="bg-white/20 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold">

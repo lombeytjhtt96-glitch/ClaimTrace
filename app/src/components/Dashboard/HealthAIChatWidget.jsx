@@ -222,8 +222,8 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
           onClick={() => setIsOpen(true)}
           className={`fixed bottom-11 sm:bottom-12 right-6 px-4 py-2.5 text-white rounded-full shadow-xl flex items-center gap-2 group z-[9999] border cursor-pointer select-none transition-all ${
             isLight
-              ? 'bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-500 hover:to-teal-700 shadow-emerald-900/30 border border-emerald-400/50'
-              : 'bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-800 hover:from-emerald-500 hover:to-teal-600 shadow-emerald-950/60 border border-emerald-400/30'
+              ? 'bg-gradient-to-r from-[#00733B] via-[#005E30] to-[#004A26] hover:from-[#008A47] hover:to-[#00733B] shadow-emerald-900/30 border border-emerald-400/50'
+              : 'bg-gradient-to-r from-[#00733B] via-[#005E30] to-[#004A26] hover:from-[#008A47] hover:to-[#00733B] shadow-emerald-950/60 border border-emerald-400/30'
           }`}
           aria-label="Buka Asisten Audit JKN AI"
         >
@@ -251,7 +251,7 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
           <div
             className={`px-4 ${isMinimized ? 'py-2.5 border-b-0' : 'py-3 border-b'} flex items-center justify-between cursor-pointer select-none shrink-0 ${
               isLight
-                ? 'bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 border-emerald-800 text-white shadow-xs'
+                ? 'bg-gradient-to-r from-[#00733B] via-[#005E30] to-[#004A26] border-emerald-800 text-white shadow-xs'
                 : 'bg-[#000c24] border-white/10 text-white'
             }`}
             onClick={() => isMinimized && setIsMinimized(false)}
@@ -384,7 +384,7 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
                     m.role === 'user'
                       ? isLight
                         ? 'bg-emerald-600 text-white font-medium rounded-tr-none shadow-xs keep-white'
-                        : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-medium rounded-tr-none shadow-emerald-950/40 keep-white'
+                        : 'bg-gradient-to-r from-[#00733B] to-[#005E30] text-white font-medium rounded-tr-none shadow-emerald-950/40 keep-white'
                       : isLight
                         ? 'bg-white text-slate-800 rounded-tl-none border border-slate-200 shadow-xs'
                         : 'bg-[#00153A]/90 text-white/90 rounded-tl-none border border-white/10 shadow-[#00081c]/50'
@@ -549,7 +549,7 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
                 className={`p-2 disabled:opacity-40 text-white rounded-xl transition-all shadow-md cursor-pointer keep-white ${
                   isLight
                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20'
-                    : 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 shadow-emerald-950/40'
+                    : 'bg-gradient-to-r from-[#00733B] to-[#005E30] hover:from-[#008A47] hover:to-[#00733B] shadow-emerald-950/40'
                 }`}
               >
                 <Send className="w-4 h-4 text-white keep-white stroke-[2.2]" />

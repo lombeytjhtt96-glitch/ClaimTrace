@@ -2,6 +2,16 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        var ctStoredTheme = localStorage.getItem('claimtrace_theme') || localStorage.getItem('theme');
+        if (ctStoredTheme === 'light' || ctStoredTheme === 'dark') {
+          document.querySelector('meta[name="color-scheme"]').content = ctStoredTheme;
+          document.documentElement.style.colorScheme = ctStoredTheme;
+        }
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/png" href="/assets/images/bpjs_icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0d5f38" />
@@ -107,15 +117,15 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   </head>
-  <body class="bg-slate-50 font-inter text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
+  <body class="bg-[#F7F8FA] font-sans text-[#061B31] antialiased selection:bg-emerald-600 selection:text-white">
     <div id="root">
-      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:Inter,system-ui,-apple-system,sans-serif;color:#0f172a;padding:24px;text-align:center;">
-        <div style="width:44px;height:44px;border-radius:12px;border:3px solid #e2e8f0;border-top-color:#059669;animation:ct-spin 0.8s linear infinite;margin-bottom:16px;"></div>
-        <div style="font-size:15px;font-weight:700;letter-spacing:-0.01em;color:#0f172a;">ClaimTrace DSS · BPJS Kesehatan</div>
-        <div style="font-size:12px;color:#64748b;margin-top:4px;">Memuat Pusat Komando Analitik &amp; Verifikasi Klaim FKRTL...</div>
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F7F8FA;font-family:'Geist','Inter',system-ui,-apple-system,sans-serif;color:#061B31;padding:24px;text-align:center;">
+        <div style="width:40px;height:40px;border-radius:10px;border:2px solid #E2E8F0;border-top-color:#047857;animation:ct-spin 0.8s linear infinite;margin-bottom:16px;"></div>
+        <div style="font-size:15px;font-weight:600;letter-spacing:-0.02em;color:#061B31;">ClaimTrace DSS · BPJS Kesehatan</div>
+        <div style="font-size:12px;color:#475569;margin-top:4px;">Memuat Pusat Komando Analitik &amp; Verifikasi Klaim FKRTL...</div>
         <style>@keyframes ct-spin{to{transform:rotate(360deg)}}</style>
       </div>
     </div>

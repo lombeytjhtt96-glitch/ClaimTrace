@@ -572,12 +572,12 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             {/* Card 5: VIEWED (24H) */}
             <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-teal-500/60 hover:shadow-teal-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-teal-400/40'
+                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-600/60 hover:shadow-emerald-100/40'
+                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-emerald-400/40'
             }`}>
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-teal-500/20 border-teal-500/30 text-teal-400'
+                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
                 }`}>
                   <Eye className="w-4 h-4" />
                 </div>
@@ -585,7 +585,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   isLight ? 'text-slate-600' : 'text-white/50'
                 }`}>DITINJAU (24 JAM)</span>
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-teal-700' : 'text-teal-400'}`}>
+              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>
                 {metrics.viewed24h}
               </div>
             </div>
@@ -617,12 +617,12 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             {/* Card 7: AVG DAYS TO COMPLETE */}
             <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-teal-500/60 hover:shadow-teal-100/40'
+                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-600/60 hover:shadow-emerald-100/40'
                 : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-cyan-400/40'
             }`}>
               <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-teal-500/20 border-teal-500/30 text-cyan-400'
+                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/20 border-emerald-500/30 text-cyan-400'
                 }`}>
                   <Timer className="w-4 h-4" />
                 </div>
@@ -630,7 +630,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   isLight ? 'text-slate-600' : 'text-white/50'
                 }`}>RATA-RATA WAKTU TUNTAS</span>
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-teal-700' : 'text-cyan-400'}`}>
+              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`}>
                 {metrics.avgDaysToComplete} hari
               </div>
             </div>

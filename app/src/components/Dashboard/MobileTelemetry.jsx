@@ -271,7 +271,7 @@ export default function MobileTelemetry({
               isLight ? 'bg-slate-50/70 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
               <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                Sampel Terkirim (Live Queue)
+                Sinyal Terkirim (Antrean Aktif)
               </span>
               <span className={`text-base font-semibold tabular-nums mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {Number(telemetryMetrics.total_dispatched || telemetryLogs.length).toLocaleString('id-ID')}

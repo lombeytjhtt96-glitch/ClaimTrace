@@ -5,10 +5,8 @@ import {
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
   Stethoscope, Search, Filter, ChevronRight, Activity, 
   CheckCircle2, XCircle, ExternalLink, Calendar, Car, 
-  Hospital, Phone, Award, AlertOctagon, TrendingUp, Download, Sparkles
+  Hospital, Phone, Award, AlertOctagon, TrendingUp, Download
 } from 'lucide-react';
-import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
-import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 // Data DPJP dari integrasi SATUSEHAT SDMK & Analisis Geovelocity
 export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight }) {
@@ -64,30 +62,43 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
     return () => { active = false; };
   }, [dpjpUrl]);
 
-  const handleRunDpjpAiAudit = async (doc) => {
+  const handleRunDpjpAiAudit = (doc) => {
     if (!doc || dpjpAiLoading) return;
     setDpjpAiLoading(true);
     try {
-      const geoSummary = doc.geovelocityEvent
-        ? `Anomali Geovelocity pada ${doc.geovelocityEvent.date}: ${doc.geovelocityEvent.pointA.time} di ${doc.geovelocityEvent.pointA.faskes} (${doc.geovelocityEvent.pointA.action}) menuju ${doc.geovelocityEvent.pointB.time} di ${doc.geovelocityEvent.pointB.faskes} (${doc.geovelocityEvent.pointB.action}), jarak ${doc.geovelocityEvent.distanceKm} km dalam ${doc.geovelocityEvent.timeGapMinutes} menit (kecepatan ${doc.geovelocityEvent.requiredSpeedKmh} km/jam).`
-        : 'Tidak ada anomali geovelocity antar-faskes.';
-      const sipSummary = (doc.hospitals || []).map((h) => `${h.name} (Status: ${h.status}, Berlaku s/d ${h.sipValidUntil})`).join('; ');
-      const prompt = `Lakukan telaah forensik beban kerja dan legalitas praktik DPJP berikut (maksimal 4 poin tajam):\n- Nama DPJP: ${doc.name} (${doc.specialty}) | ID/Token SDMK: ${doc.nip || doc.nip_hash} | STR: ${doc.str}\n- Indeks Risiko: ${doc.riskScore}/100 | Beban Harian: ${doc.dailyWorkload} pasien/hari (Batas Permenkes No. 14/2021: ${doc.workloadLimit} pasien/hari)\n- Status SIP di Faskes (SATUSEHAT SDMK): ${sipSummary}\n- Telemetri Geovelocity OSRM: ${geoSummary}\n- Klaim Tertaut: ${(doc.casesLinked || []).join(', ') || 'Tidak ada'} (Eksposur: Rp ${Number(doc.estimatedExposure || 0).toLocaleString('id-ID')})\n\nJelaskan analisis kepatuhan hukum (UU Praktik Kedokteran, Permenkes 14/2021, Perpres 82/2018) dan instruksi tindakan verifikator BPJS Kesehatan tanpa emoji.`;
-      const res = await callClaimTraceGenerateContent({
-        prompt,
-        systemInstruction: 'Anda adalah Auditor Forensik SDMK & Geovelocity Klaim JKN BPJS Kesehatan (ClaimTrace AI). Jawab dalam bahasa Indonesia baku tanpa menggunakan emoji.',
-        temperature: 0.25,
-      });
-      setDpjpAiResult((prev) => ({
-        ...prev,
-        [doc.id]: { text: res.text, tokens: res.totalTokens || 420 },
-      }));
-    } catch {
+      const geoItem = doc.geovelocityEvent
+        ? `Terdeteksi anomali jarak ${doc.geovelocityEvent.distanceKm} km dalam ${doc.geovelocityEvent.timeGapMinutes} menit (kecepatan ${doc.geovelocityEvent.requiredSpeedKmh} km/jam antara ${doc.geovelocityEvent.pointA.faskes} dan ${doc.geovelocityEvent.pointB.faskes}).`
+        : 'Tidak ada anomali perpindahan antar-faskes (OSRM dalam batas wajar).';
+      const invalidHosp = (doc.hospitals || []).filter((h) => h.status !== 'ACTIVE');
+      const sipSummary = invalidHosp.length > 0
+        ? `${invalidHosp.length} Faskes memiliki status SIP bermasalah (${invalidHosp.map((h) => `${h.name}: ${h.status}`).join(', ')}).`
+        : `Seluruh SIP (${(doc.hospitals || []).length} faskes) berstatus ACTIVE pada SATUSEHAT SDMK.`;
+      const overload = Number(doc.dailyWorkload || 0) > Number(doc.workloadLimit || 60);
+
       setDpjpAiResult((prev) => ({
         ...prev,
         [doc.id]: {
-          text: `Berdasarkan audit SATUSEHAT SDMK dan kalkulasi rute darat OSRM terhadap **${doc.name}**, beban harian (${doc.dailyWorkload}/${doc.workloadLimit} pasien) dan status SIP memerlukan klarifikasi Berita Acara resmi (BAKK) serta verifikasi log presensi fisik dokter di faskes sebelum klaim dibayarkan.`,
-          tokens: 310,
+          checks: [
+            {
+              title: 'Kapasitas Layanan Harian (Permenkes No. 14/2021)',
+              status: overload ? 'MELEBIHI_BATAS' : 'WAJAR',
+              detail: `${doc.dailyWorkload} pasien/hari (batas wajar: ${doc.workloadLimit} pasien/hari).`,
+            },
+            {
+              title: 'Sinkronisasi SIP SATUSEHAT SDMK',
+              status: invalidHosp.length > 0 ? 'HARD_TRIGGER' : 'AKTIF',
+              detail: sipSummary,
+            },
+            {
+              title: 'Audit Geovelocity Rute Darat OSRM',
+              status: doc.geovelocityEvent ? 'IMPOSSIBLE_TRAVEL' : 'VALID',
+              detail: geoItem,
+            },
+          ],
+          exposureText: `Rp ${Number(doc.estimatedExposure || 0).toLocaleString('id-ID')} (${(doc.casesLinked || []).length} berkas tertaut)`,
+          action: (overload || invalidHosp.length > 0 || doc.geovelocityEvent)
+            ? 'Tahan Berita Acara Kelengkapan Berkas (BAKB) sementara dan minta verifikasi log presensi fisik DPJP serta klarifikasi resmi HFIS x SATUSEHAT sebelum pembayaran.'
+            : 'Seluruh indikator SDMK dan geovelocity konsisten; lanjutkan proses verifikasi standar oleh Verifikator Medis.',
         },
       }));
     } finally {
@@ -685,12 +696,12 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                   </div>
                 )}
 
-                {/* LIVE AI FORENSIC DPJP AUDIT */}
+                {/* DETERMINISTIC SDMK & GEOVELOCITY COMPLIANCE AUDIT */}
                 <div className={`pt-2 border-t space-y-2.5 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Sintesis Audit SDMK &amp; Geovelocity (ClaimTrace AI)</span>
+                      <UserCheck className="w-3.5 h-3.5" />
+                      <span>Verifikasi Deterministik SDMK &amp; Geovelocity</span>
                     </span>
                     <button
                       type="button"
@@ -702,17 +713,56 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                           : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-xs'
                       }`}
                     >
-                      <Sparkles className="w-3 h-3" />
-                      <span>{dpjpAiLoading ? 'Menyusun Telaah AI...' : 'Jalankan Telaah AI DPJP'}</span>
+                      <UserCheck className="w-3 h-3" />
+                      <span>{dpjpAiLoading ? 'Memverifikasi...' : 'Verifikasi Kepatuhan SDMK & Rute'}</span>
                     </button>
                   </div>
-                  {dpjpAiResult[selectedDoctor.id] && (
-                    <div className={`p-3.5 rounded-xl border text-xs leading-relaxed ${
+                  {dpjpAiResult[selectedDoctor.id] && typeof dpjpAiResult[selectedDoctor.id] === 'object' && (
+                    <div className={`p-3.5 rounded-xl border text-xs leading-relaxed space-y-2.5 ${
                       isLight
                         ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
                         : 'bg-[#000c24]/80 border-[#FFCA40]/30 text-white/90'
                     }`}>
-                      <MarkdownRenderer content={dpjpAiResult[selectedDoctor.id].text} isLight={isLight} />
+                      {Array.isArray(dpjpAiResult[selectedDoctor.id].checks) && (
+                        <div className="space-y-1.5">
+                          {dpjpAiResult[selectedDoctor.id].checks.map((chk, idx) => (
+                            <div
+                              key={idx}
+                              className={`p-2 rounded-lg border flex flex-col gap-0.5 ${
+                                isLight ? 'bg-white border-emerald-100' : 'bg-white/5 border-white/10'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-bold text-[11px]">{chk.title}</span>
+                                <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
+                                  chk.status === 'PASS' || chk.status === 'WAJAR' || chk.status === 'TERVERIFIKASI'
+                                    ? (isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300')
+                                    : (isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-500/20 text-rose-300')
+                                }`}>
+                                  {chk.status}
+                                </span>
+                              </div>
+                              <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/75'}`}>{chk.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {dpjpAiResult[selectedDoctor.id].exposureText && (
+                        <div className={`p-2 rounded-lg border text-[11px] ${
+                          isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                        }`}>
+                          <span className="font-bold">Eksposur &amp; Dasar Regulasi: </span>
+                          <span>{dpjpAiResult[selectedDoctor.id].exposureText}</span>
+                        </div>
+                      )}
+                      {dpjpAiResult[selectedDoctor.id].action && (
+                        <div className={`p-2 rounded-lg border text-[11px] font-semibold flex items-start gap-1.5 ${
+                          isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
+                        }`}>
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>{dpjpAiResult[selectedDoctor.id].action}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

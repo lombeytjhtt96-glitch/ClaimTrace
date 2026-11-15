@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 
-const CHROME_PATH = '/home/Khalaf-Dev/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome';
+const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/chromium-browser';
 const BASE_URL = 'http://localhost:3000';
 
 const DASHBOARD_TABS = [
@@ -39,7 +39,7 @@ const AUTH_VIEWS = [
 ];
 
 async function runVerification() {
-  console.log('🚀 Starting Comprehensive Project Verification...');
+  console.log('[INFO] Starting Comprehensive Project Verification...');
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,
     headless: true,

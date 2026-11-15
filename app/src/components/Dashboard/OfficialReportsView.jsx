@@ -14,17 +14,35 @@ export default function OfficialReportsView({
   currentUser = null
 }) {
   const [activeTab, setActiveTab] = useState(initialReportType);
-  const [selectedHospital, setSelectedHospital] = useState('RS Citra Medika');
+  const [selectedHospital, setSelectedHospital] = useState('RS Khusus Mitra Husada');
   const [selectedBatch, setSelectedBatch] = useState('FPK-2026-03-A');
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [claimsList, setClaimsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sha256Seal, setSha256Seal] = useState('8f9b2a7c4e1d3b5f6a8e0c2d4f6b8a1c3e5d7f9a2b4c6e8d0f1a3b5c7e9d1f3a');
 
-  const hospitals = [
+  const defaultHospitals = [
+    { id: 'RS Khusus Mitra Husada', name: 'RS Khusus Mitra Husada (Kelas B - DKI Jakarta)', code: 'FSK-RSX-01' },
     { id: 'RS Citra Medika', name: 'RS Citra Medika (Kelas B - Jakarta Timur)', code: '0112R001' },
     { id: 'RS Medika Sejahtera', name: 'RS Medika Sejahtera (Kelas B - Bandung)', code: '0115R004' },
     { id: 'RS Prima Sehat', name: 'RS Prima Sehat (Kelas C - Bekasi)', code: '0119R008' },
   ];
+
+  const hospitals = (() => {
+    const map = new Map(defaultHospitals.map((h) => [h.id, h]));
+    claimsList.forEach((item) => {
+      const c = item?.claim || item;
+      if (c?.nama_faskes && !map.has(c.nama_faskes)) {
+        map.set(c.nama_faskes, {
+          id: c.nama_faskes,
+          name: `${c.nama_faskes} (Kelas ${c.kelas_rs || 'B'})`,
+          code: c.faskes_id || '0112R001',
+        });
+      }
+    });
+    return Array.from(map.values());
+  })();
+  const selectedHospitalMeta = hospitals.find((h) => h.id === selectedHospital) || hospitals[0];
 
   const batches = [
     { id: 'FPK-2026-03-A', label: 'Batch Maret 2026 - Periode 1 (Rawat Inap & Jalan)' },
@@ -38,11 +56,12 @@ export default function OfficialReportsView({
     const fetchClaims = async () => {
       setLoading(true);
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/claims?limit=15`);
+        const res = await authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`);
         if (res.ok) {
           const json = await res.json();
-          if (active && json?.claims) {
-            setClaimsList(json.claims);
+          const items = Array.isArray(json) ? json : (json?.claims || []);
+          if (active && items.length > 0) {
+            setClaimsList(items);
           }
         }
       } catch (e) {
@@ -55,9 +74,9 @@ export default function OfficialReportsView({
     return () => { active = false; };
   }, [selectedHospital, selectedBatch]);
 
-  // Fallback claims if API returns empty
+  // Fallback claims if API is unreachable
   const defaultClaims = [
-    { id: 'CLM-2026-8801', sep: '0301R0010326V000101', patient: 'Ny. S**** (000182*****)', diagnosis: 'Sepsis Berat (A41.9)', icd9: '99.04', tariff_submitted: 18500000, tariff_approved: 18500000, status: 'LAYAK', note: 'Berkas lengkap, verifikasi digital valid.' },
+    { id: 'CLM-2026-8801', sep: '0301R0010326V000101', patient: 'Ny. S**** (000182*****)', diagnosis: 'Prosedur Fisioterapi (Z-3-12-0)', icd9: '93.39', tariff_submitted: 15300000, tariff_approved: 0, status: 'FRAUD_SUSPECT', note: 'Anomali klaster baksos fiktif dan SIP DPJP kadaluwarsa.' },
     { id: 'CLM-2026-8802', sep: '0301R0010326V000102', patient: 'Tn. B**** (000291*****)', diagnosis: 'Infark Miokard Akut (I21.9)', icd9: '88.56', tariff_submitted: 32400000, tariff_approved: 0, status: 'PENDING', note: 'Memerlukan hasil EKG serial dan resume medis lengkap.' },
     { id: 'CLM-2026-8803', sep: '0301R0010326V000103', patient: 'An. R**** (000412*****)', diagnosis: 'Demam Berdarah Dengue (A91)', icd9: '90.59', tariff_submitted: 6800000, tariff_approved: 6800000, status: 'LAYAK', note: 'Hasil trombosit serial terlampir dan sesuai standar.' },
     { id: 'CLM-2026-8804', sep: '0301R0010326V000104', patient: 'Tn. A**** (000553*****)', diagnosis: 'Apendisitis Akut (K35.8)', icd9: '47.09', tariff_submitted: 14200000, tariff_approved: 0, status: 'DISPUTE', note: 'Perbedaan interpretasi kode komplikasi K35.3 vs K35.8.' },
@@ -65,22 +84,83 @@ export default function OfficialReportsView({
     { id: 'CLM-2026-8806', sep: '0301R0010326V000106', patient: 'Tn. K**** (000789*****)', diagnosis: 'Hernia Inguinalis (K40.9)', icd9: '53.05', tariff_submitted: 11500000, tariff_approved: 11500000, status: 'LAYAK', note: 'Laporan operasi dan bukti billing farmasi terverifikasi.' },
   ];
 
-  const activeClaims = claimsList.length > 0 ? claimsList.map((c, i) => ({
-    id: c.claim_id || `CLM-2026-880${i+1}`,
-    sep: c.sep_number || `0301R0010326V000${100+i}`,
-    patient: c.patient_name ? `${c.patient_name.slice(0, 3)}**** (000${i+1}82*****)` : `Peserta P${i+1}****`,
-    diagnosis: c.diagnosis || 'Diagnosis Klinis Terverifikasi',
-    icd9: c.icd9_code || '99.04',
-    tariff_submitted: c.billing_amount || (15000000 + (i * 2500000)),
-    tariff_approved: c.status === 'PENDING' || c.status === 'FRAUD_SUSPECT' || c.status === 'DISPUTE' ? 0 : (c.billing_amount || (15000000 + (i * 2500000))),
-    status: c.status || (i % 3 === 0 ? 'LAYAK' : i % 3 === 1 ? 'PENDING' : 'DISPUTE'),
-    note: c.recommendation || 'Verifikasi digital otomatis VEDIKA selesai.'
-  })) : defaultClaims;
+  const mapClaimReportStatus = (c, triage) => {
+    const raw = String(c?.status_verifikasi || c?.status || '').toUpperCase();
+    if (['LAYAK_BAYAR', 'LOLOSKAN_KLAIM', 'SETUJUI_LAYAK', 'LAYAK'].includes(raw)) return 'LAYAK';
+    if (['TIDAK_LAYAK_FRAUD', 'TOLAK_FRAUD', 'FRAUD_SUSPECT', 'AUDIT_LAPANGAN'].includes(raw)) return 'FRAUD_SUSPECT';
+    if (['DISPUTE_TKMKB', 'DISPUTE_KODING', 'DISPUTE'].includes(raw)) return 'DISPUTE';
+    if (['PENDING_KLARIFIKASI', 'KLARIFIKASI_FASKES', 'HOLD_KLARIFIKASI', 'PENDING'].includes(raw)) return 'PENDING';
+    if (triage?.triage_lane === 'MERAH') return 'FRAUD_SUSPECT';
+    if (triage?.triage_lane === 'KUNING') return 'PENDING';
+    return 'LAYAK';
+  };
+
+  const statusBadgeLabels = {
+    LAYAK: 'Layak Bayar',
+    PENDING: 'Pending Berkas',
+    DISPUTE: 'Dispute Koding',
+    FRAUD_SUSPECT: 'Indikasi Fraud',
+  };
+
+  const hospitalFilteredClaims = claimsList.filter((item) => {
+    const c = item?.claim || item;
+    return !selectedHospital || c?.nama_faskes === selectedHospital;
+  });
+  const effectiveSourceClaims = hospitalFilteredClaims.length > 0 ? hospitalFilteredClaims : claimsList;
+
+  const activeClaims = effectiveSourceClaims.length > 0 ? effectiveSourceClaims.slice(0, 15).map((item, i) => {
+    const c = item?.claim || item;
+    const triage = item?.triage || null;
+    const mappedStatus = mapClaimReportStatus(c, triage);
+    const submitted = Number(c?.nilai_klaim_rp ?? c?.fkl47_biaya_tagih ?? c?.billing_amount ?? (15000000 + i * 2500000));
+    const approved = mappedStatus === 'LAYAK'
+      ? Number(c?.fkl48_biaya_verifikasi ?? submitted)
+      : 0;
+    return {
+      id: c?.claim_id || `CLM-2026-880${i + 1}`,
+      sep: c?.fkl02_id_kunjungan || c?.sep_number || `0301R0010326V000${100 + i}`,
+      patient: c?.pstv01_peserta_id
+        ? `${String(c.pstv01_peserta_id).slice(0, 8)}****`
+        : c?.peserta_token_aes
+        ? `Peserta ${String(c.peserta_token_aes).slice(-6)}`
+        : `Peserta P${i + 1}****`,
+      diagnosis: c?.deskripsi_cbg ? `${c.icd10_primary || c.ina_cbg_code} (${c.ina_cbg_code})` : (c?.diagnosis || 'Diagnosis Klinis Terverifikasi'),
+      icd9: (c?.icd9cm_procedure || c?.icd9_code || '99.04').split(' ')[0],
+      tariff_submitted: submitted,
+      tariff_approved: approved,
+      status: mappedStatus,
+      note: c?.catatan_verifikator || triage?.rekomendasi_sop || c?.recommendation || 'Audit penapisan pra-bayar selesai.',
+    };
+  }) : defaultClaims;
 
   const totalSubmitted = activeClaims.reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
   const totalApproved = activeClaims.reduce((acc, c) => acc + (c.tariff_approved || 0), 0);
   const totalPending = activeClaims.filter(c => c.status === 'PENDING').reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
   const totalDispute = activeClaims.filter(c => c.status === 'DISPUTE').reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
+
+  const reportNow = new Date();
+  const formattedDateShort = reportNow.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+  const formattedDayName = reportNow.toLocaleDateString('id-ID', { weekday: 'long' });
+  const formattedDateLong = reportNow.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  const verifiedTimestampIso = reportNow.toISOString();
+
+  useEffect(() => {
+    let alive = true;
+    const seedPayload = `${selectedHospital}|${selectedHospitalMeta?.code || ''}|${selectedBatch}|${activeTab}|${activeClaims.length}|${totalSubmitted}|${totalApproved}`;
+    if (typeof window !== 'undefined' && window.crypto?.subtle && typeof TextEncoder !== 'undefined') {
+      window.crypto.subtle
+        .digest('SHA-256', new TextEncoder().encode(seedPayload))
+        .then((buf) => {
+          if (!alive) return;
+          const hex = Array.from(new Uint8Array(buf))
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+          setSha256Seal(hex);
+        })
+        .catch(() => {});
+    }
+    return () => { alive = false; };
+  }, [selectedHospital, selectedBatch, activeTab, activeClaims.length, totalSubmitted, totalApproved, selectedHospitalMeta?.code]);
 
   const formatIDR = (num) => {
     return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
@@ -89,8 +169,6 @@ export default function OfficialReportsView({
   const handlePrint = () => {
     window.print();
   };
-
-  const sha256Seal = '8f9b2a7c4e1d3b5f6a8e0c2d4f6b8a1c3e5d7f9a2b4c6e8d0f1a3b5c7e9d1f3a';
 
   const copyHash = () => {
     navigator.clipboard.writeText(sha256Seal);
@@ -115,7 +193,7 @@ export default function OfficialReportsView({
           <div>
             <div className="flex items-center space-x-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">
-                VEDIKA FPK RESMI
+                PENGAWASAN RESMI BPJS
               </span>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
                 Dokumen & Laporan Kedinasan BPJS Kesehatan
@@ -253,7 +331,7 @@ export default function OfficialReportsView({
             <div className="w-20 shrink-0 text-right">
               <div className="p-1 border border-slate-300 rounded inline-block">
                 <QrCode className="w-16 h-16 text-slate-800" />
-                <span className="block text-[8px] font-mono font-bold text-center mt-0.5">VEDIKA-SEAL</span>
+                <span className="block text-[8px] font-mono font-bold text-center mt-0.5">CLAIMTRACE-SEAL</span>
               </div>
             </div>
           </div>
@@ -263,28 +341,28 @@ export default function OfficialReportsView({
         {activeTab === 'bahv-kolektif' && (
           <div className="space-y-6">
             <div className="text-center space-y-1">
-              <h3 className="text-base font-black uppercase underline decoration-2 underline-offset-4 tracking-wide">
+              <h3 className="text-base font-display font-bold uppercase underline decoration-2 underline-offset-4 tracking-wide">
                 BERITA ACARA HASIL VERIFIKASI KLAIM (BAHV) KOLEKTIF
               </h3>
               <p className="text-xs font-mono text-slate-700">
-                Nomor: 0428/BAHV/VEDIKA/0326 · Kode FPK: {selectedBatch}
+                Nomor: 0428/BAHV/WASRIK/0326 · Kode FPK: {selectedBatch}
               </p>
             </div>
 
             <p className="text-xs leading-relaxed text-justify">
-              Pada hari ini, <strong>Jumat</strong> tanggal <strong>Empat Belas</strong> bulan <strong>November</strong> tahun <strong>Dua Ribu Dua Puluh Enam (14-11-2026)</strong>, bertempat di Kantor Cabang BPJS Kesehatan, telah dilakukan verifikasi administrasi dan medis secara digital (VEDIKA) terhadap berkas pengajuan klaim Formulir Pengajuan Klaim (FPK) dari:
+              Pada hari ini, <strong>{formattedDayName}</strong> tanggal <strong>{formattedDateLong} ({formattedDateShort})</strong>, bertempat di Kantor Cabang BPJS Kesehatan, telah dilakukan audit dan penapisan anomali pra-pembayaran klaim JKN terhadap berkas pengajuan klaim Formulir Pengajuan Klaim (FPK) dari:
             </p>
 
             <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
               <div>
-                <p><span className="text-slate-500 w-32 inline-block">Nama Faskes / RS:</span> <strong>{selectedHospital}</strong></p>
-                <p><span className="text-slate-500 w-32 inline-block">Kode PPK Faskes:</span> <span className="font-mono font-bold">0112R001</span></p>
+                <p><span className="text-slate-500 w-32 inline-block">Nama Faskes / RS:</span> <strong>{selectedHospitalMeta?.id || selectedHospital}</strong></p>
+                <p><span className="text-slate-500 w-32 inline-block">Kode PPK Faskes:</span> <span className="font-mono font-bold">{selectedHospitalMeta?.code || 'FSK-RSX-01'}</span></p>
                 <p><span className="text-slate-500 w-32 inline-block">Jenis Pelayanan:</span> RITL (Rawat Inap Tingkat Lanjutan)</p>
               </div>
               <div>
-                <p><span className="text-slate-500 w-32 inline-block">Periode Pelayanan:</span> 01 Februari 2026 s.d. 28 Februari 2026</p>
-                <p><span className="text-slate-500 w-32 inline-block">Tanggal Pengajuan:</span> 05 Maret 2026</p>
-                <p><span className="text-slate-500 w-32 inline-block">Tanggal Selesai Verif:</span> 14 November 2026</p>
+                <p><span className="text-slate-500 w-32 inline-block">Periode Pelayanan:</span> {batches.find((b) => b.id === selectedBatch)?.label || selectedBatch}</p>
+                <p><span className="text-slate-500 w-32 inline-block">Nomor Batch FPK:</span> {selectedBatch}</p>
+                <p><span className="text-slate-500 w-32 inline-block">Tanggal Selesai Verif:</span> {formattedDateLong}</p>
               </div>
             </div>
 
@@ -376,7 +454,7 @@ export default function OfficialReportsView({
                             c.status === 'DISPUTE' ? 'bg-indigo-100 text-indigo-800' :
                             'bg-rose-100 text-rose-800'
                           }`}>
-                            {c.status}
+                            {statusBadgeLabels[c.status] || c.status}
                           </span>
                         </td>
                         <td className="p-1.5 text-slate-600">{c.note}</td>
@@ -391,7 +469,7 @@ export default function OfficialReportsView({
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] space-y-1">
               <p className="font-bold text-slate-800">Dasar Hukum & Ketentuan Kepatuhan:</p>
               <p className="text-slate-600">
-                1. Peraturan Presiden No. 82 Tahun 2018 tentang Jaminan Kesehatan Pasal 74–76.<br />
+                1. Peraturan Presiden No. 82 Tahun 2018 tentang Jaminan Kesehatan Pasal 74 s.d. 76.<br />
                 2. Peraturan Menteri Kesehatan No. 26 Tahun 2021 tentang Pedoman Pencegahan dan Penanganan Kecurangan JKN.<br />
                 3. Berkas digital dilindungi kepatuhan Zero-PHI sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
               </p>
@@ -425,7 +503,7 @@ export default function OfficialReportsView({
             {/* CRYPTOGRAPHIC AUDIT SEAL */}
             <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500 font-mono">
               <span>SHA-256 INTEGRITY SEAL: {sha256Seal}</span>
-              <span>VERIFIED TIMESTAMP: 2026-11-14T08:50:00+07:00</span>
+              <span>VERIFIED TIMESTAMP: {verifiedTimestampIso}</span>
             </div>
           </div>
         )}
@@ -434,16 +512,16 @@ export default function OfficialReportsView({
         {activeTab === 'ba-pending' && (
           <div className="space-y-6">
             <div className="text-center space-y-1">
-              <h3 className="text-base font-black uppercase underline decoration-2 underline-offset-4 tracking-wide">
+              <h3 className="text-base font-display font-bold uppercase underline decoration-2 underline-offset-4 tracking-wide">
                 BERITA ACARA PENUNDAAN KLAIM (BA PENDING)
               </h3>
               <p className="text-xs font-mono text-slate-700">
-                Nomor: 0118/BA-PENDING/VEDIKA/0326 · Ref FPK: {selectedBatch}
+                Nomor: 0118/BA-PENDING/WASRIK/0326 · Ref FPK: {selectedBatch}
               </p>
             </div>
 
             <p className="text-xs leading-relaxed text-justify">
-              Menindaklanjuti proses Verifikasi Digital Klaim (VEDIKA), bersama ini disampaikan daftar klaim yang <strong>DITUNDA PEMBAYARANNYA (PENDING)</strong> kepada <strong>{selectedHospital}</strong> dikarenakan belum memenuhi kelengkapan berkas administrasi dan/atau pembuktian medis klinis sebagaimana disyaratkan dalam Pedoman Verifikasi BPJS Kesehatan.
+              Menindaklanjuti proses penapisan dan audit klaim pra-pembayaran JKN, bersama ini disampaikan daftar klaim yang <strong>DITUNDA PEMBAYARANNYA (PENDING)</strong> kepada <strong>{selectedHospital}</strong> dikarenakan belum memenuhi kelengkapan berkas administrasi dan/atau pembuktian medis klinis sebagaimana disyaratkan dalam Pedoman Verifikasi BPJS Kesehatan.
             </p>
 
             <div className="space-y-3">
@@ -480,7 +558,7 @@ export default function OfficialReportsView({
             </div>
 
             <p className="text-xs leading-relaxed text-justify">
-              Sesuai dengan ketentuan regulasi JKN, pihak FKRTL diberikan batas waktu maksimal <strong>14 (empat belas) hari kerja</strong> sejak Berita Acara ini diterbitkan untuk melengkapi dan mengunggah kembali dokumen perbaikan melalui portal VEDIKA Resubmit. Apabila sampai batas waktu tersebut berkas tidak dilengkapi, klaim akan diputuskan <strong>TIDAK LAYAK BAYAR</strong>.
+              Sesuai dengan ketentuan regulasi JKN, pihak FKRTL diberikan batas waktu maksimal <strong>14 (empat belas) hari kerja</strong> sejak Berita Acara ini diterbitkan untuk melengkapi dan mengunggah kembali dokumen perbaikan melalui portal pengajuan klaim resmi BPJS Kesehatan. Apabila sampai batas waktu tersebut berkas tidak dilengkapi, klaim akan diputuskan <strong>TIDAK LAYAK BAYAR</strong>.
             </p>
 
             <div className="pt-8 grid grid-cols-2 gap-8 text-xs text-center">
@@ -504,7 +582,7 @@ export default function OfficialReportsView({
           <div className="space-y-6">
             <div className="text-center space-y-1">
               <h3 className="text-base font-black uppercase underline decoration-2 underline-offset-4 tracking-wide text-rose-950">
-                SURAT PERINGATAN TINGKAT I (SP-1) AUDIT VEDIKA
+                SURAT PERINGATAN TINGKAT I (SP-1) PENGAWASAN KLAIM JKN
               </h3>
               <p className="text-xs font-mono text-slate-700">
                 Nomor: 0092/SP1-VPK/IV/0326 · Klasifikasi: RAHASIA / PERINGATAN FORMAL
@@ -524,7 +602,7 @@ export default function OfficialReportsView({
             <ul className="list-disc list-inside text-xs space-y-1.5 pl-2 text-slate-800">
               <li><strong>Anomali Geovelocity & SIP DPJP:</strong> Ditemukan 14 klaim dengan DPJP dr. Hendra, Sp.A tercatat melakukan tindakan operasi di {selectedHospital} pada saat bersamaan tercatat aktif di faskes lain berjarak &gt; 45 KM.</li>
               <li><strong>Unbundling / Readmisi Rekayasa:</strong> Pola pasien katarak yang dipulangkan dalam waktu 24 jam lalu didaftarkan ulang dengan SEP baru (readmisi berulang &lt; 3 hari tanpa indikasi darurat).</li>
-              <li><strong>Ketidaksesuaian Konfirmasi Peserta Mobile JKN:</strong> Sebanyak 42% peserta yang disampel menyatakan tidak menerima tindakan penunjang radiologi CT-Scan yang ditagihkan.</li>
+              <li><strong>Ketidaksesuaian Konfirmasi Peserta Mobile JKN:</strong> Sebanyak 42% peserta yang dikonfirmasi menyatakan tidak menerima tindakan penunjang radiologi CT-Scan yang ditagihkan.</li>
             </ul>
 
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs space-y-1 text-amber-900">

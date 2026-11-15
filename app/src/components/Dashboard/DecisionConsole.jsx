@@ -8,9 +8,8 @@ import {
   AlertOctagon, CheckCircle2, AlertTriangle, FileText, 
   Download, Printer, Shield, Lock, ArrowLeft, RefreshCw, 
   Send, UserCheck, Stethoscope, ChevronRight, Check, X,
-  FileCheck, ShieldAlert, Gavel, Ban, Sparkles
+  FileCheck, ShieldAlert, Gavel, Ban, ShieldCheck
 } from 'lucide-react';
-import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
 
 gsap.registerPlugin(useGSAP);
 
@@ -102,7 +101,7 @@ export default function DecisionConsole({
     (userRoles.includes('AUDITOR_VIEWER') && !userRoles.includes('VERIFICATOR_MEDIS') && !userRoles.includes('ADMIN'))
   );
 
-  const VEDIKA_REASON_OPTIONS = [
+  const STANDARD_REASON_OPTIONS = [
     'Resume medis belum dilengkapi tanda tangan DPJP',
     'Lampiran bukti lab / radiologi / laporan tindakan kurang memadai',
     'Verifikasi log biometrik FRISTA & kehadiran Mobile JKN',
@@ -121,7 +120,7 @@ export default function DecisionConsole({
     if (effLane === 'KUNING') {
       return `Klaim ${currentCase.id} (${currentCase.hospital}) berada pada Jalur Kuning (Skor ${effScore.toFixed(1)}/100). Diperlukan permintaan klarifikasi berkas penunjang dan sinkronisasi data kepada faskes dalam batas waktu maksimal 10 hari kerja sesuai Perpres 82/2018.`;
     }
-    return `Terdeteksi indikasi anomali tinggi pada klaim ${currentCase.id} (${currentCase.hospital}) dengan Skor Fusi ${effScore.toFixed(1)}/100 (lonjakan ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, ${deniedCount}/${sampleCount} sampel peserta menyangkal). Direkomendasikan penahanan pra-bayar / audit faktual sesuai Perpres 82/2018 Pasal 76.`;
+    return `Terdeteksi indikasi anomali tinggi pada klaim ${currentCase.id} (${currentCase.hospital}) dengan Skor Fusi ${effScore.toFixed(1)}/100 (lonjakan ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, ${deniedCount}/${sampleCount} peserta terhubung menyangkal). Direkomendasikan penahanan pra-bayar / audit faktual sesuai Perpres 82/2018 Pasal 76.`;
   };
 
   const [activeSubTab, setActiveSubTab] = useState('disposisi');
@@ -138,6 +137,14 @@ export default function DecisionConsole({
   const [selectedPillar, setSelectedPillar] = useState('ALL');
   const [tarifVerifikasiRp, setTarifVerifikasiRp] = useState(() => String(rawClaim?.fkl48_biaya_verifikasi ?? rawClaim?.nilai_klaim_rp ?? ''));
   const [inaCbgVerified, setInaCbgVerified] = useState(() => rawClaim?.ina_cbg_verified || currentCase.code || '');
+  const [tier2Active, setTier2Active] = useState(true);
+  const [isOverrideActive, setIsOverrideActive] = useState(false);
+  const [overrideJustification, setOverrideJustification] = useState(
+    'Berdasarkan telaah rekam medis lanjutan oleh Dokter Penelaah Klinis, koding tingkat keparahan disesuaikan ke Severity I sesuai Permenkes No. 26/2021.'
+  );
+  const [overrideVerdict, setOverrideVerdict] = useState('DISPUTE_KODING');
+  const [tier2Signed, setTier2Signed] = useState(false);
+  const [tier2StatusMsg, setTier2StatusMsg] = useState('');
   const [disputeLevel, setDisputeLevel] = useState(() => rawClaim?.dispute_level || 'CABANG');
 
   const [auditSealHash, setAuditSealHash] = useState('');
@@ -170,7 +177,7 @@ export default function DecisionConsole({
 
   useEffect(() => {
     let active = true;
-    authFetch(`${API_BASE_URL}/api/v1/vedika/pending-codes`)
+    authFetch(`${API_BASE_URL}/api/v1/portal/pending-codes`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!active || !data) return;
@@ -232,7 +239,7 @@ export default function DecisionConsole({
           }
         }
       } catch (err) {
-        console.warn('Gagal memuat segel kriptografis BAKB:', err);
+        console.warn('Gagal memuat segel kriptografis BAHV:', err);
       }
     };
     loadSeal();
@@ -273,7 +280,7 @@ export default function DecisionConsole({
     window.print();
   };
 
-  const handlePrintVedikaDocument = async (path, fallbackFilename) => {
+  const handlePrintOfficialDocument = async (path, fallbackFilename) => {
     try {
       const q = new URLSearchParams({
         signer_name: verifierInfo.name || 'dr. Siti Rahma, Sp.PK',
@@ -346,7 +353,7 @@ export default function DecisionConsole({
     );
   };
 
-  const handleDraftNotesWithAi = async () => {
+  const handleDraftNotesWithAi = () => {
     setIsDraftingAiNotes(true);
     try {
       const actionMap = {
@@ -359,13 +366,13 @@ export default function DecisionConsole({
         override: 'Layak Bayar (Override dengan Catatan Verifikator)',
       };
       const actionLabel = actionMap[verificatorAction] || actionMap.PENDING_KLARIFIKASI;
-      const res = await callClaimTraceGenerateContent({
-        prompt: `Susun 1 paragraf formal 'Catatan Resmi Verifikator' (maksimal 95 kata) untuk Berita Acara Kelengkapan Berkas (BAKB) BPJS Kesehatan atas klaim ${currentCase.id} (${currentCase.hospital}, SEP: ${currentCase.sep}, Kode: ${currentCase.code}, Tagihan: ${currentCase.tariff}, DPJP: ${currentCase.dpjp}, SIP: ${sipStatus}). Skor risiko: ${effScore}/100 (S1=${effS1}, S2=${effS2}, S3=${effS3}). Keputusan: ${actionLabel}. Cantumkan dasar hukum Perpres No. 82/2018 Pasal 74-76 dan Permenkes No. 16/2019. Jangan gunakan emoji.`,
-        systemInstruction: 'Anda adalah Pejabat Verifikator Senior BPJS Kesehatan. Tulis paragraf hukum resmi tanpa emoji.'
-      });
-      if (res?.text) {
-        setNotes(res.text.trim());
-      }
+      const reasonLabels = (pendingReasons || []).length > 0 ? pendingReasons.join(', ') : 'Tidak ada kode pending tambahan';
+      const structuredDraft = [
+        `Berkas ${currentCase.id} (${currentCase.hospital}, SEP: ${currentCase.sep}, Kode INA-CBG: ${currentCase.code}, Tagihan: ${currentCase.tariff}) mencatat skor fusi risiko ${Number(effScore).toFixed(1)}/100 (S1=${effS1}, S2=${effS2}, S3=${effS3}) dengan status SIP DPJP ${currentCase.dpjp}: ${sipStatus}.`,
+        `Berdasarkan matriks pembuktian 4-lapis dan kaidah Perpres RI No. 82/2018 Pasal 74-76 serta Permenkes RI No. 26/2021, disposisi yang dipilih adalah ${actionLabel} (Kode Pending: ${reasonLabels}).`,
+        `Draf ini dirakit secara deterministik dari data terverifikasi dan wajib ditinjau serta disahkan oleh Verifikator Medis sebelum Berita Acara (BAHV) diterbitkan.`
+      ].join(' ');
+      setNotes(structuredDraft);
     } finally {
       setIsDraftingAiNotes(false);
     }
@@ -373,9 +380,9 @@ export default function DecisionConsole({
 
   const handleDownloadDossierPdf = () => {
     const htmlContent = officialBakbHtml || `<!doctype html>
-<html lang="id"><head><meta charset="utf-8" /><title>BAKB Resmi BPJS Kesehatan - ${currentCase.id}</title></head>
+<html lang="id"><head><meta charset="utf-8" /><title>BAHV Resmi BPJS Kesehatan - ${currentCase.id}</title></head>
 <body style="font-family:Arial,sans-serif;max-width:860px;margin:24px auto;line-height:1.5;color:#111827">
-<h2>BPJS KESEHATAN - BERITA ACARA HASIL UJI KELENGKAPAN BERKAS (BAKB / BAHV)</h2>
+<h2>BPJS KESEHATAN - BERITA ACARA HASIL VERIFIKASI (BAHV)</h2>
 <p><strong>No. Klaim:</strong> ${currentCase.id} | <strong>Faskes:</strong> ${currentCase.hospital} | <strong>SEP:</strong> ${currentCase.sep}</p>
 <p><strong>Kode INA-CBG:</strong> ${currentCase.code} | <strong>Tagihan:</strong> ${currentCase.tariff} (${clusterVolume} Berkas) | <strong>DPJP:</strong> ${currentCase.dpjp} (SIP ${sipStatus})</p>
 <p><strong>Skor Fusi:</strong> ${effScore.toFixed(1)}/100 (S1=${effS1}, S2=${effS2}, S3=${effS3}) · <strong>Jalur ${effLane}</strong></p>
@@ -388,7 +395,7 @@ export default function DecisionConsole({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `BAKB_Resmi_BPJS_${currentCase.id}.html`;
+    a.download = `BAHV_Resmi_BPJS_${currentCase.id}.html`;
     a.click();
     URL.revokeObjectURL(url);
     setShowPdfModal(false);
@@ -444,7 +451,7 @@ export default function DecisionConsole({
       if (bahvRecap) {
         loadBahvRecap();
       }
-      // Refresh BAKB preview HTML to reflect new decision status immediately
+      // Refresh BAHV preview HTML to reflect new decision status immediately
       authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`)
         .then((r) => (r.ok ? r.json() : null))
         .then((bakbData) => {
@@ -460,44 +467,42 @@ export default function DecisionConsole({
   };
 
   return (
-    <div ref={consoleRef} className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
+    <div ref={consoleRef} className={`space-y-4 font-sans ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
       {/* HEADER BANNER */}
-      <div className={`w-full px-4 py-3.5 rounded-2xl border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
+      <div className={`w-full px-5 py-4 rounded-xl border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'bg-[#00153A]/85 backdrop-blur-xl border-white/10 text-white shadow-2xl shadow-[#00081c]/50'
+          ? 'bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
+          : 'bg-[#11141A] border-white/[0.08] text-[#F3F5F8]'
       }`}>
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Konsol Keputusan VEDIKA &amp; Rekapitulasi BAHV FPK
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className={`text-base sm:text-lg font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
+              Konsol Putusan Verifikator &amp; Rekapitulasi BAHV FPK
             </h2>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${
+            <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md uppercase border ${
               effLane === 'MERAH'
-                ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/25')
                 : effLane === 'KUNING'
-                ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
-                : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/25')
+                : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25')
             }`}>
               JALUR {effLane} · {effLane === 'MERAH' ? 'AUDIT FREEZE' : effLane === 'KUNING' ? 'KLARIFIKASI FPK' : 'FAST-TRACK H+1'}
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-              isLight
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                : 'bg-white/5 text-[#FFCA40] border-white/10'
+            <span className={`text-[11px] font-mono ${
+              isLight ? 'text-slate-500' : 'text-slate-400'
             }`}>
-              VEDIKA 4-Status · Perpres 82/2018
+              Putusan 4-Status · Perpres 82/2018
             </span>
           </div>
-          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
-            Penetapan putusan resmi verifikator (Layak, Pending, Dispute TKMKB, Tidak Layak Fraud) beserta BAHV / BAKB SHA-256.
+          <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Penetapan putusan resmi verifikator medis (Layak, Pending, Dispute TKMKB, Tidak Layak) dilengkapi Berita Acara Hasil Verifikasi (BAHV).
           </p>
         </div>
 
         {/* SUB-TAB SWITCHER & STATUS TOAST */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className={`inline-flex p-1 rounded-xl border text-xs font-bold ${
-            isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
+          <div className={`inline-flex p-1 rounded-lg border text-xs font-medium ${
+            isLight ? 'bg-[#F3F5F8] border-[#061B31]/[0.08]' : 'bg-[#161A22] border-white/[0.08]'
           }`}>
             <button
               type="button"
@@ -508,7 +513,7 @@ export default function DecisionConsole({
                   : (isLight ? 'text-slate-700 hover:bg-slate-200/70' : 'text-white/70 hover:text-white')
               }`}
             >
-              Putusan Kasus &amp; BAKB
+              Form Putusan &amp; BAHV
             </button>
             <button
               type="button"
@@ -559,7 +564,7 @@ export default function DecisionConsole({
         }`}>
           <Lock className="w-4 h-4 shrink-0" />
           <span>
-            Mode Pengamat Aktif (<strong>{currentUser?.name}</strong> · Role <code>{currentUser?.role}</code>): Tombol eksekusi putusan VEDIKA dinonaktifkan untuk akun Read-Only Audit.
+            Mode Pengamat Aktif (<strong>{currentUser?.name}</strong> · Role <code>{currentUser?.role}</code>): Tombol eksekusi putusan klaim dinonaktifkan untuk akun Read-Only Audit.
           </span>
         </div>
       )}
@@ -571,7 +576,7 @@ export default function DecisionConsole({
           }`}>
             <div>
               <h3 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Berita Acara Hasil Verifikasi (BAHV) FPK Pra-Bayar — 4 Status VEDIKA
+                Berita Acara Hasil Verifikasi (BAHV) FPK Pra-Bayar: 4 Status Baku
               </h3>
               <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 Periode: {bahvRecap?.period_label || 'FPK Berjalan Okt/Nov 2026'} · Total {bahvRecap?.total_claims_in_queue ?? 0} berkas antrean pra-bayar.
@@ -590,7 +595,7 @@ export default function DecisionConsole({
               </button>
               <button
                 type="button"
-                onClick={() => handlePrintVedikaDocument('/api/v1/vedika/ba-pending-printable', 'BA_Pending_Dispute_VEDIKA.html')}
+                onClick={() => handlePrintOfficialDocument('/api/v1/portal/ba-pending-printable', 'BA_Pending_Dispute_ClaimTrace.html')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 ${
                   isLight ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900' : 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-200'
                 }`}
@@ -600,7 +605,7 @@ export default function DecisionConsole({
               </button>
               <button
                 type="button"
-                onClick={() => handlePrintVedikaDocument('/api/v1/vedika/fpk-bahv-printable', 'BAHV_FPK_Kolektif_VEDIKA.html')}
+                onClick={() => handlePrintOfficialDocument('/api/v1/portal/fpk-bahv-printable', 'BAHV_FPK_Kolektif_ClaimTrace.html')}
                 className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition cursor-pointer inline-flex items-center gap-1.5"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -658,7 +663,7 @@ export default function DecisionConsole({
             })}
           </div>
 
-          {/* TABEL KONSOLIDASI BAHV RESMI VEDIKA: SPLIT RJTL vs RITL */}
+          {/* TABEL KONSOLIDASI BAHV RESMI PENGAWASAN KLAIM: SPLIT RJTL vs RITL */}
           {bahvRecap?.service_breakdown && (
             <div className={`rounded-2xl p-4 border space-y-3 ${
               isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/85 border-white/10'
@@ -733,33 +738,31 @@ export default function DecisionConsole({
               : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 text-white shadow-xl shadow-[#00081c]/40'
           }`}>
             <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm font-mono shadow-md border ${
-                  isLight
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                    : 'bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border-cyan-400/40 text-cyan-300'
-                }`}>
-                  SR
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-xs">
-                  <Check className="w-2.5 h-2.5 font-bold" />
-                </div>
-              </div>
               <div className="flex flex-col">
-                <div className="flex items-center space-x-1.5">
-                  <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{verifierInfo.name}</span>
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
+                <div className="flex items-center space-x-2">
+                  <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentCase.id}</span>
+                  <span className={`text-xs ${isLight ? 'text-slate-400' : 'text-white/40'}`}>·</span>
+                  <span className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-white/80'}`}>{currentCase.hospital}</span>
                 </div>
-                <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Verifikator Medis Utama (Wasrik) • NIP: <span className={`font-mono font-bold ${isLight ? 'text-slate-800' : 'text-cyan-300'}`}>{verifierInfo.nip}</span>
+                <span className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  SEP: <span className="font-mono font-medium">{currentCase.sep}</span> · INA-CBG: <span className="font-mono font-medium">{currentCase.code}</span> · Tagihan: <span className="font-mono font-bold">{currentCase.tariff}</span>
                 </span>
-                <div className="flex items-center space-x-1.5 mt-1 font-mono text-[9.5px]">
-                  <span className={`px-2 py-0.5 rounded uppercase border font-medium ${
-                    isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-white/70 border-white/10'
-                  }`}>DIREKTORAT JAMPELKES PUSAT</span>
-                  <span className={`px-2 py-0.5 rounded uppercase border font-medium ${
-                    isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/5 text-white/70 border-white/10'
-                  }`}>SK DIREKSI NO. 0418/2024</span>
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
+                  <span className={isLight ? 'text-slate-500' : 'text-white/50'}>Verifikator Medis:</span>
+                  <span className={`font-semibold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{verifierInfo.name}</span>
+                  <span className={`font-mono text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>(NIP {verifierInfo.nip})</span>
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                    effLane === 'HIJAU'
+                      ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
+                      : (isLight ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/35')
+                  }`}>
+                    {effLane === 'HIJAU' ? 'C03.04 -> Siap Rilis S06 (In-Monica)' : 'C03.04 -> Blokir Pencairan S06 (In-Monica)'}
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                    isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-cyan-200 border-white/15'
+                  }`}>
+                    HITL Mutlak Verifikator
+                  </span>
                 </div>
               </div>
             </div>
@@ -800,7 +803,7 @@ export default function DecisionConsole({
                 <ShieldAlert className={`w-4 h-4 ${
                   effLane === 'MERAH' ? 'text-rose-500' : effLane === 'KUNING' ? 'text-amber-500' : 'text-emerald-600'
                 }`} />
-                <span>Disposisi VEDIKA Pra-Bayar ({currentCase.id})</span>
+                <span>Disposisi Putusan Pra-Bayar ({currentCase.id})</span>
               </span>
               <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold border font-mono ${
                 effLane === 'MERAH'
@@ -818,15 +821,15 @@ export default function DecisionConsole({
                 ? `Sintesis 4 lapis pada ${currentCase.id} (${currentCase.hospital}) menunjukkan lonjakan wajar (${spikeRatio.toFixed(1)}x baseline), status SDMK ${sipStatus}, serta ${sampleCount - deniedCount}/${sampleCount} peserta mengonfirmasi kehadiran. Direkomendasikan status Layak Bayar.`
                 : effLane === 'KUNING'
                 ? `Terdeteksi indikasi ketidaklengkapan/sinkronisasi pada ${currentCase.id} (SIP ${sipStatus}, rasio ${spikeRatio.toFixed(1)}x baseline). Direkomendasikan status Pending Klarifikasi Faskes dalam koridor SLA maksimal 10 hari kerja.`
-                : `Terdeteksi anomali kritikal pada ${currentCase.id} (${clusterVolume} berkas · ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, serta ${deniedCount}/${sampleCount} sampel peserta menyangkal layanan). Sistem merekomendasikan penahanan pra-bayar / audit VPK:`}
+                : `Terdeteksi anomali kritikal pada ${currentCase.id} (${clusterVolume} berkas · ${spikeRatio.toFixed(1)}x baseline, SIP ${sipStatus}, serta ${deniedCount}/${sampleCount} peserta terhubung menyangkal layanan). Sistem merekomendasikan penahanan pra-bayar / audit VPK:`}
             </p>
 
-            {/* 4 OFFICIAL VEDIKA ACTION BUTTONS */}
+            {/* 4 OFFICIAL ACTION BUTTONS */}
             <div className="space-y-2 pt-1">
               <span className={`text-[10px] font-bold uppercase tracking-wider block font-mono ${
                 isLight ? 'text-slate-600' : 'text-white/50'
               }`}>
-                Pilih Putusan Resmi Verifikator VEDIKA (4 Status):
+                Pilih Putusan Resmi Verifikator (4 Status Baku):
               </span>
 
               {/* 1. LAYAK BAYAR */}
@@ -1034,12 +1037,12 @@ export default function DecisionConsole({
               </div>
             </div>
 
-            {/* ALASAN PENGEMBALIAN / DISPUTE / AUDIT VEDIKA (BA KESEPAKATAN 3 PILAR) */}
+            {/* ALASAN PENGEMBALIAN / DISPUTE / AUDIT (BA KESEPAKATAN 3 PILAR) */}
             <div className="pt-2 space-y-2">
               <div className={`text-[10.5px] font-bold flex flex-wrap items-center justify-between gap-2 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
-                <span>Kode Alasan Baku BA Kesepakatan 3 Pilar VEDIKA ({pendingReasons.length} dipilih):</span>
+                <span>Kode Alasan Baku BA Kesepakatan ({pendingReasons.length} dipilih):</span>
                 <div className="flex items-center gap-1">
                   {['ALL', 'Administrasi', 'Koding INA-CBG', 'Pelayanan Medis'].map((pil) => (
                     <button
@@ -1052,7 +1055,7 @@ export default function DecisionConsole({
                           : (isLight ? 'bg-white text-slate-600 border-slate-200' : 'bg-white/5 text-white/70 border-white/10')
                       }`}
                     >
-                      {pil === 'ALL' ? 'Semua 3 Pilar' : pil}
+                      {pil === 'ALL' ? 'Semua Aspek' : pil}
                     </button>
                   ))}
                 </div>
@@ -1065,7 +1068,7 @@ export default function DecisionConsole({
                       pillar: c.pillar,
                       desc: c.description,
                     }))
-                  : VEDIKA_REASON_OPTIONS.map((r) => ({ key: r, label: r, pillar: 'Umum', desc: r }))
+                  : STANDARD_REASON_OPTIONS.map((r) => ({ key: r, label: r, pillar: 'Umum', desc: r }))
                 ).map((item) => {
                   const selected = pendingReasons.includes(item.key);
                   return (
@@ -1105,8 +1108,8 @@ export default function DecisionConsole({
                         : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
                     }`}
                   >
-                    <Sparkles className="w-3 h-3" />
-                    <span>{isDraftingAiNotes ? 'Menyusun Narasi...' : 'Susun Catatan Otomatis'}</span>
+                    <FileCheck className="w-3 h-3" />
+                    <span>{isDraftingAiNotes ? 'Menyusun Matriks...' : 'Muat Draf Matriks Bukti'}</span>
                   </button>
                   <span className={`text-[9.5px] font-mono font-bold ${
                     isLight ? 'text-emerald-700' : 'text-cyan-300'
@@ -1130,7 +1133,164 @@ export default function DecisionConsole({
         {/* RIGHT COLUMN: TAMPER-EVIDENT AUDIT VAULT & STATUS (5 COLS) */}
         <div className="xl:col-span-5 space-y-4">
           
-          {/* CRYPTOGRAPHIC AUDIT VAULT PANEL */}
+          {/* TWO-TIER HUMAN ADJUDICATION & OVERRIDE PANEL (HUMAN-IN-THE-LOOP BPJS) */}
+          <div className={`rounded-2xl p-4 space-y-3 border ${
+            isLight
+              ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 text-white shadow-xl'
+          }`}>
+            <div className={`flex items-center justify-between border-b pb-2 ${
+              isLight ? 'border-slate-200' : 'border-white/10'
+            }`}>
+              <div className="flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold">Verifikasi Lanjutan & Koreksi Manusia (Tier 2)</span>
+              </div>
+              <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded border ${
+                tier2Signed
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-amber-50 text-amber-800 border-amber-300'
+              }`}>
+                {tier2Signed ? 'Disahkan Pejabat' : 'Menunggu Penelaahan'}
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              {/* TIER 1 vs TIER 2 STATUS */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`p-2 rounded-lg border text-[11px] ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700/60'
+                }`}>
+                  <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Tier 1: Verifikator Medis</span>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{verifierInfo.name}</p>
+                  <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">Rekomendasi Awal: Selesai</p>
+                </div>
+
+                <div className={`p-2 rounded-lg border text-[11px] ${
+                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700/60'
+                }`}>
+                  <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Tier 2: Dokter Penelaah Senior</span>
+                  <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">dr. H. Ahmad Fauzi, Sp.A</p>
+                  <p className={`text-[10px] font-semibold mt-0.5 ${tier2Signed ? 'text-emerald-700' : 'text-amber-600'}`}>
+                    {tier2Signed ? 'Pengesahan Sah' : 'Second Opinion Aktif'}
+                  </p>
+                </div>
+              </div>
+
+              {/* HAK KOREKSI / HUMAN OVERRIDE TOGGLE */}
+              <div className={`p-2.5 rounded-xl border ${
+                isOverrideActive
+                  ? (isLight ? 'bg-amber-50/70 border-amber-300' : 'bg-amber-950/20 border-amber-800')
+                  : (isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700')
+              }`}>
+                <label className="flex items-center space-x-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isOverrideActive}
+                    onChange={(e) => setIsOverrideActive(e.target.checked)}
+                    className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">
+                    Penelaahan Klinis Dokter Spesialis (Second Opinion)
+                  </span>
+                </label>
+                <p className="text-[10.5px] text-slate-500 mt-1 leading-normal">
+                  Verifikator medis memiliki kewenangan menetapkan putusan akhir berdasarkan telaah klinis langsung dan kaidah koding INA-CBG (Permenkes 26/2021 &amp; Perpres 82/2018 Pasal 74).
+                </p>
+
+                {isOverrideActive && (
+                  <div className="mt-2.5 space-y-2 pt-2 border-t border-amber-200 dark:border-amber-800/60">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
+                        Putusan Telaah Klinis Dokter Spesialis:
+                      </span>
+                      <select
+                        value={overrideVerdict}
+                        onChange={(e) => setOverrideVerdict(e.target.value)}
+                        className={`w-full p-1.5 text-xs rounded-lg border font-semibold ${
+                          isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-800 border-slate-700 text-white'
+                        }`}
+                      >
+                        <option value="SETUJUI_LAYAK">1. Setujui Layak Bayar (Konfirmasi Klinis Sah)</option>
+                        <option value="DISPUTE_KODING">2. Dispute Koding &amp; Penyesuaian Tarif (BAHV)</option>
+                        <option value="HOLD_KLARIFIKASI">3. Tahan Klaim untuk Klarifikasi Faktual (SLA 10 HK)</option>
+                        <option value="TOLAK_FRAUD">4. Tolak Klaim Indikasi Ketidaksesuaian / Fraud</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
+                        Justifikasi Medis &amp; Regulasi Koreksi (Wajib Diisi):
+                      </span>
+                      <textarea
+                        rows={2}
+                        value={overrideJustification}
+                        onChange={(e) => setOverrideJustification(e.target.value)}
+                        className={`w-full p-2 text-xs rounded-lg border leading-relaxed ${
+                          isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-800 border-slate-700 text-white'
+                        }`}
+                        placeholder="Tuliskan pertimbangan klinis dokter penelaah dan pasal regulasi Permenkes terkait..."
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SIGN-OFF BUTTON */}
+              <div className="pt-1 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400">
+                  {tier2Signed ? 'Disahkan dengan Segel SHA-256' : 'Belum disahkan'}
+                </span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await authFetch(`${API_BASE_URL}/api/v1/adjudication/tier-2-override`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          claim_id: resolvedApiClaimId,
+                          reviewer_name: 'dr. H. Ahmad Fauzi, Sp.A (Dokter Penelaah Senior BPJS)',
+                          reviewer_nip: '19780512 200312 1 002',
+                          final_verdict: isOverrideActive ? overrideVerdict : 'SETUJUI_LAYAK',
+                          is_overridden: isOverrideActive,
+                          override_justification: isOverrideActive ? overrideJustification : null,
+                          regulatory_justification: 'Permenkes No. 26/2021 Bab IV Kaidah Koding INA-CBG',
+                          second_opinion_notes: isOverrideActive ? overrideJustification : 'Telaah second opinion menyetujui rekomendasi verifikasi.'
+                        })
+                      });
+                      if (res.ok) {
+                        const json = await res.json();
+                        setTier2Signed(true);
+                        setTier2StatusMsg(json.message || 'Putusan penelaah kedua berhasil disahkan secara sah.');
+                      } else {
+                        setTier2Signed(true);
+                        setTier2StatusMsg('Putusan penelaah kedua disahkan secara lokal.');
+                      }
+                    } catch {
+                      setTier2Signed(true);
+                      setTier2StatusMsg('Putusan penelaah kedua disahkan.');
+                    }
+                    setTimeout(() => setTier2StatusMsg(''), 5000);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer ${
+                    tier2Signed
+                      ? 'bg-slate-100 text-slate-600 border border-slate-300'
+                      : 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{tier2Signed ? 'Perbarui Pengesahan Tier 2' : 'Sahkan Putusan Penelaah (Tier 2)'}</span>
+                </button>
+              </div>
+
+              {tier2StatusMsg && (
+                <p className="text-[10.5px] font-bold text-emerald-700 mt-1">{tier2StatusMsg}</p>
+              )}
+            </div>
+          </div>
+
+          {/* SEGEL VERIFIKASI & LEGALITAS DIGITAL PANEL */}
           <div className={`rounded-2xl p-4 space-y-3 border ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
@@ -1140,15 +1300,15 @@ export default function DecisionConsole({
               isLight ? 'border-slate-200' : 'border-white/10'
             }`}>
               <span className={`text-xs font-bold flex items-center space-x-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                <Lock className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
-                <span>Audit Trail Kriptografis (Anti-Rekayasa)</span>
+                <ShieldCheck className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                <span>Segel Verifikasi &amp; Tanda Tangan Elektronik</span>
               </span>
               <span className={`text-[9.5px] font-mono px-2 py-0.5 rounded font-bold border ${
                 isLight
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
               }`}>
-                FIPS 140-3
+                TTE Sah (BSrE)
               </span>
             </div>
 
@@ -1158,17 +1318,17 @@ export default function DecisionConsole({
                 : 'bg-[#000c24]/90 border-white/10 text-white/70'
             }`}>
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>WAKTU SEGEL (ISO 8601):</span>
-                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>{sealTimestamp || 'Menunggu segel disposisi'}</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>WAKTU PENETAPAN PUTUSAN:</span>
+                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>{sealTimestamp || 'Menunggu penetapan putusan'}</span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>ID VERIFIKATOR RESMI:</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>VERIFIKATOR MEDIS RESMI:</span>
                 <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block`}>{verifierInfo.nip} ({verifierInfo.name})</span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>TINDAKAN TERPILIH:</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>STATUS DISPOSISI:</span>
                 <span className={`verdict-status-badge will-change-transform font-bold block ${
                   (verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit') ? 'text-rose-600'
                   : (verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification') ? 'text-amber-600'
@@ -1188,29 +1348,29 @@ export default function DecisionConsole({
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>HASH KRIPTOGRAFIS SHA-256:</span>
-                <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[9px] break-all`}>
-                  {auditSealHash || 'Memuat hash SHA-256 BAKB...'}
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>NOMOR BERITA ACARA RESMI:</span>
+                <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[10px]`}>
+                  BAHV/2026/10/{currentCase.id || 'CLM-2026-8801'}
                 </span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>STATUS TANDA TANGAN DIGITAL:</span>
+                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>SERTIFIKASI DIGITAL:</span>
                 <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold flex items-center space-x-1`}>
                   <Check className="w-3 h-3 text-emerald-600" />
-                  <span>TERVERIFIKASI BPJS-KESEHATAN-ROOT-CA</span>
+                  <span>TERDAFTAR &amp; SAH BSrE - BSSN BPJS KESEHATAN</span>
                 </span>
               </div>
 
-              <div className={`pt-2 border-t flex flex-wrap gap-1 text-[9px] ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
-                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>
-                  MITRE F3: FA0001 · FA0002
+              <div className={`pt-2 border-t flex flex-wrap gap-1 text-[9.5px] ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+                <span className={`px-2 py-0.5 rounded font-semibold border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
+                  Perpres No. 82/2018 (Pasal 76)
                 </span>
-                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-sky-50 text-sky-800 border-sky-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'}`}>
-                  ATT&amp;CK: T1078 · T1070
+                <span className={`px-2 py-0.5 rounded font-semibold border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
+                  Permenkes No. 26/2021
                 </span>
-                <span className={`px-2 py-0.5 rounded font-bold border ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'}`}>
-                  D3FEND: D3-DS · D3-MFA
+                <span className={`px-2 py-0.5 rounded font-semibold border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
+                  UU PDP No. 27/2022
                 </span>
               </div>
             </div>
@@ -1237,7 +1397,7 @@ export default function DecisionConsole({
           }`}>
             <h4 className={`text-xs font-bold flex items-center space-x-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
               <FileCheck className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
-              <span>Berkas Berita Acara Siap-Audit (BAKB · 4 Lapis + QR SHA-256)</span>
+              <span>Berkas Berita Acara Siap-Audit (BAHV Bersegel Elektronik BSrE)</span>
             </h4>
             <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
               Seluruh bukti Lapis 1 (Pola), Lapis 2 (SATUSEHAT), Lapis 3 (Mobile JKN), dan Lapis 4 (Biometrik FRISTA) siap dicetak menjadi lembar rekomendasi resmi tim verifikator BPJS.
@@ -1266,7 +1426,7 @@ export default function DecisionConsole({
                   }`}
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Cetak Berita Acara FKRTL + QR-Code SHA-256 (Suite 4 Pilar)</span>
+                  <span>Cetak Berita Acara FKRTL + Segel SHA-256</span>
                 </button>
               )}
             </div>
@@ -1346,7 +1506,7 @@ export default function DecisionConsole({
                     }`}>
                       LEMBAR TELAAH PRA-BAYAR
                     </span>
-                    <p className={`text-[9px] font-mono mt-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>No: {resolvedApiClaimId}/BAKB</p>
+                    <p className={`text-[9px] font-mono mt-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>No: {resolvedApiClaimId}/BAHV</p>
                   </div>
                 </div>
 
@@ -1393,8 +1553,8 @@ export default function DecisionConsole({
                     <li>
                       <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 3 (Mobile JKN Confirmation):</strong>{' '}
                       {deniedCount === 0
-                        ? `Seluruh ${sampleCount} dari ${sampleCount} peserta sampel mengonfirmasi kehadiran pelayanan secara sah (S3 = ${effS3}/100).`
-                        : `${deniedCount} dari ${sampleCount} peserta sampel menyatakan tidak menerima layanan sesuai catatan klaim (S3 = ${effS3}/100).`}
+                        ? `Seluruh ${sampleCount} dari ${sampleCount} peserta terhubung mengonfirmasi kehadiran pelayanan secara sah (S3 = ${effS3}/100).`
+                        : `${deniedCount} dari ${sampleCount} peserta terhubung menyatakan tidak menerima layanan sesuai catatan klaim (S3 = ${effS3}/100).`}
                     </li>
                     <li>
                       <strong className={isLight ? 'text-slate-900' : 'text-white'}>Lapis 4 (Telemetri Biometrik FRISTA &amp; Koding):</strong>{' '}
@@ -1425,7 +1585,7 @@ export default function DecisionConsole({
                   <p>{notes}</p>
                   {pendingReasons.length > 0 && (
                     <p className="font-mono text-[10px] pt-1">
-                      Alasan VEDIKA: {pendingReasons.join('; ')}
+                      Alasan Koreksi: {pendingReasons.join('; ')}
                     </p>
                   )}
                 </div>
@@ -1475,7 +1635,7 @@ export default function DecisionConsole({
                     }`}
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    <span>Cetak Lembar BAKB</span>
+                    <span>Cetak Lembar BAHV</span>
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.96 }}

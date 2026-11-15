@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ChevronLeft, MessageSquare, AlertCircle, CheckCircle, Upload, Paperclip, X } from 'lucide-react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 
 export default function PengaduanScreen({ onNavigate }) {
   const [kategori, setKategori] = useState('Biaya Tambahan Diluar Ketentuan');
@@ -28,7 +28,7 @@ export default function PengaduanScreen({ onNavigate }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/wbs/report`, {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/wbs/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

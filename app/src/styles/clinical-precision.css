@@ -1,0 +1,160 @@
+/* ==========================================================================
+ * ClaimTrace JKN Clinical Precision Styling Layer
+ * High-legibility institutional typography, layered light elevation,
+ * dark workspace luminance, and tabular data alignment.
+ * ========================================================================== */
+
+:root {
+  --ct-font-display: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  --ct-font-sans: 'Inter', 'Geist', system-ui, -apple-system, sans-serif;
+  --ct-font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ct-canvas: #F7F8FA;
+  --ct-surface: #FFFFFF;
+  --ct-inset: #F3F5F8;
+  --ct-ink: #061B31;
+  --ct-ink-secondary: #475569;
+  --ct-ink-muted: #64748B;
+  --ct-border: rgba(6, 27, 49, 0.08);
+  --ct-accent: #00733B;
+
+  --ct-ui-canvas: #F7F8FA;
+  --ct-ui-sidebar: #FFFFFF;
+  --ct-ui-surface: #FFFFFF;
+  --ct-ui-border: rgba(6, 27, 49, 0.08);
+}
+
+html.dark,
+.theme-dark {
+  --ct-canvas: #090B0E;
+  --ct-surface: #11141A;
+  --ct-inset: #161A22;
+  --ct-ink: #F3F5F8;
+  --ct-ink-secondary: #9CA3AF;
+  --ct-ink-muted: #6B7280;
+  --ct-border: rgba(255, 255, 255, 0.08);
+  --ct-accent: #2E9E68;
+
+  --ct-ui-canvas: #090B0E;
+  --ct-ui-sidebar: #0E1116;
+  --ct-ui-surface: #11141A;
+  --ct-ui-border: rgba(255, 255, 255, 0.08);
+}
+
+html,
+body {
+  font-family: var(--ct-font-sans);
+  font-feature-settings: "cv01" 1, "ss01" 1, "ss03" 1;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--ct-font-display);
+  letter-spacing: -0.02em;
+}
+
+.font-mono,
+code,
+pre,
+kbd {
+  font-family: var(--ct-font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+table th,
+table td,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hairline & layered surface elevation in Light Mode */
+#cockpit-root.theme-light {
+  background-color: var(--ct-canvas);
+  color: var(--ct-ink);
+}
+
+#cockpit-root.theme-light .cockpit-card,
+#cockpit-root.theme-light [class*="bg-[#00153A]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-light [class*="bg-[#1e2530]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-light [class*="bg-[#222b38]"]:not(.hero-navy-banner):not(.keep-dark-surface) {
+  background-color: #FFFFFF;
+  border-color: var(--ct-border);
+  box-shadow: 0 1px 2px rgba(6, 27, 49, 0.04), 0 0 0 1px rgba(6, 27, 49, 0.05);
+}
+
+/* Obsidian Charcoal surface hierarchy in Dark Mode */
+#cockpit-root.theme-dark {
+  background-color: var(--ct-canvas);
+  color: var(--ct-ink);
+}
+
+#cockpit-root.theme-dark [class*="bg-[#000c24]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#00081c]"]:not(.hero-navy-banner):not(.keep-dark-surface) {
+  background-color: #090B0E !important;
+}
+
+#cockpit-root.theme-dark [class*="bg-[#00153A]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#1e2530]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#222b38]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark .bg-slate-900:not(.hero-navy-banner):not(.keep-dark-surface) {
+  background-color: #11141A !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#cockpit-root.theme-dark [class*="bg-[#00134A]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#001030]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#001435]"]:not(.hero-navy-banner):not(.keep-dark-surface),
+#cockpit-root.theme-dark [class*="bg-[#001945]"]:not(.hero-navy-banner):not(.keep-dark-surface) {
+  background-color: #161A22 !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+#cockpit-root.theme-dark [class*="border-[#2d3748]"],
+#cockpit-root.theme-dark .border-slate-800 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Precision Surface Dot Grid (restrained 5% contrast) */
+.surface-dot-grid {
+  background-image: radial-gradient(rgba(6, 27, 49, 0.07) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.theme-dark .surface-dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Subtle institutional hero banner anchor */
+.hero-navy-banner {
+  background: linear-gradient(135deg, #061B31 0%, #092540 55%, #063D36 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle clean scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.45);
+}
+
+@media print {
+  body,
+  #cockpit-root {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+}

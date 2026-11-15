@@ -48,7 +48,7 @@ export default function AntreanScreen({ onNavigate }) {
               </div>
 
               {/* Box Nomor Antrean */}
-              <div className="bg-gradient-to-tr from-[#0288D1] to-[#01A65A] text-white p-5 rounded-2xl shadow-xs my-2">
+              <div className="bg-gradient-to-tr from-[#0288D1] to-[#00733B] text-white p-5 rounded-2xl shadow-xs my-2">
                 <span className="text-xs uppercase tracking-widest font-bold opacity-80">
                   Nomor Antrean Anda
                 </span>

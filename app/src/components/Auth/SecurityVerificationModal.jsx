@@ -1,53 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_BASE_URL } from '../../services/apiConfig';
+import { API_BASE_URL, getDeviceFingerprint, saveAuthenticatedSession, clearSessionStorage } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
-import { Shield, Mail, Laptop, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Shield, Mail, Laptop, AlertCircle, Check, CheckCircle2, RefreshCw, Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react';
 
 export default function SecurityVerificationModal({
-  isOpen = true,
+  isOpen = false,
   user = null,
   identifier = '',
-  email = 'siti.rahma@bpjs-kesehatan.go.id',
-  initialStep = 'pin',
-  onVerified,
+  preAuthToken = '',
   onCompleteVerification,
-  onCancel,
   onCancelSignOut,
-  isLight = undefined,
+  isLight = true,
 }) {
   const effectiveIsLight =
-    isLight !== undefined
+    typeof isLight === 'boolean'
       ? isLight
-      : typeof window !== 'undefined' && localStorage.getItem('claimtrace_theme') === 'light';
-  const resolvedEmail =
-    user?.email || (identifier && identifier.includes('@') ? identifier : email);
+      : typeof window !== 'undefined' && localStorage.getItem('claimtrace_theme') !== 'dark';
 
-  const [step, setStep] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('step');
-      if (p === 'otp' || p === '2') return 'otp';
-      if (p === 'device' || p === '3') return 'device';
-      if (p === 'pin' || p === '1') return 'pin';
-    }
-    return initialStep === 'otp' ? 'otp' : initialStep === 'device' ? 'device' : 'pin';
-  });
+  const resolvedEmail = user?.email || (identifier && identifier.includes('@') ? identifier : 'Email terdaftar');
+  const resolvedId = user?.nip || identifier || '';
+  const deviceFingerprint = getDeviceFingerprint();
 
-  const getExpectedPin = () => {
-    const isSiti = user?.email?.includes('siti') || user?.nip?.includes('1987') || (typeof identifier === 'string' && (identifier.includes('siti') || identifier.includes('1987')));
-    return isSiti ? ['1', '2', '3', '4', '5', '6'] : ['6', '5', '4', '3', '2', '1'];
-  };
+  // Sequential server-enforced MFA stages: 'pin' -> 'otp' -> 'device' (no manual skipping)
+  const [step, setStep] = useState('pin');
+  const [stageToken, setStageToken] = useState(preAuthToken || '');
 
-  // Tahap 1: PIN Verifikator 6 Angka
-  const [pin, setPin] = useState(getExpectedPin);
-  // Tahap 2: OTP Email Dinas
-  const [otp, setOtp] = useState(['8', '4', '9', '2', '0', '1']);
-  const [otpCountdown, setOtpCountdown] = useState(55);
-  // Tahap 3: Sesi Perangkat
-  const [sessionDuration, setSessionDuration] = useState('1h');
-  const [trustDevice, setTrustDevice] = useState(true);
+  // Stage 1: PIN Otorisasi 6 Digit (selalu kosong di awal)
+  const [pin, setPin] = useState(['', '', '', '', '', '']);
+  const [showPinDigits, setShowPinDigits] = useState(false);
+
+  // Stage 2: OTP Email 6 Digit (selalu kosong, CSPRNG dari server)
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpEmailDest, setOtpEmailDest] = useState(resolvedEmail);
+  const [otpCountdown, setOtpCountdown] = useState(180);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Stage 3: Device & Strict Session Policy
+  const [sessionDurationMinutes, setSessionDurationMinutes] = useState(15);
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(15);
   const [revokeOtherSessions, setRevokeOtherSessions] = useState(true);
+  const [strictIpLock, setStrictIpLock] = useState(true);
 
   const [error, setError] = useState(null);
+  const [stageLockedOut, setStageLockedOut] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
   const pinRefs = useRef([]);
@@ -55,16 +50,23 @@ export default function SecurityVerificationModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    setStep('pin');
+    setStageToken(preAuthToken || '');
+    setPin(['', '', '', '', '', '']);
+    setOtp(['', '', '', '', '', '']);
+    setOtpEmailDest(resolvedEmail);
+    setOtpCountdown(180);
+    setResendCooldown(0);
     setError(null);
-    const expected = getExpectedPin();
-    setPin(expected);
-    setOtp(['8', '4', '9', '2', '0', '1']);
-    if (step === 'pin') {
-      setTimeout(() => pinRefs.current[0]?.focus(), 60);
-    } else if (step === 'otp') {
-      setTimeout(() => otpRefs.current[0]?.focus(), 60);
-    }
-  }, [step, isOpen, user, identifier]);
+    setStageLockedOut(false);
+    setTimeout(() => pinRefs.current[0]?.focus(), 80);
+  }, [isOpen, preAuthToken, resolvedEmail]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (step === 'pin') setTimeout(() => pinRefs.current[0]?.focus(), 60);
+    if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 60);
+  }, [isOpen, step]);
 
   useEffect(() => {
     if (!isOpen || step !== 'otp' || otpCountdown <= 0) return;
@@ -72,603 +74,574 @@ export default function SecurityVerificationModal({
     return () => clearInterval(t);
   }, [isOpen, step, otpCountdown]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen || resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [isOpen, resendCooldown]);
 
-  const handlePinChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const next = [...pin];
-    next[index] = value.slice(-1);
-    setPin(next);
+  if (!isOpen || !preAuthToken) return null;
+
+  const handleDigitChange = (arr, setter, refs, index, rawVal) => {
+    const clean = rawVal.replace(/\D/g, '');
+    if (!clean && rawVal !== '') return;
+    if (clean.length > 1) {
+      // Support clean 6-digit paste directly into slot
+      const pasted = clean.slice(0, 6).split('');
+      const next = ['', '', '', '', '', ''];
+      pasted.forEach((ch, idx) => {
+        next[idx] = ch;
+      });
+      setter(next);
+      setError(null);
+      const focusIdx = Math.min(5, pasted.length - 1);
+      refs.current[focusIdx]?.focus();
+      return;
+    }
+    const next = [...arr];
+    next[index] = clean;
+    setter(next);
     setError(null);
-    if (value && index < 5) {
-      pinRefs.current[index + 1]?.focus();
+    if (clean && index < 5) {
+      refs.current[index + 1]?.focus();
     }
   };
 
-  const handlePinKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !pin[index] && index > 0) {
-      pinRefs.current[index - 1]?.focus();
-    } else if (e.key === 'Enter' && pin.join('').length === 6) {
-      handleVerifyPin();
+  const handleDigitKeyDown = (arr, refs, index, e, submitFn) => {
+    if (e.key === 'Backspace' && !arr[index] && index > 0) {
+      refs.current[index - 1]?.focus();
+    } else if (e.key === 'Enter' && arr.join('').length === 6) {
+      submitFn();
     }
   };
 
-  const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const next = [...otp];
-    next[index] = value.slice(-1);
-    setOtp(next);
-    setError(null);
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    } else if (e.key === 'Enter' && otp.join('').length === 6) {
-      handleVerifyOtp();
-    }
+  const handleHardAbort = () => {
+    clearSessionStorage({ broadcast: false });
+    if (onCancelSignOut) onCancelSignOut();
   };
 
   const handleVerifyPin = async () => {
-    const entered = pin.join('');
-    if (entered.length < 6) {
-      setError('Harap masukkan seluruh 6 angka PIN otorisasi.');
+    const enteredPin = pin.join('');
+    if (enteredPin.length < 6) {
+      setError('Masukkan 6 digit PIN otorisasi verifikator Anda.');
       return;
     }
     setIsVerifying(true);
     setError(null);
+
     try {
-      let pinValid = false;
-      let res = null;
-      try {
-        res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-pin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: user?.nip || user?.email || resolvedEmail,
-            pin: entered,
-          }),
-        });
-      } catch (_netErr) {
-        res = null;
-      }
-
-      if (res) {
-        if (res.ok) {
-          pinValid = true;
-        } else {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.detail || 'PIN Otorisasi 6 digit tidak valid.');
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${stageToken}`,
+          'X-Device-Fingerprint': deviceFingerprint,
+        },
+        body: JSON.stringify({
+          identifier: resolvedId,
+          pin: enteredPin,
+          pre_auth_token: stageToken,
+          device_fingerprint: deviceFingerprint,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401 && /dicabut|kedaluwarsa|dimulai ulang|Batas 3 kali/i.test(data.detail || '')) {
+          setStageLockedOut(true);
         }
-      } else if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-        // Explicit offline-only localhost dev fallback when backend daemon is unreachable
-        const isSiti = user?.email?.includes('siti') || user?.nip?.includes('1987') || (typeof identifier === 'string' && (identifier.includes('siti') || identifier.includes('1987')));
-        const expectedDevPin = isSiti ? '123456' : '654321';
-        if (entered === expectedDevPin) {
-          pinValid = true;
-        } else {
-          throw new Error('PIN Otorisasi 6 digit tidak valid.');
-        }
-      } else {
-        throw new Error('Tidak dapat menghubungi server autentikasi BPJS Kesehatan.');
+        setPin(['', '', '', '', '', '']);
+        setError(data.detail || 'PIN Otorisasi 6 digit tidak valid.');
+        return;
       }
 
-      if (pinValid) {
-        setError(null);
-        setStep('otp');
+      if (!data.pre_auth_token) {
+        setError('Server tidak mengembalikan token tahapan OTP yang sah.');
+        return;
       }
-    } catch (err) {
-      setError(err.message || 'Verifikasi PIN gagal.');
-      setPin(['', '', '', '', '', '']);
-      pinRefs.current[0]?.focus();
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const entered = otp.join('');
-    if (entered.length < 6) {
-      setError('Harap masukkan seluruh 6 angka kode OTP.');
-      return;
-    }
-    setIsVerifying(true);
-    setError(null);
-    try {
-      let otpValid = false;
-      let res = null;
-      try {
-        res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: user?.nip || user?.email || resolvedEmail,
-            otp: entered,
-          }),
-        });
-      } catch (_netErr) {
-        res = null;
-      }
-
-      if (res) {
-        if (res.ok) {
-          otpValid = true;
-        } else {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.detail || 'Kode OTP Email tidak sesuai.');
-        }
-      } else if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-        if (entered === '849201') {
-          otpValid = true;
-        } else {
-          throw new Error('Kode OTP Email tidak sesuai atau telah kedaluwarsa.');
-        }
-      } else {
-        throw new Error('Tidak dapat menghubungi server autentikasi BPJS Kesehatan.');
-      }
-
-      if (otpValid) {
-        setError(null);
-        setStep('device');
-      }
-    } catch (err) {
-      setError(err.message || 'Verifikasi OTP gagal.');
+      setStageToken(data.pre_auth_token);
+      setOtpEmailDest(data.email_destination || resolvedEmail);
       setOtp(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
+      setOtpCountdown(data.ttl_seconds || 180);
+      setResendCooldown(30);
+      setStep('otp');
+    } catch {
+      setError('Koneksi ke server otorisasi BPJS Kesehatan gagal.');
     } finally {
       setIsVerifying(false);
     }
   };
 
   const handleResendOtp = async () => {
-    if (otpCountdown > 0) return;
+    if (resendCooldown > 0 || stageLockedOut) return;
+    setError(null);
     try {
-      setOtpCountdown(60);
-      setError(null);
-      await fetch(`${API_BASE_URL}/api/v1/auth/send-otp`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/send-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${stageToken}`,
+          'X-Device-Fingerprint': deviceFingerprint,
+        },
         body: JSON.stringify({
-          identifier: user?.nip || user?.email || resolvedEmail,
+          identifier: resolvedId,
+          pre_auth_token: stageToken,
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.detail || 'Gagal mengirim ulang kode OTP.');
+        return;
+      }
+      setOtp(['', '', '', '', '', '']);
+      setOtpCountdown(data.ttl_seconds || 180);
+      setResendCooldown(30);
     } catch {
-      setError('Gagal mengirim ulang OTP. Pastikan server terhubung.');
+      setError('Gagal menghubungi server untuk pengiriman OTP ulang.');
     }
   };
 
-  const handleConfirmSession = async () => {
+  const handleVerifyOtp = async () => {
+    const enteredOtp = otp.join('');
+    if (enteredOtp.length < 6) {
+      setError('Masukkan 6 digit kode OTP dari email Anda.');
+      return;
+    }
     setIsVerifying(true);
     setError(null);
+
     try {
-      const durationMins = sessionDuration === '15m' ? 15 : sessionDuration === '8h' ? 480 : 60;
-      let token = `token-sec-${Date.now()}`;
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/auth/trust-device`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: user?.nip || user?.email || resolvedEmail,
-            device_fingerprint: 'DEV-TRUSTED-CHROME-LINUX-2026',
-            session_duration_minutes: durationMins,
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token) token = data.token;
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${stageToken}`,
+          'X-Device-Fingerprint': deviceFingerprint,
+        },
+        body: JSON.stringify({
+          identifier: resolvedId,
+          otp: enteredOtp,
+          pre_auth_token: stageToken,
+          device_fingerprint: deviceFingerprint,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401 && /dicabut|login ulang|Batas 3 kali/i.test(data.detail || '')) {
+          setStageLockedOut(true);
         }
-      } catch {
-        // Fallback gracefully to keep session authenticated
+        setOtp(['', '', '', '', '', '']);
+        setError(data.detail || 'Kode OTP Email tidak sesuai atau telah kedaluwarsa.');
+        return;
       }
 
-      const verifiedPayload = {
-        ...(user || {
-          nip: '199208152015031002',
-          name: 'Budi Santoso, S.Kom, M.TI',
-          email: resolvedEmail,
-          role: 'Analis Forensik Digital Anti-Fraud',
-          roleTitle: 'Auditor Investigasi Klaim',
-          unit: 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-          avatar: 'BS',
-          allowedRoles: ['FRAUD_INVESTIGATOR', 'ANALYST', 'SUPER_ADMIN', 'BAKB_SIGNER'],
-        }),
-        isMfaVerified: true,
-        sessionDurationMinutes: durationMins,
-        trustDevice,
-        revokeOtherSessions,
-        deviceId: 'DEV-TRUSTED-CHROME-LINUX-2026',
-        token: token,
-        verifiedAt: new Date().toISOString(),
-      };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('claimtrace_token', verifiedPayload.token);
-        localStorage.setItem('claimtrace_user', JSON.stringify(verifiedPayload));
+      if (!data.pre_auth_token) {
+        setError('Server tidak menerbitkan token otorisasi perangkat.');
+        return;
       }
-      onVerified?.(verifiedPayload);
-      onCompleteVerification?.(verifiedPayload);
-    } catch (err) {
-      setError(err.message || 'Gagal mengotorisasi sesi perangkat.');
+      setStageToken(data.pre_auth_token);
+      setStep('device');
+    } catch {
+      setError('Gagal memverifikasi kode OTP ke server otorisasi.');
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleCancelAction = () => {
-    onCancel?.();
-    onCancelSignOut?.();
+  const handleAuthorizeSession = async () => {
+    setIsVerifying(true);
+    setError(null);
+
+    const effectiveIdle = Math.min(idleTimeoutMinutes, sessionDurationMinutes);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/auth/authorize-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${stageToken}`,
+          'X-Device-Fingerprint': deviceFingerprint,
+        },
+        body: JSON.stringify({
+          identifier: resolvedId,
+          device_fingerprint: deviceFingerprint,
+          pre_auth_token: stageToken,
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'ClaimTrace Workstation',
+          session_duration_minutes: sessionDurationMinutes,
+          idle_timeout_minutes: effectiveIdle,
+          revoke_other_sessions: revokeOtherSessions,
+          strict_ip_lock: strictIpLock,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401) {
+          setStageLockedOut(true);
+        }
+        setError(data.detail || 'Otorisasi perangkat ditolak oleh server.');
+        return;
+      }
+
+      if (!data.token || !data.token.startsWith('ct.') || !data.user?.isMfaVerified) {
+        setError('Respons token sesi server tidak memenuhi standar kriptografis MFA.');
+        return;
+      }
+
+      const saved = saveAuthenticatedSession(data.token, data.user);
+      if (!saved) {
+        setError('Gagal menyimpan sesi terenkripsi di peramban.');
+        return;
+      }
+
+      if (onCompleteVerification) {
+        onCompleteVerification(data.user, {
+          expiresInSeconds: data.expires_in_seconds || sessionDurationMinutes * 60,
+          idleTimeoutSeconds: data.idle_timeout_seconds || effectiveIdle * 60,
+        });
+      }
+    } catch {
+      setError('Gagal menyelesaikan otorisasi sesi perangkat dengan server.');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md transition-colors duration-200 ${
-          effectiveIsLight ? 'bg-slate-900/40' : 'bg-[#00081c]/80'
-        }`}
-      >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 15 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 15 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className={`relative overflow-hidden rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl transition-colors duration-200 ${
-            effectiveIsLight
-              ? 'bg-white text-slate-900 shadow-2xl shadow-slate-400/40'
-              : 'bg-[#00153A] text-white shadow-2xl shadow-black/90'
-          }`}
-        >
-          {/* Pemilih Tahap Verifikasi Berlapis */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            {[
-              { id: 'pin', label: '1. PIN Audit' },
-              { id: 'otp', label: '2. OTP Email' },
-              { id: 'device', label: '3. Sesi Perangkat' },
-            ].map((item) => {
-              const active = step === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setError(null);
-                    setStep(item.id);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    active
-                      ? 'bg-emerald-700 text-white font-bold shadow-sm'
-                      : effectiveIsLight
-                        ? 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200/80'
-                        : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+  const stages = [
+    { key: 'pin', label: '1. PIN', done: step === 'otp' || step === 'device' },
+    { key: 'otp', label: '2. OTP Email', done: step === 'device' },
+    { key: 'device', label: '3. Perangkat', done: false },
+  ];
 
-          {/* TAHAP 1: PIN OTORISASI VERIFIKATOR (6 ANGKA) */}
+  const surfaceCls = effectiveIsLight
+    ? 'bg-white border-[#E2E8F0] text-[#061B31] shadow-2xl'
+    : 'bg-[#11141A] border-white/10 text-[#F1F5F9] shadow-2xl';
+  const subSurfaceCls = effectiveIsLight
+    ? 'bg-[#F7F8FA] border-[#E2E8F0]'
+    : 'bg-[#161A22] border-white/10';
+  const inputCls = effectiveIsLight
+    ? 'bg-[#F7F8FA] border-[#CBD5E1] text-[#061B31] focus:border-[#00733B] focus:bg-white focus:ring-2 focus:ring-emerald-500/20'
+    : 'bg-[#161A22] border-white/15 text-white focus:border-emerald-400 focus:bg-[#1B202A] focus:ring-2 focus:ring-emerald-500/25';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm font-inter">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className={`relative w-full max-w-lg rounded-2xl border p-6 sm:p-7 ${surfaceCls}`}
+      >
+        <div className="text-center space-y-1.5 mb-5">
+          <h2 className="text-lg font-bold tracking-tight">Verifikasi Keamanan</h2>
+          <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Selesaikan 3 tahap verifikasi untuk{' '}
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">{user?.name || resolvedId}</span>.
+          </p>
+        </div>
+
+        {/* Non-clickable progress bar */}
+        <div className="grid grid-cols-3 gap-2 mb-5" aria-label="Tahapan Verifikasi MFA">
+          {stages.map((s) => {
+            const isActive = step === s.key;
+            return (
+              <div
+                key={s.key}
+                className={`py-2 px-2.5 rounded-xl border text-center text-[11px] font-semibold select-none transition-colors ${
+                  isActive
+                    ? effectiveIsLight
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
+                      : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : s.done
+                    ? effectiveIsLight
+                      ? 'bg-slate-50 border-emerald-200 text-emerald-700'
+                      : 'bg-emerald-950/30 border-emerald-500/20 text-emerald-400'
+                    : effectiveIsLight
+                    ? 'bg-slate-50 border-slate-200 text-slate-400'
+                    : 'bg-[#161A22] border-white/5 text-slate-500'
+                }`}
+              >
+                {s.done ? <Check className="w-3 h-3 inline mr-1 shrink-0" /> : null}
+                {s.label}
+              </div>
+            );
+          })}
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <p className="font-medium leading-snug">{error}</p>
+              {stageLockedOut && (
+                <button
+                  type="button"
+                  onClick={handleHardAbort}
+                  className="text-[11px] font-bold underline cursor-pointer"
+                >
+                  Muat Ulang Proses Login Sekarang
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <AnimatePresence mode="wait">
           {step === 'pin' && (
-            <>
-              <div className="text-center mb-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border transition-colors ${
-                  effectiveIsLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-xs'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <Shield className={`w-7 h-7 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+            <motion.div
+              key="step-pin"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="space-y-4"
+            >
+              <div className={`p-3.5 rounded-xl border flex items-start justify-between gap-3 ${subSurfaceCls}`}>
+                <div className="flex items-start gap-2.5 text-xs">
+                  <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <p className={effectiveIsLight ? 'text-slate-600' : 'text-slate-300'}>
+                    Masukkan 6 digit PIN otorisasi rahasia verifikator Anda (maksimum 3 kali percobaan).
+                  </p>
                 </div>
-                <h2 className={`text-xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                  Otorisasi Verifikator
-                </h2>
-                <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Masukkan 6 angka PIN otorisasi auditor klaim JKN untuk melanjutkan
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPinDigits((v) => !v)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                  title={showPinDigits ? 'Sembunyikan digit PIN' : 'Tampilkan digit PIN'}
+                >
+                  {showPinDigits ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
 
-              <div className="flex gap-2 justify-center mb-4">
+              <div className="flex justify-center gap-2 sm:gap-2.5 py-1">
                 {pin.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => {
-                      pinRefs.current[i] = el;
-                    }}
-                    type="password"
+                    ref={(el) => (pinRefs.current[i] = el)}
+                    type={showPinDigits ? 'text' : 'password'}
                     inputMode="numeric"
-                    maxLength={1}
-                    aria-label={`Digit PIN ${i + 1}`}
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    disabled={stageLockedOut || isVerifying}
                     value={digit}
-                    onChange={(e) => handlePinChange(i, e.target.value)}
-                    onKeyDown={(e) => handlePinKeyDown(i, e)}
-                    className={`w-11 h-13 text-center text-2xl font-bold font-mono tabular-nums rounded-xl border outline-none transition-all duration-150 ${
-                      digit
-                        ? effectiveIsLight
-                          ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 font-bold ring-2 ring-emerald-600/15'
-                          : 'border-emerald-500 bg-emerald-500/15 text-emerald-300 ring-2 ring-emerald-500/20'
-                        : effectiveIsLight
-                          ? 'border-slate-300 bg-slate-50 text-slate-900 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600/15'
-                          : 'border-white/10 bg-white/5 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
-                    }`}
+                    aria-label={`Digit PIN ${i + 1}`}
+                    onChange={(e) => handleDigitChange(pin, setPin, pinRefs, i, e.target.value)}
+                    onKeyDown={(e) => handleDigitKeyDown(pin, pinRefs, i, e, handleVerifyPin)}
+                    className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg font-mono font-bold rounded-xl border focus:outline-none transition ${inputCls}`}
                   />
                 ))}
               </div>
 
-              <div className="flex items-center justify-between text-xs mb-4 px-1">
-                <span className={`text-[11px] font-medium ${effectiveIsLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  PIN Kedinasan BPJS (6 Digit)
-                </span>
+              <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"
-                  onClick={() => setPin(getExpectedPin())}
-                  className={`text-[11px] font-semibold transition-colors cursor-pointer ${
-                    effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                  onClick={handleHardAbort}
+                  className={`text-xs font-medium cursor-pointer ${
+                    effectiveIsLight ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Isi Kode Otomatis
+                  Batalkan & Keluar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyPin}
+                  disabled={isVerifying || stageLockedOut || pin.join('').length < 6}
+                  className="px-5 py-2.5 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                >
+                  {isVerifying && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Verifikasi PIN & Kirim OTP</span>
                 </button>
               </div>
-
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-rose-500 text-sm text-center mb-4 flex items-center justify-center gap-1 font-medium"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {error}
-                </motion.p>
-              )}
-
-              <button
-                type="button"
-                onClick={handleVerifyPin}
-                disabled={isVerifying || pin.join('').length < 6}
-                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
-              >
-                {isVerifying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-[#000c24] border-t-transparent rounded-full animate-spin" />
-                    Memverifikasi...
-                  </span>
-                ) : (
-                  'Verifikasi PIN'
-                )}
-              </button>
-            </>
+            </motion.div>
           )}
 
-          {/* TAHAP 2: KODE OTP EMAIL DINAS */}
           {step === 'otp' && (
-            <>
-              <div className="text-center mb-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border transition-colors ${
-                  effectiveIsLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-xs'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <Mail className={`w-7 h-7 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+            <motion.div
+              key="step-otp"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="space-y-4"
+            >
+              <div className={`p-3.5 rounded-xl border flex items-start justify-between gap-3 ${subSurfaceCls}`}>
+                <div className="flex items-start gap-2.5 text-xs">
+                  <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <p className={effectiveIsLight ? 'text-slate-600' : 'text-slate-300'}>
+                    Masukkan 6 digit kode OTP yang dikirim ke{' '}
+                    <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">{otpEmailDest}</span>.
+                  </p>
                 </div>
-                <h2 className={`text-xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                  OTP Email Dinas
-                </h2>
-                <p className={`text-xs truncate ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Masukkan 6 digit kode yang dikirim ke {resolvedEmail}
-                </p>
+                <span className="text-[11px] font-mono font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0">
+                  {Math.floor(otpCountdown / 60)}:{String(otpCountdown % 60).padStart(2, '0')}
+                </span>
               </div>
 
-              <div className="flex gap-2 justify-center mb-4">
+              <div className="flex justify-center gap-2 sm:gap-2.5 py-1">
                 {otp.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => {
-                      otpRefs.current[i] = el;
-                    }}
+                    ref={(el) => (otpRefs.current[i] = el)}
                     type="text"
                     inputMode="numeric"
-                    maxLength={1}
-                    aria-label={`Digit OTP ${i + 1}`}
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    disabled={stageLockedOut || isVerifying}
                     value={digit}
-                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                    className={`w-11 h-13 text-center text-2xl font-bold font-mono tabular-nums rounded-xl border outline-none transition-all duration-150 ${
-                      digit
-                        ? effectiveIsLight
-                          ? 'border-emerald-600 bg-emerald-50/50 text-emerald-950 font-bold ring-2 ring-emerald-600/15'
-                          : 'border-emerald-500 bg-emerald-500/15 text-emerald-300 ring-2 ring-emerald-500/20'
-                        : effectiveIsLight
-                          ? 'border-slate-300 bg-slate-50 text-slate-900 focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600/15'
-                          : 'border-white/10 bg-white/5 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
-                    }`}
+                    aria-label={`Digit OTP ${i + 1}`}
+                    onChange={(e) => handleDigitChange(otp, setOtp, otpRefs, i, e.target.value)}
+                    onKeyDown={(e) => handleDigitKeyDown(otp, otpRefs, i, e, handleVerifyOtp)}
+                    className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg font-mono font-bold rounded-xl border focus:outline-none transition ${inputCls}`}
                   />
                 ))}
               </div>
 
-              <div className="flex items-center justify-between text-xs mb-4 px-1">
+              <div className="flex items-center justify-between pt-1">
                 <button
                   type="button"
                   onClick={handleResendOtp}
-                  disabled={otpCountdown > 0}
-                  className={`inline-flex items-center gap-1 font-medium cursor-pointer ${
-                    effectiveIsLight
-                      ? 'text-emerald-700 hover:text-emerald-800 disabled:text-slate-400'
-                      : 'text-emerald-400 hover:text-emerald-300 disabled:text-white/40'
-                  } disabled:cursor-not-allowed`}
-                >
-                  <RefreshCw className={`w-3 h-3 ${otpCountdown > 0 ? 'animate-spin' : ''}`} />
-                  {otpCountdown > 0 ? `Kirim ulang (${otpCountdown}d)` : 'Kirim Ulang OTP'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOtp(['8', '4', '9', '2', '0', '1'])}
-                  className={`text-[11px] font-semibold transition-colors cursor-pointer ${
-                    effectiveIsLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                  disabled={resendCooldown > 0 || stageLockedOut}
+                  className={`text-xs font-medium flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                    effectiveIsLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Isi Kode Otomatis
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>{resendCooldown > 0 ? `Kirim Ulang (${resendCooldown}s)` : 'Kirim Ulang Kode OTP'}</span>
                 </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleHardAbort}
+                    className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={isVerifying || stageLockedOut || otp.join('').length < 6}
+                    className="px-5 py-2.5 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  >
+                    {isVerifying && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Verifikasi OTP Email</span>
+                  </button>
+                </div>
               </div>
-
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-rose-500 text-sm text-center mb-4 flex items-center justify-center gap-1 font-medium"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {error}
-                </motion.p>
-              )}
-
-              <button
-                type="button"
-                onClick={handleVerifyOtp}
-                disabled={isVerifying || otp.join('').length < 6}
-                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer"
-              >
-                {isVerifying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-[#000c24] border-t-transparent rounded-full animate-spin" />
-                    Memverifikasi...
-                  </span>
-                ) : (
-                  'Verifikasi OTP Email'
-                )}
-              </button>
-            </>
+            </motion.div>
           )}
 
-          {/* TAHAP 3: SESI PERANGKAT KERJA */}
           {step === 'device' && (
-            <>
-              <div className="text-center mb-5">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 border transition-colors ${
-                  effectiveIsLight
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-xs'
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <Laptop className={`w-7 h-7 ${effectiveIsLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
-                </div>
-                <h2 className={`text-xl font-bold mb-1 ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                  Sesi Perangkat Kerja
-                </h2>
-                <p className={`text-xs ${effectiveIsLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Konfirmasi terminal verifikator &amp; parameter sesi aktif
-                </p>
-              </div>
-
-              <div className={`rounded-xl border p-3.5 mb-4 space-y-2 text-xs transition-colors ${
-                effectiveIsLight
-                  ? 'border-slate-200 bg-slate-50 text-slate-800'
-                  : 'border-white/10 bg-white/5 text-white'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Terminal Kerja</span>
-                  <span className={`font-semibold ${effectiveIsLight ? 'text-slate-900' : 'text-white'}`}>
-                    Linux • Chrome 130
+            <motion.div
+              key="step-device"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="space-y-4"
+            >
+              <div className={`p-3.5 rounded-xl border space-y-2 ${subSurfaceCls}`}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Otorisasi Perangkat</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>ID Perangkat</span>
-                  <span className={`font-mono font-semibold ${effectiveIsLight ? 'text-emerald-800' : 'text-emerald-300'}`}>
-                    FP-BPJS-94A8
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className={effectiveIsLight ? 'text-slate-500' : 'text-white/50'}>Jaringan Intranet</span>
-                  <span className={`inline-flex items-center gap-1 font-semibold ${
-                    effectiveIsLight ? 'text-emerald-700' : 'text-emerald-300'
-                  }`}>
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${effectiveIsLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                    10.12.4.99 (TLS 1.3)
-                  </span>
+                <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                  ID Perangkat: {deviceFingerprint}
                 </div>
               </div>
 
-              <div className="mb-4">
-                <p className={`text-xs font-semibold mb-1.5 ${effectiveIsLight ? 'text-slate-700' : 'text-white/70'}`}>
-                  Batas Waktu Sesi
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: '15m', label: '15 Menit' },
-                    { id: '1h', label: '1 Jam' },
-                    { id: '8h', label: '8 Jam' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setSessionDuration(opt.id)}
-                      className={`py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                        sessionDuration === opt.id
-                          ? effectiveIsLight
-                            ? 'border-emerald-700 bg-emerald-700 text-white font-bold shadow-xs'
-                            : 'border-emerald-500 bg-emerald-600 text-white font-bold'
-                          : effectiveIsLight
-                            ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                            : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-5 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    aria-label="Kotak centang opsi"
-                    type="checkbox"
-                    checked={trustDevice}
-                    onChange={(e) => setTrustDevice(e.target.checked)}
-                    className="rounded accent-emerald-700"
-                  />
-                  <span className={effectiveIsLight ? 'text-slate-700' : 'text-white/70'}>
-                    Percayai perangkat kerja ini selama 7 hari
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <label className="space-y-1.5 block">
+                  <span className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                    Batas Maksimal Sesi
                   </span>
+                  <select
+                    value={sessionDurationMinutes}
+                    onChange={(e) => setSessionDurationMinutes(Number(e.target.value))}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none ${inputCls}`}
+                  >
+                    <option value={15}>15 Menit (Strict)</option>
+                    <option value={30}>30 Menit</option>
+                    <option value={60}>60 Menit (1 Jam)</option>
+                    <option value={120}>120 Menit (Maksimum)</option>
+                  </select>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+
+                <label className="space-y-1.5 block">
+                  <span className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                    Auto-Lock Idle Timeout
+                  </span>
+                  <select
+                    value={idleTimeoutMinutes}
+                    onChange={(e) => setIdleTimeoutMinutes(Number(e.target.value))}
+                    className={`w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none ${inputCls}`}
+                  >
+                    <option value={5}>5 Menit Tanpa Aktivitas</option>
+                    <option value={10}>10 Menit Tanpa Aktivitas</option>
+                    <option value={15}>15 Menit (Standar BPJS)</option>
+                    <option value={30}>30 Menit</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
                   <input
-                    aria-label="Kotak centang opsi"
                     type="checkbox"
                     checked={revokeOtherSessions}
                     onChange={(e) => setRevokeOtherSessions(e.target.checked)}
-                    className="rounded accent-emerald-700"
+                    className="mt-0.5 accent-emerald-600 rounded"
                   />
-                  <span className={effectiveIsLight ? 'text-slate-700' : 'text-white/70'}>
-                    Putuskan sesi aktif pada perangkat lain
-                  </span>
+                  <div>
+                    <span className="font-semibold block">Cabut Semua Sesi Perangkat Lain (Single-Session Enforcement)</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Otomatis menaikkan epoch token dan memutus sesi aktif sebelumnya di perangkat lain.
+                    </span>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
+                  <input
+                    type="checkbox"
+                    checked={strictIpLock}
+                    onChange={(e) => setStrictIpLock(e.target.checked)}
+                    className="mt-0.5 accent-emerald-600 rounded"
+                  />
+                  <div>
+                    <span className="font-semibold block">Strict IP & User-Agent Session Lock</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Menolak penggunaan ulang token jika alamat IP, User-Agent, atau Device Fingerprint berubah.
+                    </span>
+                  </div>
                 </label>
               </div>
 
-              <button
-                type="button"
-                onClick={handleConfirmSession}
-                disabled={isVerifying}
-                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium text-xs rounded-xl mb-3 disabled:opacity-50 shadow-xs transition-colors cursor-pointer"
-              >
-                {isVerifying ? 'Mengaktifkan Sesi...' : 'Konfirmasi & Masuk Dasbor'}
-              </button>
-            </>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={handleHardAbort}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                >
+                  Batalkan Login
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAuthorizeSession}
+                  disabled={isVerifying || stageLockedOut}
+                  className="px-5 py-2.5 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                >
+                  {isVerifying ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  <span>Masuk</span>
+                </button>
+              </div>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          {/* Batal */}
-          <button
-            type="button"
-            onClick={handleCancelAction}
-            className={`w-full py-2 text-sm transition-colors cursor-pointer ${
-              effectiveIsLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white'
-            }`}
-          >
-            Batal &amp; Keluar
-          </button>
-        </motion.div>
+        <div className={`mt-5 pt-3 border-t flex items-center justify-between text-[10.5px] ${effectiveIsLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
+          <span className="flex items-center gap-1.5">
+            <Lock className="w-3 h-3 text-emerald-600" />
+            <span>Sesi terenkripsi terikat perangkat</span>
+          </span>
+          <span className="font-mono">AAL2</span>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </div>
   );
 }

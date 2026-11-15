@@ -4,8 +4,9 @@ import { MotionConfig } from 'motion/react'
 import { injectSpeedInsights } from '@vercel/speed-insights'
 import App from './App.jsx'
 import './index.css'
+import './styles/clinical-precision.css'
 
-// Initialize Vercel Speed Insights
+// Initialize Speed Insights telemetry
 injectSpeedInsights()
 
 // Register Service Worker for offline Wasrik hospital field audit resilience

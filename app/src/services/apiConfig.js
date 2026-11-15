@@ -1,36 +1,126 @@
 /**
- * ClaimTrace JKN DSS - Centralized API Configuration
- * Supports production Vercel deployment, Hugging Face Spaces backend,
- * and local Vite dev proxy without Mixed Content or CORS errors.
+ * ClaimTrace JKN DSS - Centralized Strict Session & API Configuration
+ * Zero auto-login, zero hardcoded credentials, cryptographic session binding.
  */
 
 export const getApiBaseUrl = () => {
-  // 1. Explicit Vite environment variable (set in Vercel or .env)
   if (import.meta.env?.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
   }
-
-  // 2. In browser environments:
-  // When running on localhost or 127.0.0.1, return empty string so Vite proxy handles /api
-  // When running in production on Vercel, return empty string so Vercel rewrites handle /api
   return '';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
-let pendingSessionPromise = null;
-let authBackoffUntil = 0;
 const _sessionJsonCache = new Map();
 const _inflightGetMap = new Map();
+let _prefetchedSession = false;
+
+export const getDeviceFingerprint = () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'CT-WKS-SERVER';
+  }
+  try {
+    let existing = localStorage.getItem('claimtrace_device_fp');
+    if (existing && existing.startsWith('CT-WKS-') && existing.length >= 16) {
+      return existing;
+    }
+    const rndBytes = new Uint8Array(8);
+    if (window.crypto?.getRandomValues) {
+      window.crypto.getRandomValues(rndBytes);
+    } else {
+      for (let i = 0; i < rndBytes.length; i += 1) {
+        rndBytes[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    const hex = Array.from(rndBytes, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const plat = (navigator.platform || 'WEB').replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase() || 'WEB';
+    const created = `CT-WKS-${plat}-${hex}`;
+    localStorage.setItem('claimtrace_device_fp', created);
+    return created;
+  } catch {
+    return 'CT-WKS-EPHEMERAL-SESSION';
+  }
+};
+
+export const getStoredAuthToken = () => {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const token = localStorage.getItem('bpjs_auth_token');
+    if (!token || typeof token !== 'string') return null;
+    if (!token.startsWith('ct.') || token.split('.').length !== 3) {
+      return null;
+    }
+    return token;
+  } catch {
+    return null;
+  }
+};
+
+export const hasValidSessionStorage = () => {
+  const token = getStoredAuthToken();
+  if (!token) return false;
+  try {
+    const rawUser = localStorage.getItem('claimtrace_user');
+    if (!rawUser) return false;
+    const parsed = JSON.parse(rawUser);
+    if (!parsed || parsed.isMfaVerified !== true || !parsed.nip) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const saveAuthenticatedSession = (token, user) => {
+  if (typeof localStorage === 'undefined') return false;
+  if (!token || !token.startsWith('ct.') || token.split('.').length !== 3) {
+    return false;
+  }
+  if (!user || user.isMfaVerified !== true) {
+    return false;
+  }
+  try {
+    localStorage.setItem('bpjs_auth_token', token);
+    if (user.role) localStorage.setItem('bpjs_user_role', user.role);
+    if (user.nip) localStorage.setItem('bpjs_user_nip', user.nip);
+    localStorage.setItem('claimtrace_user', JSON.stringify(user));
+    localStorage.removeItem('claimtrace_session_revoked_at');
+    _sessionJsonCache.clear();
+    _prefetchedSession = false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const clearSessionStorage = ({ broadcast = true } = {}) => {
+  _sessionJsonCache.clear();
+  _inflightGetMap.clear();
+  _prefetchedSession = false;
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem('bpjs_auth_token');
+    localStorage.removeItem('bpjs_user_role');
+    localStorage.removeItem('bpjs_user_nip');
+    localStorage.removeItem('claimtrace_user');
+    if (broadcast) {
+      localStorage.setItem('claimtrace_session_revoked_at', String(Date.now()));
+    }
+  } catch {}
+};
 
 export const getCachedJsonSync = (url) => {
+  if (!hasValidSessionStorage()) return null;
   const entry = _sessionJsonCache.get(url);
   if (!entry) return null;
-  if (Date.now() - entry.ts > 60000) return entry.data; // allow stale-while-revalidate immediately
+  if (Date.now() - entry.ts > 60000) return entry.data;
   return entry.data;
 };
 
 export const cachedAuthGetJson = async (url, options = {}) => {
+  if (!hasValidSessionStorage()) return null;
   if (_inflightGetMap.has(url)) {
     return _inflightGetMap.get(url);
   }
@@ -53,9 +143,8 @@ export const cachedAuthGetJson = async (url, options = {}) => {
   return promise;
 };
 
-let _prefetchedSession = false;
 export const prefetchDashboardHotEndpoints = () => {
-  if (_prefetchedSession) return;
+  if (_prefetchedSession || !hasValidSessionStorage()) return;
   _prefetchedSession = true;
   const hotUrls = [
     `${API_BASE_URL}/api/v1/system/national-scale-metrics`,
@@ -72,6 +161,7 @@ export const prefetchDashboardHotEndpoints = () => {
     `${API_BASE_URL}/api/v1/duckdb/info`,
   ];
   const runPrefetch = () => {
+    if (!hasValidSessionStorage()) return;
     hotUrls.forEach((u) => {
       cachedAuthGetJson(u);
     });
@@ -83,73 +173,28 @@ export const prefetchDashboardHotEndpoints = () => {
   }
 };
 
-export const ensureSessionToken = async () => {
-  if (typeof localStorage === 'undefined') return null;
-  const existing = localStorage.getItem('claimtrace_token') || localStorage.getItem('bpjs_session_token');
-  if (existing && !existing.startsWith('token-sec-')) {
-    return existing;
-  }
-  if (Date.now() < authBackoffUntil) {
-    return null;
-  }
-  if (!pendingSessionPromise) {
-    pendingSessionPromise = fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        identifier: '198704202011012001',
-        password: 'Password123!',
-        recaptcha_token: 'local-verified',
-      }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          authBackoffUntil = Date.now() + 10000;
-          return null;
-        }
-        const data = await res.json();
-        if (data?.token) {
-          localStorage.setItem('claimtrace_token', data.token);
-          localStorage.setItem('bpjs_session_token', data.token);
-          return data.token;
-        }
-        return null;
-      })
-      .catch(() => {
-        authBackoffUntil = Date.now() + 5000;
-        return null;
-      })
-      .finally(() => {
-        pendingSessionPromise = null;
-      });
-  }
-  return pendingSessionPromise;
-};
+export const ensureSessionToken = async () => getStoredAuthToken();
 
-/**
- * Global HTTP Interceptor for ClaimTrace API requests.
- * Catches 401 Unauthorized responses, automatically dispatches
- * the 'claimtrace:session-expired' event, and injects session headers.
- */
 export const authFetch = async (url, options = {}) => {
-  const token = await ensureSessionToken();
-  const role = typeof localStorage !== 'undefined' ? localStorage.getItem('bpjs_user_role') : null;
-  const nip = typeof localStorage !== 'undefined' ? localStorage.getItem('bpjs_user_nip') : null;
+  const token = getStoredAuthToken();
+  const deviceFingerprint = getDeviceFingerprint();
 
   const headers = {
     ...(options.headers || {}),
-    ...(token ? { 'Authorization': `Bearer ${token}`, 'X-BPJS-Token': token } : {}),
-    ...(role ? { 'X-Verificator-Role': role } : {}),
-    ...(nip ? { 'X-Verificator-NIP': nip } : {})
+    ...(token ? { Authorization: `Bearer ${token}`, 'X-BPJS-Token': token } : {}),
+    'X-Device-Fingerprint': deviceFingerprint,
   };
 
   const response = await fetch(url, { ...options, headers });
 
   if (response.status === 401) {
+    clearSessionStorage({ broadcast: true });
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('claimtrace:session-expired', {
-        detail: { status: 401, url }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('claimtrace:session-expired', {
+          detail: { status: 401, url },
+        })
+      );
     }
   }
 

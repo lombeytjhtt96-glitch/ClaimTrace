@@ -680,7 +680,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
     const nowIso = new Date().toISOString();
     const seed = `${selectedClaimId}-${baVerifierNip}-${baActionType}-${nowIso}`;
-    const fakeHash =
+    const digestHex =
       'a8f4c291e7b038d561294fa71c80b3e5921d47c60983ab12e5f4890c1a2b3d4e'.slice(0, 56) +
       selectedClaimId.slice(-8).replace(/[^a-zA-Z0-9]/g, 'f');
     const actionLabel = ACTION_LABELS[baActionType] || baActionType;
@@ -703,8 +703,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         `Berdasarkan triangulasi 4 lapis bukti (Analitik AI Spatiotemporal, Registry SATUSEHAT SDMK, Konfirmasi Mobile JKN Peserta, serta Log Biometrik FRISTA), klaim ${selectedCase.claim_id} pada ${selectedCase.hospital} ditetapkan dengan putusan '${actionLabel}' dan nilai efisiensi/koreksi sebesar Rp ${selectedCase.potential_recovery_rp.toLocaleString('id-ID')}.`,
       cryptographic_seal: {
         algorithm: 'SHA-256 Tamper-Evident Chained Hash',
-        document_hash: fakeHash,
-        verification_uri: `http://localhost:3000/?view=dashboard&tab=audit&verify=${fakeHash.slice(0, 16)}`,
+        document_hash: digestHex,
+        verification_uri: `${typeof window !== 'undefined' ? window.location.origin : 'https://claimtrace.bpjs-kesehatan.go.id'}/?view=dashboard&tab=audit&verify=${digestHex.slice(0, 16)}`,
         qr_matrix_21x21: buildDeterministicQrMatrix(seed)
       }
     });
@@ -728,21 +728,21 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 <title>Berita Acara Verifikasi Klaim - ${baDossier.ba_number}</title>
 <style>
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #0f172a; margin: 36px; line-height: 1.5; }
-  .header { border-bottom: 3px solid #047857; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-  .title { font-size: 18px; font-weight: 800; color: #064e3b; text-transform: uppercase; }
+  .header { border-bottom: 3px solid #00733B; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .title { font-size: 18px; font-weight: 800; color: #004A26; text-transform: uppercase; }
   .subtitle { font-size: 12px; color: #475569; margin-top: 4px; }
   .ba-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 12px; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12px; }
   th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
   th { background: #f1f5f9; font-weight: 700; color: #1e293b; }
-  .seal-box { border: 2px solid #059669; background: #ecfdf5; border-radius: 10px; padding: 14px; margin-top: 20px; font-family: monospace; font-size: 11px; }
+  .seal-box { border: 2px solid #00733B; background: #ECF7F1; border-radius: 10px; padding: 14px; margin-top: 20px; font-family: monospace; font-size: 11px; }
   .sig-grid { display: flex; justify-content: space-between; margin-top: 32px; font-size: 12px; }
   @media print { .no-print { display: none; } body { margin: 15mm; } }
 </style>
 </head>
 <body>
   <div class="no-print" style="margin-bottom: 16px; text-align: right;">
-    <button onclick="window.print()" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer;">Cetak / Simpan PDF</button>
+    <button onclick="window.print()" style="background:#00733B;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer;">Cetak / Simpan PDF</button>
   </div>
   <div class="header">
     <div>
@@ -889,8 +889,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                 }`}
               >
-                <Sparkles className="w-3 h-3" />
-                <span>Arsitektur Lanjutan 5 Pilar · Produksi Nasional BPJS Kesehatan</span>
+                <ShieldCheck className="w-3 h-3" />
+                <span>Suite Forensik Lanjutan · Operasional BPJS Kesehatan</span>
               </span>
               <span
                 className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${
@@ -899,11 +899,11 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
                 }`}
               >
-                5 Pilar Forensik Lanjutan Aktif
+                5 Modul Forensik Lanjutan Aktif
               </span>
             </div>
             <h1 className={`text-xl font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Pusat Ekspansi 5 Pilar: Upcoding, Biometrik FRISTA, RAG Regulasi, Berita Acara PDF &amp; Hugging Face Clinical NLP
+              Suite Forensik Lanjutan: Deteksi Upcoding, Biometrik FRISTA, RAG Regulasi JKN, Berita Acara PDF &amp; Clinical NLP
             </h1>
             <p className={`text-xs leading-relaxed max-w-4xl ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
               Pengembangan lanjutan ClaimTrace yang memperluas deteksi ke 14 tipologi kecurangan JKN (Upcoding Severity Level &amp;
@@ -919,7 +919,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             }`}
           >
             <span className={`text-[10px] font-bold uppercase tracking-wider block ${isLight ? 'text-emerald-800' : 'text-emerald-300'}`}>
-              Total Cost Recovery (4 Skenario)
+              Potensi Penyelamatan DJS (4 Kasus Aktif)
             </span>
             <div className={`text-xl font-extrabold font-mono mt-0.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
               Rp {totalRecoveryAllCases.toLocaleString('id-ID')}
@@ -931,7 +931,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
         </div>
 
         {/* 5 PILLAR NAVIGATION TABS */}
-        <div role="tablist" aria-label="Navigasi 5 Pilar Forensik Lanjutan" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
+        <div role="tablist" aria-label="Navigasi Modul Forensik Lanjutan" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-5 pt-4 border-t border-slate-200/20">
           {[
             {
               id: 'typology',
@@ -1023,7 +1023,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       >
         <div className="flex items-center gap-2 text-xs font-bold">
           <Layers className="w-4 h-4 text-emerald-500" />
-          <span>Pilih Skenario Berkas Klaim Aktif:</span>
+          <span>Pilih Berkas Klaim FKRTL Aktif:</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {cases.map((c) => {
@@ -1184,7 +1184,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             <div className="flex items-center justify-between border-b pb-3 border-slate-200/20">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-sm font-bold">Simulator Audit Koding INA-CBG Interaktif</h3>
+                <h3 className="text-sm font-bold">Panel Audit Koding INA-CBG Interaktif</h3>
               </div>
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
                 Real-Time Engine
@@ -1431,8 +1431,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-bold flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Analisis Forensik Biometrik & Presensi:</span>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Verifikasi Lintas Log Biometrik &amp; Presensi (On-Premise):</span>
                 </div>
               </div>
 
@@ -1445,6 +1445,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
+                      if (e.isComposing || e.keyCode === 229) return;
                       runFristaAiForensicAudit(selectedClaimId, fristaAiFocus);
                     }
                   }}
@@ -1584,6 +1585,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
+                    if (e.isComposing || e.keyCode === 229) return;
                     executeRagQuery(ragQuery, selectedClaimId);
                   }
                 }}
@@ -1642,8 +1644,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3 border-slate-200/20">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <h3 className="text-sm font-bold">Sintesis Telaah Hukum & Klinis HealthAI</h3>
+                    <Scale className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <h3 className="text-sm font-bold">Telaah Kepatuhan Hukum &amp; Klinis JKN (On-Premise)</h3>
                   </div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'}`}>
@@ -1763,13 +1765,13 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     disabled={isDraftingBaAi}
                     className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <Sparkles className="w-3 h-3" />
-                    <span>{isDraftingBaAi ? 'Menyusun dengan AI...' : 'Susun Narasi Hukum dengan AI'}</span>
+                    <FileCheck className="w-3 h-3" />
+                    <span>{isDraftingBaAi ? 'Menyusun Draf Dasar Hukum...' : 'Muat Draf Pertimbangan Yuridis (On-Premise)'}</span>
                   </button>
                 </div>
                 <textarea
                   rows={3}
-                  placeholder="Klik 'Susun Narasi Hukum dengan AI' atau ketik catatan putusan verifikator..."
+                  placeholder="Klik 'Muat Draf Pertimbangan Yuridis (On-Premise)' atau ketik catatan putusan verifikator..."
                   value={baNotes}
                   onChange={(e) => setBaNotes(e.target.value)}
                   className={`w-full p-3 rounded-xl border text-xs ${
@@ -1930,7 +1932,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       )}
 
       {/* =========================================================================
-          PILAR 5: HUGGING FACE CLINICAL NLP & SEMANTIC PLAGIARISM HUB
+          MODUL 5: HUGGING FACE CLINICAL NLP & SEMANTIC PLAGIARISM HUB
           Powered by sentence-transformers/all-MiniLM-L6-v2 & ChromaDB Vector Core
           Zero-PHI On-Premise Air-Gapped Architecture (UU PDP No. 27/2022 Compliant)
       ========================================================================= */}
@@ -2231,9 +2233,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             <div className={`lg:col-span-7 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/90 border-white/10 shadow-xl'} space-y-3`}>
               <div className="flex items-center justify-between border-b pb-2.5 border-slate-200/20">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <FileText className="w-4 h-4 text-amber-400" />
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                    Uji Teks Resume Klinis Kustom (Live Tester)
+                    Uji Kemiripan Teks Resume Klinis (Zero-PHI)
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono text-slate-400">Zero-PHI Local Embedding</span>

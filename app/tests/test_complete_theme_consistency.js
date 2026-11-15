@@ -2,8 +2,8 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 
-const downloadsDir = '/mnt/c/Users/Asus/Downloads/Screenshoot All Pages ClaimTrace';
-const artifactsDir = '/home/Khalaf-Dev/.gemini/antigravity/brain/bc1217c1-62d5-40a9-8f47-eade18d108bf/screenshots';
+const downloadsDir = process.env.SCREENSHOT_EXPORT_DIR || path.resolve(process.cwd(), 'artifacts', 'exports');
+const artifactsDir = process.env.ARTIFACT_DIR || path.resolve(process.cwd(), 'artifacts', 'screenshots');
 
 if (!fs.existsSync(artifactsDir)) fs.mkdirSync(artifactsDir, { recursive: true });
 

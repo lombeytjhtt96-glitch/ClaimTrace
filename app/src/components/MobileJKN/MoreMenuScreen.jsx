@@ -24,7 +24,7 @@ export default function MoreMenuScreen({ onNavigate, onOpenClaimTrace }) {
           subtitle: 'Lapis 3: Lindungi kepesertaan dari klaim anomali',
           icon: null,
           customIcon: (
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-xs shadow-emerald-500/30">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#008A47] to-[#00733B] flex items-center justify-center text-white shadow-xs shadow-emerald-500/30">
               <Shield className="w-6 h-6 animate-pulse" />
             </div>
           ),
@@ -274,7 +274,7 @@ export default function MoreMenuScreen({ onNavigate, onOpenClaimTrace }) {
                         {item.title}
                       </h4>
                       {item.specialBadge && (
-                        <span className="text-[9px] font-bold bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-2 py-0.5 rounded-full shadow-sm shadow-emerald-500/20">
+                        <span className="text-[9px] font-bold bg-gradient-to-r from-[#00733B] to-[#005E30] text-white px-2 py-0.5 rounded-full shadow-sm shadow-emerald-500/20">
                           {item.specialBadge}
                         </span>
                       )}

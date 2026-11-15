@@ -43,7 +43,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         help_text: 'Warna penekanan elemen aktif, tombol sorotan, dan lencana status prioritas.',
         type: 'select',
         options: [
-          { value: 'emerald', label: 'Zamrud Medis (#10B981)' },
+          { value: 'emerald', label: 'Zamrud Medis (#00733B)' },
           { value: 'gold', label: 'Emas Imperial (#FFCA40)' },
           { value: 'cyan', label: 'Biru Sian (#38BDF8)' },
           { value: 'purple', label: 'Ungu Kedokteran (#8B5CF6)' },
@@ -91,10 +91,10 @@ export const INITIAL_SETTINGS_CATEGORIES = [
   },
   {
     id: 'tri_layer_engine',
-    title: 'Mesin Deteksi Anomali Tiga Lapis & Ambang Batas Risiko',
+    title: 'Mesin Deteksi 4-Lapis (C03.04), FairGuard & Kapasitas Audit',
     icon: 'Layers',
     description:
-      'Konfigurasikan bobot fusi risiko komposit (Lapis 1 Pola Klinis, Lapis 2 Tata Kelola/SIP, Lapis 3 Presensi Pasien) dan ambang batas penyortiran otomatis.',
+      'Konfigurasikan bobot fusi risiko Lapis 1-4, perlindungan Hard-Negative (Z49.1/Z51.1/I69.3/UNSYNCED), kapasitas telaah verifikator (k), dan blokir rilis S06 (In-Monica).',
     settings: [
       {
         key: 'auto_flag_critical',
@@ -106,10 +106,37 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         editable: true,
       },
       {
+        key: 'hard_negative_protection_enabled',
+        label: 'Aktifkan FairGuard Hard-Negative (Z49.1, Z51.1, I69.3 & SIP Unsynced)',
+        help_text:
+          'Melindungi RS rujukan kelas A/B atas layanan kronis terjadwal serta mengalihkan profil SIP UNSYNCED ke Jalur Kuning administratif tanpa penalti tuduhan fraud.',
+        type: 'toggle',
+        value: true,
+        editable: true,
+      },
+      {
+        key: 's06_inmonica_prepay_hold',
+        label: 'Blokir Otomatis Pencairan S06 (In-Monica) pada Berkas Merah/Kuning (C03.04)',
+        help_text:
+          'Menahan rilis tagihan faskes sebelum memasuki sistem pembayaran S06 In-Monica sampai verifikator manusia menerbitkan BAHV.',
+        type: 'toggle',
+        value: true,
+        editable: true,
+      },
+      {
+        key: 'default_verifier_daily_capacity',
+        label: 'Kapasitas Telaah Harian per Verifikator (k Berkas/Hari)',
+        help_text:
+          'Digunakan untuk mengurutkan antrean Prioritas Top-k agar verifikator cabang menuntaskan temuan bernilai DJS tertinggi sebelum batas SLA 10 HK.',
+        type: 'number',
+        value: 5,
+        editable: true,
+      },
+      {
         key: 'red_lane_threshold',
         label: 'Ambang Batas Skor Risiko Jalur Merah (Red Lane)',
         help_text:
-          'Skor komposit minimum Tiga Lapis (0-100) untuk mengklasifikasikan berkas klaim sebagai Risiko Kritis / Tinggi.',
+          'Skor komposit minimum (0-100) untuk mengklasifikasikan berkas klaim sebagai Risiko Kritis / Tinggi.',
         type: 'number',
         value: 75,
         editable: true,
@@ -145,7 +172,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         key: 'min_claim_value_audit',
         label: 'Batas Minimum Nominal Klaim Ditapis (Rupiah)',
         help_text:
-          'Nominal minimum berkas klaim yang wajib melalui inferensi fusi bukti tiga lapis secara komprehensif.',
+          'Nominal minimum berkas klaim yang wajib melalui inferensi fusi bukti 4-lapis secara komprehensif.',
         type: 'number',
         value: 500000,
         editable: true,
@@ -178,10 +205,10 @@ export const INITIAL_SETTINGS_CATEGORIES = [
       },
       {
         key: 'fusion_formula',
-        label: 'Rumus Fusi Matematis Tiga Lapis',
-        help_text: 'Pembobotan aktuaria standar yang diterapkan di seluruh Kantor Cabang BPJS Kesehatan.',
+        label: 'Rumus Fusi Matematis 4-Lapis & Hard Trigger SDMK',
+        help_text: 'Pembobotan aktuaria standar pada proses C03.04 di seluruh Kantor Cabang BPJS Kesehatan.',
         type: 'text',
-        value: 'S_total = 0.50(L1_PolaKlinis) + 0.30(L2_TataKelola) + 0.20(L3_PresensiPeserta)',
+        value: 'S_total = 0.50(L1_Klaster) + 0.30(L2_SDMK) + 0.20(L3_MobileJKN) + Audit RME L4 (Hard-Trigger SIP_EXPIRED)',
         editable: false,
       },
     ],
@@ -1085,6 +1112,41 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
   const [rbacDirectory, setRbacDirectory] = useState([]);
   const [activePrivileges, setActivePrivileges] = useState(null);
   const [opsDirectory, setOpsDirectory] = useState(null);
+  const [verifyProbeState, setVerifyProbeState] = useState({
+    loading: false,
+    result: null,
+    error: null,
+  });
+
+  const handleRunVerifyProbe = async () => {
+    setVerifyProbeState({ loading: true, result: null, error: null });
+    try {
+      const response = await authFetch(`${API_BASE_URL}/api/v1/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          claim_id: 'PROBE-CFG-01',
+          fkl17_icd10_primer: 'Z49.1',
+          fkl19_inacbg_code: 'N-3-15-0',
+          cluster_spike_ratio: 3.1,
+          sip_status: 'ACTIVE',
+          mobile_jkn_denied_ratio: 0.0,
+          simulate_llm_timeout: false,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      setVerifyProbeState({ loading: false, result: data, error: null });
+    } catch (err) {
+      setVerifyProbeState({
+        loading: false,
+        result: null,
+        error: err?.message || 'Gagal menghubungi /api/v1/verify',
+      });
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -1204,7 +1266,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
 
   return (
     <div className={`mx-auto max-w-5xl space-y-8 pb-12 transition-colors duration-300 ${
-      isLight ? 'text-slate-900' : 'text-white'
+      isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'
     }`}>
       <AnimatePresence>
         {toast && (
@@ -1244,12 +1306,12 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
 
       {/* Header Pengaturan */}
       <header className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6 ${
-        isLight ? 'border-slate-200' : 'border-white/10'
+        isLight ? 'border-[#061B31]/[0.08]' : 'border-white/[0.08]'
       }`}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shadow-md ${
-              isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white/10 border-white/15 text-[#FFCA40]'
+            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${
+              isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
             }`}>
               <Settings className="h-6 w-6" />
             </div>
@@ -1265,7 +1327,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
                 </span>
               </h1>
               <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                Kelola parameter operasional, preferensi tema (Gelap/Terang/Sistem), ambang batas fusi tiga lapis, dan kepatuhan regulasi BPJS Kesehatan.
+                Kelola parameter operasional, preferensi tema (Gelap/Terang/Sistem), ambang batas fusi 4-lapis, dan kepatuhan regulasi BPJS Kesehatan.
               </p>
             </div>
           </div>
@@ -1286,6 +1348,80 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
           </button>
         )}
       </header>
+
+      {/* Probe Kesiapan Engine /api/v1/verify (ML In-Memory + FairGuard Z49.1 + Local Fallback) */}
+      <div
+        data-testid="verify-engine-probe-bar"
+        className={`flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
+          isLight
+            ? 'border-emerald-200 bg-emerald-50/70 text-slate-800'
+            : 'border-emerald-500/25 bg-[#03132b]/80 text-white'
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-mono font-bold border ${
+              isLight
+                ? 'bg-white text-emerald-800 border-emerald-300'
+                : 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Probe Kesiapan Engine /api/v1/verify (ML + Local Fallback)</span>
+          </span>
+
+          {verifyProbeState.result ? (
+            <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
+              <span className={`px-2 py-0.5 rounded border font-semibold ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/85'}`}>
+                HTTP {verifyProbeState.result.http_status_code || 200}
+              </span>
+              <span className={`px-2 py-0.5 rounded border font-semibold ${
+                verifyProbeState.result.meets_sub_1s_production_sla
+                  ? (isLight ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300')
+                  : (isLight ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-amber-500/20 border-amber-400/30 text-amber-300')
+              }`}>
+                Latensi {Number(verifyProbeState.result.total_pipeline_latency_ms || 0).toFixed(2)} ms
+              </span>
+              <span className={`px-2 py-0.5 rounded border font-semibold ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/85'}`}>
+                .pkl Startup: {verifyProbeState.result.stage_4_in_memory_ml_inference?.loaded_once_at_startup ? 'SIAP' : 'ON-DEMAND'}
+              </span>
+              <span className={`px-2 py-0.5 rounded border font-semibold ${
+                verifyProbeState.result.hard_negative_protected
+                  ? (isLight ? 'bg-cyan-100 border-cyan-300 text-cyan-800' : 'bg-cyan-500/20 border-cyan-400/30 text-cyan-300')
+                  : (isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/85')
+              }`}>
+                FairGuard Z49.1: {verifyProbeState.result.hard_negative_protected ? 'AKTIF' : 'REGULER'}
+              </span>
+              <span className={`px-2 py-0.5 rounded border font-semibold ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/85'}`}>
+                Fallback: {verifyProbeState.result.stage_5_and_6_llm_and_fallback?.fallback_source || 'deterministik'}
+              </span>
+            </div>
+          ) : verifyProbeState.error ? (
+            <span className={`font-mono text-[11px] font-semibold ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>
+              Gagal: {verifyProbeState.error}
+            </span>
+          ) : (
+            <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/65'}`}>
+              Uji langsung pipeline C03.04 on-premise, model in-memory, proteksi FairGuard Z49.1, dan cadangan lokal.
+            </span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          data-testid="run-verify-probe-btn"
+          disabled={verifyProbeState.loading}
+          onClick={handleRunVerifyProbe}
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer disabled:opacity-60 ${
+            isLight
+              ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm'
+              : 'bg-emerald-500 hover:bg-emerald-400 text-[#000c24] shadow-md'
+          }`}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${verifyProbeState.loading ? 'animate-spin' : ''}`} />
+          <span>{verifyProbeState.loading ? 'Menguji Pipeline...' : 'Uji Kesiapan /api/v1/verify'}</span>
+        </button>
+      </div>
 
       {/* Kategori Navigation Bar */}
       <div className="flex flex-wrap items-center gap-2 pb-1">
@@ -1363,7 +1499,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
             <div>
               <h2 className="text-base font-bold">Tata Kelola Peran Verifikator &amp; Matriks Hak Akses RBAC (C03.04)</h2>
               <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/65'}`}>
-                Hierarki kewenangan Administrator Cabang, Verifikator Medis (VEDIKA/VIDI), dan Pengamat Wasrik (Read-Only) beserta direktori Kedeputian Wilayah.
+                Hierarki kewenangan Administrator Cabang, Verifikator Medis (Klaim FKRTL), dan Pengamat Wasrik (Read-Only) beserta direktori Kedeputian Wilayah.
               </p>
             </div>
             {activePrivileges && (
@@ -1398,7 +1534,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
                         ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
                         : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                     }`}>
-                      {actor.role_code || actor.role} · {actor.privilege_tier}
+                      {({ ADMIN: 'Administrator TI', VERIFICATOR_MEDIS: 'Verifikator Medis', TRIAGE_OFFICER: 'Petugas Triase', AUDITOR_VIEWER: 'Auditor Wasrik', BAKB_SIGNER: 'Penanda Tangan BAKB' }[actor.role_code] || actor.role || 'Petugas Operasional')} · {({ FULL: 'Akses Penuh', ADJUDICATE: 'Hak Putus', READ: 'Baca Saja', ADMIN: 'Tata Kelola' }[actor.privilege_tier] || actor.privilege_tier || 'Standar')}
                     </span>
                   </div>
                 ))}

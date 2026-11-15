@@ -21,7 +21,7 @@ export default function RiwayatPelayananScreen({ onNavigate, onOpenClaimTrace, p
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {/* Banner Penjelasan ClaimTrace */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-3.5 rounded-2xl shadow-xs space-y-1">
+        <div className="bg-gradient-to-r from-[#00733B] to-[#005E30] text-white p-3.5 rounded-2xl shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Shield className="w-4 h-4" />

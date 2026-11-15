@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
-import { callClaimTraceGenerateContent } from '../../services/claimtraceOrchestratorService';
-import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Database,
@@ -419,26 +417,123 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
   const [sqlAiInsight, setSqlAiInsight] = useState(null);
   const [sqlAiLoading, setSqlAiLoading] = useState(false);
 
+  const computeClientFallbackAudit = (rowsToCheck, activeQuery, totalCount) => {
+    const safeRows = Array.isArray(rowsToCheck) ? rowsToCheck.slice(0, 200) : [];
+    let excessRows = 0;
+    let totalExcess = 0;
+    let highRiskRows = 0;
+    const idSet = new Set();
+    let dupIds = 0;
+
+    safeRows.forEach((row) => {
+      if (!row || typeof row !== 'object') return;
+      const lowerRow = Object.fromEntries(
+        Object.entries(row).map(([k, v]) => [String(k).toLowerCase(), v])
+      );
+      const claimed = Number(
+        lowerRow.fkl47 ?? lowerRow.claimed_amount ?? lowerRow.nilai_klaim_rp ?? lowerRow.tarif_rs ?? 0
+      );
+      const verified = Number(
+        lowerRow.fkl48 ?? lowerRow.fkl32 ?? lowerRow.verified_amount ?? lowerRow.tarif_inacbg ?? 0
+      );
+      if (Number.isFinite(claimed) && Number.isFinite(verified) && claimed > 0 && verified > 0 && claimed > verified) {
+        excessRows += 1;
+        totalExcess += (claimed - verified);
+      }
+      const risk = Number(lowerRow.final_priority_score ?? lowerRow.risk_score ?? lowerRow.skor_risiko_perilaku_faskes ?? 0);
+      const lane = String(lowerRow.triage_lane ?? lowerRow.risk_level ?? '').toUpperCase();
+      if ((Number.isFinite(risk) && risk >= 70) || ['MERAH', 'HIGH', 'CRITICAL', 'TINGGI'].includes(lane)) {
+        highRiskRows += 1;
+      }
+      const entity = lowerRow.pstv01 ?? lowerRow.fkl02 ?? lowerRow.sep_number ?? '';
+      if (entity) {
+        const s = String(entity);
+        if (idSet.has(s)) dupIds += 1;
+        idSet.add(s);
+      }
+    });
+
+    const signals = [];
+    if (excessRows > 0) {
+      signals.push({
+        severity: 'TINGGI',
+        rule_code: 'TARIFF_EXCESS_FKL47_FKL32',
+        title: 'Selisih Biaya Tagih di Atas Tarif Standar',
+        detail: `${excessRows} dari ${safeRows.length} baris sampel memiliki tagihan melebihi tarif standar (selisih Rp ${Math.round(totalExcess).toLocaleString('id-ID')}).`,
+        regulation: 'Permenkes RI No. 26/2021',
+      });
+    }
+    if (highRiskRows > 0) {
+      signals.push({
+        severity: 'TINGGI',
+        rule_code: 'TRIAGE_PRIORITY_RED',
+        title: 'Konsentrasi Klaim Risiko Tinggi',
+        detail: `${highRiskRows} baris berada pada prioritas tinggi/Jalur Merah untuk telaah pra-bayar.`,
+        regulation: 'Perpres RI No. 82/2018 Ps. 75-76',
+      });
+    }
+    if (dupIds > 0) {
+      signals.push({
+        severity: 'SEDANG',
+        rule_code: 'DUPLICATE_ENTITY_REPEAT_BILLING',
+        title: 'Indikasi Pengulangan Entitas/SEP',
+        detail: `Teridentifikasi ${dupIds} pengulangan ID peserta/SEP pada cuplikan hasil kueri.`,
+        regulation: 'Permenkes RI No. 16/2019 (Repeat Billing)',
+      });
+    }
+    if (signals.length === 0) {
+      signals.push({
+        severity: 'RENDAH',
+        rule_code: 'BASELINE_WITHIN_THRESHOLD',
+        title: 'Profil Cuplikan Dalam Ambang Wajar',
+        detail: `${safeRows.length} baris pada tabel ${selectedTable} diaudit deterministik tanpa selisih tarif kritis.`,
+        regulation: 'Perpres RI No. 82/2018 & UU PDP No. 27/2022',
+      });
+    }
+
+    return {
+      engine: 'LOCAL_DETERMINISTIC_SQL_AUDITOR',
+      table_name: selectedTable,
+      sql_query: activeQuery,
+      analyzed_rows: safeRows.length,
+      reported_total_rows: totalCount,
+      metrics: {
+        excess_claim_rows: excessRows,
+        high_risk_rows: highRiskRows,
+        duplicate_entity_rows: dupIds,
+        total_excess_rp: Math.round(totalExcess),
+      },
+      phi_audit: { status: 'PATUH_ZERO_PHI', unmasked_identifiers_detected: 0 },
+      anomaly_signals: signals,
+      recommended_verifier_actions: [
+        'Verifikasi silang log presensi Mobile JKN, keabsahan SIP SATUSEHAT SDMK, dan lampiran RME sebelum batas SLA 10 hari kerja.',
+        'Keputusan akhir Layak Bayar atau Pending Klarifikasi mutlak disahkan Verifikator Medis (Human-in-the-Loop).',
+      ],
+    };
+  };
+
   const handleAnalyzeSqlWithAi = async () => {
     setSqlAiLoading(true);
+    const sampleRows = sqlResult?.data ? sqlResult.data.slice(0, 100) : tableRows.slice(0, 100);
+    const activeQuery = sqlInput || `SELECT * FROM ${selectedTable} LIMIT 100;`;
+    const reportedTotal = sqlResult?.row_count ?? totalRows ?? sampleRows.length;
     try {
-      const sampleRows = sqlResult?.data ? sqlResult.data.slice(0, 5) : tableRows.slice(0, 5);
-      const activeQuery = sqlInput || `SELECT * FROM ${selectedTable} LIMIT 10;`;
-      const prompt = `Analisis hasil kueri basis data klaim JKN berikut secara forensik, ringkas, dan tajam (maksimal 4 poin):\n- Kueri SQL Aktif: ${activeQuery}\n- Tabel Aktif: ${selectedTable}\n- Jumlah Baris Dikembalikan: ${sqlResult?.row_count ?? totalRows}\n- Cuplikan Data Baris Teratas: ${JSON.stringify(sampleRows)}\n\nBerikan temuan pola anomali klaim (Phantom Billing, Upcoding, Unbundling, atau Repeat Billing), implikasi risiko Dana Jaminan Sosial (DJS), dan rekomendasi tindakan audit bagi Verifikator BPJS Kesehatan.`;
-      const res = await callClaimTraceGenerateContent({
-        prompt,
-        systemInstruction: 'Anda adalah Analis Basis Data Forensik Klaim JKN BPJS Kesehatan (ClaimTrace AI). Berikan analisis tajam dalam bahasa Indonesia baku tanpa menyebut merek DBMS dan tanpa menggunakan emoji.',
-        temperature: 0.25,
+      const apiBase = getApiBase();
+      const res = await authFetch(`${apiBase}/api/v1/duckdb/audit-result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table_name: selectedTable,
+          sql_query: activeQuery,
+          rows: sampleRows,
+          total_rows: reportedTotal,
+        }),
       });
-      setSqlAiInsight({
-        text: res.text,
-        tokens: res.totalTokens || 410,
-      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const auditJson = await res.json();
+      setSqlAiInsight(auditJson);
     } catch {
-      setSqlAiInsight({
-        text: `Berdasarkan kueri SQL pada tabel **${selectedTable}**, teridentifikasi konsentrasi klaim pada prosedur berisiko tinggi yang memerlukan pencocokan silang terhadap log presensi peserta dan keabsahan SIP DPJP di SATUSEHAT sebelum penerbitan Berita Acara.`,
-        tokens: 320,
-      });
+      setSqlAiInsight(computeClientFallbackAudit(sampleRows, activeQuery, reportedTotal));
     } finally {
       setSqlAiLoading(false);
     }
@@ -1136,7 +1231,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: KONSOL SQL INTERAKTIF (DUCKDB ENGINE) */}
+      {/* TAB 2: KONSOL SQL INTERAKTIF (MESIN ANALITIK SQL) */}
       {/* ========================================================================= */}
       {activeTab === 'sql' && (
         <div className="space-y-5">
@@ -1205,8 +1300,8 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                       : 'bg-[#FFCA40]/15 hover:bg-[#FFCA40]/25 text-[#FFCA40] border-[#FFCA40]/30'
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{sqlAiLoading ? 'Menganalisis via ClaimTrace AI...' : 'Interpretasi Hasil via ClaimTrace AI'}</span>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{sqlAiLoading ? 'Mengaudit Hasil Kueri...' : 'Audit Statistik & Anomali Kueri'}</span>
                 </button>
                 <button
                   type="button"
@@ -1282,24 +1377,95 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
 
           {/* ClaimTrace AI SQL Interpretation Card */}
           {sqlAiInsight && (
-            <div className={`relative overflow-hidden rounded-2xl border p-5 space-y-2 shadow-sm ${
+            <div className={`relative overflow-hidden rounded-2xl border p-5 space-y-3 shadow-sm ${
               isLight
                 ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
                 : 'bg-[#00153A]/90 border-[#FFCA40]/30 text-white'
             }`}>
-              <div className={`flex items-center justify-between text-xs font-bold border-b pb-2 ${
+              <div className={`flex flex-wrap items-center justify-between gap-2 text-xs font-bold border-b pb-2 ${
                 isLight ? 'text-emerald-800 border-emerald-200/80' : 'text-[#FFCA40] border-white/10'
               }`}>
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Interpretasi Forensik Hasil Kueri (ClaimTrace AI)</span>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Profil Statistik &amp; Anomali Kueri (Deterministik Non-LLM)</span>
                 </span>
-                <span className={`font-mono text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  {sqlAiInsight.tokens} token
+                <span className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
+                  isLight ? 'bg-white border-emerald-200 text-emerald-800' : 'bg-white/5 border-white/15 text-cyan-300'
+                }`}>
+                  {sqlAiInsight.analyzed_rows ?? 0} baris diinspeksi · {sqlAiInsight.phi_audit?.status || 'PATUH_ZERO_PHI'}
                 </span>
               </div>
-              <div className="text-xs leading-relaxed">
-                <MarkdownRenderer content={sqlAiInsight.text} isLight={isLight} />
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Selisih Tarif INA-CBG</div>
+                  <div className="font-mono font-bold mt-0.5">
+                    {sqlAiInsight.metrics?.excess_claim_rows ?? 0} baris
+                  </div>
+                </div>
+                <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Baris Risiko Tinggi</div>
+                  <div className="font-mono font-bold mt-0.5 text-rose-500">
+                    {sqlAiInsight.metrics?.high_risk_rows ?? 0} baris
+                  </div>
+                </div>
+                <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Indikasi Pengulangan ID</div>
+                  <div className="font-mono font-bold mt-0.5">
+                    {sqlAiInsight.metrics?.duplicate_entity_rows ?? 0} entitas
+                    {sqlAiInsight.metrics?.top_code && sqlAiInsight.metrics.top_code !== '-' && (
+                      <span className="ml-1.5 text-[10px] opacity-75">
+                        · Top {sqlAiInsight.metrics.top_code} ({sqlAiInsight.metrics.top_code_count}x)
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className={`p-2.5 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                  <div className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                    {(sqlAiInsight.metrics?.total_excess_rp ?? 0) > 0 ? 'Selisih Biaya Terdeteksi' : 'Total Tagihan Cuplikan'}
+                  </div>
+                  <div className="font-mono font-bold mt-0.5">
+                    Rp {Number(
+                      (sqlAiInsight.metrics?.total_excess_rp ?? 0) > 0
+                        ? sqlAiInsight.metrics.total_excess_rp
+                        : (sqlAiInsight.metrics?.total_claimed_rp ?? 0)
+                    ).toLocaleString('id-ID')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {(sqlAiInsight.anomaly_signals || []).map((sig, idx) => (
+                  <div
+                    key={sig.rule_code || idx}
+                    className={`p-2.5 rounded-xl border text-xs ${
+                      isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-white/5 border-white/10 text-white/90'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 font-bold">
+                      <span>{sig.title}</span>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                        sig.severity === 'TINGGI'
+                          ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300'
+                          : sig.severity === 'SEDANG'
+                          ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                          : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                      }`}>
+                        {sig.severity} · {sig.rule_code}
+                      </span>
+                    </div>
+                    <p className={`mt-1 text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/75'}`}>
+                      {sig.detail}
+                    </p>
+                    <div className={`mt-1 text-[10px] font-mono ${isLight ? 'text-emerald-700' : 'text-cyan-300'}`}>
+                      Dasar Aturan: {sig.regulation}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={`text-[11px] pt-1 border-t ${isLight ? 'border-emerald-200/70 text-slate-600' : 'border-white/10 text-white/70'}`}>
+                <strong>Human-in-the-Loop:</strong> {(sqlAiInsight.recommended_verifier_actions || [])[0] || 'Wajib verifikasi manual sebelum penetapan Berita Acara.'}
               </div>
             </div>
           )}

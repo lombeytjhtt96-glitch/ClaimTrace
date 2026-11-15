@@ -143,7 +143,7 @@ export default function UbahDataScreen({ onNavigate }) {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#01A65A] to-[#0288D1] text-white font-bold py-3 rounded-xl shadow-xs shadow-emerald-500/20 active:scale-95 transition text-xs"
+            className="w-full bg-gradient-to-r from-[#00733B] to-[#0288D1] text-white font-bold py-3 rounded-xl shadow-xs shadow-emerald-500/20 active:scale-95 transition text-xs"
           >
             Simpan Perubahan Data
           </button>

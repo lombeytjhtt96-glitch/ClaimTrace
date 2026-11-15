@@ -89,7 +89,7 @@ async function run() {
     }
   });
 
-  console.log('Waiting for response 1 from Gemini...');
+  console.log('Waiting for response 1 from ClaimTrace On-Premise HealthAI...');
   await new Promise(r => setTimeout(r, 4500));
 
   // 6. Send message 2: "berapa jumlah pasian"
@@ -109,11 +109,11 @@ async function run() {
     }
   });
 
-  console.log('Waiting for response 2 from Gemini...');
+  console.log('Waiting for response 2 from ClaimTrace On-Premise HealthAI...');
   await new Promise(r => setTimeout(r, 4500));
 
   // 7. Capture screenshot
-  const screenshotPath = '/home/Khalaf-Dev/.gemini/antigravity/brain/bc1217c1-62d5-40a9-8f47-eade18d108bf/chat_healthai_verified.png';
+  const screenshotPath = process.env.ARTIFACT_DIR ? `${process.env.ARTIFACT_DIR}/chat_healthai_verified.png` : './artifacts/chat_healthai_verified.png';
   await page.screenshot({ path: screenshotPath, fullPage: false });
   console.log('Screenshot saved to:', screenshotPath);
 

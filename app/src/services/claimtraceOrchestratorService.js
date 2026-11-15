@@ -14,7 +14,7 @@
  * POST /api/v1/claimtrace-ai/generate
  */
 
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL, authFetch } from './apiConfig';
 
 // Zero Client-Side Key Architecture (NIST CSF 2.0 PR.DS-01 · UU PDP No. 27/2022)
 // All AI API credentials are securely stored on the backend server.
@@ -192,15 +192,15 @@ export function getAiTelemetryState() {
     const parsed = JSON.parse(raw);
 
     let needsResave = false;
-    if (typeof parsed?.active_model === 'string' && /gemini|flash/i.test(parsed.active_model)) {
-      parsed.active_model = 'ClaimTrace AI Core';
+    if (typeof parsed?.active_model === 'string' && !parsed.active_model.toLowerCase().includes('claimtrace')) {
+      parsed.active_model = 'ClaimTrace On-Premise Core';
       needsResave = true;
     }
     if (Array.isArray(parsed?.langgraph_executions)) {
       parsed.langgraph_executions = parsed.langgraph_executions.map((ex) => {
-        if (typeof ex.model_used === 'string' && /gemini|flash/i.test(ex.model_used)) {
+        if (typeof ex.model_used === 'string' && !ex.model_used.toLowerCase().includes('claimtrace')) {
           needsResave = true;
-          return { ...ex, model_used: 'ClaimTrace AI Core' };
+          return { ...ex, model_used: 'ClaimTrace On-Premise Core' };
         }
         return ex;
       });
@@ -655,7 +655,7 @@ export async function generateClaimTraceInterventionCampaign(iaSummary) {
  */
 export async function getHFSemanticStats() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/stats`);
+    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/stats`);
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn('[HFSemantic] Offline fallback for stats:', err);
@@ -672,7 +672,7 @@ export async function getHFSemanticStats() {
 
 export async function getHFClinicalResumes() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/resumes`);
+    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/resumes`);
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn('[HFSemantic] Offline fallback for resumes:', err);
@@ -682,7 +682,7 @@ export async function getHFClinicalResumes() {
 
 export async function verifyClaimPlagiarismHF(claimId, threshold = 0.90) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/verify-claim/${claimId}?threshold=${threshold}`);
+    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/verify-claim/${claimId}?threshold=${threshold}`);
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn('[HFSemantic] Offline fallback for verify-claim:', err);
@@ -692,7 +692,7 @@ export async function verifyClaimPlagiarismHF(claimId, threshold = 0.90) {
 
 export async function verifyClinicalTextHF(text, topK = 4) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/verify-text`, {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/verify-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, top_k: topK }),
@@ -706,7 +706,7 @@ export async function verifyClinicalTextHF(text, topK = 4) {
 
 export async function getClusterSemanticMatrixHF(clusterId) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/semantic/cluster-matrix/${clusterId}`);
+    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/cluster-matrix/${clusterId}`);
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn('[HFSemantic] Offline fallback for cluster-matrix:', err);

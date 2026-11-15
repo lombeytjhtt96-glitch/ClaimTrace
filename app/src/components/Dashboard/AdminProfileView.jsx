@@ -634,9 +634,13 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
         <form className="space-y-4" onSubmit={handlePasswordSubmit}>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Kata Sandi Saat Ini</label>
+              <label htmlFor="admin-current-password" className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Kata Sandi Saat Ini</label>
               <input
+                id="admin-current-password"
+                name="current-password"
                 type="password"
+                autoComplete="current-password"
+                required
                 value={passwordForm.currentPassword}
                 onChange={(e) =>
                   setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))
@@ -651,9 +655,13 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             </div>
 
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Kata Sandi Baru</label>
+              <label htmlFor="admin-new-password" className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Kata Sandi Baru</label>
               <input
+                id="admin-new-password"
+                name="new-password"
                 type="password"
+                autoComplete="new-password"
+                required
                 value={passwordForm.newPassword}
                 onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
                 placeholder="Masukkan kata sandi baru (min 8 karakter)"
@@ -666,9 +674,13 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             </div>
 
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Konfirmasi Kata Sandi Baru</label>
+              <label htmlFor="admin-confirm-password" className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Konfirmasi Kata Sandi Baru</label>
               <input
+                id="admin-confirm-password"
+                name="confirm-password"
                 type="password"
+                autoComplete="new-password"
+                required
                 value={passwordForm.confirmPassword}
                 onChange={(e) =>
                   setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 import {
   ResponsiveContainer,
   BarChart,
@@ -31,7 +32,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 
-const CHART_COLORS = ['#059669', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
+const CHART_COLORS = ['#00733B', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
 
 // ─── Allow-Listed Queries (Adapted from IAQuerySelector.tsx to JKN Claim Audit) ───
 const ALLOW_LISTED_QUERIES = [
@@ -124,7 +125,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
           yAxisId="left"
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 11, fill: isLight ? '#059669' : '#06b6d4' }}
+          tick={{ fontSize: 11, fill: isLight ? '#00733B' : '#06b6d4' }}
           tickFormatter={(v) => `${Number(v).toLocaleString('id-ID')} kss`}
         />
         {data[0]?.avg_risk !== undefined && (
@@ -151,7 +152,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
           yAxisId="left"
           type="monotone"
           dataKey="value"
-          stroke={isLight ? '#059669' : '#06b6d4'}
+          stroke={isLight ? '#00733B' : '#06b6d4'}
           strokeWidth={3}
           name="Jumlah Kasus Anomali"
           dot={false}
@@ -204,7 +205,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
         <Bar
           dataKey="value"
-          fill={isLight ? '#059669' : '#0284c7'}
+          fill={isLight ? '#00733B' : '#0284c7'}
           radius={[6, 6, 0, 0]}
           name="Jumlah Temuan Klaim"
           isAnimationActive={false}
@@ -668,7 +669,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 </div>
                 {status.dataset_date_min && status.dataset_date_max && (
                   <p className={`mt-2 text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                    Cakupan tanggal aktif pada DuckDB: {status.dataset_date_min} s.d. {status.dataset_date_max}
+                    Cakupan tanggal aktif pada Basis Data: {status.dataset_date_min} s.d. {status.dataset_date_max}
                   </p>
                 )}
               </div>
@@ -812,7 +813,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 <CheckCircle2 className={`h-5 w-5 shrink-0 mt-0.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 <div className="text-xs space-y-1">
                   <p className={`font-bold text-sm ${isLight ? 'text-emerald-900' : 'text-emerald-200'}`}>
-                    Kueri berhasil dieksekusi langsung di DuckDB ({Number(result?.result?.total_records_anonymized || 0).toLocaleString('id-ID')} berkas teranonimisasi)
+                    Kueri berhasil dieksekusi langsung di Basis Data ({Number(result?.result?.total_records_anonymized || 0).toLocaleString('id-ID')} berkas teranonimisasi)
                   </p>
                   <p className={isLight ? 'text-emerald-800' : 'text-emerald-300'}>Alur Eksekusi: {(result.execution_path || []).join(' → ')}</p>
                   <p className={isLight ? 'text-emerald-800' : 'text-emerald-300'}>Waktu Eksekusi: {result.execution_time_ms} ms</p>
@@ -835,7 +836,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                     <Sparkles className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
                     Ringkasan Eksekutif IA
                   </h3>
-                  <p className={`text-sm leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>{result.summary}</p>
+                  <MarkdownRenderer content={result.summary} isLight={isLight} />
                 </div>
 
                 <div className={`rounded-xl p-5 border ${
@@ -938,7 +939,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                       )}
                       <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/40'}`}>{report.generated_at}</span>
                     </div>
-                    <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{report.summary}</p>
+                    <MarkdownRenderer content={report.summary} isLight={isLight} />
                     <div className={`flex items-center gap-4 mt-2 text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                       <span className="flex items-center gap-1 font-medium">
                         <FileText className="w-3.5 h-3.5 opacity-60" />
@@ -1112,9 +1113,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
                 Ringkasan Eksekutif &amp; Evaluasi Audit
               </h4>
-              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                {selectedReportModal.summary}
-              </p>
+              <MarkdownRenderer content={selectedReportModal.summary} isLight={isLight} />
             </div>
 
             {/* Temuan Kunci */}
@@ -1293,9 +1292,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                             {report.generated_at}
                           </span>
                         </div>
-                        <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                          {report.summary}
-                        </p>
+                        <MarkdownRenderer content={report.summary} isLight={isLight} />
                         <div className={`flex flex-wrap items-center gap-4 mt-2 text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                           <span className="flex items-center gap-1 font-medium">
                             <FileText className="w-3.5 h-3.5 opacity-60" />

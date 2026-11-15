@@ -20,7 +20,7 @@ export default function TemporalAlertCard({
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [intelligence, setIntelligence] = useState(() => ({
-    spec_version: '3.31.0',
+    spec_version: '1.0.0',
     topic: `BPJS Kesehatan ${primaryDiagnosis} ${cbgCode} fraud`,
     claim_id: claimId,
     lookback_window_days: 30,
@@ -55,7 +55,7 @@ export default function TemporalAlertCard({
     try {
       // Map synthetic claim ID if passed from UI
       const targetId = claimId.includes('880') ? claimId : 'CLM-2026-8801';
-      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${targetId}/last30days-intelligence`);
+      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${targetId}/temporal-intelligence`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
@@ -64,7 +64,7 @@ export default function TemporalAlertCard({
     } catch (err) {
       // Graceful local fallback to deterministic 30-day circular
       setIntelligence({
-        spec_version: '3.31.0',
+        spec_version: '1.0.0',
         topic: `BPJS Kesehatan ${primaryDiagnosis} ${cbgCode} fraud`,
         claim_id: claimId,
         lookback_window_days: 30,

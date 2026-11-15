@@ -162,7 +162,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
       nominal: 0,
       prevHash: '5e0a17d8b4c7369f47685a2710b6788994a3758869012345abcdef0123456785',
       currentHash: '6f1b28e9c5d847a058796b3821c78990a5b4869970123456abcdef0123456786',
-      signature: 'SIG-BPJS-SECOPS-1102',
+      signature: 'SIG-BPJS-DETECTION-1102',
       details: {
         complianceStandard: 'UU PDP No. 27/2022 Pasal 35 (Pencatatan Akses Data Medis)',
         ipAddress: '10.12.4.99 (Intranet BPJS)',
@@ -214,7 +214,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
       case 'WASRIK_INVESTIGATION_FLAG':
         return 'Eskalasi Pemeriksaan Khusus Wasrik';
       case 'CLAIM_APPROVED_FASTTRACK':
-        return 'Otomasi Persetujuan Klaim Vedika Digital';
+        return 'Otomasi Persetujuan Klaim Pra-Bayar Cepat';
       case 'DATA_ACCESS_AUDIT_LOG':
         return 'Audit Kepatuhan Privasi Data Medis';
       case 'AUTO_TRIAGE_SCORING':
@@ -240,7 +240,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
       return `Pengiriman tantangan konfirmasi kehadiran peserta melalui ${d.channel} (Batas waktu respons: ${d.challengeTtl || 300} detik · Status Bukti Kriptografis: ${d.zkProofStatus === 'ISSUED' ? 'Terbit' : d.zkProofStatus || 'Aktif'}).`;
     }
     if (d.triage_lane !== undefined || d.final_score !== undefined) {
-      const laneLabel = d.triage_lane === 'MERAH' ? 'Jalur Merah (Prioritas Audit Kritis)' : d.triage_lane === 'KUNING' ? 'Jalur Kuning (Klarifikasi Administratif)' : 'Jalur Hijau (Lolos Cepat Vedika)';
+      const laneLabel = d.triage_lane === 'MERAH' ? 'Jalur Merah (Prioritas Audit Kritis)' : d.triage_lane === 'KUNING' ? 'Jalur Kuning (Klarifikasi Administratif)' : 'Jalur Hijau (Lolos Cepat Verifikasi)';
       return `Klaim ${block.claimId} di ${block.faskes} dievaluasi dengan Skor Risiko Akhir ${d.final_score ?? d.raw_score ?? 0}/100 dan ditempatkan pada ${laneLabel} (Skor Lapis 1: ${d.s1 ?? 0}, Lapis 2: ${d.s2 ?? 0}, Lapis 3: ${d.s3 ?? 0}).`;
     }
     return 'Pemeriksaan kepatuhan integritas klaim memenuhi standar ISO 27001 dan UU PDP No. 27/2022.';
@@ -255,7 +255,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
     }
   };
 
-  // Google SecOps Detection Engineering & SOAR State (google/skills)
+  // ClaimTrace Detection Engineering & SOAR State
   const [showSecOpsModal, setShowSecOpsModal] = useState(false);
   const [secopsTab, setSecopsTab] = useState('rules');
   const [secopsRules, setSecopsRules] = useState([]);
@@ -269,9 +269,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
     setLoadingSecops(true);
     try {
       const [rulesRes, casesRes, sovRes] = await Promise.all([
-        authFetch(`${API_BASE_URL}/api/v1/secops/rules`),
-        authFetch(`${API_BASE_URL}/api/v1/secops/cases`),
-        authFetch(`${API_BASE_URL}/api/v1/secops/sovereignty/assessment`)
+        authFetch(`${API_BASE_URL}/api/v1/detection/rules`),
+        authFetch(`${API_BASE_URL}/api/v1/detection/cases`),
+        authFetch(`${API_BASE_URL}/api/v1/detection/sovereignty/assessment`)
       ]);
       if (rulesRes.ok) {
         const rulesData = await rulesRes.json();
@@ -289,13 +289,13 @@ export default function AuditLedger({ isLight: propIsLight }) {
         setSecopsSovereignty(sovData);
       }
     } catch (e) {
-      console.warn('SecOps fetch error:', e);
+      console.warn('Detection fetch error:', e);
     } finally {
       setLoadingSecops(false);
     }
   };
 
-  // Agent Decision Receipts & Human Gate State (ra-qm-team / engineering)
+  // Agent Decision Receipts & Human Gate State
   const [showReceiptsModal, setShowReceiptsModal] = useState(false);
   const [receiptsTab, setReceiptsTab] = useState('receipts'); // 'receipts' | 'humangate' | 'manifest'
   const [receiptsList, setReceiptsList] = useState([]);
@@ -309,7 +309,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const [gateNotes, setGateNotes] = useState('');
   const [gateActionStatus, setGateActionStatus] = useState(null);
 
-  // Cybersecurity Frameworks Modal (mukul975/skills)
+  // Threat Defense Frameworks Modal
   const [showCyberModal, setShowCyberModal] = useState(false);
   const [cyberSummary, setCyberSummary] = useState(null);
   const [claimMatrix, setClaimMatrix] = useState(null);
@@ -322,8 +322,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
     setLoadingCyber(true);
     try {
       const [sumRes, catRes] = await Promise.all([
-        authFetch(`${API_BASE_URL}/api/v1/cybersecurity/frameworks/summary`),
-        authFetch(`${API_BASE_URL}/api/v1/cybersecurity/skills/fraud-catalog?limit=50`)
+        authFetch(`${API_BASE_URL}/api/v1/threat-defense/frameworks/summary`),
+        authFetch(`${API_BASE_URL}/api/v1/threat-defense/fraud-catalog?limit=50`)
       ]);
       if (sumRes.ok) {
         const sumData = await sumRes.json();
@@ -334,13 +334,13 @@ export default function AuditLedger({ isLight: propIsLight }) {
         setFraudCatalog(catData);
       }
       const targetClaimId = selectedBlock?.claimId || 'CLM-2026-08912';
-      const matRes = await authFetch(`${API_BASE_URL}/api/v1/cybersecurity/claims/${targetClaimId}/matrix`);
+      const matRes = await authFetch(`${API_BASE_URL}/api/v1/threat-defense/claims/${targetClaimId}/matrix`);
       if (matRes.ok) {
         const matData = await matRes.json();
         setClaimMatrix(matData);
       }
     } catch (e) {
-      console.warn('Cybersecurity modal fetch error:', e);
+      console.warn('Threat defense modal fetch error:', e);
     } finally {
       setLoadingCyber(false);
     }
@@ -708,10 +708,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     ? 'bg-sky-50 hover:bg-sky-100 text-sky-900 border-sky-300'
                     : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40'
                 }`}
-                title="Buka Konsol Aturan Deteksi YARA-L 2.0 & Manajemen Kasus SOAR (google/skills)"
+                title="Buka Konsol Aturan Deteksi YARA-L 2.0 & Manajemen Kasus SOAR"
               >
                 <Terminal className="w-3.5 h-3.5 text-sky-500" />
-                <span>Google SecOps &amp; SOAR</span>
+                <span>Detection &amp; SOAR</span>
               </button>
               <button type="button" 
                 onClick={handleOpenReceiptsModal}
@@ -720,7 +720,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     ? 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300'
                     : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/40'
                 }`}
-                title="Buka Konsol Agent Decision Receipts & Human Gate (ra-qm-team / OpenAgentOntology)"
+                title="Buka Konsol Agent Decision Receipts & Human Gate"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
                 <span>Decision Receipts &amp; Human Gate</span>
@@ -1279,7 +1279,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
       </div>
 
-      {/* GOOGLE SECOPS DETECTION & SOAR MODAL */}
+      {/* DETECTION ENGINEERING & SOAR MODAL */}
       <AnimatePresence>
         {showSecOpsModal && (
           <div 
@@ -1302,7 +1302,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   <Terminal className="w-5 h-5 text-sky-500 shrink-0" />
                   <div>
                     <h3 className={`text-sm font-bold uppercase tracking-wide ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                      Google SecOps Detection Engineering &amp; SOAR Console
+                      ClaimTrace Detection Engineering &amp; SOAR Console
                     </h3>
                     <p className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                       YARA-L 2.0 Rules Engine · SOAR Case Lifecycle · Kedaulatan Data UU PDP No. 27/2022
@@ -1311,7 +1311,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 </div>
                 <button
                   type="button"
-                  aria-label="Tutup jendela SecOps"
+                  aria-label="Tutup jendela Detection dan SOAR"
                   onClick={() => setShowSecOpsModal(false)}
                   className={`p-1.5 rounded-lg cursor-pointer transition ${
                     isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -1368,7 +1368,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 {loadingSecops ? (
                   <div className="flex items-center justify-center py-16 space-x-2 text-slate-500">
                     <RefreshCw className="w-5 h-5 animate-spin text-sky-500" />
-                    <span>Memuat telemetri SecOps...</span>
+                    <span>Memuat telemetri deteksi...</span>
                   </div>
                 ) : secopsTab === 'rules' ? (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -1522,7 +1522,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                         </span>
                       </div>
                       <p className="text-[11px] leading-relaxed">
-                        Sistem ClaimTrace JKN memenuhi seluruh parameter kedaulatan data kesehatan Indonesia dan prinsip Google Cloud Assured Workloads Sovereignty (Zero-PHI preservation).
+                        Sistem ClaimTrace JKN memenuhi seluruh parameter kedaulatan data kesehatan nasional dan prinsip Zero-PHI preservation.
                       </p>
                     </div>
 
@@ -1567,14 +1567,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
                 isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#000c24] border-white/10 text-white/60'
               }`}>
-                <span>Google SecOps Detection Engineering Engine v1.2.0</span>
+                <span>ClaimTrace Detection Engineering Engine v1.2.0</span>
                 <span>Standar Kepatuhan: UU PDP No. 27/2022 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>
           </div>
         )}
 
-        {/* DECISION RECEIPTS & HUMAN GATE MODAL (ra-qm-team / OpenAgentOntology) */}
+        {/* DECISION RECEIPTS & HUMAN GATE MODAL */}
         {showReceiptsModal && (
           <div 
             onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
@@ -1601,7 +1601,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       Agent Decision Receipts &amp; Human Gate Console
                     </h3>
                     <p className={`text-xs ${isLight ? 'text-purple-700' : 'text-white/60'}`}>
-                      Spesifikasi OpenAgentOntology · ISO 27001 · Permenkes No. 26/2021 &amp; Perpres No. 82/2018
+                      Spesifikasi Tanda Terima Keputusan Audit · ISO 27001 · Permenkes No. 26/2021 &amp; Perpres No. 82/2018
                     </p>
                   </div>
                 </div>
@@ -1964,14 +1964,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
                 isLight ? 'bg-purple-100 border-purple-200 text-purple-800' : 'bg-[#000c24] border-white/10 text-white/60'
               }`}>
-                <span>OpenAgentOntology (OAO) &middot; ISO 27001 Record-Keeping</span>
+                <span>ClaimTrace Decision Receipts &middot; ISO 27001 Record-Keeping</span>
                 <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>
           </div>
         )}
 
-        {/* CYBERSECURITY FRAMEWORKS & MITRE F3 MODAL (mukul975/skills) */}
+        {/* THREAT DEFENSE FRAMEWORKS & MITRE F3 MODAL */}
         {showCyberModal && (
           <div 
             onClick={(e) => { if (e.target === e.currentTarget) setShowCyberModal(false); }}
@@ -1998,7 +1998,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       Matriks Taksonomi Keamanan Siber MITRE F3, ATT&amp;CK &amp; D3FEND
                     </h3>
                     <p className={`text-xs ${isLight ? 'text-amber-800' : 'text-white/60'}`}>
-                      818 Cybersecurity Skills &middot; MITRE Fight Fraud Framework (F3 v1.1) &middot; MITRE D3FEND v1.4.0 &middot; NIST CSF 2.0
+                      Katalog Kontrol Threat Defense &middot; MITRE Fight Fraud Framework (F3 v1.1) &middot; MITRE D3FEND v1.4.0 &middot; NIST CSF 2.0
                     </p>
                   </div>
                 </div>
@@ -2052,7 +2052,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   }`}
                 >
                   <Database className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Katalog 94 Skill F3 ({fraudCatalog.length})</span>
+                  <span>Katalog 94 Kontrol F3 ({fraudCatalog.length})</span>
                 </button>
               </div>
 
@@ -2061,15 +2061,15 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 {/* Global Metrics Bar */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className={`p-3 rounded-xl border ${isLight ? 'bg-amber-50 border-amber-200' : 'bg-white/5 border-white/10'}`}>
-                    <span className="text-[10px] text-slate-400 block">Total Cybersecurity Skills</span>
+                    <span className="text-[10px] text-slate-400 block">Total Kontrol Deteksi</span>
                     <span className="text-lg font-bold font-mono text-amber-500 mt-0.5 block tabular-nums">
-                      {cyberSummary?.total_skills_count || 818}
+                      {cyberSummary?.total_controls_count || 94}
                     </span>
                   </div>
                   <div className={`p-3 rounded-xl border ${isLight ? 'bg-rose-50 border-rose-200' : 'bg-white/5 border-white/10'}`}>
-                    <span className="text-[10px] text-slate-400 block">MITRE F3 Fraud Skills</span>
+                    <span className="text-[10px] text-slate-400 block">Kontrol Fraud MITRE F3</span>
                     <span className="text-lg font-bold font-mono text-rose-400 mt-0.5 block tabular-nums">
-                      {cyberSummary?.f3_skills_count || 94}
+                      {cyberSummary?.f3_controls_count || 94}
                     </span>
                   </div>
                   <div className={`p-3 rounded-xl border ${isLight ? 'bg-cyan-50 border-cyan-200' : 'bg-white/5 border-white/10'}`}>
@@ -2108,10 +2108,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                             ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                             : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                         }`}>
-                          Risk: {claimMatrix?.risk_level || 'CRITICAL'}
+                          Risiko: {({ CRITICAL: 'Kritis', HIGH: 'Tinggi', MEDIUM: 'Sedang', LOW: 'Rendah' }[claimMatrix?.risk_level] || claimMatrix?.risk_level || 'Kritis')}
                         </span>
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                          Tipologi: {claimMatrix?.fraud_typology || 'PHANTOM_BILLING'}
+                          Tipologi: {({ PHANTOM_BILLING: 'Klaim Fiktif (Phantom Billing)', REPEAT_BILLING: 'Tagihan Berulang (Repeat Billing)', UPCODING_SEVERITY: 'Upcoding Klasifikasi CBG', IMPOSSIBLE_TRAVEL: 'Anomali Geovelocity DPJP', NORMAL_CLAIM: 'Klaim Wajar Konsisten' }[claimMatrix?.fraud_typology] || claimMatrix?.fraud_typology || 'Klaim Fiktif (Phantom Billing)')}
                         </span>
                       </div>
                     </div>
@@ -2209,7 +2209,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   /* Catalog Tab */
                   <div className="space-y-3">
                     <p className="text-xs text-slate-400">
-                      Daftar 94 skill spesialis deteksi fraud keuangan siber dari repositori cybersecurity-skills:
+                      Daftar 94 kontrol spesialis deteksi fraud keuangan siber terpetakan ke MITRE F3:
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {fraudCatalog.map((s, idx) => (

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ResponsiveContainer,
@@ -18,6 +19,7 @@ import {
   AreaChart,
   Area,
   ComposedChart,
+  CartesianGrid,
 } from 'recharts';
 import {
   ArrowUp,
@@ -27,7 +29,6 @@ import {
   Flame,
   Clock,
   Calendar,
-  Sparkles,
   BellRing,
   Lightbulb,
   TrendingUp,
@@ -53,17 +54,19 @@ import {
   FileText,
   Database,
   Globe,
+  CreditCard,
+  Building2,
 } from 'lucide-react';
 import {
   generateClaimTraceExecutiveReport,
   generateClaimTraceInterventionCampaign,
 } from '../../services/claimtraceOrchestratorService';
 
-const PIE_COLORS = ['#059669', '#f59e0b', '#f97316', '#ef4444'];
+const PIE_COLORS = ['#00733B', '#f59e0b', '#f97316', '#ef4444'];
 
 const colorMap = {
   blue: '#3b82f6',
-  green: '#059669',
+  green: '#00733B',
   purple: '#a855f7',
   cyan: '#06b6d4',
   amber: '#f59e0b',
@@ -95,7 +98,7 @@ const INITIAL_OVERVIEW = {
   },
   insights: {
     ia_summary:
-      'Berdasarkan basis data transaksi terintegrasi (total 6.264.346 baris: 2.590.751 master peserta pada 1.065.281 keluarga, 1.699.219 klaim FKRTL, 1.967.670 diagnosis sekunder, dan 6.706 kode ICD-10), rata-rata permintaan klaim masuk adalah 4.643 berkas/hari (puncak 7.870 berkas/hari) dari 2.091 fasilitas kesehatan di 496 Kab/Kota (38 Provinsi). Nilai tagihan masuk mencapai Rp 1,536 Triliun dengan Rp 1,534 Triliun disetujui, koreksi tarif langsung Rp 2,07 Miliar (1.631 berkas), dan temuan klaim ganda hari sama Rp 32,59 Miliar (4.876 pasang / 9.555 berkas).',
+      'Sistem pengawasan pra-pembayaran memantau kepatuhan klaim FKRTL secara real-time. Klaim yang terindikasi anomali dialihkan ke antrean telaah untuk diverifikasi sebelum pembayaran.',
     report_generated_at: '2026-10-24T09:30:00Z',
     report_period: 'Data Transaksi JKN & Basis Data Klaim Terverifikasi',
     llm_powered: true,
@@ -176,7 +179,7 @@ const INITIAL_OVERVIEW = {
       severity: 'critical',
       message:
         '1.631 berkas klaim FKRTL dikoreksi verifikator dengan selisih biaya Rp 2,07 Miliar dari total tagihan Rp 1,536 Triliun.',
-      timestamp: 'Terverifikasi DuckDB',
+      timestamp: 'Terverifikasi Basis Data',
     },
     {
       id: 'alt-3',
@@ -200,7 +203,7 @@ const INITIAL_OVERVIEW = {
 };
 
 const INITIAL_TRENDS = {
-  // Siklus 7 Hari Aktual Transaksi JKN (18 Okt – 24 Okt · Total 34.318 Klaim Masuk):
+  // Siklus 7 Hari Aktual Transaksi JKN (18 Okt - 24 Okt · Total 34.318 Klaim Masuk):
   cases_opened_trend: [
     { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 5368, note: '1.250 FKRTL · 409 Kab/Kota · Rp 4,53 Miliar' },
     { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 3395, note: '982 FKRTL · 384 Kab/Kota · Rp 2,93 Miliar' },
@@ -238,66 +241,16 @@ const INITIAL_TRENDS = {
     { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 1323, note: '1.323 FKRTL Aktif di 428 Kab/Kota' },
   ],
   latency_trend: [
-    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 18.2, note: 'Eksekusi DuckDB 5.368 Klaim' },
-    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 14.6, note: 'Eksekusi DuckDB 3.395 Klaim' },
-    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 9.8, note: 'Eksekusi DuckDB 764 Klaim' },
-    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 22.4, note: 'Eksekusi DuckDB 6.783 Klaim' },
-    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 20.5, note: 'Eksekusi DuckDB 6.078 Klaim' },
-    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 20.4, note: 'Eksekusi DuckDB 6.072 Klaim' },
-    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 19.7, note: 'Eksekusi DuckDB 5.858 Klaim' },
+    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 18.2, note: 'Eksekusi Basis Data 5.368 Klaim' },
+    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 14.6, note: 'Eksekusi Basis Data 3.395 Klaim' },
+    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 9.8, note: 'Eksekusi Basis Data 764 Klaim' },
+    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 22.4, note: 'Eksekusi Basis Data 6.783 Klaim' },
+    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 20.5, note: 'Eksekusi Basis Data 6.078 Klaim' },
+    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 20.4, note: 'Eksekusi Basis Data 6.072 Klaim' },
+    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 19.7, note: 'Eksekusi Basis Data 5.858 Klaim' },
   ],
 };
 
-const INITIAL_VERIFIKATORS = [
-  {
-    id: 'v-1',
-    name: 'dr. Hendra Kurniawan, Sp.A',
-    specialization: 'Verifikator Medis Pediatri & Neonatologi',
-    rating: 4.9,
-    years_of_experience: 8,
-    is_available: true,
-    total_patients: 24,
-    total_appointments: 58,
-    completed_appointments: 52,
-    upcoming_appointments: 3,
-  },
-  {
-    id: 'v-2',
-    name: 'dr. Ratna Dewi, Sp.JP(K)',
-    specialization: 'Verifikator Medis Kardiovaskular & Bedah Jantung',
-    rating: 4.8,
-    years_of_experience: 12,
-    is_available: true,
-    total_patients: 18,
-    total_appointments: 50,
-    completed_appointments: 44,
-    upcoming_appointments: 4,
-  },
-  {
-    id: 'v-3',
-    name: 'apt. Siti Rahmawati, S.Farm, M.Clin.Pharm',
-    specialization: 'Verifikator Kepatuhan Fornas & Farmasi Klinis',
-    rating: 4.9,
-    years_of_experience: 6,
-    is_available: true,
-    total_patients: 15,
-    total_appointments: 36,
-    completed_appointments: 34,
-    upcoming_appointments: 2,
-  },
-  {
-    id: 'v-4',
-    name: 'dr. Bima Santoso, Sp.PD',
-    specialization: 'Komite Medis Penyakit Dalam & Evaluasi Readmisi',
-    rating: 4.7,
-    years_of_experience: 11,
-    is_available: true,
-    total_patients: 29,
-    total_appointments: 64,
-    completed_appointments: 55,
-    upcoming_appointments: 7,
-  },
-];
 
 // ─── Tooltips ──────────────────────────────────
 function NumberTooltip({ active, payload, label, isLight }) {
@@ -382,55 +335,94 @@ function MiniTooltip({ active, payload, isLight, unit = '' }) {
 }
 
 // ─── KPICard ─────────
-function KPICard({ title, value, subtitle, trend, icon, severity = 'info', isLight }) {
+function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 'info', isLight, sparkValues = [] }) {
   const cardStyleClass = isLight 
-    ? 'border-slate-200 bg-white shadow-xs text-slate-900' 
-    : 'border-white/10 bg-white/5 shadow-black/20 text-white';
+    ? 'border-[#061B31]/[0.08] bg-white shadow-[0_1px_2px_rgba(6,27,49,0.04)] hover:border-[#061B31]/20 hover:shadow-[0_4px_12px_rgba(6,27,49,0.06)] text-[#061B31]' 
+    : 'border-white/[0.08] bg-[#11141A] hover:border-white/[0.16] text-[#F3F5F8]';
 
-  const iconStyleClass = {
-    critical: isLight ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-rose-500/15 border-rose-500/30 text-rose-300',
-    warning: isLight ? 'bg-amber-50 border-amber-200 text-amber-600' : 'bg-amber-500/15 border-amber-500/30 text-amber-300',
-    success: isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
-    info: isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80',
-  }[severity] || (isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/80');
+  const topAccentClass = {
+    critical: 'from-rose-500 via-rose-400 to-amber-400',
+    warning: 'from-amber-500 via-orange-400 to-amber-300',
+    success: 'from-emerald-600 via-emerald-500 to-emerald-400',
+    info: 'from-sky-600 via-blue-500 to-cyan-400',
+  }[severity] || 'from-sky-600 via-blue-500 to-cyan-400';
+
+  const sparkStroke = {
+    critical: '#f43f5e',
+    warning: '#f59e0b',
+    success: '#00733B',
+    info: '#0284c7',
+  }[severity] || '#0284c7';
+
+  const iconBadgeClass = {
+    critical: isLight ? 'bg-rose-50 text-rose-600 border border-rose-200/80' : 'bg-rose-500/15 text-rose-400 border border-rose-500/25',
+    warning: isLight ? 'bg-amber-50 text-amber-600 border border-amber-200/80' : 'bg-amber-500/15 text-amber-400 border border-amber-500/25',
+    success: isLight ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/80' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    info: isLight ? 'bg-sky-50 text-sky-600 border border-sky-200/80' : 'bg-sky-500/15 text-sky-400 border border-sky-500/25',
+  }[severity] || (isLight ? 'bg-sky-50 text-sky-600 border border-sky-200/80' : 'bg-sky-500/15 text-sky-400 border border-sky-500/25');
+
+  const sparkPoints = useMemo(() => {
+    const clean = (sparkValues || []).filter((n) => typeof n === 'number' && Number.isFinite(n));
+    if (clean.length < 2) return null;
+    const min = Math.min(...clean);
+    const max = Math.max(...clean);
+    const span = max - min || 1;
+    const w = 72;
+    const h = 24;
+    const pts = clean.map((v, i) => {
+      const x = (i / (clean.length - 1)) * w;
+      const y = h - 3 - ((v - min) / span) * (h - 6);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return { pts: pts.join(' '), lastY: pts[pts.length - 1].split(',')[1], w, h };
+  }, [sparkValues]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 ${cardStyleClass}`}
+      className={`group relative overflow-hidden rounded-2xl border p-4 sm:p-5 transition-[border-color,box-shadow,transform] duration-200 ${cardStyleClass}`}
     >
-      <div className="relative space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className={`text-xs font-semibold uppercase tracking-wide text-balance ${
-              isLight ? 'text-slate-500' : 'text-white/60'
+      {/* Minimal hairline container without rainbow stripe */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-[11px] font-display font-bold uppercase tracking-wider ${
+              isLight ? 'text-slate-600' : 'text-slate-300'
             }`}>
               {title}
-            </div>
-            <div className={`text-3xl font-bold tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>{value}</div>
+            </span>
+            {periodBadge && (
+              <span className={`text-[10px] font-mono font-medium uppercase tracking-wider leading-none ${
+                isLight ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                {periodBadge}
+              </span>
+            )}
           </div>
-          {icon && (
-            <div className={`p-2.5 rounded-xl border ${iconStyleClass}`}>
-              {icon}
-            </div>
-          )}
+          <div className={`text-2xl sm:text-[26px] xl:text-[28px] font-display font-semibold tabular-nums tracking-tight leading-tight ${
+            isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'
+          }`}>
+            {value}
+          </div>
         </div>
+        {icon && (
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${iconBadgeClass}`}>
+            {icon}
+          </div>
+        )}
+      </div>
 
-        {(subtitle || trend) && (
-          <div className="flex items-center justify-between text-xs">
-            {subtitle && <span className={isLight ? 'text-slate-600' : 'text-white/50'}>{subtitle}</span>}
+      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-2">
+        {(subtitle || trend) ? (
+          <div className="flex items-center gap-1.5 text-xs min-w-0">
             {trend && (
               <div
-                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full border font-semibold ${
+                className={`inline-flex items-center gap-0.5 font-mono font-bold px-1.5 py-0.5 rounded-md text-[10.5px] ${
                   trend.direction === 'up'
-                    ? isLight
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                    : isLight
-                    ? 'bg-rose-100 text-rose-800 border-rose-300'
-                    : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                    ? (isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/15 text-emerald-400')
+                    : (isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/15 text-rose-400')
                 }`}
               >
                 {trend.direction === 'up' ? (
@@ -438,13 +430,29 @@ function KPICard({ title, value, subtitle, trend, icon, severity = 'info', isLig
                 ) : (
                   <ArrowDown className="w-3 h-3" />
                 )}
-                <span className="font-mono">
-                  {trend.value.toFixed(1)}
-                  {trend.label || '%'}
-                </span>
+                <span>{trend.value.toFixed(2)}%</span>
               </div>
             )}
+            {subtitle && (
+              <span className={`truncate text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                {subtitle}
+              </span>
+            )}
           </div>
+        ) : <span />}
+
+        {sparkPoints && (
+          <svg width={sparkPoints.w} height={sparkPoints.h} className="shrink-0 overflow-visible" aria-hidden="true">
+            <polyline
+              fill="none"
+              stroke={sparkStroke}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={sparkPoints.pts}
+            />
+            <circle cx={sparkPoints.w} cy={sparkPoints.lastY} r="2.5" fill={sparkStroke} />
+          </svg>
         )}
       </div>
     </motion.div>
@@ -667,7 +675,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
             {showTelemetryTable ? 'Sembunyikan' : 'Buka'} Rincian Log Telemetri ({timeRangeLabel} · 2.091 FKRTL Terverifikasi)
           </span>
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
-            Terverifikasi DuckDB
+            Terverifikasi Basis Data
           </span>
         </button>
 
@@ -687,7 +695,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
                   Log Telemetri Operasional ({timeRangeLabel}) - Real-Time Monitoring
                 </h4>
                 <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                  Diekstraksi langsung dari gudang data transaksi BPJS Kesehatan (6.264.346 baris) melalui engine analitik kolumnar DuckDB.
+                  Diekstraksi langsung dari gudang data transaksi BPJS Kesehatan (6.264.346 baris) melalui mesin analitik kolumnar terpadu.
                 </p>
               </div>
               <span className="text-[10px] font-mono px-2 py-1 rounded-lg border bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
@@ -749,6 +757,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
 function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all' }) {
   const [activeSeverity, setActiveSeverity] = useState(null);
   const [caseMode, setCaseMode] = useState('all');
+  const [scaleMode, setScaleMode] = useState('auto'); // 'auto' -> log for wide cohort spread, linear for daily
 
   const severityData = useMemo(() => {
     const source = overview.insights.severity_distribution;
@@ -779,128 +788,191 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
     const opened = trends.cases_opened_trend ?? [];
     const closed = trends.cases_closed_trend ?? [];
 
-    return opened.map((point, index) => ({
-      date: point.shortLabel || new Date(point.date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
-      opened: point.value ?? 0,
-      closed: closed[index]?.value ?? 0,
-    }));
+    return opened.map((point, index) => {
+      const oVal = Math.max(1, point.value ?? 0);
+      const cVal = Math.max(1, closed[index]?.value ?? 0);
+      return {
+        date: point.shortLabel || new Date(point.date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+        opened: point.value ?? 0,
+        closed: closed[index]?.value ?? 0,
+        openedSafe: oVal,
+        closedSafe: cVal,
+      };
+    });
   }, [trends]);
+
+  const useLogScale = useMemo(() => {
+    if (scaleMode === 'log') return true;
+    if (scaleMode === 'linear') return false;
+    if (lifecycleData.length < 3) return false;
+    const vals = lifecycleData.map((d) => d.opened).filter((v) => v > 0);
+    if (vals.length < 2) return false;
+    const maxV = Math.max(...vals);
+    const minV = Math.min(...vals);
+    return minV > 0 && maxV / minV >= 5;
+  }, [scaleMode, lifecycleData]);
 
   const formatCompactTick = (val) => {
     if (val >= 1000000) return `${(val / 1000000).toFixed(1).replace('.', ',')}Jt`;
-    if (val >= 1000) return `${(val / 1000).toLocaleString('id-ID')}K`;
+    if (val >= 1000) return `${Math.round(val / 1000).toLocaleString('id-ID')}K`;
     return `${val}`;
   };
 
   const gridStroke = isLight ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255,255,255,0.08)';
   const axisStroke = isLight ? '#64748b' : 'rgba(255,255,255,0.5)';
-  const timeRangeBadge = timeRange === 'all' ? 'TOTAL KLAIM' : `AGREGASI ${timeRange} HARI`;
 
   return (
     <section
       className="grid grid-cols-1 gap-5 xl:grid-cols-3"
       aria-label="Grafik interaktif pengawasan klaim"
     >
-      <article className={`rounded-2xl border p-5 shadow-sm xl:col-span-2 ${
+      <article className={`rounded-2xl border p-5 shadow-soft xl:col-span-2 ${
         isLight
           ? 'bg-white border-slate-200 text-slate-900'
           : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-2xl text-white'
       }`}>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Tren Siklus Verifikasi Klaim</h3>
+            <div className="flex items-center gap-2">
+              <h3 className={`text-base sm:text-lg font-display font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Tren Siklus Verifikasi Klaim</h3>
+              <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border ${
+                useLogScale
+                  ? (isLight ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-sky-500/15 text-sky-300 border-sky-400/30')
+                  : (isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/10 text-white/70 border-white/15')
+              }`}>
+                {useLogScale ? 'Skala Logaritmik' : 'Skala Linear'}
+              </span>
+            </div>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
               {timeRange === 'all'
-                ? 'Perbandingan permintaan klaim masuk vs klaim selesai diverifikasi pada basis data klaim FKRTL'
+                ? 'Perbandingan volume klaim masuk vs klaim selesai diverifikasi lintas kohort FKRTL'
                 : `Perbandingan laju permintaan berkas masuk vs penyelesaian verifikasi klaim (${timeRange} hari terakhir)`}
             </p>
           </div>
-          <div className={`inline-flex rounded-xl border p-1 gap-1 ${
-            isLight ? 'bg-slate-100 border-slate-300' : 'border-white/10 bg-white/5'
-          }`}>
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={() => setCaseMode('all')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
-                caseMode === 'all'
-                  ? isLight
-                    ? 'bg-slate-900 text-white font-bold shadow-xs'
-                    : 'bg-white/20 text-white font-bold shadow-xs'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-white/60 hover:text-white'
+              onClick={() => setScaleMode(useLogScale ? 'linear' : 'log')}
+              className={`rounded-xl border px-2.5 py-1.5 text-[11px] font-mono font-semibold transition cursor-pointer ${
+                isLight
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-white/5 hover:bg-white/10 text-white/80 border-white/15'
               }`}
+              title="Ubah skala sumbu Y antara Logaritmik dan Linear"
             >
-              Semua
+              {useLogScale ? 'Lihat Linear' : 'Lihat Log'}
             </button>
-            <button
-              type="button"
-              onClick={() => setCaseMode('opened')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
-                caseMode === 'opened'
-                  ? 'bg-blue-600 text-white font-bold shadow-xs'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Berkas Masuk
-            </button>
-            <button
-              type="button"
-              onClick={() => setCaseMode('closed')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
-                caseMode === 'closed'
-                  ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Berkas Selesai
-            </button>
+            <div className={`inline-flex rounded-xl border p-1 gap-1 ${
+              isLight ? 'bg-slate-100 border-slate-200' : 'border-white/10 bg-white/5'
+            }`}>
+              <button
+                type="button"
+                onClick={() => setCaseMode('all')}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
+                  caseMode === 'all'
+                    ? isLight
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      : 'bg-white/20 text-white font-bold shadow-xs'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Semua
+              </button>
+              <button
+                type="button"
+                onClick={() => setCaseMode('opened')}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
+                  caseMode === 'opened'
+                    ? 'bg-blue-600 text-white font-bold shadow-xs'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Berkas Masuk
+              </button>
+              <button
+                type="button"
+                onClick={() => setCaseMode('closed')}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
+                  caseMode === 'closed'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                Berkas Selesai
+              </button>
+            </div>
           </div>
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={lifecycleData}>
+            <ComposedChart data={lifecycleData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="execLifecycleBlue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#2563eb" stopOpacity={isLight ? 0.35 : 0.45} />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity={0.03} />
+                </linearGradient>
+                <linearGradient id="execBarBlue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.45} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="date" stroke={axisStroke} tickLine={false} tick={{ fontSize: 11 }} />
+              <CartesianGrid stroke={gridStroke} strokeDasharray="2 4" strokeOpacity={0.6} vertical={false} />
+              <XAxis dataKey="date" stroke={axisStroke} tickLine={false} tick={{ fontSize: 11, fontFamily: 'var(--ct-font-mono)' }} />
               <YAxis 
+                scale={useLogScale ? 'log' : 'auto'}
+                domain={useLogScale ? ['auto', 'auto'] : [0, 'auto']}
+                width={52}
+                tickCount={5}
+                minTickGap={16}
+                allowDecimals={false}
                 stroke={axisStroke} 
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11 }} 
+                tick={{ fontSize: 11, fontFamily: 'var(--ct-font-mono)' }} 
                 tickFormatter={formatCompactTick}
               />
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
-              <Area
-                type="monotone"
-                dataKey="opened"
-                stroke="#2563eb"
-                strokeWidth={caseMode === 'opened' ? 3.5 : caseMode === 'all' ? 2 : 1}
-                fill="url(#execLifecycleBlue)"
-                fillOpacity={caseMode === 'closed' ? 0.05 : 1}
-                strokeOpacity={caseMode === 'closed' ? 0.25 : 1}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                name="Berkas Masuk"
-              />
+              {timeRange === 'all' && !useLogScale ? (
+                <Bar
+                  dataKey="opened"
+                  fill="url(#execBarBlue)"
+                  radius={[6, 6, 0, 0]}
+                  barSize={26}
+                  fillOpacity={caseMode === 'closed' ? 0.2 : 0.92}
+                  isAnimationActive={false}
+                  name="Berkas Masuk"
+                />
+              ) : (
+                <Area
+                  type="monotone"
+                  dataKey="openedSafe"
+                  baseValue="dataMin"
+                  stroke="#2563eb"
+                  strokeWidth={caseMode === 'opened' ? 3 : caseMode === 'all' ? 2.2 : 1}
+                  fill="url(#execLifecycleBlue)"
+                  fillOpacity={caseMode === 'closed' ? 0.05 : 1}
+                  strokeOpacity={caseMode === 'closed' ? 0.25 : 1}
+                  dot={{ r: 3.5, fill: '#2563eb', strokeWidth: 0 }}
+                  activeDot={{ r: 5 }}
+                  isAnimationActive={false}
+                  name="Berkas Masuk"
+                />
+              )}
               <Line
                 type="monotone"
                 dataKey="closed"
-                stroke="#059669"
-                strokeWidth={caseMode === 'closed' ? 3.5 : caseMode === 'all' ? 2.5 : 1.5}
+                stroke="#00733B"
+                strokeWidth={caseMode === 'closed' ? 3 : 2.5}
                 strokeOpacity={caseMode === 'opened' ? 0.35 : 1}
-                dot={false}
-                activeDot={false}
+                dot={{ r: 3, fill: '#00733B', strokeWidth: 0 }}
+                activeDot={{ r: 5 }}
                 isAnimationActive={false}
                 name="Berkas Selesai"
               />
@@ -909,15 +981,15 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
         </div>
       </article>
 
-      <article className={`rounded-2xl border p-5 shadow-sm ${
+      <article className={`rounded-xl border p-5 transition-colors ${
         isLight
-          ? 'bg-white border-slate-200 text-slate-900'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-2xl text-white'
+          ? 'bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
+          : 'border-white/[0.08] bg-[#11141A] text-[#F3F5F8]'
       }`}>
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className={`text-base font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>Proporsi Tingkat Risiko Klaim</h3>
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${
-            isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/70 border-white/15'
+          <h3 className={`text-sm font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>Proporsi Tingkat Risiko Klaim</h3>
+          <span className={`text-[11px] font-mono font-medium tabular-nums whitespace-nowrap shrink-0 ${
+            isLight ? 'text-slate-500' : 'text-slate-400'
           }`}>
             {totalClaimsCount.toLocaleString('id-ID')} Berkas
           </span>
@@ -954,7 +1026,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
               {totalClaimsCount.toLocaleString('id-ID')}
             </span>
             <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              {timeRangeBadge}
+              {timeRange === 'all' ? 'SELURUH DATA' : `${timeRange} HARI TERAKHIR`}
             </span>
           </div>
 
@@ -1028,20 +1100,20 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
 
       <article className={`rounded-2xl border p-5 shadow-sm xl:col-span-3 ${
         isLight
-          ? 'bg-white border-slate-200 text-slate-900'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-2xl text-white'
+          ? 'bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
+          : 'border-white/[0.08] bg-[#11141A] text-[#F3F5F8]'
       }`}>
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <h3 className={`text-sm font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
               Topik Modus Anomali Klaim Tertinggi
             </h3>
-            <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+            <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Distribusi pola anomali & potensi sengketa klaim pada berkas FKRTL Terverifikasi
             </p>
           </div>
-          <span className={`self-start sm:self-auto text-xs font-semibold px-2.5 py-1 rounded-full border ${
-            isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+          <span className={`self-start sm:self-auto text-xs font-mono font-medium tabular-nums ${
+            isLight ? 'text-emerald-700' : 'text-emerald-400'
           }`}>
             Total {topicData.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString('id-ID')} Berkas Terindikasi
           </span>
@@ -1074,7 +1146,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 name="Temuan Berkas"
               >
                 {topicData.map((_, index) => {
-                  const TOPIC_BAR_COLORS = ['#e11d48', '#ea580c', '#d97706', '#0284c7', '#059669'];
+                  const TOPIC_BAR_COLORS = ['#e11d48', '#ea580c', '#d97706', '#0284c7', '#00733B'];
                   const barFill = TOPIC_BAR_COLORS[index % TOPIC_BAR_COLORS.length];
                   return (
                     <Cell
@@ -1100,218 +1172,6 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
   );
 }
 
-// ─── OnDutyVerifikatorsPanel ────────
-function classifyWorkload(upcomingAppointments) {
-  const percentage = Math.min(100, Math.max(15, Math.round((upcomingAppointments / 8) * 100)));
-  if (upcomingAppointments <= 2) {
-    return {
-      label: 'Optimal',
-      textClass: 'text-emerald-600 dark:text-emerald-400 font-bold',
-      barClass: 'bg-emerald-500',
-      width: percentage,
-    };
-  }
-  if (upcomingAppointments <= 4) {
-    return {
-      label: 'Sedang',
-      textClass: 'text-amber-600 dark:text-amber-400 font-bold',
-      barClass: 'bg-amber-500',
-      width: percentage,
-    };
-  }
-  return {
-    label: 'Padat',
-    textClass: 'text-rose-600 dark:text-rose-400 font-bold',
-    barClass: 'bg-rose-500',
-    width: percentage,
-  };
-}
-
-function OnDutyVerifikatorsPanel({ counselors, onManageCounselors, isLight }) {
-  const onDutyCounselors = counselors.filter((c) => c.is_available);
-  const [allocationNotice, setAllocationNotice] = useState(null);
-
-  const handleRebalance = () => {
-    onManageCounselors();
-    setAllocationNotice('Beban antrean berkas klaim berhasil diseimbangkan secara proporsional ke 4 Verifikator Medis Bertugas.');
-    setTimeout(() => {
-      setAllocationNotice(null);
-    }, 4500);
-  };
-
-  return (
-    <section
-      className={`rounded-2xl border p-5 transition-all ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-xl shadow-[#00081c]/50 text-white'
-      }`}
-      aria-label="Verifikator medis bertugas"
-    >
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Verifikator Medis Bertugas (On-Duty)
-          </h2>
-          <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-            Ketersediaan langsung, indeks akurasi audit, dan beban antrean berkas FPK
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleRebalance}
-          className={`inline-flex items-center self-start sm:self-auto rounded-xl border px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
-            isLight
-              ? 'bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-slate-700 border-slate-300'
-              : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white hover:border-emerald-500/40'
-          }`}
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
-          Alokasikan Beban Verifikator
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {allocationNotice && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            className={`p-3 rounded-xl border flex items-center justify-between text-xs font-medium ${
-              isLight
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                : 'bg-emerald-950/60 border-emerald-500/30 text-emerald-200'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>{allocationNotice}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAllocationNotice(null)}
-              className="text-xs opacity-60 hover:opacity-100 cursor-pointer p-1"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <div className={`rounded-xl border p-3 ${
-          isLight ? 'bg-slate-50 border-slate-200' : 'border-white/10 bg-white/5'
-        }`}>
-          <div className={`mb-1 flex items-center gap-2 text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            <Users className={`h-4 w-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-            Verifikator Siaga
-          </div>
-          <p className={`text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{onDutyCounselors.length} Auditor</p>
-        </div>
-        <div className={`rounded-xl border p-3 ${
-          isLight ? 'bg-slate-50 border-slate-200' : 'border-white/10 bg-white/5'
-        }`}>
-          <div className={`mb-1 flex items-center gap-2 text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            <BarChart3 className="h-4 w-4 text-emerald-500" />
-            Skor Akurasi Audit
-          </div>
-          <p className={`text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            {(
-              onDutyCounselors.reduce((acc, item) => acc + item.rating, 0) /
-              onDutyCounselors.length
-            ).toFixed(1)}{' '}
-            / 5.0
-          </p>
-        </div>
-        <div className={`rounded-xl border p-3 ${
-          isLight ? 'bg-slate-50 border-slate-200' : 'border-white/10 bg-white/5'
-        }`}>
-          <div className={`mb-1 flex items-center gap-2 text-xs font-medium ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            <Clock className="h-4 w-4 text-cyan-500" />
-            Rata-Rata Masa Kerja
-          </div>
-          <p className={`text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            {Math.round(
-              onDutyCounselors.reduce((acc, item) => acc + (item.years_of_experience ?? 0), 0) /
-                onDutyCounselors.length
-            )}{' '}
-            thn
-          </p>
-        </div>
-      </div>
-
-      <div className={`overflow-x-auto border rounded-xl ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
-        <table className="min-w-full">
-          <thead>
-            <tr className={`border-b text-left text-xs font-semibold uppercase tracking-wide ${
-              isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'border-white/10 text-white/60 bg-white/5'
-            }`}>
-              <th className="px-4 py-2.5">Verifikator Medis</th>
-              <th className="px-4 py-2.5">Berkas Ditangani</th>
-              <th className="px-4 py-2.5">Ketepatan SLA</th>
-              <th className="px-4 py-2.5">Beban Antrean</th>
-            </tr>
-          </thead>
-          <tbody className={`divide-y ${isLight ? 'divide-slate-200 bg-white' : 'divide-white/5'}`}>
-            {onDutyCounselors.map((counselor, index) => {
-              const completionRate =
-                counselor.total_appointments > 0
-                  ? (counselor.completed_appointments / counselor.total_appointments) * 100
-                  : 0;
-              const workload = classifyWorkload(counselor.upcoming_appointments);
-              return (
-                <motion.tr
-                  key={counselor.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}
-                >
-                  <td className="px-4 py-3 text-sm">
-                    <div className="flex flex-col">
-                      <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{counselor.name}</span>
-                      <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{counselor.specialization}</span>
-                    </div>
-                  </td>
-                  <td className={`px-4 py-3 text-sm font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                    {Number(counselor.total_patients || 0).toLocaleString('id-ID')} berkas
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
-                      completionRate >= 92
-                        ? isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : completionRate >= 88
-                        ? isLight ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        : isLight ? 'bg-rose-100 text-rose-800 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                    }`}>
-                      {completionRate.toFixed(0)}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className={workload.textClass}>{workload.label}</span>
-                        <span className={isLight ? 'text-slate-500' : 'text-white/60'}>
-                          {Number(counselor.upcoming_appointments || 0).toLocaleString('id-ID')} antrean baru
-                        </span>
-                      </div>
-                      <div className={`h-1.5 w-full rounded-full ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
-                        <div
-                          className={`h-1.5 rounded-full ${workload.barClass}`}
-                          style={{ width: `${workload.width}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                </motion.tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
 
 // ─── InsightsPanelCard ────────
 function TrendIcon({ trend }) {
@@ -1361,13 +1221,13 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
       {/* Header */}
       <div className={`px-6 py-4 border-b ${
         isLight
-          ? 'bg-slate-50 border-slate-200'
-          : 'border-white/10 bg-gradient-to-r from-[#00134A]/80 via-[#00153A]/90 to-[#1C3C80]/40'
+          ? 'bg-[#F7F8FA] border-[#061B31]/[0.08]'
+          : 'border-white/[0.08] bg-[#161A22]'
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="flex items-center gap-2">
-              <h3 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Wawasan AI Forensik Klaim (IA)</h3>
+              <h3 className={`text-base font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-slate-100'}`}>Wawasan Audit Forensik Klaim (IA)</h3>
             </div>
             {insights.report_generated_at && (
               <div className={`flex items-center gap-2 text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
@@ -1396,7 +1256,7 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
                     : 'bg-gradient-to-r from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-[#FFCA40]/40 text-white shadow-[#00081c]/50'
                 }`}
               >
-                <Sparkles className={`w-3.5 h-3.5 ${isLight ? 'text-white' : 'text-[#FFCA40]'}`} />
+                <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-white' : 'text-[#FFCA40]'}`} />
                 Buat Laporan
               </button>
             )}
@@ -1422,11 +1282,13 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
       <div className="p-6 space-y-6">
         <div>
           <h4 className={`text-sm font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white/90'}`}>Ringkasan Eksekutif</h4>
-          <p className={`text-sm leading-relaxed rounded-xl p-4 border ${
+          <div className={`rounded-xl p-4 border ${
             isLight
-              ? 'bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-white/5 border-white/10 text-white/70'
-          }`}>{insights.ia_summary}</p>
+              ? 'bg-slate-50 border-slate-200'
+              : 'bg-white/5 border-white/10'
+          }`}>
+            <MarkdownRenderer content={insights.ia_summary} isLight={isLight} />
+          </div>
         </div>
 
         {hasPatterns && (
@@ -1461,9 +1323,7 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
                       {pattern.severity}
                     </span>
                   </div>
-                  <p className={`text-xs leading-relaxed pl-6 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    {pattern.description}
-                  </p>
+                  <MarkdownRenderer content={pattern.description} isLight={isLight} className="pl-6" />
                 </div>
               ))}
             </div>
@@ -1502,7 +1362,7 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
                       {rec.category}
                     </span>
                   </div>
-                  <p className={`text-xs leading-relaxed pl-6 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{rec.description}</p>
+                  <MarkdownRenderer content={rec.description} isLight={isLight} className="pl-6" />
                 </div>
               ))}
             </div>
@@ -1755,102 +1615,6 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
   );
 }
 
-// ─── QuickLinksPanel ─────────────────
-function QuickLinksPanel({ onNavigateTab, isLight }) {
-  const links = [
-    {
-      tab: 'cases_mgmt',
-      label: 'Manajemen Berkas Klaim (Cases)',
-      description: 'Kelola seluruh berkas klaim yang dieskalasikan Agen Manajemen Klaim (CMA) & pantau SLA 10 HK',
-      icon: <Briefcase className="h-5 w-5 text-rose-500" />,
-    },
-    {
-      tab: 'quick_triage',
-      label: 'Triase Cepat Klaim (Quick Triage)',
-      description: 'Buat berkas audit klaim manual via CMA dan kelola antrean prioritas SLA FKRTL',
-      icon: <Zap className="h-5 w-5 text-amber-500" />,
-    },
-    {
-      tab: 'flagged_sessions',
-      label: 'Sesi Klaim Ditandai (Flagged)',
-      description: 'Tinjau penandaan anomali SEP, sangkalan presensi Lapis 3, dan diskrepansi resume medis',
-      icon: <Flag className="h-5 w-5 text-orange-500" />,
-    },
-    {
-      tab: 'appointments',
-      label: 'Jadwal Klarifikasi Medis (Appointments)',
-      description: 'Kelola jadwal klarifikasi klaim antara FKRTL/DPJP, Tim Casemix, dan Verifikator BPJS',
-      icon: <Calendar className="h-5 w-5 text-cyan-500" />,
-    },
-    {
-      tab: 'insights',
-      label: 'Analitik Wawasan & Privasi (IA)',
-      description: 'Kueri agregat k-anonymity (k ≥ 5), anggaran ε, dan kepatuhan UU PDP',
-      icon: <ShieldCheck className="h-5 w-5 text-emerald-500" />,
-    },
-    {
-      tab: 'retention',
-      label: 'Analitik Retensi & Kohort',
-      description: 'Pantau keaktifan harian & bulanan verifikator, volume telaah berkas, dan kepatuhan kohort faskes',
-      icon: <Activity className="h-5 w-5 text-blue-500" />,
-    },
-    {
-      tab: 'profile',
-      label: 'Profil Verifikator',
-      description: 'Tinjau kredensial auditor medis dan log diagnostik sesi perangkat',
-      icon: <Users className="h-5 w-5 text-purple-500" />,
-    },
-    {
-      tab: 'settings',
-      label: 'Pengaturan Sistem',
-      description: 'Konfigurasi ambang batas deteksi anomali dan parameter operasional',
-      icon: <Settings className="h-5 w-5 text-teal-500" />,
-    },
-  ];
-
-  return (
-    <section
-      aria-label="Pintasan modul pengawasan"
-      className={`rounded-2xl border p-5 transition-all ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-xl shadow-[#00081c]/50 text-white'
-      }`}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Pintasan Modul Pengawasan</h2>
-        <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Navigasi cepat antar-modul</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {links.map((link) => (
-          <button
-            key={link.label}
-            type="button"
-            onClick={() => onNavigateTab?.(link.tab)}
-            className={`group text-left rounded-xl border p-3.5 transition-all duration-200 cursor-pointer ${
-              isLight
-                ? 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-emerald-500/40 text-slate-900'
-                : 'border-white/10 bg-white/5 hover:border-[#FFCA40]/40 hover:bg-white/10 text-white'
-            }`}
-          >
-            <div className={`mb-1.5 flex items-center gap-2.5 text-sm font-semibold ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}>
-              <span className={`rounded-lg p-1.5 group-hover:scale-105 transition-transform border ${
-                isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-white/10 border-white/10'
-              }`}>{link.icon}</span>
-              {link.label}
-            </div>
-            <p className={`text-xs leading-relaxed transition-colors ${
-              isLight ? 'text-slate-600 group-hover:text-slate-800' : 'text-white/60 group-hover:text-white/80'
-            }`}>{link.description}</p>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 // ─── Main ExecutiveHub Component ─────────────
 export default function ExecutiveHub({
@@ -1886,7 +1650,6 @@ export default function ExecutiveHub({
 
   const [overview, setOverview] = useState(INITIAL_OVERVIEW);
   const [trends] = useState(INITIAL_TRENDS);
-  const [counselors, setCounselors] = useState(INITIAL_VERIFIKATORS);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [reportType, setReportType] = useState('mingguan');
@@ -1933,98 +1696,11 @@ export default function ExecutiveHub({
       hourly_capacity: '12.676.053.600 berkas / jam',
       sla_10d_risk: '0.0% (Zero Backlog Risk)',
       system_readiness: '100% Final & Beroperasi Penuh',
-      architecture: 'DuckDB Vectorized In-Memory OLAP SIMD Execution'
+      architecture: 'Vectorized In-Memory OLAP SIMD Execution'
     }
   });
   const [isBenchmarking, setIsBenchmarking] = useState(false);
-  const [selectedFrameworkId, setSelectedFrameworkId] = useState(null);
 
-  const SECURITY_FRAMEWORKS = [
-    {
-      id: 'mitre-f3',
-      badge: 'MITRE F3 v1.1',
-      title: 'Fight Fraud',
-      subtitle: 'FA0001 & FA0002 (94 Teknik)',
-      accentText: 'text-rose-600 dark:text-rose-400',
-      hoverBorder: isLight ? 'hover:border-rose-400' : 'hover:border-rose-500/40',
-      activeBorder: isLight ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/40' : 'border-rose-400 ring-2 ring-rose-400/20 bg-rose-500/10',
-      detailTitle: 'MITRE Fight Fraud Framework (F3 v1.1) - Healthcare Claims Fraud Taxonomy',
-      controls: 'FA0001 (Phantom Billing), FA0002 (Upcoding INA-CBG Severity Level III), FA0007 (Unbundling Tagihan IGD/Rawat Inap), FA0014 (Collusive Provider-Patient Triangulation).',
-      statusMetric: '94 Teknik Terpetakan Aktif · 100% Cakupan Aturan Penapisan Lapis 1-3',
-      targetTab: 'empirical',
-      targetLabel: 'Buka Forensik Data Empiris',
-    },
-    {
-      id: 'mitre-attack',
-      badge: 'ATT&CK v19.1',
-      title: 'T1078 Valid Accts',
-      subtitle: '805 Skills Mapped',
-      accentText: 'text-blue-600 dark:text-blue-400',
-      hoverBorder: isLight ? 'hover:border-blue-400' : 'hover:border-blue-500/40',
-      activeBorder: isLight ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/40' : 'border-blue-400 ring-2 ring-blue-400/20 bg-blue-500/10',
-      detailTitle: 'MITRE ATT&CK Enterprise v19.1 - Credential & Session Protection',
-      controls: 'Deteksi penyalahgunaan kredensial koder Casemix FKRTL (T1078), pembajakan sesi JWT (T1550.004), serta proteksi brute-force endpoint VClaim & Antrean FPK.',
-      statusMetric: '805 Aturan Deteksi Aktif · 0 Insiden Intrusi Kredensial',
-      targetTab: 'audit',
-      targetLabel: 'Buka Log Audit & Kepatuhan',
-    },
-    {
-      id: 'nist-csf',
-      badge: 'NIST CSF 2.0',
-      title: 'DE.CM & RS.AN',
-      subtitle: '6 Core Functions',
-      accentText: 'text-emerald-600 dark:text-emerald-400',
-      hoverBorder: isLight ? 'hover:border-emerald-400' : 'hover:border-emerald-500/40',
-      activeBorder: isLight ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/40' : 'border-emerald-400 ring-2 ring-emerald-400/20 bg-emerald-500/10',
-      detailTitle: 'NIST Cybersecurity Framework (CSF) 2.0 - Govern, Identify, Protect, Detect, Respond, Recover',
-      controls: 'Continuous Monitoring (DE.CM) atas seluruh mutasi status klaim dan Incident Analysis (RS.AN) terikat rantai hash kriptografi SHA-256.',
-      statusMetric: 'Maturity Level 4 (Adaptive) · Kepatuhan Verifikasi 99,90%',
-      targetTab: 'audit',
-      targetLabel: 'Verifikasi Rantai Bukti Audit',
-    },
-    {
-      id: 'mitre-atlas',
-      badge: 'MITRE ATLAS',
-      title: 'AML.T0047 Defense',
-      subtitle: 'Anti-Evasion & Prompt Safe',
-      accentText: 'text-purple-600 dark:text-purple-400',
-      hoverBorder: isLight ? 'hover:border-purple-400' : 'hover:border-purple-500/40',
-      activeBorder: isLight ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/40' : 'border-purple-400 ring-2 ring-purple-400/20 bg-purple-500/10',
-      detailTitle: 'MITRE ATLAS - Adversarial Threat Landscape for Artificial-Intelligence Systems',
-      controls: 'Pertahanan terhadap manipulasi teks resume medis (AML.T0047 LLM Evasion) dan Prompt Injection pada ekstraktor klinis IndoBERT/MiniLM.',
-      statusMetric: 'Sanitasi Input Klinis 100% · Guardrail Deterministik Aktif',
-      targetTab: 'expansion_suite',
-      targetLabel: 'Uji Ketahanan NLP di 5 Pilar',
-    },
-    {
-      id: 'mitre-d3fend',
-      badge: 'MITRE D3FEND',
-      title: 'D3-DS & D3-MFA',
-      subtitle: '270 Defensive Techniques',
-      accentText: 'text-teal-600 dark:text-teal-400',
-      hoverBorder: isLight ? 'hover:border-teal-400' : 'hover:border-teal-500/40',
-      activeBorder: isLight ? 'border-teal-500 ring-2 ring-teal-500/20 bg-teal-50/40' : 'border-teal-400 ring-2 ring-teal-400/20 bg-teal-500/10',
-      detailTitle: 'MITRE D3FEND - Knowledge Graph of Cybersecurity Countermeasures',
-      controls: 'Penerapan Multi-Factor Authentication (D3-MFA) bagi Verifikator Medis, Data Spooling Protection (D3-DS), dan pembatasan kueri SQL read-only.',
-      statusMetric: '270 Kontrol Defensif Aktif · Proteksi DuckDB Sandbox 100%',
-      targetTab: 'database_viewer',
-      targetLabel: 'Buka Sandbox Database Klaim',
-    },
-    {
-      id: 'nist-ai-rmf',
-      badge: 'NIST AI RMF 1.0',
-      title: 'Measure 0.998',
-      subtitle: 'Zero-PHI AI Governance',
-      accentText: isLight ? 'text-indigo-600' : 'text-indigo-400',
-      hoverBorder: isLight ? 'hover:border-indigo-400' : 'hover:border-indigo-500/40',
-      activeBorder: isLight ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/40' : 'border-indigo-400 ring-2 ring-indigo-400/20 bg-indigo-500/10',
-      detailTitle: 'NIST Artificial Intelligence Risk Management Framework (AI RMF 1.0)',
-      controls: 'Tata kelola AI tanpa kebocoran identitas pasien (Zero-PHI HMAC-SHA256), k-Anonymity (k >= 12), dan Differential Privacy (kuota epsilon <= 20,0) sesuai UU PDP No. 27/2022.',
-      statusMetric: 'Skor Keandalan 0.998 · 0 Kebocoran Data Pribadi (Zero-PHI)',
-      targetTab: 'retention',
-      targetLabel: 'Audit Kepatuhan Privasi & Retensi',
-    },
-  ];
 
   const initialExecMetrics = getCachedJsonSync(`${API_BASE_URL}/api/v1/system/national-scale-metrics`);
   const initialExecTrends = getCachedJsonSync(`${API_BASE_URL}/api/v1/system/national-telemetry-trends?days=7`);
@@ -2096,8 +1772,8 @@ export default function ExecutiveHub({
         ...base.insights,
         report_period:
           timeRange === 'all'
-            ? 'Portofolio Lengkap Transaksi Terpadu (DuckDB Live)'
-            : `Evaluasi Aktual DuckDB (${timeRange} Hari Terakhir · ${Number(vol).toLocaleString('id-ID')} Berkas)`,
+            ? 'Portofolio Lengkap Transaksi Terpadu (Basis Data Live)'
+            : `Evaluasi Aktual Basis Data (${timeRange} Hari Terakhir · ${Number(vol).toLocaleString('id-ID')} Berkas)`,
         severity_distribution: sevDist,
         trending_topics: liveTopics,
       },
@@ -2146,7 +1822,7 @@ export default function ExecutiveHub({
           shortLabel: c.cohort_date.split('(')[0].trim(),
           labelDate: c.cohort_date,
           value: Number((18.5 + (idx % 4) * 2.1).toFixed(1)),
-          note: `Eksekusi DuckDB ${Number(c.claims_count).toLocaleString('id-ID')} Klaim`,
+          note: `Eksekusi Basis Data ${Number(c.claims_count).toLocaleString('id-ID')} Klaim`,
         })),
       };
     }
@@ -2303,23 +1979,23 @@ export default function ExecutiveHub({
   return (
     <div className={`space-y-6 pb-8 ${isLight ? 'text-slate-900' : 'text-white'}`}>
       {/* HEADER ATAS */}
-      <div className={`flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b pb-4 ${
+      <div className={`flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 border-b pb-4 ${
         isLight ? 'border-slate-200' : 'border-white/10'
       }`}>
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-2xl border shadow-sm ${
+        <div className="flex items-center gap-3 w-full xl:w-auto min-w-0 flex-1">
+          <div className={`p-2.5 rounded-2xl border shadow-sm shrink-0 ${
             isLight
               ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
               : 'bg-gradient-to-tr from-health-blue-dark to-health-blue border-white/10 text-white'
           }`}>
             <LayoutDashboard className="w-5 h-5" />
           </div>
-          <div className="min-w-0">
-            <h1 className={`text-base font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Pusat Komando &amp; Analitik Eksekutif JKN
+          <div className="min-w-0 flex-1">
+            <h1 className={`text-lg sm:text-xl font-display font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              Dashboard Ringkasan
             </h1>
-            <p className={`text-xs mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Basis Data Transaksi Terpadu JKN (6.264.346 baris: 2.590.751 master peserta &amp; 1.699.219 klaim FKRTL)
+            <p className={`text-xs mt-0.5 leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+              Ringkasan eksekutif pengawasan pra-pembayaran klaim JKN dan pemantauan risiko fasilitas kesehatan.
             </p>
           </div>
         </div>
@@ -2343,7 +2019,7 @@ export default function ExecutiveHub({
                   timeRange === item.id
                     ? isLight
                       ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                      : 'bg-gradient-to-r from-health-blue-dark to-health-blue text-[#FFCA40] border border-[#FFCA40]/40 shadow-sm'
+                      : 'bg-emerald-600 text-white shadow-sm'
                     : isLight
                     ? 'text-slate-600 hover:text-slate-900'
                     : 'text-white/60 hover:text-white'
@@ -2364,7 +2040,7 @@ export default function ExecutiveHub({
                 : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white'
             }`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'} ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'} ${isRefreshing ? 'animate-spin' : ''}`} />
             Perbarui
           </button>
 
@@ -2373,486 +2049,82 @@ export default function ExecutiveHub({
             onClick={() => setIsReportModalOpen(true)}
             className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-md cursor-pointer transition-all ${
               isLight
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                : 'bg-gradient-to-tr from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-[#FFCA40]/40 text-white shadow-[#00081c]/50'
+                ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
             }`}
           >
-            <FileText className={`w-3.5 h-3.5 ${isLight ? 'text-white' : 'text-[#FFCA40]'}`} />
+            <FileText className="w-3.5 h-3.5" />
             Ekspor Laporan
           </button>
         </div>
       </div>
 
-      {/* AUDIT KESIAPAN SKALA NASIONAL & STRESS TEST THROUGHPUT MESIN DUCKDB */}
-      <section className={`rounded-2xl border p-5 transition-all relative overflow-hidden ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'border-white/10 bg-[#00153A]/90 backdrop-blur-xl shadow-xl text-white'
-      }`}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-4 mb-4 border-slate-200 dark:border-white/10">
-          <div className="flex items-start gap-3">
-            <div className={`p-2.5 rounded-xl border ${
-              isLight
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-[#FFCA40]/15 border-[#FFCA40]/30 text-[#FFCA40]'
-            }`}>
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className={`text-sm font-bold tracking-tight uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Mesin Verifikasi Berkelanjutan &amp; Stress Test Throughput DuckDB SIMD
-                </h3>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${
-                  isLight
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                }`}>
-                  SISTEM AKTIF · LIVE 24/7
-                </span>
-              </div>
-              <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Memproses rata-rata <strong>4.643 klaim/hari</strong> pada transaksi terverifikasi (puncak 7.870/hari) dengan eksekusi vektor SIMD DuckDB tanpa antrean tertunda.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={handleRunNationalBenchmark}
-              disabled={isBenchmarking}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer ${
-                isLight
-                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                  : 'bg-gradient-to-r from-health-blue-dark to-health-blue hover:from-health-blue border border-[#FFCA40]/40 text-white shadow-lg'
-              }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isBenchmarking ? 'animate-spin' : ''}`} />
-              {isBenchmarking ? 'Menjalankan Stress Test 100K Klaim...' : 'Uji Throughput 100.000 Klaim Live'}
-            </button>
-          </div>
-        </div>
-
-        {/* Benchmark Result Display */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className={`p-3.5 rounded-xl border ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-          }`}>
-            <span className={`text-[11px] font-semibold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Throughput Pemrosesan</span>
-            <span className={`text-xl font-bold font-mono block mt-1 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-              {benchmarkData ? `${(benchmarkData.throughput_rows_per_second / 1000000).toFixed(2)} Juta / dtk` : '3.52 Juta / dtk'}
-            </span>
-            <span className={`text-[10px] block mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              {benchmarkData ? `${benchmarkData.throughput_rows_per_second.toLocaleString('id-ID')} berkas/detik` : '3.521.126 berkas/detik'}
-            </span>
-          </div>
-
-          <div className={`p-3.5 rounded-xl border ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-          }`}>
-            <span className={`text-[11px] font-semibold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Durasi Uji 100K Berkas</span>
-            <span className={`text-xl font-bold font-mono block mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              {benchmarkData ? `${benchmarkData.duration_ms} ms` : '28.4 ms'}
-            </span>
-            <span className={`text-[10px] block mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              Eksekusi SIMD Vectorized DuckDB
-            </span>
-          </div>
-
-          <div className={`p-3.5 rounded-xl border ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-          }`}>
-            <span className={`text-[11px] font-semibold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Laju Permintaan Harian</span>
-            <span className={`text-xl font-bold font-mono block mt-1 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-              4.643 / hari
-            </span>
-            <span className={`text-[10px] block mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              Puncak 7.870/hari (selesai 0.0013 dtk)
-            </span>
-          </div>
-
-          <div className={`p-3.5 rounded-xl border ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-          }`}>
-            <span className={`text-[11px] font-semibold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Jaminan Kepatuhan SLA</span>
-            <span className={`text-xl font-bold font-mono block mt-1 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-              99,90% Disetujui
-            </span>
-            <span className={`text-[10px] block mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              1.697.588 / 1.699.219 Klaim Sesuai SLA
-            </span>
-          </div>
-        </div>
-
-        <div className={`p-3 rounded-xl border text-xs leading-relaxed flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-          isLight ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
-        }`}>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>
-              <strong>Rekam Transaksi Terintegrasi:</strong> Seluruh <strong>6.264.346 baris</strong> transaksi terpadu (<code>2.590.751</code> master peserta &amp; <code>1.699.219</code> klaim FKRTL) terindeks aktif dan terus memproses klaim baru secara real-time.
-            </span>
-          </div>
-          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-white/60 dark:bg-black/30 shrink-0">
-            2.091 FKRTL Terverifikasi (496 Kab/Kota)
-          </span>
-        </div>
-      </section>
-
-      {/* Banner Portofolio Data Transaksi Resmi BPJS Kesehatan */}
-      <section className={`rounded-2xl p-5 border relative overflow-hidden transition-all ${
-        isLight
-          ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-xs'
-          : 'bg-[#00153A] text-white shadow-xl border-white/10'
-      }`}>
-        <div className="relative z-10">
-          <div className={`flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 border-b pb-3 ${
-            isLight ? 'border-emerald-200' : 'border-white/10'
-          }`}>
-            <div className="flex items-center gap-2.5">
-              <span className={`p-2 rounded-xl border ${
-                isLight
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                  : 'bg-[#FFCA40]/15 border-[#FFCA40]/30 text-[#FFCA40]'
-              }`}>
-                <Database className="w-5 h-5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className={`text-sm font-bold tracking-tight uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Portofolio Data Transaksi Klaim BPJS Kesehatan
-                  </h2>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border font-mono ${
-                    isLight
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                      : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40'
-                  }`}>
-                    6.264.346 Baris Aktif
-                  </span>
-                </div>
-                <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Gudang Data Nasional BPJS Kesehatan · 2.590.751 Master Peserta · 1.699.219 Klaim FKRTL · 1.967.670 Diagnosis Sekunder · 6.706 ICD-10
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-[11px] font-mono px-2.5 py-1 rounded-xl border ${
-                isLight
-                  ? 'bg-white text-emerald-800 border-emerald-300 font-bold'
-                  : 'bg-white/5 text-[#FFCA40] border border-white/10'
-              }`}>
-                Formula Henry Lucky (Binus): k = 500 | Lift = 4.81x
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <button
-              type="button"
-              onClick={() => onNavigateTab?.('database_viewer')}
-              className={`rounded-xl p-3.5 border transition-all text-left cursor-pointer group ${
-                isLight
-                  ? 'bg-white border-slate-200 hover:border-emerald-400 shadow-xs'
-                  : 'bg-white/5 border-white/10 hover:border-[#FFCA40]/40'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Total Portofolio Klaim FKRTL</p>
-                <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-              </div>
-              <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>Rp 1,536 Triliun</p>
-              <p className={`text-[10px] mt-0.5 tabular-nums ${isLight ? 'text-slate-600 font-medium' : 'text-white/50'}`}>1.699.219 Klaim (1,50 Jt RJTL + 195,5 Rb RITL)</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab?.('empirical')}
-              className={`rounded-xl p-3.5 border transition-all text-left cursor-pointer group ${
-                isLight
-                  ? 'bg-white border-slate-200 hover:border-amber-400 shadow-xs'
-                  : 'bg-white/5 border-white/10 hover:border-[#FFCA40]/40'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Temuan Anomali &amp; Koreksi Tarif</p>
-                <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-amber-600' : 'text-[#FFCA40]'}`} />
-              </div>
-              <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-amber-700' : 'text-[#FFCA40]'}`}>Rp 34,66 Miliar</p>
-              <p className={`text-[10px] mt-0.5 tabular-nums ${isLight ? 'text-amber-800 font-medium' : 'text-[#FFE08C]/80'}`}>4.876 Pasang Ganda (Rp 32,59 M) + 1.631 Koreksi (Rp 2,07 M)</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab?.('graph')}
-              className={`rounded-xl p-3.5 border transition-all text-left cursor-pointer group ${
-                isLight
-                  ? 'bg-white border-slate-200 hover:border-rose-400 shadow-xs'
-                  : 'bg-white/5 border-white/10 hover:border-rose-500/40'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Klaim Lintas 2 RS Hari Sama</p>
-                <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-rose-600' : 'text-rose-400'}`} />
-              </div>
-              <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>2.584 Kasus</p>
-              <p className={`text-[10px] mt-0.5 tabular-nums ${isLight ? 'text-rose-800 font-medium' : 'text-rose-300/80'}`}>Rp 19,26 M · 2.091 FKRTL di 496 Kab/Kota</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab?.('retention')}
-              className={`rounded-xl p-3.5 border transition-all text-left cursor-pointer group ${
-                isLight
-                  ? 'bg-white border-slate-200 hover:border-emerald-400 shadow-xs'
-                  : 'bg-white/5 border-white/10 hover:border-emerald-500/40'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <p className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Cakupan Master Peserta</p>
-                <ChevronRight className={`w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-              </div>
-              <p className={`text-xl font-bold mt-1 tabular-nums tracking-tight ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>2.590.751 Peserta</p>
-              <p className={`text-[10px] mt-0.5 tabular-nums ${isLight ? 'text-emerald-800 font-medium' : 'text-emerald-300/80'}`}>306.710 Pasien FKRTL · 345.047 Rujukan FKTP</p>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 6 KERANGKA KERJA KEAMANAN SIBER & DETEKSI FRAUD */}
-      <section aria-label="Postur Keamanan Siber & Anti-Fraud" className={`rounded-2xl border p-4 transition-all ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-xl shadow-[#00081c]/50 text-white'
-      }`}>
-        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 ${
-          isLight ? 'border-slate-200' : 'border-white/10'
-        }`}>
-          <div className="flex items-center space-x-2.5">
-            <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${
-              isLight
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-[#FFCA40]/15 border-[#FFCA40]/30 text-[#FFCA40]'
-            }`}>
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className={`text-xs sm:text-sm font-bold tracking-tight flex items-center gap-1.5 ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}>
-                <span>Postur Keamanan Siber &amp; Anti-Fraud Komprehensif</span>
-                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                  isLight
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                    : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/40'
-                }`}>
-                  6 Framework Terintegrasi
-                </span>
-              </h3>
-              <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Terpetakan ke 818 keahlian keamanan siber berstandar <strong>Keamanan Siber Internasional</strong> &amp; <strong>MITRE F3 v1.1</strong> (Klik kartu untuk inspeksi kontrol)
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-600 font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span>Audit Posture: AKTIF &amp; TERVALIDASI</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-3">
-          {SECURITY_FRAMEWORKS.map((fw) => {
-            const isSelected = selectedFrameworkId === fw.id;
-            return (
-              <button
-                key={fw.id}
-                type="button"
-                onClick={() => setSelectedFrameworkId(isSelected ? null : fw.id)}
-                className={`p-3 rounded-xl border text-left space-y-0.5 transition-all cursor-pointer ${
-                  isSelected
-                    ? fw.activeBorder
-                    : isLight
-                      ? `bg-slate-50 border-slate-200 ${fw.hoverBorder}`
-                      : `bg-white/5 border-white/10 ${fw.hoverBorder}`
-                }`}
-              >
-                <span className={`text-[9px] font-mono font-bold block ${fw.accentText}`}>{fw.badge}</span>
-                <span className={`text-xs font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>{fw.title}</span>
-                <span className={`text-[10px] block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{fw.subtitle}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <AnimatePresence>
-          {selectedFrameworkId && (() => {
-            const activeFw = SECURITY_FRAMEWORKS.find((f) => f.id === selectedFrameworkId);
-            if (!activeFw) return null;
-            return (
-              <motion.div
-                key={activeFw.id}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className={`mt-3 p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                  isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/15 text-white'
-                }`}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${activeFw.accentText}`}>{activeFw.detailTitle}</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
-                      TERVERIFIKASI
-                    </span>
-                  </div>
-                  <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/75'}`}>{activeFw.controls}</p>
-                  <p className="text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">{activeFw.statusMetric}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => onNavigateTab?.(activeFw.targetTab)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      isLight
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                        : 'bg-[#FFCA40] hover:bg-[#FFE08C] text-[#00153A]'
-                    }`}
-                  >
-                    <span>{activeFw.targetLabel}</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })()}
-        </AnimatePresence>
-      </section>
-
       {/* KPI Cards Grid */}
       <section aria-label="Indikator kinerja utama">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Ringkasan Eksekutif Data Transaksi JKN ({timeRange === 'all' ? 'Seluruh Data' : `${timeRange} Hari Terakhir`})
-          </h2>
-          <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-            Basis Data Terpadu BPJS Kesehatan (2.590.751 Peserta · 2.091 FKRTL di 496 Kab/Kota)
-          </p>
-        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <KPICard
             isLight={isLight}
-            title={`Permintaan Klaim Masuk (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
+            title="Total Klaim FKRTL"
+            periodBadge={timeRange === 'all' ? 'SEMUA' : `${timeRange}H`}
             value={activeOverview.kpis.total_active_cases.toLocaleString('id-ID')}
-            subtitle={
-              timeRange === 'all'
-                ? '1.503.675 RJTL + 195.544 RITL (4.643/hari)'
-                : `${activeOverview.kpis.cases_closed_7d.toLocaleString('id-ID')} disetujui penuh (${timeRange} hari)`
-            }
+            subtitle="vs baseline"
+            trend={{ direction: 'down', value: 9.19 }}
+            icon={<FileText className="w-5 h-5" />}
             severity="info"
+            sparkValues={(activeTrends.cases_opened_trend || []).map((d) => d.value)}
           />
 
           <KPICard
             isLight={isLight}
-            title={`Nilai Tagih & Eksposur (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
+            title="Total Nilai Klaim"
+            periodBadge={timeRange === 'all' ? 'SEMUA' : `${timeRange}H`}
             value={timeRange === 'all' ? 'Rp 1,536 T' : timeRange === 90 ? 'Rp 384,49 M' : timeRange === 30 ? 'Rp 129,77 M' : 'Rp 29,88 M'}
-            subtitle={
-              timeRange === 'all'
-                ? 'Verifikasi Rp 1,534 T · Eksposur Anomali Rp 34,66 M'
-                : `${activeOverview.kpis.critical_Waiting_cases.toLocaleString('id-ID')} berkas risiko kritis/koreksi`
-            }
-            severity="critical"
-          />
-
-          <KPICard
-            isLight={isLight}
-            title={`Peserta & Pasien Unik (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
-            value={timeRange === 'all' ? '2.590.751' : timeRange === 90 ? '131.175' : timeRange === 30 ? '77.710' : '28.740'}
-            subtitle={
-              timeRange === 'all'
-                ? '1.065.281 Keluarga · 306.710 Pasien FKRTL'
-                : `Pasien FKRTL unik dilayani (${timeRange} hari terakhir)`
-            }
-            severity="info"
-          />
-
-          <KPICard
-            isLight={isLight}
-            title={`FKRTL Aktif (${timeRange === 'all' ? 'Total' : `${timeRange}H`})`}
-            value={`${activeOverview.kpis.active_sessions.toLocaleString('id-ID')} RS`}
-            subtitle={
-              timeRange === 'all'
-                ? 'Tersebar di 496 Kab/Kota (38 Provinsi) · SLA 99,90%'
-                : `${timeRange === 90 ? '494' : timeRange === 30 ? '494' : '485'} Kab/Kota aktif · Konkordansi 99,90%`
-            }
+            subtitle="vs bulan lalu"
+            trend={{ direction: 'up', value: 4.67 }}
+            icon={<CreditCard className="w-5 h-5" />}
             severity="success"
+            sparkValues={(activeTrends.cases_closed_trend || []).map((d) => d.value)}
+          />
+
+          <KPICard
+            isLight={isLight}
+            title="Faskes Aktif"
+            periodBadge={timeRange === 'all' ? 'SEMUA' : `${timeRange}H`}
+            value={`${activeOverview.kpis.active_sessions.toLocaleString('id-ID')} RS`}
+            subtitle="vs baseline"
+            trend={{ direction: 'up', value: 2.85 }}
+            icon={<Building2 className="w-5 h-5" />}
+            severity="warning"
+            sparkValues={(activeTrends.auditor_trend || []).map((d) => d.value)}
+          />
+
+          <KPICard
+            isLight={isLight}
+            title="Kepatuhan SLA"
+            periodBadge={timeRange === 'all' ? '10 HK' : `${timeRange}H`}
+            value="99,9%"
+            subtitle="SLA 10 HK"
+            trend={{ direction: 'up', value: 1.32 }}
+            icon={<ShieldCheck className="w-5 h-5" />}
+            severity="info"
+            sparkValues={(activeTrends.sentiment_trend || []).map((d) => d.value)}
           />
         </div>
       </section>
 
-      {/* Trend Analysis */}
+      {/* Charts & Analisis Tren */}
       <section aria-label="Analisis tren klaim" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Analisis Tren Verifikasi &amp; Permintaan Masuk
-          </h2>
-          <p className={`text-xs font-semibold ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-            {timeRange === 'all' ? 'Basis Data Transaksi JKN' : `${timeRange} hari terakhir`}
-          </p>
-        </div>
-
-        <MicroTrendsGrid
-          isLight={isLight}
-          timeRange={timeRange}
-          trends={activeTrends}
-          sentimentValue={
-            activeOverview.kpis.avg_sentiment_score ? activeOverview.kpis.avg_sentiment_score * 100 : null
-          }
-          avgResolutionHours={activeOverview.kpis.avg_resolution_time_hours}
-          activeUsers={activeOverview.active_users}
-        />
-
         <InteractiveMetricsCharts isLight={isLight} overview={activeOverview} trends={activeTrends} timeRange={timeRange} />
       </section>
 
-      {/* Operations & Intelligence */}
+      {/* Operasional & Deteksi Anomali */}
       <section aria-label="Operasional dan intelijen audit" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Operasional Verifikator & Intelijen Forensik
-          </h2>
-          <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-            Kesiapan verifikator medis, peringatan klaim kritis, dan sintesis AI
-          </p>
-        </div>
-
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <div className="space-y-6 xl:col-span-7">
-            <OnDutyVerifikatorsPanel
-              isLight={isLight}
-              counselors={counselors}
-              onManageCounselors={() =>
-                setCounselors((prev) => {
-                  const isBalanced = prev.every((c) => c.upcoming_appointments === 4);
-                  if (!isBalanced) {
-                    return prev.map((c) => ({
-                      ...c,
-                      upcoming_appointments: 4,
-                    }));
-                  } else {
-                    return prev.map((c, idx) => ({
-                      ...c,
-                      upcoming_appointments: [3, 4, 2, 7][idx % 4],
-                    }));
-                  }
-                })
-              }
-            />
+          <div className="space-y-6 xl:col-span-6">
             <AlertsFeed isLight={isLight} alerts={activeOverview.alerts} onInspectCase={onInspectCase} />
-            <ClaimAnomalyOverviewCard
-              isLight={isLight}
-              trendingTopics={activeOverview.insights.trending_topics}
-              severityDistribution={activeOverview.insights.severity_distribution}
-            />
           </div>
 
-          <div className="space-y-6 xl:col-span-5">
+          <div className="space-y-6 xl:col-span-6">
             <InsightsPanelCard
               isLight={isLight}
               insights={activeOverview.insights}
@@ -2861,9 +2133,6 @@ export default function ExecutiveHub({
             />
           </div>
         </div>
-
-        {/* Pintasan Modul Pengawasan */}
-        <QuickLinksPanel isLight={isLight} onNavigateTab={onNavigateTab} />
       </section>
 
       {/* Generate Report Modal */}
@@ -2885,18 +2154,18 @@ export default function ExecutiveHub({
               }`}
             >
               <div className={`px-6 py-4 border-b flex items-center justify-between ${
-                isLight ? 'bg-slate-50 border-slate-200' : 'border-white/10 bg-gradient-to-r from-[#00134A] to-[#1C3C80]'
+                isLight ? 'bg-[#F7F8FA] border-[#061B31]/[0.08]' : 'border-white/[0.08] bg-[#161A22]'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`p-2.5 rounded-xl border ${
                     isLight ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-[#FFCA40]/20 border-[#FFCA40]/30 text-[#FFCA40]'
                   }`}>
-                    <Sparkles className="w-5 h-5" />
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Buat Laporan Wawasan IA</h2>
+                    <h2 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Buat Laporan Wawasan Audit (IA)</h2>
                     <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                      Sintesis otomatis Agen Analitik Wawasan Klaim JKN
+                      Sintesis deterministik Mesin Analitik Wawasan Klaim JKN
                     </p>
                   </div>
                 </div>
@@ -2947,7 +2216,7 @@ export default function ExecutiveHub({
                     <Cpu className={`w-5 h-5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
                     <div>
                       <p className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                        Analisis Forensik AI Terpadu
+                        Analisis Forensik Deterministik Terpadu
                       </p>
                       <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                         Susun ringkasan pola upcoding, phantom billing, dan rekomendasi intervensi
@@ -2983,7 +2252,7 @@ export default function ExecutiveHub({
                         : 'bg-gradient-to-r from-health-blue-dark to-health-blue hover:from-health-blue border border-[#FFCA40]/40 text-white shadow-[#00081c]/50'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4" />
                     {isGenerating ? 'Memproses Sintesis...' : 'Buat Laporan Audit'}
                   </button>
                 </div>
@@ -3012,16 +2281,16 @@ export default function ExecutiveHub({
               }`}
             >
               <div className={`px-6 py-4 border-b flex items-center justify-between ${
-                isLight ? 'bg-slate-50 border-slate-200' : 'border-white/10 bg-gradient-to-r from-[#00134A] to-[#1C3C80]'
+                isLight ? 'bg-[#F7F8FA] border-[#061B31]/[0.08]' : 'border-white/[0.08] bg-[#161A22]'
               }`}>
                 <div className="flex items-center gap-3">
-                  <Sparkles className={`w-6 h-6 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+                  <CheckCircle2 className={`w-6 h-6 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
                   <div>
                     <h2 className={`text-lg font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                       Buat Program Intervensi Kepatuhan Faskes
                     </h2>
                     <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                      AI menyusun instruksi pembinaan Casemix RS berdasarkan temuan anomali klaim
+                      Mesin aturan menyusun instruksi pembinaan Casemix RS berdasarkan temuan anomali klaim
                     </p>
                   </div>
                 </div>
@@ -3048,9 +2317,7 @@ export default function ExecutiveHub({
                   }`}>
                     Sumber Temuan Wawasan IA
                   </h3>
-                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                    {overview.insights.ia_summary}
-                  </p>
+                  <MarkdownRenderer content={overview.insights.ia_summary} isLight={isLight} />
                 </div>
 
                 {!campaignGenerated ? (
@@ -3068,11 +2335,11 @@ export default function ExecutiveHub({
                       {isGenerating ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          Menyusun Intervensi dengan AI...
+                          Menyusun Draf Intervensi Kepatuhan...
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4" />
+                          <CheckCircle2 className="w-4 h-4" />
                           Susun Draf Intervensi Faskes
                         </>
                       )}

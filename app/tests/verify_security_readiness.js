@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 
-const outDir = '/home/Khalaf-Dev/.gemini/antigravity/brain/bc1217c1-62d5-40a9-8f47-eade18d108bf/screenshots';
+const outDir = process.env.ARTIFACT_DIR || path.resolve(process.cwd(), 'artifacts', 'screenshots');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 async function verifySecurity() {
@@ -23,6 +23,9 @@ async function verifySecurity() {
       interceptedGoogleGenAiRequests.push(url);
     }
     if (url.includes('/api/v1/gemini/generate')) {
+      interceptedGoogleGenAiRequests.push(url);
+    }
+    if (url.includes('/api/v1/claimtrace-ai/generate')) {
       interceptedProxyRequests.push(url);
     }
   });
@@ -149,7 +152,7 @@ async function verifySecurity() {
   // Test running sandbox prompt via proxy
   await page.evaluate(() => {
     const btns = Array.from(document.querySelectorAll('button'));
-    const runBtn = btns.find(b => b.textContent && b.textContent.includes('Kirim ke Gemini API'));
+    const runBtn = btns.find(b => b.textContent && (b.textContent.includes('Jalankan Audit Pipeline') || b.textContent.includes('Evaluasi Matriks Bukti')));
     if (runBtn) runBtn.click();
   });
   await new Promise(r => setTimeout(r, 4000));
@@ -159,7 +162,7 @@ async function verifySecurity() {
 
   console.log('--- AUDIT NETWORK TRAFFIC RESULTS ---');
   console.log(`Direct Google Generative AI requests intercepted: ${interceptedGoogleGenAiRequests.length} (MUST BE 0)`);
-  console.log(`Backend Proxy (/api/v1/gemini/generate) requests intercepted: ${interceptedProxyRequests.length}`);
+  console.log(`On-Premise Engine (/api/v1/claimtrace-ai/generate) requests intercepted: ${interceptedProxyRequests.length}`);
 
   if (interceptedGoogleGenAiRequests.length > 0) {
     console.error('FAILED: Found direct client calls to Google Generative AI:', interceptedGoogleGenAiRequests);

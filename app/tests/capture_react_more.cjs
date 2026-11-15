@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 
-const ARTIFACT_DIR = '/home/Khalaf-Dev/.gemini/antigravity/brain/bc1217c1-62d5-40a9-8f47-eade18d108bf';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR || path.resolve(__dirname, 'artifacts');
 
 (async () => {
   const browser = await chromium.launch({ headless: true });

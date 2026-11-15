@@ -350,7 +350,7 @@ function SuccessRateRing({ rate, size = 36 }) {
   const r = (size - 6) / 2;
   const circ = 2 * Math.PI * r;
   const fill = Math.min(Math.max(rate, 0), 100);
-  const color = fill >= 90 ? '#10b981' : fill >= 70 ? '#f59e0b' : '#ef4444';
+  const color = fill >= 90 ? '#00733B' : fill >= 70 ? '#f59e0b' : '#ef4444';
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
       <circle
@@ -1256,10 +1256,10 @@ export default function AgentCopilot({
               }`}>
                 <div>
                   <div className={`text-xs font-bold ${isLight ? 'text-emerald-900' : 'text-[#FFCA40]'}`}>
-                    Eksekusi LangGraph Operasional (Live ClaimTrace AI)
+                    Eksekusi Pipeline Verifikasi BEA (On-Premise Rule Engine)
                   </div>
                   <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                    Klik untuk memicu panggilan evaluasi ke engine ClaimTrace AI dan mencatat trace baru di tabel atas.
+                    Menjalankan evaluasi deterministik 4 lapis bukti BPJS dan mencatat jejak audit ke tabel di atas (Keputusan akhir tetap pada Verifikator).
                   </p>
                 </div>
                 <button
@@ -1272,8 +1272,8 @@ export default function AgentCopilot({
                       : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-lg shadow-[#FFCA40]/20'
                   }`}
                 >
-                  <Zap className="w-3.5 h-3.5" />
-                  {liveTraceLoading ? 'Memproses Audit...' : 'Picu Trace AI Live'}
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {liveTraceLoading ? 'Memproses Pipeline...' : 'Jalankan Audit Pipeline'}
                 </button>
               </div>
             </div>
@@ -2111,10 +2111,10 @@ export default function AgentCopilot({
                     : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24] shadow-amber-500/20'
                 }`}
               >
-                <Sparkles className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" />
                 {isRunningAudit
-                  ? 'Menyusun Sintesis via ClaimTrace AI...'
-                  : 'Susun Sintesis Yuridis Live (ClaimTrace AI)'}
+                  ? 'Menyusun Matriks Bukti On-Premise...'
+                  : 'Evaluasi Matriks Bukti & Regulasi JKN (On-Premise)'}
               </button>
             </div>
 
@@ -2317,9 +2317,6 @@ export default function AgentCopilot({
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('claimtrace_token') || ''}`,
-                            'X-Verificator-Role': 'VERIFICATOR_MEDIS',
-                            'X-Verificator-NIP': '198704202011012001',
                           },
                           body: JSON.stringify({
                             trace_id: agentData.trace_id || 'tr-2026-jkn-clm202610085',

@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 
-const outDir = '/home/Khalaf-Dev/.gemini/antigravity/brain/bc1217c1-62d5-40a9-8f47-eade18d108bf/screenshots';
+const outDir = process.env.ARTIFACT_DIR || path.resolve(process.cwd(), 'artifacts', 'screenshots');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 async function run() {
@@ -21,7 +21,10 @@ async function run() {
       interceptedCalls.push({ type: 'GOOGLE_DIRECT_LEAK', url });
     }
     if (url.includes('/api/v1/gemini/generate')) {
-      interceptedCalls.push({ type: 'SECURE_BACKEND_PROXY', url });
+      interceptedCalls.push({ type: 'DEPRECATED_GEMINI_ROUTE_LEAK', url });
+    }
+    if (url.includes('/api/v1/claimtrace-ai/generate')) {
+      interceptedCalls.push({ type: 'ONPREMISE_BACKEND_ENGINE', url });
     }
   });
 
@@ -139,15 +142,15 @@ async function run() {
   await page.screenshot({ path: path.join(outDir, 'sec_6_copilot_ai_vault_tab.png') });
   console.log('Captured sec_6_copilot_ai_vault_tab.png');
 
-  // Send Sandbox Prompt via Backend Proxy
-  console.log('Triggering AI prompt via Backend Proxy...');
+  // Send Sandbox Prompt via On-Premise Backend Engine
+  console.log('Triggering verification via On-Premise Backend Engine...');
   await page.evaluate(() => {
     const btns = Array.from(document.querySelectorAll('button'));
-    const submitBtn = btns.find(b => b.textContent && b.textContent.includes('Kirim ke Gemini API'));
+    const submitBtn = btns.find(b => b.textContent && (b.textContent.includes('Jalankan Audit Pipeline') || b.textContent.includes('Evaluasi Matriks Bukti')));
     if (submitBtn) submitBtn.click();
   });
 
-  // Wait for AI generation
+  // Wait for evaluation response
   await new Promise(r => setTimeout(r, 4500));
   await page.screenshot({ path: path.join(outDir, 'sec_7_copilot_sandbox_live_result.png') });
   console.log('Captured sec_7_copilot_sandbox_live_result.png');
@@ -160,8 +163,8 @@ async function run() {
 
   console.log('================ AUDIT VERDICT ================');
   console.log('Intercepted Network Calls:', interceptedCalls);
-  const directLeaks = interceptedCalls.filter(c => c.type === 'GOOGLE_DIRECT_LEAK');
-  const proxyCalls = interceptedCalls.filter(c => c.type === 'SECURE_BACKEND_PROXY');
+  const directLeaks = interceptedCalls.filter(c => c.type === 'GOOGLE_DIRECT_LEAK' || c.type === 'DEPRECATED_GEMINI_ROUTE_LEAK');
+  const proxyCalls = interceptedCalls.filter(c => c.type === 'ONPREMISE_BACKEND_ENGINE');
 
   console.log(`Direct Google API Leaks: ${directLeaks.length}`);
   console.log(`Secure Backend Proxy Calls: ${proxyCalls.length}`);

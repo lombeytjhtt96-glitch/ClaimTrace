@@ -107,7 +107,7 @@ function TrendChart({
   height = 260,
   isLight = false,
 }) {
-  const chartColor = color || (isLight ? '#059669' : '#FFCA40');
+  const chartColor = color || (isLight ? '#00733B' : '#FFCA40');
 
   const stats = useMemo(() => {
     if (!data || data.length === 0) return { maxValue: 0, minValue: 0, avgValue: 0 };
@@ -336,7 +336,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
             </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Rekam longitudinal <strong>{Number(pMetrics.kepesertaan_rows || 2590751).toLocaleString('id-ID')} master peserta</strong> dan <strong>{Number(pMetrics.fkrtl_claims_volume || 1699219).toLocaleString('id-ID')} klaim FKRTL</strong> terintegrasi secara live via DuckDB OLAP.
+            Rekam longitudinal <strong>{Number(pMetrics.kepesertaan_rows || 2590751).toLocaleString('id-ID')} master peserta</strong> dan <strong>{Number(pMetrics.fkrtl_claims_volume || 1699219).toLocaleString('id-ID')} klaim FKRTL</strong> terintegrasi secara live via Basis Data Analitik.
           </p>
         </div>
 
@@ -419,7 +419,7 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
           data={activeUsersTrend}
           title="FKRTL Aktif Harian (30 Hari Terakhir)"
           subtitle={`Jumlah fasilitas kesehatan pengaju klaim per hari dari total ${Number(pMetrics.distinct_fkrtl_facilities || 2091).toLocaleString('id-ID')} FKRTL terdaftar`}
-          color={isLight ? '#059669' : '#FFCA40'}
+          color={isLight ? '#00733B' : '#FFCA40'}
           height={280}
         />
 
