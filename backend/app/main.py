@@ -278,6 +278,7 @@ from app.security.token_manager import (
 from app.security.access_control import (
     Privilege,
     Subject,
+    ROLE_PRIVILEGES_MAP,
     InsufficientPrivilegeException,
     resolve_subject,
     verify_privilege,
@@ -597,6 +598,7 @@ _AUTH_STORE_LOCK = threading.Lock()
 OTP_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "data" / "otp_challenges.json"
 OTP_MAIL_SPOOL_FILE = Path(__file__).resolve().parent.parent / "data" / ".otp_mail_spool.json"
 AUTH_CREDENTIALS_FILE = Path(__file__).resolve().parent.parent / "data" / ".auth_credentials.json"
+DIRECTORY_ACCOUNTS_FILE = Path(__file__).resolve().parent.parent / "data" / ".directory_accounts.json"
 PASSWORD_RESET_SPOOL_FILE = Path(__file__).resolve().parent.parent / "data" / ".password_reset_spool.json"
 ACTIVE_OTP_CHALLENGES: Dict[str, Any] = {}
 
@@ -830,6 +832,44 @@ def _persist_password_hash(nip: str, new_hash: str) -> None:
             pass
 
 
+def _load_provisioned_directory_accounts() -> List[Dict[str, Any]]:
+    """Loads extra local directory accounts from gitignored 0600 storage outside pytest."""
+    if os.getenv("PYTEST_CURRENT_TEST") or not DIRECTORY_ACCOUNTS_FILE.exists():
+        return []
+    try:
+        with open(DIRECTORY_ACCOUNTS_FILE, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        if not isinstance(raw, list):
+            return []
+        valid_accounts: List[Dict[str, Any]] = []
+        for entry in raw:
+            if not isinstance(entry, dict):
+                continue
+            nip = str(entry.get("nip") or "").strip()
+            username = str(entry.get("username") or "").strip()
+            email = str(entry.get("email") or "").strip()
+            pwd_hash = str(entry.get("password_hash") or "").strip()
+            pin_hash = str(entry.get("pin_hash") or "").strip()
+            if (
+                nip.isdigit()
+                and username
+                and email
+                and pwd_hash.startswith("pbkdf2_sha256$")
+                and pin_hash.startswith("pbkdf2_sha256$")
+            ):
+                valid_accounts.append(entry)
+        return valid_accounts
+    except Exception:
+        return []
+
+
+def _register_directory_record(directory: Dict[str, Dict[str, Any]], record: Dict[str, Any]) -> None:
+    """Indexes a verificator/administrator record under nip, lowercased email, and lowercased username."""
+    directory[record["nip"]] = record
+    directory[record["email"].lower()] = record
+    directory[record["username"].lower()] = record
+
+
 def _build_verificator_directory() -> Dict[str, Dict[str, Any]]:
     persisted_hashes = _load_persisted_password_hashes()
     seed_accounts = [
@@ -902,9 +942,25 @@ def _build_verificator_directory() -> Dict[str, Dict[str, Any]]:
             "isMfaVerified": False,
             "allowedRoles": item["allowedRoles"],
         }
-        directory[item["nip"]] = record
-        directory[item["email"].lower()] = record
-        directory[item["username"].lower()] = record
+        _register_directory_record(directory, record)
+    for item in _load_provisioned_directory_accounts():
+        nip = str(item["nip"]).strip()
+        allowed_roles = item.get("allowedRoles")
+        record = {
+            "nip": nip,
+            "username": str(item["username"]).strip(),
+            "email": str(item["email"]).strip(),
+            "password_hash": persisted_hashes.get(nip) or str(item["password_hash"]).strip(),
+            "pin_hash": str(item["pin_hash"]).strip(),
+            "name": str(item.get("name") or item["username"]).strip(),
+            "role": str(item.get("role") or "ADMIN").strip(),
+            "roleTitle": str(item.get("roleTitle") or "Administrator Sistem").strip(),
+            "unit": str(item.get("unit") or "Kantor Pusat BPJS Kesehatan · Tata Kelola Verifikasi Nasional").strip(),
+            "avatar": str(item.get("avatar") or "AC").strip(),
+            "isMfaVerified": False,
+            "allowedRoles": allowed_roles if isinstance(allowed_roles, list) and allowed_roles else ["ADMIN"],
+        }
+        _register_directory_record(directory, record)
     return directory
 
 
@@ -2285,44 +2341,38 @@ def authorize_device_session(
 @app.get("/api/v1/auth/verificators")
 def list_demo_verificators():
     """Mengembalikan daftar akun verifikator dan administrator resmi (tanpa kredensial rahasia) dan tanpa mutasi audit."""
-    return [
-        {
-            "name": "dr. Siti Rahma, Sp.PK",
-            "nip": "198704202011012001",
-            "email": "siti.rahma@bpjs-kesehatan.go.id",
-            "role": "Verifikator Medis Senior",
-            "role_code": "VERIFICATOR_MEDIS",
-            "unit": "Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan",
-            "privilege_tier": "ADJUDICATE"
-        },
-        {
-            "name": "Budi Santoso, S.Kom, M.TI",
-            "nip": "199208152015031002",
-            "email": "admin.fraud@bpjs-kesehatan.go.id",
-            "role": "Analis Forensik Digital Anti-Fraud",
-            "role_code": "ANALYST",
-            "unit": "Kedeputian Bidang Pengawasan dan Pemeriksaan",
-            "privilege_tier": "READ"
-        },
-        {
-            "name": "Hendra Wijaya, S.Si, M.M",
-            "nip": "198501012010011001",
-            "email": "kepala.cabang@bpjs-kesehatan.go.id",
-            "role": "Administrator Kebijakan & Tata Kelola JKN",
-            "role_code": "ADMIN",
-            "unit": "Kantor Pusat BPJS Kesehatan · Tata Kelola Verifikasi Nasional",
-            "privilege_tier": "ADMIN"
-        },
-        {
-            "name": "dr. Andi Pratama, MARS",
-            "nip": "199003152018011005",
-            "email": "auditor.wasrik@bpjs-kesehatan.go.id",
-            "role": "Auditor Pengawasan (Read-Only)",
-            "role_code": "AUDITOR_VIEWER",
-            "unit": "Kantor Regional · Tim Pengawasan & Pemeriksaan (Read-Only)",
-            "privilege_tier": "READ"
-        }
-    ]
+    seen_nips: set[str] = set()
+    entries: List[Dict[str, Any]] = []
+    for record in VERIFICATOR_DIRECTORY.values():
+        nip = str(record.get("nip") or "").strip()
+        if not nip or nip in seen_nips:
+            continue
+        seen_nips.add(nip)
+        allowed = record.get("allowedRoles") or []
+        role_code = str(allowed[0]) if allowed else str(record.get("role") or "VERIFICATOR_MEDIS")
+        privs = set(ROLE_PRIVILEGES_MAP.get(str(record.get("role") or ""), set()))
+        for r in allowed:
+            privs.update(ROLE_PRIVILEGES_MAP.get(str(r), set()))
+        if Privilege.ADMIN in privs:
+            tier = "ADMIN"
+        elif Privilege.ADJUDICATE in privs:
+            tier = "ADJUDICATE"
+        elif Privilege.READ in privs:
+            tier = "READ"
+        else:
+            tier = "VIEW"
+        entries.append(
+            {
+                "name": record.get("name"),
+                "nip": nip,
+                "email": record.get("email"),
+                "role": record.get("role"),
+                "role_code": role_code,
+                "unit": record.get("unit"),
+                "privilege_tier": tier,
+            }
+        )
+    return entries
 
 @app.get("/api/v1/claims")
 def list_triage_claims(
@@ -5414,7 +5464,7 @@ def assign_portal_plotting(
     )
     verify_privilege(subject, Privilege.ADJUDICATE, action_name="PLOTTING_VERIFICATOR")
 
-    target_name = VERIFICATOR_NAME_BY_NIP.get(req.verifier_nip)
+    target_name = VERIFICATOR_NAME_BY_NIP.get(req.verifier_nip) or (VERIFICATOR_DIRECTORY.get(req.verifier_nip) or {}).get("name")
     if not target_name:
         raise HTTPException(status_code=404, detail=f"NIP verifikator '{req.verifier_nip}' tidak terdaftar pada direktori verifikator.")
 
@@ -5631,7 +5681,7 @@ def pull_fpk_batch_and_prapurifikasi(
             frista_verified=tpl["frista"],
             tte_dpjp_valid=tpl["tte"],
             assigned_verifier_nip=assigned_nip,
-            assigned_verifier_name=VERIFICATOR_NAME_BY_NIP.get(assigned_nip) if assigned_nip else None,
+            assigned_verifier_name=(VERIFICATOR_NAME_BY_NIP.get(assigned_nip) or (VERIFICATOR_DIRECTORY.get(assigned_nip) or {}).get("name")) if assigned_nip else None,
         )
         enrich_claim_vedika_defaults(new_claim)
         triage = evaluate_claim_triage(new_claim)
