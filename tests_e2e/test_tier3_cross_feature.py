@@ -425,15 +425,15 @@ def test_x13_security_posture_and_framework_mapping_synergy(client: TestClient):
     Memverifikasi sinergi pemetaan kerangka kerja keamanan siber:
     MITRE F3, ATT&CK, D3FEND, NIST CSF 2.0, dan UU PDP No. 27/2022.
     """
-    res = client.get("/api/v1/cybersecurity/frameworks/summary")
+    res = client.get("/api/v1/threat-defense/frameworks/summary")
     assert res.status_code == 200
     data = res.json()
-    assert data["total_skills_count"] > 0
+    assert data["total_controls_count"] > 0
     supported = data["mapped_frameworks"]
     assert "MITRE_ATTACK_v19" in supported
     assert "NIST_CSF_v2" in supported
     assert "MITRE_F3_v1_1" in supported
-    assert data["f3_skills_count"] > 0
+    assert data["f3_controls_count"] > 0
 
 
 def test_x14_wbs_whistleblowing_to_audit_ledger_traceability(client: TestClient):

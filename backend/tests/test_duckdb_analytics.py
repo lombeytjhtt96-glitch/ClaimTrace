@@ -1,7 +1,6 @@
 """
 Unit and Integration Tests for DuckDB OLAP Analytics Engine in ClaimTrace
 BPJS Kesehatan Healthkathon 2026 - Modus #6 Phantom Billing & Modus #11 Repeat Billing
-Inspired by teaguesterling/duckdb_mcp
 """
 
 import pytest

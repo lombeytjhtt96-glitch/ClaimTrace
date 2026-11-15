@@ -340,7 +340,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "is_active": True,
             "screening_risk": "LOW",
             "screening_score": 15,
-            "screening_finding": "Spesialis OLAP DuckDB, Spatiotemporal Geovelocity, dan Audit Ledger SHA-256",
+            "screening_finding": "Spesialis Basis Data OLAP, Spatiotemporal Geovelocity, dan Audit Ledger SHA-256",
             "streak_days": 38,
             "sentiment_pct": 96,
             "sla_compliance": 99,
@@ -442,7 +442,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
                         {
                             "role": "assistant",
                             "sender_name": "TCA (Audit Ekonomi JKN)",
-                            "model": "ClaimTrace DuckDB OLAP",
+                            "model": "ClaimTrace Analytical SQL OLAP",
                             "text": "Total tagihan klaster bernilai Rp 15.300.000. Penundaan BAKB mengamankan dana DJS pra-pembayaran dan tetap memenuhi koridor waktu klarifikasi SLA 10 hari kerja.",
                             "tokens": 520,
                             "latency_ms": 140,
@@ -518,6 +518,9 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         "require_mfa_adjudicate": True,
         "zero_phi_strict": True,
         "k_anonymity_min": 5,
+        "default_verifier_daily_capacity": 5,
+        "hard_negative_protection_enabled": True,
+        "s06_inmonica_prepay_hold": True,
     }
 
     profile = {
@@ -569,6 +572,9 @@ class OperationsStore:
                             saved_settings.setdefault("geovelocity_speed_limit", 120)
                             saved_settings.setdefault("split_claim_threshold", 3)
                             saved_settings.setdefault("semantic_plagiarism_threshold", 90)
+                            saved_settings.setdefault("default_verifier_daily_capacity", 5)
+                            saved_settings.setdefault("hard_negative_protection_enabled", True)
+                            saved_settings.setdefault("s06_inmonica_prepay_hold", True)
                             loaded.setdefault("case_checklists", {})
                             loaded.setdefault("claim_pending_reasons", {})
                             self.state = loaded
@@ -1003,7 +1009,7 @@ class OperationsStore:
                     "text": reply[:700],
                     "tokens": max(120, len(reply.split()) * 2),
                     "latency_ms": 180,
-                    "citations": ["Perpres No. 82/2018", "DuckDB OLAP Live"],
+                    "citations": ["Perpres No. 82/2018", "Basis Data Analitik Live"],
                     "timestamp": now.strftime("%H:%M")
                 })
                 ses["message_count"] = len(ses["messages"])

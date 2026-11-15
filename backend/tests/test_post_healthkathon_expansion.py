@@ -132,7 +132,7 @@ def test_agent_four_scenarios_and_hitl_approval():
             "trace_id": trace_id,
             "action": "TUNDA_BAYAR",
             "verifier_nip": "198704202011012001",
-            "notes": "Otorisasi pengujian otomatis sesuai pedoman Karpathy Goal-Driven Execution.",
+            "notes": "Otorisasi pengujian otomatis sesuai pedoman verifikasi internal.",
         },
     )
     assert app_resp.status_code == 200

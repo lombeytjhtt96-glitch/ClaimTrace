@@ -4,8 +4,8 @@ Healthkathon BPJS Kesehatan 2026 • Kategori: Efisiensi Risiko pada Faskes (#6 
 Tim Pengembang Nasional ClaimTrace • BPJS Kesehatan Tingkat Nasional
 
 Provides high-performance in-memory indexing, search, and validation for 10,469 official
-ICD-10 diagnostic codes with English (WHO) and Indonesian clinical translations.
-Adapted from fendis0709/icd-10 for SATUSEHAT (PMK 24/2022) and BPJS vClaim / Vedika.
+ICD-10 diagnostic codes with English (WHO) and Indonesian clinical translations
+for SATUSEHAT (PMK 24/2022) and BPJS vClaim / E-Klaim interoperability.
 """
 
 import os
@@ -13,13 +13,13 @@ import json
 import re
 from typing import Dict, List, Optional, Any
 
-# Primary and fallback data paths
+# Local dataset path
 BACKEND_DATA_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "data",
     "master_icd_x.json"
 )
-FALLBACK_DATA_PATH = os.path.expanduser("~/icd-10/master_icd_x.json")
+FALLBACK_DATA_PATH = BACKEND_DATA_PATH
 
 CHAPTER_BLOCKS = [
     ("I", "A00", "B99", "Penyakit infeksi dan parasit tertentu", "Certain infectious and parasitic diseases"),

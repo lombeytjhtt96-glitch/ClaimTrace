@@ -1,10 +1,9 @@
 """
-Prometheus Metrics & Observability Engine for ClaimTrace (Healthkathon BPJS Kesehatan 2026)
-Standard Prometheus HTTP API v1 & Exposition Handler
-Inspired by prometheus/prometheus-mcp
+Telemetry Metrics & Observability Engine for ClaimTrace (Healthkathon BPJS Kesehatan 2026)
+Standard OpenMetrics HTTP API v1 & Exposition Handler
 
 Exposes real-time SLO/SLA metrics, fraud velocity anomalies, audit chain health,
-and PromQL execution endpoints for verifiers and IT Ops.
+and metric query execution endpoints for verifiers and IT Ops.
 """
 
 import time
@@ -22,11 +21,11 @@ from prometheus_client import (
 from app.data.synthetic_seed import SYNTHETIC_CLAIMS_DATABASE
 from app.engine.scoring import evaluate_claim_triage, audit_logger
 
-class PrometheusMetricsEngine:
+class TelemetryMetricsEngine:
     """
-    Engine Telemetri & Observabilitas Prometheus untuk ClaimTrace.
+    Engine Telemetri & Observabilitas OpenMetrics untuk ClaimTrace.
     """
-    _instance: Optional["PrometheusMetricsEngine"] = None
+    _instance: Optional["TelemetryMetricsEngine"] = None
 
     def __init__(self):
         self.registry = CollectorRegistry()
@@ -34,13 +33,13 @@ class PrometheusMetricsEngine:
         self.sync_metrics_from_data()
 
     @classmethod
-    def get_instance(cls) -> "PrometheusMetricsEngine":
+    def get_instance(cls) -> "TelemetryMetricsEngine":
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def _init_metrics(self) -> None:
-        """Inisialisasi kolektor metrik Prometheus standar"""
+        """Inisialisasi kolektor metrik OpenMetrics standar"""
         self.claims_total = Counter(
             "claimtrace_claims_total",
             "Total volume klaim terproses dalam sistem ClaimTrace",
@@ -88,7 +87,7 @@ class PrometheusMetricsEngine:
 
         self.vedika_sla_days_remaining = Gauge(
             "claimtrace_vedika_sla_days_remaining",
-            "Sisa hari kepatuhan SLA 10 hari kerja Vedika (Perpres 82/2018)",
+            "Sisa hari kepatuhan SLA 10 hari kerja Verifikasi Klaim (Perpres 82/2018)",
             ["claim_id"],
             registry=self.registry
         )
@@ -101,7 +100,7 @@ class PrometheusMetricsEngine:
         )
 
     def sync_metrics_from_data(self) -> None:
-        """Sinkronisasi data klaim aktif ke instans metrik Prometheus"""
+        """Sinkronisasi data klaim aktif ke instans metrik telemetri"""
         valid, _ = audit_logger.verify_integrity()
         self.audit_integrity_status.set(1 if valid else 0)
 
@@ -131,13 +130,13 @@ class PrometheusMetricsEngine:
             self.mobile_jkn_confirmation_ratio.labels(status="tidak_hadir").set(round(total_denied / total_sample, 3))
 
     def get_metrics_exposition(self) -> str:
-        """Menghasilkan representasi metrik standar Prometheus text/plain"""
+        """Menghasilkan representasi metrik standar OpenMetrics text/plain"""
         self.sync_metrics_from_data()
         return generate_latest(self.registry).decode("utf-8")
 
-    def execute_promql_query(self, query: str) -> Dict[str, Any]:
+    def execute_metric_query(self, query: str) -> Dict[str, Any]:
         """
-        Menjalankan kueri PromQL instan (Mock PromQL Evaluation Engine)
+        Menjalankan kueri metrik instan (In-Memory Metric Query Evaluator)
         Mendukung kueri standar: metrik langsung, sum by(lane), filter label, dan aggregate.
         """
         self.sync_metrics_from_data()
@@ -199,11 +198,11 @@ class PrometheusMetricsEngine:
         end_ts: Optional[float] = None,
         step_seconds: int = 60
     ) -> Dict[str, Any]:
-        """Evaluasi kueri PromQL deret waktu (time series matrix)"""
+        """Evaluasi kueri metrik deret waktu (time series matrix)"""
         end = end_ts or time.time()
         start = start_ts or (end - 3600)  # 1 hour window default
 
-        instant_res = self.execute_promql_query(query)
+        instant_res = self.execute_metric_query(query)
         matrix_results = []
 
         timestamps = [start + (i * step_seconds) for i in range(int((end - start) / step_seconds) + 1)]
@@ -225,7 +224,7 @@ class PrometheusMetricsEngine:
         }
 
     def get_active_alerts(self) -> List[Dict[str, Any]]:
-        """Daftar alert Prometheus aktif yang dipantau sistem ClaimTrace"""
+        """Daftar alert telemetri aktif yang dipantau sistem ClaimTrace"""
         return [
             {
                 "labels": {
@@ -237,7 +236,7 @@ class PrometheusMetricsEngine:
                 "annotations": {
                     "summary": "Lonjakan Klaster Layanan Faskes Melebihi 8x Baseline Tanpa SK Baksos Resmi",
                     "description": "Klaster CLS-PHANTOM-85 mencatat 85 klaim massal dengan lonjakan 8.5x dari baseline. Rekomendasi Triase Merah segera.",
-                    "runbook_url": "skill://check-system-health/SKILL.md"
+                    "runbook_url": "runbook://claimtrace/check-system-health"
                 },
                 "state": "firing",
                 "activeAt": "2026-10-21T00:00:00Z",
@@ -253,7 +252,7 @@ class PrometheusMetricsEngine:
                 "annotations": {
                     "summary": "Telemetri SATUSEHAT SDMK Mendeteksi Transit Dokter Mustahil Secara Fisik",
                     "description": "Tindakan bedah simultan di Jakarta dan Bandung dalam selisih 45 menit (kecepatan transit melebihi 190 km/jam).",
-                    "runbook_url": "skill://impossible-travel-audit/SKILL.md"
+                    "runbook_url": "runbook://claimtrace/impossible-travel-audit"
                 },
                 "state": "firing",
                 "activeAt": "2026-10-21T00:05:00Z",
@@ -267,9 +266,9 @@ class PrometheusMetricsEngine:
                     "regulation": "Perpres 82/2018 Pasal 76"
                 },
                 "annotations": {
-                    "summary": "Batas Waktu SLA Verifikasi Vedika Tersisa <= 3 Hari",
+                    "summary": "Batas Waktu SLA Verifikasi Klaim Tersisa <= 3 Hari",
                     "description": "Klaim CLM-2026-8801 memerlukan telaah prioritas agar tidak melampaui batas 10 hari kerja penerbitan berita acara.",
-                    "runbook_url": "skill://sla-monitor/SKILL.md"
+                    "runbook_url": "runbook://claimtrace/sla-monitor"
                 },
                 "state": "firing",
                 "activeAt": "2026-10-21T00:10:00Z",
@@ -278,7 +277,7 @@ class PrometheusMetricsEngine:
         ]
 
     def get_alerting_rules(self) -> List[Dict[str, Any]]:
-        """Katalog Prometheus Alerting & Recording Rules"""
+        """Katalog Aturan Alerting & Recording Telemetri ClaimTrace"""
         return [
             {
                 "name": "claimtrace_fraud_rules",
@@ -312,13 +311,13 @@ class PrometheusMetricsEngine:
         ]
 
     def get_runtime_info(self) -> Dict[str, Any]:
-        """Informasi runtime Prometheus instance"""
+        """Informasi runtime subsistem telemetri ClaimTrace"""
         return {
-            "version": "2.54.0",
-            "revision": "prometheus-mcp-claimtrace",
-            "mcp_server": "prometheus/prometheus-mcp (Official Specification)",
+            "version": "1.0.0",
+            "revision": "claimtrace-telemetry",
+            "engine": "claimtrace-openmetrics",
             "uptime_seconds": 3600,
-            "goroutines": 32,
+            "workers": 32,
             "status": "READY",
             "storage_retention": "15d"
         }
@@ -333,7 +332,7 @@ class PrometheusMetricsEngine:
         }
 
     def get_metric_metadata(self, metric_name: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Metadata deskriptif metrik Prometheus"""
+        """Metadata deskriptif metrik telemetri ClaimTrace"""
         all_meta = [
             {"metric": "claimtrace_claims_total", "type": "counter", "help": "Total volume klaim terproses dalam sistem"},
             {"metric": "claimtrace_priority_score", "type": "gauge", "help": "Skor prioritas telaah triase klaim (0-100)"},
@@ -342,10 +341,10 @@ class PrometheusMetricsEngine:
             {"metric": "claimtrace_impossible_travel_events_total", "type": "counter", "help": "Jumlah anomali impossible travel geovelocity DPJP"},
             {"metric": "claimtrace_semantic_plagiarism_detections_total", "type": "counter", "help": "Jumlah deteksi plagiarisme resume medis via ChromaDB"},
             {"metric": "claimtrace_audit_integrity_status", "type": "gauge", "help": "Status integritas rantai audit hash SHA-256"},
-            {"metric": "claimtrace_vedika_sla_days_remaining", "type": "gauge", "help": "Sisa hari kepatuhan SLA 10 hari kerja Vedika"}
+            {"metric": "claimtrace_vedika_sla_days_remaining", "type": "gauge", "help": "Sisa hari kepatuhan SLA 10 hari kerja Verifikasi Klaim"}
         ]
         if metric_name:
             return [m for m in all_meta if m["metric"] == metric_name]
         return all_meta
 
-prometheus_engine = PrometheusMetricsEngine.get_instance()
+telemetry_engine = TelemetryMetricsEngine.get_instance()

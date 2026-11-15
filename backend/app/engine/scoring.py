@@ -62,6 +62,41 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
         except Exception:
             pass
 
+    # Clinical & Comorbidity Deep Auditing (Charlson Comorbidity & INA-CBG Severity)
+    try:
+        from app.engine.clinical_auditor import clinical_auditor
+        upcoding_check = clinical_auditor.validate_ina_cbg_severity(
+            ina_cbg_code=claim.ina_cbg_code,
+            primary_icd10=getattr(claim, "primary_icd10", "") or "",
+            secondary_icd10s=getattr(claim, "secondary_icd10s", None) or []
+        )
+        if upcoding_check.get("upcoding_suspected"):
+            indikator.append(
+                f"IND-CLIN-UPCODING: Evaluasi Klinis Kaidah Koding INA-CBG (Permenkes 26/2021) mendeteksi "
+                f"ketidaksesuaian tingkat keparahan {claim.ina_cbg_code} dengan indeks komorbiditas Charlson "
+                f"(Skor: {upcoding_check.get('charlson_comorbidity_score')})"
+            )
+            raw_score = max(raw_score, 75.0)
+            final_score = raw_score
+    except Exception:
+        pass
+
+    # Temporal Causality & Trajectory Coherence
+    try:
+        from app.engine.temporal_coherence import temporal_coherence
+        temp_eval = temporal_coherence.validate_episode_causality(
+            admission_date_str=getattr(claim, "admission_date", None) or getattr(claim.episode_meta, "admission_date", None),
+            discharge_date_str=getattr(claim, "discharge_date", None) or getattr(claim.episode_meta, "discharge_date", None)
+        )
+        if not temp_eval.get("is_coherent") and temp_eval.get("violations"):
+            hard_trigger = True
+            trigger_reason = f"Anomali Kausalitas Temporal: {temp_eval['violations'][0]}"
+            lane = "MERAH"
+            final_score = max(final_score, 85.0)
+            indikator.append(f"IND-TEMP-INVERSION: {temp_eval['violations'][0]}")
+    except Exception:
+        pass
+
     # 2. Evaluate Lapis 2 Indicators (SATUSEHAT SDMK Footprint)
     if claim.episode_meta.cluster_id == "CLS-GEODIST-COLLISION" or "Anomali Kecepatan Fisik" in claim.dpjp_meta.catatan_sdmk:
         indikator.append(
@@ -125,7 +160,7 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     attack_tags: List[str] = []
     d3fend_tags: List[str] = ["D3-DL (Tamper-Evident Audit Chain)", "D3-MA (HMAC/SHA-256 Ledger)"]
     reg_basis: List[str] = [
-        "Perpres No. 82/2018 Pasal 76 ayat (2) (SLA Vedika 10 Hari Kerja)",
+        "Perpres No. 82/2018 Pasal 76 ayat (2) (SLA Verifikasi Klaim 10 Hari Kerja)",
         "UU Perlindungan Data Pribadi No. 27/2022 (Minimasi Data & Privasi Peserta)"
     ]
 
@@ -199,7 +234,7 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
                 f"disertai penolakan presensi 6 dari 8 peserta terverifikasi Mobile JKN."
             )
             penjelasan_sah = (
-                "Keterlambatan integrasi berkas hasil laboratorium LIS atau gambar endoskopi PACS ke dalam berkas klaim digital Vedika, "
+                "Keterlambatan integrasi berkas hasil laboratorium LIS atau gambar endoskopi PACS ke dalam berkas klaim digital ClaimTrace, "
                 "atau komorbiditas akut berat yang tercatat manual pada lembar resume medis fisik."
             )
             rekomendasi = (
@@ -242,9 +277,9 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     else:
         sla_days = 2
         bea_process = "C03.04 (Klaim)"
-        bea_target = "VIDI (Vedika Digital Fast-Track)"
+        bea_target = "VIDI (Verifikasi Digital Fast-Track)"
         bea_action = (
-            "Otomasi Rekomendasi Lolos Cepat. Berkas diteruskan ke VIDI untuk penerbitan "
+            "Otomasi Rekomendasi Lolos Cepat. Berkas diteruskan untuk penerbitan "
             "Berita Acara Persetujuan Klaim dalam < 30 detik tanpa penundaan."
         )
         ringkasan = (

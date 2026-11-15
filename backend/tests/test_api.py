@@ -161,7 +161,7 @@ def test_playwright_automation_spec_endpoint():
     response = client.get("/api/v1/automation/playwright-spec")
     assert response.status_code == 200
     data = response.json()
-    assert data["mcp_server"] == "microsoft/playwright-mcp"
+    assert data["runner"] == "claimtrace-playwright-suite"
     assert data["total_e2e_tests"] == 7
     assert data["test_suite_status"] == "100% PASSED"
     assert len(data["test_cases"]) == 7

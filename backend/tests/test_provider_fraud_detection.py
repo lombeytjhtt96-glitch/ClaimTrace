@@ -1,7 +1,6 @@
 """
 Unit and Integration Tests for Healthcare Provider Fraud Detection & Analysis
-Healthkathon BPJS Kesehatan 2026 • Tim Pengembang Nasional ClaimTrace • BPJS Kesehatan Tingkat Nasional
-Adapted from rohansoni634/Healthcare-Provider-Fraud-Detection-Analysis
+Healthkathon BPJS Kesehatan 2026 - Tim Pengembang Nasional ClaimTrace
 """
 
 import pytest

@@ -300,7 +300,7 @@ def test_cognitive_triage_brief_api_endpoint_200():
 
 
 def test_cognitive_triage_brief_api_endpoint_404():
-    response = client.get("/api/v1/claims/NONEXISTENT-ADHD-CLAIM/cognitive-triage-brief")
+    response = client.get("/api/v1/claims/NONEXISTENT-TRIAGE-CLAIM/cognitive-triage-brief")
     assert response.status_code == 404
     assert "tidak ditemukan" in response.json()["detail"]
 

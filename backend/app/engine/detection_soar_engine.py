@@ -1,9 +1,9 @@
 """
-Google SecOps Detection Engineering & SOAR Case Management Engine for ClaimTrace JKN.
-Applies specifications from google/skills:
-- secops-detection-engineering (YARA-L 2.0 syntax, UDM events, detection gap mitigation)
-- secops-cases & secops-triage (Incident lifecycle, SLA tracking, severity classification)
-- assuredworkloads-environment-assessor & assured-workloads-basics (Sovereign healthcare data boundary per UU PDP 27/2022)
+Detection Engineering & SOAR Case Management Engine for ClaimTrace JKN.
+Implements:
+- YARA-L 2.0 detection rules, UDM event matching, and detection gap mitigation
+- SOAR incident case lifecycle, SLA tracking, and severity classification
+- Sovereign healthcare data boundary controls per UU PDP No. 27/2022
 """
 
 import hashlib
@@ -19,7 +19,7 @@ PRECOMPILED_YARA_L_RULES = [
         "rule_name": "jkn_phantom_billing_cluster",
         "target_jkn_modus": "Modus #6: Phantom Billing & Baksos Fiktif",
         "meta": {
-            "author": "ClaimTrace JKN SecOps Detection Engineering",
+            "author": "ClaimTrace JKN Detection Engineering",
             "description": "Mendeteksi lonjakan klaim massal (>30 klaim/24 jam) dengan rasio surge >5x baseline dan penolakan kehadiran Mobile JKN >50%",
             "severity": "Critical",
             "priority": "High",
@@ -30,7 +30,7 @@ PRECOMPILED_YARA_L_RULES = [
         },
         "rule_text": """rule jkn_phantom_billing_cluster {
   meta:
-    author = "ClaimTrace JKN SecOps Detection Engineering"
+    author = "ClaimTrace JKN Detection Engineering"
     description = "Mendeteksi lonjakan klaim massal (>30 klaim/24 jam) dengan rasio surge >5x baseline dan penolakan kehadiran Mobile JKN >50%"
     severity = "Critical"
     priority = "High"
@@ -86,7 +86,7 @@ PRECOMPILED_YARA_L_RULES = [
         "rule_name": "jkn_inactive_dpjp_credential_abuse",
         "target_jkn_modus": "Modus #2: Penggunaan Kredensial Medis/SIP Kadaluarsa",
         "meta": {
-            "author": "ClaimTrace JKN SecOps Detection Engineering",
+            "author": "ClaimTrace JKN Detection Engineering",
             "description": "Mendeteksi klaim FKRTL yang ditagihkan menggunakan Surat Izin Praktik (SIP) DPJP yang tercatat tidak aktif atau mutasi di SISDMK SATUSEHAT",
             "severity": "Critical",
             "priority": "High",
@@ -97,7 +97,7 @@ PRECOMPILED_YARA_L_RULES = [
         },
         "rule_text": """rule jkn_inactive_dpjp_credential_abuse {
   meta:
-    author = "ClaimTrace JKN SecOps Detection Engineering"
+    author = "ClaimTrace JKN Detection Engineering"
     description = "Mendeteksi klaim FKRTL yang ditagihkan menggunakan Surat Izin Praktik (SIP) DPJP yang tercatat tidak aktif atau mutasi di SISDMK SATUSEHAT"
     severity = "Critical"
     priority = "High"
@@ -143,7 +143,7 @@ PRECOMPILED_YARA_L_RULES = [
         "rule_name": "jkn_repeat_billing_fragmentation",
         "target_jkn_modus": "Modus #4: Repeat Billing & Fragmentasi Klaim Rawat Jalan",
         "meta": {
-            "author": "ClaimTrace JKN SecOps Detection Engineering",
+            "author": "ClaimTrace JKN Detection Engineering",
             "description": "Mendeteksi tagihan rawat jalan berulang untuk pasien yang sama dengan diagnosis identik tanpa jeda 7 hari kalender atau tanpa rujukan baru",
             "severity": "High",
             "priority": "Medium",
@@ -154,7 +154,7 @@ PRECOMPILED_YARA_L_RULES = [
         },
         "rule_text": """rule jkn_repeat_billing_fragmentation {
   meta:
-    author = "ClaimTrace JKN SecOps Detection Engineering"
+    author = "ClaimTrace JKN Detection Engineering"
     description = "Mendeteksi tagihan rawat jalan berulang untuk pasien yang sama dengan diagnosis identik tanpa jeda 7 hari kalender atau tanpa rujukan baru"
     severity = "High"
     priority = "Medium"
@@ -199,7 +199,7 @@ PRECOMPILED_YARA_L_RULES = [
         "rule_name": "jkn_unbundling_surgical_arbitrage",
         "target_jkn_modus": "Modus #5: Services Unbundling / Pemecahan Episode Bedah",
         "meta": {
-            "author": "ClaimTrace JKN SecOps Detection Engineering",
+            "author": "ClaimTrace JKN Detection Engineering",
             "description": "Mendeteksi pemecahan tagihan paket operasi tunggal menjadi beberapa berkas klaim terpisah pada tanggal rawat inap yang sama",
             "severity": "High",
             "priority": "Medium",
@@ -210,7 +210,7 @@ PRECOMPILED_YARA_L_RULES = [
         },
         "rule_text": """rule jkn_unbundling_surgical_arbitrage {
   meta:
-    author = "ClaimTrace JKN SecOps Detection Engineering"
+    author = "ClaimTrace JKN Detection Engineering"
     description = "Mendeteksi pemecahan tagihan paket operasi tunggal menjadi beberapa berkas klaim terpisah pada tanggal rawat inap yang sama"
     severity = "High"
     priority = "Medium"
@@ -256,7 +256,7 @@ PRECOMPILED_YARA_L_RULES = [
         "rule_name": "jkn_upcoding_severity_mismatch",
         "target_jkn_modus": "Modus #1: Upcoding Derajat Keparahan Kasus Digestif",
         "meta": {
-            "author": "ClaimTrace JKN SecOps Detection Engineering",
+            "author": "ClaimTrace JKN Detection Engineering",
             "description": "Mendeteksi penagihan tarif tingkat keparahan III tanpa bukti objektif transfusi darah, endoskopi terapeutik, atau rawat intensif",
             "severity": "Critical",
             "priority": "High",
@@ -267,7 +267,7 @@ PRECOMPILED_YARA_L_RULES = [
         },
         "rule_text": """rule jkn_upcoding_severity_mismatch {
   meta:
-    author = "ClaimTrace JKN SecOps Detection Engineering"
+    author = "ClaimTrace JKN Detection Engineering"
     description = "Mendeteksi penagihan tarif tingkat keparahan III tanpa bukti objektif transfusi darah, endoskopi terapeutik, atau rawat intensif"
     severity = "Critical"
     priority = "High"
@@ -317,7 +317,7 @@ PRECOMPILED_YARA_L_RULES = [
 
 def validate_yara_l_syntax(rule_text: str) -> Dict[str, Any]:
     """
-    Validates YARA-L 2.0 rule syntax based on Google SecOps detection engineering guidelines.
+    Validates YARA-L 2.0 rule syntax against ClaimTrace detection engineering standards.
     Verifies the presence of:
     1. rule <rule_identifier> { ... }
     2. meta: section with author, description, severity, version
@@ -404,13 +404,13 @@ def compile_dynamic_yara_l_rule(
         "compiled_at": datetime.now(timezone.utc).isoformat()
     }
 
-def generate_secops_cases(claims_database: List[Dict[str, Any]]) -> Dict[str, Any]:
+def generate_soar_cases(claims_database: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Transforms active ClaimTrace claims into Google SecOps SOAR Incident Cases.
+    Transforms active ClaimTrace claims into SOAR Incident Cases.
     Implements:
     - Alert linking and grouping
     - Severity mapping (MERAH -> CRITICAL, KUNING -> HIGH, HIJAU -> LOW)
-    - 10-day Vedika statutory SLA tracking (Perpres 82/2018)
+    - 10-day statutory SLA tracking (Perpres 82/2018)
     - Tamper-evident SHA-256 seal for every case
     """
     cases = []
@@ -498,7 +498,7 @@ def generate_secops_cases(claims_database: List[Dict[str, Any]]) -> Dict[str, An
     integrity_seal = hashlib.sha256(manifest_bytes).hexdigest()
     
     return {
-        "spec_version": "1.2.0-secops",
+        "spec_version": "1.2.0-soar",
         "total_cases": len(cases),
         "critical_cases": crit_count,
         "high_cases": high_count,
@@ -510,7 +510,7 @@ def generate_secops_cases(claims_database: List[Dict[str, Any]]) -> Dict[str, An
 
 def generate_sovereignty_assessment_report() -> Dict[str, Any]:
     """
-    Evaluates ClaimTrace environment against Google Cloud Assured Workloads sovereignty
+    Evaluates ClaimTrace environment against sovereign healthcare cloud boundary controls
     and Indonesian healthcare data protection standards (UU PDP No. 27/2022).
     """
     checks = [
@@ -524,9 +524,9 @@ def generate_sovereignty_assessment_report() -> Dict[str, Any]:
         {
             "control_id": "SOV-LOC-02",
             "name": "Kedaulatan & Residensi Data Nasional",
-            "standard": "PP No. 71/2019 & Assured Workloads Sovereign Boundary",
+            "standard": "PP No. 71/2019 & Sovereign Data Boundary",
             "status": "COMPLIANT",
-            "evidence": "Seluruh repositori DuckDB, korpus vektor, dan artefak audit berlokasi di zona data Indonesia (Jakarta Region)."
+            "evidence": "Seluruh repositori basis data, korpus vektor, dan artefak audit berlokasi di zona data Indonesia (Jakarta Region)."
         },
         {
             "control_id": "AUD-INT-03",
@@ -538,14 +538,14 @@ def generate_sovereignty_assessment_report() -> Dict[str, Any]:
         {
             "control_id": "ACC-GOV-04",
             "name": "Tata Kelola Akses Berbasis Peran (RBAC)",
-            "standard": "Permenkes No. 26/2021 & Assured Workloads Privileged Access",
+            "standard": "Permenkes No. 26/2021 & Privileged Access Governance",
             "status": "COMPLIANT",
             "evidence": "Disposisi klaim jalur merah memerlukan otorisasi verifikator ber-NIP resmi; aksi otomatis dibatasi ke mode asistif."
         }
     ]
     
     report_data = {
-        "framework": "UU PDP No. 27/2022 & Google Cloud Assured Workloads Sovereignty",
+        "framework": "UU PDP No. 27/2022 & Sovereign Healthcare Boundary Controls",
         "data_residency_region": "asia-southeast2 (Jakarta, Indonesia)",
         "phi_protection_level": "RESTRICTED_PSEUDONYMIZED",
         "overall_compliance_status": "CERTIFIED_SOVEREIGN",

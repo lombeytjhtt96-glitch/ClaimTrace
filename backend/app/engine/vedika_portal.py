@@ -1,10 +1,10 @@
 """
-ClaimTrace VEDIKA Portal Engine
--------------------------------
+ClaimTrace Verification Portal Engine
+-------------------------------------
 Authentic domain catalog, digital dossier builder, i-Care cross-faskes timeline,
 billing & Special CMG reconciliation, RJTL/RITL BAHV aggregation, and printable
 official BA Pending / FPK HTML generators aligned with BPJS Kesehatan BEA C03.04
-(VIDI / Smart VEDIKA / Perpres 82/2018 / Permenkes 3/2023 / SE Diryan 51/2016).
+(Perpres 82/2018 / Permenkes 3/2023 / SE Diryan 51/2016).
 
 Strictly zero PHI: all participant identifiers remain pseudonymized AES tokens.
 """
@@ -25,14 +25,14 @@ VEDIKA_PENDING_CODES: List[Dict[str, str]] = [
         "code": "ADM-01",
         "pillar": "Administrasi",
         "title": "Eligibilitas SEP & Masa Kepesertaan Tidak Sesuai",
-        "regulation": "Perpres 82/2018 & Juknis VClaim-VEDIKA",
+        "regulation": "Perpres 82/2018 & Juknis VClaim",
         "description": "Tanggal pelayanan / kelas rawat pada e-SEP tidak selaras dengan status aktif kepesertaan saat admisi."
     },
     {
         "code": "ADM-02",
         "pillar": "Administrasi",
         "title": "Absen Verifikasi Biometrik FRISTA / TTE DPJP",
-        "regulation": "Kebijakan Smart VEDIKA & BSrE PSrE",
+        "regulation": "Kebijakan Verifikasi Biometrik & BSrE PSrE",
         "description": "e-SEP atau Resume Medis belum tervalidasi pengenalan wajah FRISTA / fingerprint atau tanda tangan elektronik DPJP."
     },
     {
@@ -109,7 +109,7 @@ VEDIKA_PENDING_CODES: List[Dict[str, str]] = [
         "code": "MED-02",
         "pillar": "Pelayanan Medis",
         "title": "Readmisi Dini <= 30 Hari / Repeat Billing Episode",
-        "regulation": "Audit Efisiensi Episode Klinis VEDIKA",
+        "regulation": "Audit Efisiensi Episode Klinis Klaim",
         "description": "Klaim berulang dalam <= 30 hari untuk diagnosis terkait tanpa bukti kondisi eksaserbasi akut baru yang terpisah."
     },
     {
@@ -130,7 +130,7 @@ VEDIKA_PENDING_CODES: List[Dict[str, str]] = [
         "code": "MED-05",
         "pillar": "Pelayanan Medis",
         "title": "Berkas Penunjang Medis / Laporan Operasi / PA Belum Lengkap",
-        "regulation": "Standar Uji Kelengkapan Berkas VEDIKA",
+        "regulation": "Standar Uji Kelengkapan Berkas Digital",
         "description": "Laporan tindakan pembedahan, hasil laboratorium, radiologi, atau patologi anatomi tidak terunggah pada berkas digital."
     }
 ]
@@ -613,7 +613,7 @@ def build_vedika_dossier(
     dispute_tier = getattr(claim, "dispute_level", None) or "CABANG"
 
     resolved_reasons = [
-        VEDIKA_CODE_LOOKUP.get(code, {"code": code, "pillar": "Catatan Verifikator", "title": code, "regulation": "VEDIKA", "description": ""})
+        VEDIKA_CODE_LOOKUP.get(code, {"code": code, "pillar": "Catatan Verifikator", "title": code, "regulation": "Kaidah Klaim", "description": ""})
         for code in (pending_reasons or [])
     ]
 
@@ -916,7 +916,7 @@ def render_collective_fpk_bahv_html(
 <html lang="id">
 <head>
 <meta charset="utf-8" />
-<title>BAHV & Rekapitulasi FPK Kolektif - VEDIKA ClaimTrace JKN</title>
+<title>BAHV & Rekapitulasi FPK Kolektif - ClaimTrace JKN</title>
 <style>
   body {{ font-family: Arial, Helvetica, sans-serif; color: #111827; margin: 24px; font-size: 11px; }}
   .hdr {{ border-bottom: 2px solid #047857; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; }}
@@ -935,7 +935,7 @@ def render_collective_fpk_bahv_html(
   <div class="hdr">
     <div>
       <h1>BERITA ACARA HASIL VERIFIKASI (BAHV) & FORMULIR PENGAJUAN KLAIM (FPK)</h1>
-      <div class="sub">Sistem Pengawasan Klaim Pra-Bayar VEDIKA · BEA C03.04 · {html.escape(no_fpk_filter or 'Rekapitulasi Kolektif Aktif')}</div>
+      <div class="sub">Sistem Pengawasan Klaim Pra-Bayar ClaimTrace · BEA C03.04 · {html.escape(no_fpk_filter or 'Rekapitulasi Kolektif Aktif')}</div>
     </div>
     <div style="text-align:right">
       <div><strong>Dicetak:</strong> {html.escape(now_iso)}</div>
@@ -1025,7 +1025,7 @@ def render_ba_pending_dispute_html(
     )
     rows = ""
     for idx, item in enumerate(pending_items, start=1):
-        code_list = item.get("pending_reasons") or ["KLARIFIKASI-VEDIKA"]
+        code_list = item.get("pending_reasons") or ["KLARIFIKASI-PRA-BAYAR"]
         descs = "; ".join(
             f"{code}: {VEDIKA_CODE_LOOKUP[code]['title']}" if code in VEDIKA_CODE_LOOKUP else code
             for code in code_list
@@ -1054,7 +1054,7 @@ def render_ba_pending_dispute_html(
 <html lang="id">
 <head>
 <meta charset="utf-8" />
-<title>Berita Acara Pending & Dispute Klaim VEDIKA</title>
+<title>Berita Acara Pending & Dispute Klaim JKN</title>
 <style>
   body {{ font-family: Arial, Helvetica, sans-serif; color: #111827; margin: 24px; font-size: 11px; }}
   h1 {{ font-size: 15px; margin: 0 0 4px 0; color: #92400e; }}
@@ -1081,7 +1081,7 @@ def render_ba_pending_dispute_html(
     </tbody>
   </table>
   <p><strong>Total Berkas Tertahan / Klarifikasi:</strong> {len(pending_items)} berkas senilai {_fmt_rp(total_held)}.</p>
-  <div class="seal">SHA-256 INTEGRITY SEAL: {doc_hash} · Dikelola melalui ClaimTrace VEDIKA Portal</div>
+  <div class="seal">SHA-256 INTEGRITY SEAL: {doc_hash} · Dikelola melalui ClaimTrace DSS JKN</div>
 </body>
 </html>"""
 

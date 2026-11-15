@@ -1,8 +1,6 @@
 """
 Unit and Integration Tests for ClaimTrace JKN Decision Receipts & Human Gate.
-Verifies patterns from OpenAgentOntology and RA-QM:
-- ra-qm-team/skills/agent-decision-receipts (Tamper-evident action manifests, offline verification)
-- engineering/human-gate (Human-in-the-loop review gate, blocker resolution, NIP validation)
+Verifies tamper-evident action manifests, offline verification, and human-in-the-loop controls.
 """
 
 import pytest

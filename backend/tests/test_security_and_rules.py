@@ -258,7 +258,7 @@ def test_deep_rules_engine_evidence_dossier_scientific_standard():
     assert dossier["evidence_manifest"][0]["evidence_id"] == "E001"
     assert dossier["evidence_manifest"][0]["verification_status"] == "CONFIRMED_ANOMALY"
     assert dossier["evidence_manifest"][0]["uncertainty"] == "low"
-    assert "DRAFT — EVIDENCE-BASED AUDIT DOSSIER" in dossier["governance_notice"]
+    assert "DRAFT: EVIDENCE-BASED AUDIT DOSSIER" in dossier["governance_notice"]
 
 def test_rules_engine_vclaim_duplicate_sep():
     claim = {
@@ -356,14 +356,37 @@ def test_rules_engine_icd10_symptom_and_sepsis_a419():
     assert any(v["rule_code"] == "RUL-UPCODING-SEPSIS-A419" for v in res_sep["violations"])
 
 def test_otp_challenge_store_and_invalid_otp_rejected():
-    res = client.post("/api/v1/auth/verify-pin", json={
+    from app.security.rate_limiter import rate_limiter
+
+    rate_limiter.reset_all_auth_lockouts()
+    # Unauthenticated PIN attempt without stage-locked PRE_AUTH token must fail closed
+    unauth_pin = client.post("/api/v1/auth/verify-pin", json={
         "identifier": "198704202011012001",
         "pin": "123456"
     })
-    assert res.status_code == 200
-    bad_otp = client.post("/api/v1/auth/verify-otp", json={
+    assert unauth_pin.status_code == 401
+
+    login_res = client.post("/api/v1/auth/login", json={
         "identifier": "198704202011012001",
-        "otp": "000000"
+        "password": "Password123!",
+        "recaptcha_token": "local-verified"
     })
+    assert login_res.status_code == 200
+    pre_pin_token = login_res.json()["token"]
+
+    res = client.post(
+        "/api/v1/auth/verify-pin",
+        json={"identifier": "198704202011012001", "pin": "123456"},
+        headers={"Authorization": f"Bearer {pre_pin_token}"},
+    )
+    assert res.status_code == 200
+    pre_otp_token = res.json()["pre_auth_token"]
+
+    bad_otp = client.post(
+        "/api/v1/auth/verify-otp",
+        json={"identifier": "198704202011012001", "otp": "000000"},
+        headers={"Authorization": f"Bearer {pre_otp_token}"},
+    )
     assert bad_otp.status_code == 401
+    rate_limiter.reset_all_auth_lockouts()
 

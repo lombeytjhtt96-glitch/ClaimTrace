@@ -1,8 +1,7 @@
 """
 Claim Dossier and Invoice Organizer Engine for ClaimTrace JKN.
 Automates medical claim invoice organization, audit dossier generation,
-and financial dispute reconciliation following awesome-codex-skills
-(invoice-organizer, spreadsheet-formula-helper, and paperjsx) architecture.
+and financial dispute reconciliation for Permenkes 26/2021 TGR workflows.
 
 Complies with:
 - Permenkes RI No. 26 Tahun 2021 (Pasal 74 sanksi administratif 50%)
@@ -55,7 +54,7 @@ class FaskesDossierSummary(BaseModel):
 
 
 class ClaimDossierManifest(BaseModel):
-    spec_version: str = "1.0.0-codex"
+    spec_version: str = "1.0.0-claimtrace"
     manifest_id: str
     created_at: str
     total_faskes_diaudit: int
@@ -250,7 +249,7 @@ def organize_claim_dossiers(claims_map: Dict[str, Any]) -> ClaimDossierManifest:
     batch_hash = hashlib.sha256(batch_raw.encode("utf-8")).hexdigest()
 
     return ClaimDossierManifest(
-        spec_version="1.0.0-codex",
+        spec_version="1.0.0-claimtrace",
         manifest_id=manifest_id,
         created_at=now_str,
         total_faskes_diaudit=len(faskes_summaries),
@@ -267,8 +266,7 @@ def organize_claim_dossiers(claims_map: Dict[str, Any]) -> ClaimDossierManifest:
 
 def generate_dossier_csv_report(manifest: ClaimDossierManifest) -> str:
     """
-    Exports dossier items into a clean CSV report containing formulas
-    inspired by awesome-codex-skills/spreadsheet-formula-helper.
+    Exports dossier items into a structured CSV audit report containing Excel formulas.
     """
     output = io.StringIO()
     writer = csv.writer(output, lineterminator="\n")

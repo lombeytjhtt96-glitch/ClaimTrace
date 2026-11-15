@@ -4,9 +4,9 @@ Healthkathon BPJS Kesehatan 2026 • Kategori: Efisiensi Risiko pada Faskes (#6 
 Tim Pengembang Nasional ClaimTrace • BPJS Kesehatan Tingkat Nasional
 
 Implements FHIR R4 standard endpoints for direct integration with:
-- WSO2 FHIR MCP Server (wso2/fhir-mcp-server)
+- Standard FHIR MCP clients and healthcare interoperability gateways
 - Kementerian Kesehatan RI SATUSEHAT Data Platform (PMK 24/2022)
-- BPJS Kesehatan vClaim / Vedika Core / BAKB Interoperability
+- BPJS Kesehatan vClaim / Interoperabilitas Klaim / BAKB
 
 Supported Resources:
 - Patient, Practitioner, Organization, Encounter, Condition, Procedure,
@@ -205,7 +205,7 @@ def get_all_fhir_resources() -> Dict[str, Dict[str, Any]]:
 def get_capability_statement():
     """
     FHIR Conformance Statement / CapabilityStatement.
-    Required by WSO2 fhir-mcp-server, Kemenkes SATUSEHAT, and SMART-on-FHIR clients.
+    Required by SMART-on-FHIR clients, Kemenkes SATUSEHAT, and standard FHIR MCP connectors.
     """
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
@@ -256,7 +256,7 @@ def get_capability_statement():
 def search_fhir_resources(resource_type: str, request: Request):
     """
     Executes a standard FHIR search interaction returning a Bundle of type 'searchset'.
-    Supports query parameters and filters for wso2/fhir-mcp-server tool 'search'.
+    Supports query parameters and filters for standard FHIR 'search' operations.
     """
     res_index = get_all_fhir_resources()
     target_type = resource_type.lower()
@@ -302,7 +302,7 @@ def search_fhir_resources(resource_type: str, request: Request):
 def read_fhir_resource(resource_type: str, resource_id: str):
     """
     Performs a standard FHIR 'read' interaction to retrieve a single resource instance.
-    Directly consumed by wso2/fhir-mcp-server tool 'read'.
+    Directly consumed by standard FHIR 'read' connectors.
     """
     res_index = get_all_fhir_resources()
     lookup_key = f"{resource_type.lower()}/{resource_id.lower()}"
@@ -334,7 +334,7 @@ def create_fhir_resource(resource_type: str, payload: Dict[str, Any]):
     """
     Handles FHIR 'create' interaction with SATUSEHAT validation.
     Enforces NIK format and ICD-10 diagnostic standard checks.
-    Consumed by wso2/fhir-mcp-server and SIMRS/HIS gateways.
+    Consumed by standard FHIR gateways and SIMRS/HIS adapters.
     """
     validation_issues = []
     claimed_type = payload.get("resourceType")

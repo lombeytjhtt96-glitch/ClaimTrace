@@ -22,7 +22,7 @@ from app.engine.decision_receipts_engine import (
     verify_decision_receipt,
     apply_human_gate_review
 )
-from app.engine.cybersecurity_framework_engine import cybersecurity_engine
+from app.engine.threat_defense_engine import threat_defense_engine
 from app.security.token_manager import create_access_token, verify_access_token, REVOKED_TOKENS
 from app.models.schemas import ClaimInput
 
@@ -778,18 +778,18 @@ def test_f09_05_decision_receipt_verification_endpoint(client: TestClient):
 # ==============================================================================
 
 def test_f10_01_framework_catalog_summary_response(client: TestClient):
-    """Memverifikasi ringkasan pemetaan kerangka kerja keamanan siber."""
-    res = client.get("/api/v1/cybersecurity/frameworks/summary")
+    """Memverifikasi ringkasan pemetaan kerangka kerja pertahanan fraud."""
+    res = client.get("/api/v1/threat-defense/frameworks/summary")
     assert res.status_code == 200
     data = res.json()
-    assert "total_skills_count" in data
+    assert "total_controls_count" in data
     assert "MITRE_F3_v1_1" in data["mapped_frameworks"]
     assert "NIST_CSF_v2" in data["mapped_frameworks"]
 
 
 def test_f10_02_mitre_f3_positioning_and_monetization_tags():
     """Memverifikasi pemetaan taktik positioning dan monetization pada MITRE F3."""
-    matrix = cybersecurity_engine.evaluate_claim_cybersecurity({
+    matrix = threat_defense_engine.evaluate_claim_threat_matrix({
         "claim_id": "CLM-2026-8801",
         "fraud_typology": "PHANTOM_BILLING"
     })
@@ -801,7 +801,7 @@ def test_f10_02_mitre_f3_positioning_and_monetization_tags():
 
 def test_f10_03_mitre_attack_and_d3fend_countermeasures():
     """Memverifikasi keberadaan TTP ATT&CK dan tindakan bertahan D3FEND."""
-    matrix = cybersecurity_engine.evaluate_claim_cybersecurity({
+    matrix = threat_defense_engine.evaluate_claim_threat_matrix({
         "claim_id": "CLM-2026-8801",
         "fraud_typology": "PHANTOM_BILLING"
     })
@@ -811,15 +811,15 @@ def test_f10_03_mitre_attack_and_d3fend_countermeasures():
     assert "D3-ARA" in d3fend_ids or "D3-DA" in d3fend_ids
 
 
-def test_f10_04_claim_cybersecurity_matrix_evaluation(client: TestClient):
-    """Memverifikasi evaluasi matriks keamanan siber klaim melalui REST API."""
+def test_f10_04_claim_threat_matrix_evaluation(client: TestClient):
+    """Memverifikasi evaluasi matriks pertahanan ancaman klaim melalui REST API."""
     req = {
         "claim_id": "CLM-2026-8801",
         "fraud_typology": "PHANTOM_BILLING",
         "faskes_code": "FSK-8801",
         "nominal_klaim_rp": 15300000.0
     }
-    res = client.post("/api/v1/cybersecurity/claims/evaluate", json=req)
+    res = client.post("/api/v1/threat-defense/claims/evaluate", json=req)
     assert res.status_code == 200
     data = res.json()
     assert data["claim_id"] == "CLM-2026-8801"
@@ -828,8 +828,8 @@ def test_f10_04_claim_cybersecurity_matrix_evaluation(client: TestClient):
 
 
 def test_f10_05_canonical_matrix_sha256_determinism():
-    """Memverifikasi determinisme hash SHA-256 pada komponen matriks keamanan siber."""
-    m1 = cybersecurity_engine.evaluate_claim_cybersecurity({"claim_id": "CLM-DET-01", "fraud_typology": "UPCODING"})
+    """Memverifikasi determinisme hash SHA-256 pada komponen matriks pertahanan ancaman."""
+    m1 = threat_defense_engine.evaluate_claim_threat_matrix({"claim_id": "CLM-DET-01", "fraud_typology": "UPCODING"})
     assert len(m1["canonical_matrix_sha256"]) == 64
     assert m1["fraud_typology"] == "UPCODING"
     assert m1["risk_level"] == "HIGH"

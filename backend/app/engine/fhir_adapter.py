@@ -426,7 +426,7 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
             {"text": f"MITRE F3 Mapping: {', '.join(triage.mitre_f3_tags)}"},
             {"text": f"MITRE ATT&CK Mapping: {', '.join(triage.mitre_attack_tags)}"},
             {"text": f"Dasar Hukum: {', '.join(triage.regulatory_basis)}"},
-            {"text": f"SLA Vedika Deadline: {triage.sla_deadline_days} Hari Kerja (Perpres 82/2018)"}
+            {"text": f"SLA Verifikasi Klaim: {triage.sla_deadline_days} Hari Kerja (Perpres 82/2018)"}
         ]
     }
 
@@ -473,7 +473,7 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
                     ]
                 },
                 "who": {
-                    "display": "Verifikator Vedika BPJS Kesehatan (Human-in-the-Loop)"
+                    "display": "Verifikator Medis BPJS Kesehatan (Human-in-the-Loop)"
                 }
             }
         ],

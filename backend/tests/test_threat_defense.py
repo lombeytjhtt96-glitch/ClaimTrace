@@ -1,36 +1,36 @@
 """
-Unit & Integration Tests for Cybersecurity Frameworks & MITRE F3 Engine
-Validates 818-skills library mapping, MITRE F3 Positioning/Monetization,
-MITRE ATT&CK TTPs, MITRE D3FEND countermeasures, and REST API endpoints.
+Unit & Integration Tests for Threat Defense Frameworks & MITRE F3 Engine
+Validates MITRE F3 Positioning/Monetization, MITRE ATT&CK TTPs,
+MITRE D3FEND countermeasures, and REST API endpoints.
 """
 
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.engine.cybersecurity_framework_engine import cybersecurity_engine, FRAUD_TYPOLOGY_MATRIX
+from app.engine.threat_defense_engine import threat_defense_engine, FRAUD_TYPOLOGY_MATRIX
 
 client = TestClient(app)
 
 def test_engine_summary_statistics():
-    """Verify 818 skills and 6 framework coverage metrics."""
-    summary = cybersecurity_engine.get_framework_summary()
-    assert summary["total_skills_count"] == 818
-    assert summary["f3_skills_count"] == 94
+    """Verify F3 catalog count and 6 framework coverage metrics."""
+    summary = threat_defense_engine.get_framework_summary()
+    assert summary["total_controls_count"] == 94
+    assert summary["f3_controls_count"] == 94
     frameworks = summary["mapped_frameworks"]
     assert frameworks["MITRE_ATTACK_v19"] >= 800
     assert frameworks["NIST_CSF_v2"] >= 800
     assert frameworks["MITRE_D3FEND_v1_4"] == 139
     assert frameworks["MITRE_F3_v1_1"] == 94
-    assert len(summary["top_fraud_skills"]) > 0
+    assert len(summary["top_fraud_controls"]) > 0
 
-def test_fraud_skills_catalog():
-    """Verify catalog parsing from filesystem and tactic filtering."""
-    catalog = cybersecurity_engine.get_fraud_skills_catalog(limit=25)
+def test_fraud_controls_catalog():
+    """Verify catalog loading from internal F3 JSON store and tactic filtering."""
+    catalog = threat_defense_engine.get_fraud_controls_catalog(limit=25)
     assert len(catalog) > 0
-    for skill in catalog:
-        assert skill["has_f3"] is True
-        assert "name" in skill
-        assert "description" in skill
+    for item in catalog:
+        assert item["has_f3"] is True
+        assert "name" in item
+        assert "description" in item
 
 def test_phantom_billing_f3_mapping():
     """Verify Phantom Billing maps to F3 Positioning F1005/F1036 and D3FEND D3-ARA."""
@@ -41,7 +41,7 @@ def test_phantom_billing_f3_mapping():
         "indikator_anomali": ["PATIENT_NOT_FOUND_IN_DUKCAPIL", "ABSENT_BIOMETRIC_CHECKIN"],
         "nominal_klaim_rp": 85000000.0
     }
-    matrix = cybersecurity_engine.evaluate_claim_cybersecurity(claim)
+    matrix = threat_defense_engine.evaluate_claim_threat_matrix(claim)
     assert matrix["claim_id"] == "CLM-PHANTOM-TEST-001"
     assert matrix["risk_level"] == "CRITICAL"
     
@@ -68,7 +68,7 @@ def test_upcoding_f3_mapping():
         "indikator_anomali": ["UPCODING_SEVERITY_LEVEL_3", "DISCORDANT_ICD10_PROCEDURE"],
         "nominal_klaim_rp": 62000000.0
     }
-    matrix = cybersecurity_engine.evaluate_claim_cybersecurity(claim)
+    matrix = threat_defense_engine.evaluate_claim_threat_matrix(claim)
     assert matrix["fraud_typology"] == "UPCODING"
     assert matrix["risk_level"] == "HIGH"
     
@@ -86,7 +86,7 @@ def test_geovelocity_collision_mapping():
         "indikator_anomali": ["GEOVELOCITY_IMPOSSIBLE_TRAVEL_SPEED_185KMH"],
         "nominal_klaim_rp": 24000000.0
     }
-    matrix = cybersecurity_engine.evaluate_claim_cybersecurity(claim)
+    matrix = threat_defense_engine.evaluate_claim_threat_matrix(claim)
     assert matrix["fraud_typology"] == "GEOVELOCITY_COLLISION"
     assert matrix["risk_level"] == "CRITICAL"
     
@@ -103,7 +103,7 @@ def test_repeat_billing_and_unbundling():
         "indikator_anomali": ["REPEAT_BILLING_WITHIN_7_DAYS"],
         "nominal_klaim_rp": 15000000.0
     }
-    matrix_repeat = cybersecurity_engine.evaluate_claim_cybersecurity(claim_repeat)
+    matrix_repeat = threat_defense_engine.evaluate_claim_threat_matrix(claim_repeat)
     assert matrix_repeat["fraud_typology"] == "REPEAT_BILLING"
     d3fend_repeat = [item["technique_id"] for item in matrix_repeat["d3fend_countermeasures"]]
     assert "D3-TR" in d3fend_repeat
@@ -113,7 +113,7 @@ def test_repeat_billing_and_unbundling():
         "indikator_anomali": ["FRAGMENTED_SURGICAL_UNBUNDLING"],
         "nominal_klaim_rp": 38000000.0
     }
-    matrix_unbundle = cybersecurity_engine.evaluate_claim_cybersecurity(claim_unbundle)
+    matrix_unbundle = threat_defense_engine.evaluate_claim_threat_matrix(claim_unbundle)
     assert matrix_unbundle["fraud_typology"] == "UNBUNDLING"
     d3fend_unbundle = [item["technique_id"] for item in matrix_unbundle["d3fend_countermeasures"]]
     assert "D3-CR" in d3fend_unbundle
@@ -121,32 +121,32 @@ def test_repeat_billing_and_unbundling():
 def test_canonical_sha256_integrity():
     """Verify canonical digest reproducibility and tamper detection."""
     claim_a = {"claim_id": "CLM-SEAL-01", "fraud_typology": "UPCODING", "nominal_klaim_rp": 10000000.0}
-    matrix_a1 = cybersecurity_engine.evaluate_claim_cybersecurity(claim_a)
+    matrix_a1 = threat_defense_engine.evaluate_claim_threat_matrix(claim_a)
     
     # Same payload with identical timestamp
-    matrix_a2 = cybersecurity_engine.evaluate_claim_cybersecurity(claim_a)
+    matrix_a2 = threat_defense_engine.evaluate_claim_threat_matrix(claim_a)
     assert len(matrix_a1["canonical_matrix_sha256"]) == 64
     assert len(matrix_a2["canonical_matrix_sha256"]) == 64
 
 def test_api_framework_summary_endpoint():
-    """Test GET /api/v1/cybersecurity/frameworks/summary."""
-    res = client.get("/api/v1/cybersecurity/frameworks/summary")
+    """Test GET /api/v1/threat-defense/frameworks/summary."""
+    res = client.get("/api/v1/threat-defense/frameworks/summary")
     assert res.status_code == 200
     data = res.json()
-    assert data["total_skills_count"] == 818
-    assert data["f3_skills_count"] == 94
+    assert data["total_controls_count"] == 94
+    assert data["f3_controls_count"] == 94
     assert "MITRE_F3_v1_1" in data["mapped_frameworks"]
 
 def test_api_fraud_catalog_endpoint():
-    """Test GET /api/v1/cybersecurity/skills/fraud-catalog."""
-    res = client.get("/api/v1/cybersecurity/skills/fraud-catalog?limit=10")
+    """Test GET /api/v1/threat-defense/fraud-catalog."""
+    res = client.get("/api/v1/threat-defense/fraud-catalog?limit=10")
     assert res.status_code == 200
     data = res.json()
     assert isinstance(data, list)
     assert len(data) <= 10
 
 def test_api_claim_evaluate_endpoint():
-    """Test POST /api/v1/cybersecurity/claims/evaluate."""
+    """Test POST /api/v1/threat-defense/claims/evaluate."""
     payload = {
         "claim_id": "CLM-API-TEST-999",
         "faskes_code": "FASKES-RSUD-TEST",
@@ -154,7 +154,7 @@ def test_api_claim_evaluate_endpoint():
         "indikator_anomali": ["GEOVELOCITY_IMPOSSIBLE_TRAVEL"],
         "nominal_klaim_rp": 75000000.0
     }
-    res = client.post("/api/v1/cybersecurity/claims/evaluate", json=payload)
+    res = client.post("/api/v1/threat-defense/claims/evaluate", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["claim_id"] == "CLM-API-TEST-999"

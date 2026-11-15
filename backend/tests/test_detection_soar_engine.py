@@ -1,19 +1,19 @@
 """
-Unit and Integration Tests for Google SecOps Detection Engineering & SOAR Engine
-Applies patterns from google/skills:
-- secops-detection-engineering (YARA-L 2.0 validation, UDM testing)
-- secops-cases (SOAR incident case lifecycle, SLA calculations)
-- assuredworkloads-environment-assessor (Sovereignty compliance per UU PDP 27/2022)
+Unit and Integration Tests for Detection Engineering (YARA-L 2.0) & SOAR Engine
+Covers:
+- YARA-L 2.0 validation and UDM event testing
+- SOAR incident case lifecycle and SLA calculations
+- Sovereign healthcare data boundary compliance per UU PDP No. 27/2022
 """
 
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.engine.google_secops_engine import (
+from app.engine.detection_soar_engine import (
     PRECOMPILED_YARA_L_RULES,
     validate_yara_l_syntax,
     compile_dynamic_yara_l_rule,
-    generate_secops_cases,
+    generate_soar_cases,
     generate_sovereignty_assessment_report
 )
 
@@ -47,8 +47,8 @@ def test_dynamic_yara_l_compilation():
     assert "#claim >= 20" in res["rule_text"]
     assert "over 12h" in res["rule_text"]
 
-def test_secops_cases_generation():
-    """Verifies SecOps SOAR case generation, SLA tracking, and SHA-256 integrity."""
+def test_soar_cases_generation():
+    """Verifies SOAR case generation, SLA tracking, and SHA-256 integrity."""
     mock_claims = [
         {
             "claim_id": "CLM-2026-8801",
@@ -73,7 +73,7 @@ def test_secops_cases_generation():
             "s3_score": 10.0
         }
     ]
-    manifest = generate_secops_cases(mock_claims)
+    manifest = generate_soar_cases(mock_claims)
     assert manifest["total_cases"] == 2
     assert manifest["critical_cases"] == 1
     assert len(manifest["integrity_seal"]) == 64
@@ -93,9 +93,9 @@ def test_sovereignty_assessment_report():
     assert rep["compliant_controls"] == 4
     assert len(rep["sovereign_seal_sha256"]) == 64
 
-def test_api_list_secops_rules():
-    """Integration test for GET /api/v1/secops/rules."""
-    res = client.get("/api/v1/secops/rules")
+def test_api_list_detection_rules():
+    """Integration test for GET /api/v1/detection/rules."""
+    res = client.get("/api/v1/detection/rules")
     assert res.status_code == 200
     data = res.json()
     assert len(data) >= 5
@@ -103,16 +103,16 @@ def test_api_list_secops_rules():
     assert "jkn_phantom_billing_cluster" in rule_names
     assert "jkn_inactive_dpjp_credential_abuse" in rule_names
 
-def test_api_get_secops_rule_by_id():
-    """Integration test for GET /api/v1/secops/rules/{rule_id}."""
-    res = client.get("/api/v1/secops/rules/YARA-L-JKN-001")
+def test_api_get_detection_rule_by_id():
+    """Integration test for GET /api/v1/detection/rules/{rule_id}."""
+    res = client.get("/api/v1/detection/rules/YARA-L-JKN-001")
     assert res.status_code == 200
     data = res.json()
     assert data["rule_id"] == "YARA-L-JKN-001"
     assert data["syntax_validation"]["valid"] is True
 
-def test_api_compile_secops_rule():
-    """Integration test for POST /api/v1/secops/rules/compile."""
+def test_api_compile_detection_rule():
+    """Integration test for POST /api/v1/detection/rules/compile."""
     payload = {
         "rule_name": "test_rule_katarak_upcoding",
         "description": "Deteksi klaim fakoemulsifikasi tanpa visus",
@@ -121,24 +121,24 @@ def test_api_compile_secops_rule():
         "threshold_count": 10,
         "time_window_hours": 24
     }
-    res = client.post("/api/v1/secops/rules/compile", json=payload)
+    res = client.post("/api/v1/detection/rules/compile", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["syntax_valid"] is True
     assert "H-2-36-0" in data["rule_text"]
 
-def test_api_list_secops_cases():
-    """Integration test for GET /api/v1/secops/cases."""
-    res = client.get("/api/v1/secops/cases")
+def test_api_list_detection_cases():
+    """Integration test for GET /api/v1/detection/cases."""
+    res = client.get("/api/v1/detection/cases")
     assert res.status_code == 200
     data = res.json()
-    assert data["spec_version"] == "1.2.0-secops"
+    assert data["spec_version"] == "1.2.0-soar"
     assert data["total_cases"] >= 6
     assert data["critical_cases"] >= 1
 
-def test_api_get_secops_case_detail():
-    """Integration test for GET /api/v1/secops/cases/CLM-2026-8801."""
-    res = client.get("/api/v1/secops/cases/CLM-2026-8801")
+def test_api_get_detection_case_detail():
+    """Integration test for GET /api/v1/detection/cases/CLM-2026-8801."""
+    res = client.get("/api/v1/detection/cases/CLM-2026-8801")
     assert res.status_code == 200
     data = res.json()
     assert data["claim_id"] == "CLM-2026-8801"
@@ -146,8 +146,8 @@ def test_api_get_secops_case_detail():
     assert "RS Khusus Mitra Husada" in data["hospital"]
 
 def test_api_sovereignty_assessment():
-    """Integration test for GET /api/v1/secops/sovereignty/assessment."""
-    res = client.get("/api/v1/secops/sovereignty/assessment")
+    """Integration test for GET /api/v1/detection/sovereignty/assessment."""
+    res = client.get("/api/v1/detection/sovereignty/assessment")
     assert res.status_code == 200
     data = res.json()
     assert data["overall_compliance_status"] == "CERTIFIED_SOVEREIGN"

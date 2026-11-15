@@ -57,11 +57,14 @@ class RateLimiterRegistry:
     def record_auth_failure(self, ip: str, max_failures: int = 5, lockout_duration: int = 300) -> bool:
         """
         Records a failed login/credential attempt.
-        If threshold reached, locks out the IP for lockout_duration seconds.
+        If threshold reached, locks out the key for lockout_duration seconds.
+        Automatically resets prior expired lockouts before accumulating new failures.
         """
         now = time.time()
         with self._lock:
             count, lock_until = self._auth_lockouts.get(ip, (0, 0.0))
+            if lock_until > 0.0 and now >= lock_until:
+                count, lock_until = 0, 0.0
             if now < lock_until:
                 return True # Already locked out
             new_count = count + 1
@@ -71,20 +74,35 @@ class RateLimiterRegistry:
             self._auth_lockouts[ip] = (new_count, 0.0)
             return False
 
+    def get_auth_failure_count(self, key: str) -> int:
+        now = time.time()
+        with self._lock:
+            count, lock_until = self._auth_lockouts.get(key, (0, 0.0))
+            if lock_until > 0.0 and now >= lock_until:
+                self._auth_lockouts.pop(key, None)
+                return 0
+            return count
+
     def is_auth_locked(self, ip: str) -> Tuple[bool, int]:
         """
-        Checks if IP is currently under brute-force lockout.
+        Checks if key is currently under brute-force lockout.
         """
         now = time.time()
         with self._lock:
             count, lock_until = self._auth_lockouts.get(ip, (0, 0.0))
             if now < lock_until:
                 return True, max(1, int(lock_until - now))
+            if lock_until > 0.0 and now >= lock_until:
+                self._auth_lockouts.pop(ip, None)
             return False, 0
 
     def reset_auth_failure(self, ip: str) -> None:
         with self._lock:
             self._auth_lockouts.pop(ip, None)
+
+    def reset_all_auth_lockouts(self) -> None:
+        with self._lock:
+            self._auth_lockouts.clear()
 
 
 # Global registry singleton
@@ -115,8 +133,18 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             client_ip = peer_ip
         path = request.url.path
 
-        # 1. Check Brute-Force Auth Lockout
-        if path.startswith("/api/v1/auth"):
+        # 1. Check Brute-Force Auth Lockout on credential, recovery & MFA endpoints
+        _credential_auth_paths = {
+            "/api/v1/auth/login",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            "/api/v1/auth/verify-pin",
+            "/api/v1/auth/send-otp",
+            "/api/v1/auth/verify-otp",
+            "/api/v1/auth/authorize-session",
+            "/api/v1/auth/trust-device",
+        }
+        if path in _credential_auth_paths:
             is_locked, lockout_remaining = rate_limiter.is_auth_locked(client_ip)
             if is_locked:
                 return JSONResponse(
@@ -131,9 +159,12 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                 )
 
         # 2. Contextual Thresholds
-        if path.startswith("/api/v1/auth"):
-            limit, window = 20, 60
+        if path in _credential_auth_paths or path in {"/api/v1/auth/captcha", "/api/v1/auth/reset-password/validate"}:
+            limit, window = 25, 60
             key = f"auth:{client_ip}"
+        elif path.startswith("/api/v1/auth"):
+            limit, window = 120, 60
+            key = f"auth_sess:{client_ip}"
         elif path.startswith("/api/v1/wbs"):
             limit, window = 15, 60
             key = f"wbs:{client_ip}"

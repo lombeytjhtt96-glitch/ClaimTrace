@@ -1,8 +1,8 @@
 """
-ClaimTrace Humanizer Engine
-Implements Wikipedia's 'Signs of AI writing' and blader/humanizer v3.1.0 doctrine.
-Transforms AI-sounding claim adjudication text into natural, plain human prose.
-Eliminates 26 AI writing tells (staging, forced triads, buzzwords, bold labels, chatbot residue).
+ClaimTrace Clinical Narrative Refiner Engine
+Implements structured clinical prose normalization and AI-pattern removal doctrine.
+Transforms verbose adjudication drafts into direct, objective clinical notes.
+Eliminates 26 automated writing tells (staging, forced triads, buzzwords, bold labels, chatbot residue).
 """
 
 import hashlib
@@ -11,7 +11,7 @@ import re
 from typing import Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
-# Pattern definitions derived from blader/humanizer 26-pattern taxonomy
+# Pattern definitions for 26-category clinical prose normalization taxonomy
 PATTERNS_MAP: Dict[str, List[re.Pattern]] = {
     "§1_not_x_but_y": [
         re.compile(r"\b(?:it's not (?:just|only|merely)|not just|not only|not merely)\b.*?\b(?:but|it is|it's)\b", re.IGNORECASE),
@@ -63,16 +63,16 @@ PATTERNS_MAP: Dict[str, List[re.Pattern]] = {
     ],
 }
 
-class HumanizedAdjudicationText(BaseModel):
-    spec_version: str = "3.1.0"
+class RefinedAdjudicationText(BaseModel):
+    spec_version: str = "1.0.0"
     original_text: str
     patterns_detected: List[str]
     draft_critique: str
-    humanized_text: str
+    refined_text: str
     word_count_before: int
     word_count_after: int
     word_count_reduction_pct: float
-    humanized_hash: str
+    refined_hash: str
 
 def compute_sha256(data: str) -> str:
     return hashlib.sha256(data.encode("utf-8")).hexdigest()
@@ -159,9 +159,9 @@ def clean_ai_prose(text: str) -> str:
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
 
-def humanize_claim_prose(text: str, writing_sample: Optional[str] = None) -> HumanizedAdjudicationText:
+def refine_claim_prose(text: str, writing_sample: Optional[str] = None) -> RefinedAdjudicationText:
     """
-    Executes the 4-step Humanizer workflow on arbitrary clinical adjudication prose:
+    Executes the 4-step clinical prose refinement workflow on arbitrary adjudication prose:
     1. Mark tells (§1 - §26).
     2. Draft rewrite preserving factual invariants.
     3. Check draft against overused patterns.
@@ -193,24 +193,24 @@ def humanize_claim_prose(text: str, writing_sample: Optional[str] = None) -> Hum
 
     raw_hash_content = json.dumps({
         "original": text,
-        "humanized": cleaned_text,
+        "refined": cleaned_text,
         "patterns": detected_patterns
     }, sort_keys=True)
-    humanized_hash = compute_sha256(raw_hash_content)
+    refined_hash = compute_sha256(raw_hash_content)
 
-    return HumanizedAdjudicationText(
-        spec_version="3.1.0",
+    return RefinedAdjudicationText(
+        spec_version="1.0.0",
         original_text=text,
         patterns_detected=detected_patterns,
         draft_critique=critique,
-        humanized_text=cleaned_text,
+        refined_text=cleaned_text,
         word_count_before=words_before,
         word_count_after=words_after,
         word_count_reduction_pct=reduction_pct,
-        humanized_hash=humanized_hash
+        refined_hash=refined_hash
     )
 
-def generate_humanized_claim_narrative(claim_id: str, claim_data: Optional[Dict] = None) -> HumanizedAdjudicationText:
+def generate_refined_claim_narrative(claim_id: str, claim_data: Optional[Dict] = None) -> RefinedAdjudicationText:
     """
     Generates an authentic, plain-language clinical adjudication note for a specific claim.
     Written strictly in the objective, direct voice of a senior medical verifier.
@@ -238,4 +238,4 @@ def generate_humanized_claim_narrative(claim_id: str, claim_data: Optional[Dict]
         f"Klaim memenuhi syarat administrasi dan diteruskan ke adjudikasi tahap akhir."
     )
 
-    return humanize_claim_prose(prose)
+    return refine_claim_prose(prose)

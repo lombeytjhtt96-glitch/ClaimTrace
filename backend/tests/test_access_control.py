@@ -1,6 +1,6 @@
 """
 Tests for ClaimTrace Enterprise Access Control & Privilege Gatekeeper
-Inspired by Internet2 Grouper Security Review Standards:
+Verifies RBAC & ABAC Enforcement Standards:
 - Server-side privilege enforcement (Hiding UI is not security).
 - Strict separation of READ vs ADJUDICATE (no role conflation).
 - Fail-closed error handling on invalid/tampered tokens.
@@ -71,7 +71,7 @@ def test_verificator_adjudication_authorized():
 
 def test_analyst_cannot_adjudicate_claim_fail_closed():
     """
-    GROUPE SECURITY DOCTRINE: Read-role vs Manage-role separation.
+    Prinsip Keamanan Akses: Read-role vs Manage-role separation.
     An analyst with only READ privilege must be REJECTED with HTTP 403
     when attempting to adjudicate, preventing privilege conflation.
     """
@@ -96,7 +96,7 @@ def test_analyst_cannot_adjudicate_claim_fail_closed():
     detail = res.json()["detail"]
     assert detail["error"] == "INSUFFICIENT_PRIVILEGE"
     assert detail["required_privilege"] == "ADJUDICATE"
-    assert "Hiding UI is NOT security" in detail["message"]
+    assert "Prinsip Keamanan Akses" in detail["message"]
 
 
 def test_tampered_token_rejected_401():

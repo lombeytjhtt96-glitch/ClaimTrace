@@ -154,7 +154,9 @@ def query_osrm_routing_api(
             url,
             headers={"User-Agent": "ClaimTrace-BPJS-Healthkathon/1.0 (OSRM-Geovelocity-Engine)"}
         )
-        with urllib.request.urlopen(req, timeout=timeout_sec) as response:
+        if not url.startswith("https://router.project-osrm.org/"):
+            return None
+        with urllib.request.urlopen(req, timeout=timeout_sec) as response:  # nosec B310
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 if data.get("code") == "Ok" and data.get("routes"):

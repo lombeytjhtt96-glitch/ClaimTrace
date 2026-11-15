@@ -1,11 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app, SYNTHETIC_CLAIMS_DATABASE
-from app.engine.humanizer_engine import (
+from app.engine.narrative_refiner import (
     detect_ai_patterns,
     clean_ai_prose,
-    humanize_claim_prose,
-    generate_humanized_claim_narrative,
+    refine_claim_prose,
+    generate_refined_claim_narrative,
 )
 
 client = TestClient(app)
@@ -45,43 +45,43 @@ def test_clean_ai_prose_preserves_facts():
     assert "K-4-17-I" in cleaned
     assert "15.000.000" in cleaned
 
-def test_humanize_claim_prose_metrics():
+def test_refine_claim_prose_metrics():
     raw = "Tentu saja! Pada intinya, mari kita selami kasus ini yang krusial. Semoga ini membantu!"
-    result = humanize_claim_prose(raw)
-    assert result.spec_version == "3.1.0"
+    result = refine_claim_prose(raw)
+    assert result.spec_version == "1.0.0"
     assert len(result.patterns_detected) >= 3
     assert result.word_count_after < result.word_count_before
     assert result.word_count_reduction_pct > 0.0
-    assert len(result.humanized_hash) == 64
+    assert len(result.refined_hash) == 64
 
-def test_generate_humanized_claim_narrative_existing_claim():
+def test_generate_refined_claim_narrative_existing_claim():
     claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
-    narrative = generate_humanized_claim_narrative(claim_id)
-    assert narrative.spec_version == "3.1.0"
-    assert len(narrative.humanized_text) > 0
-    assert len(narrative.humanized_hash) == 64
+    narrative = generate_refined_claim_narrative(claim_id)
+    assert narrative.spec_version == "1.0.0"
+    assert len(narrative.refined_text) > 0
+    assert len(narrative.refined_hash) == 64
 
-def test_api_humanize_prose_endpoint():
+def test_api_refine_prose_endpoint():
     payload = {
         "text": "Tentu saja! Mari kita bedah kasus ini. Bukan sekadar selisih tarif melainkan fraud krusial. Semoga ini membantu!"
     }
-    response = client.post("/api/v1/claims/humanize-prose", json=payload)
+    response = client.post("/api/v1/claims/refine-narrative", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["spec_version"] == "3.1.0"
+    assert data["spec_version"] == "1.0.0"
     assert len(data["patterns_detected"]) > 0
-    assert "humanized_text" in data
-    assert len(data["humanized_hash"]) == 64
+    assert "refined_text" in data
+    assert len(data["refined_hash"]) == 64
 
-def test_api_humanized_narrative_endpoint():
+def test_api_refined_narrative_endpoint():
     claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
-    response = client.get(f"/api/v1/claims/{claim_id}/humanized-narrative")
+    response = client.get(f"/api/v1/claims/{claim_id}/refined-narrative")
     assert response.status_code == 200
     data = response.json()
-    assert data["spec_version"] == "3.1.0"
-    assert "Verifikasi berkas" in data["humanized_text"]
+    assert data["spec_version"] == "1.0.0"
+    assert "Verifikasi berkas" in data["refined_text"]
 
-def test_api_humanized_narrative_endpoint_404():
-    response = client.get("/api/v1/claims/NONEXISTENT-HUMANIZER-ID/humanized-narrative")
+def test_api_refined_narrative_endpoint_404():
+    response = client.get("/api/v1/claims/NONEXISTENT-NARRATIVE-ID/refined-narrative")
     assert response.status_code == 404
     assert "tidak ditemukan" in response.json()["detail"]

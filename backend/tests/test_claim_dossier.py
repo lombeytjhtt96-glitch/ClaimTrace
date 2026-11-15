@@ -1,6 +1,6 @@
 """
 Unit test suite for Claim Dossier and Invoice Organizer Engine.
-Validates awesome-codex-skills integration for ClaimTrace JKN.
+Validates invoice organization and financial dispute reconciliation for ClaimTrace JKN.
 """
 
 from fastapi.testclient import TestClient
@@ -17,7 +17,7 @@ client = TestClient(app)
 def test_organize_claim_dossiers_structure():
     manifest = organize_claim_dossiers(SYNTHETIC_CLAIMS_DATABASE)
     assert isinstance(manifest, ClaimDossierManifest)
-    assert manifest.spec_version == "1.0.0-codex"
+    assert manifest.spec_version == "1.0.0-claimtrace"
     assert manifest.manifest_id.startswith("DOSSIER-")
     assert manifest.total_berkas_diorganisir == len(SYNTHETIC_CLAIMS_DATABASE)
     assert manifest.total_faskes_diaudit >= 1
@@ -64,7 +64,7 @@ def test_api_dossier_summary_endpoint():
     res = client.get("/api/v1/dossier/summary")
     assert res.status_code == 200
     data = res.json()
-    assert data["spec_version"] == "1.0.0-codex"
+    assert data["spec_version"] == "1.0.0-claimtrace"
     assert data["total_berkas_diorganisir"] >= 1
     assert "faskes_summaries" in data
     assert "claims" in data

@@ -1,10 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app, SYNTHETIC_CLAIMS_DATABASE
-from app.engine.last30days_engine import (
+from app.engine.temporal_radar_engine import (
     get_30day_temporal_radar,
     generate_claim_30day_intelligence,
-    execute_last30days_cli,
+    query_temporal_intelligence,
     ACTIVE_30DAY_REGULATORY_CIRCULARS,
 )
 
@@ -12,14 +12,14 @@ client = TestClient(app)
 
 def test_get_30day_temporal_radar_structure():
     radar = get_30day_temporal_radar()
-    assert radar.spec_version == "3.31.0"
+    assert radar.spec_version == "1.0.0"
     assert radar.total_signals_tracked == len(ACTIVE_30DAY_REGULATORY_CIRCULARS)
     assert len(radar.high_priority_alerts) > 0
     assert len(radar.typologies_in_focus) >= 3
     assert len(radar.radar_hash) == 64
 
-def test_execute_last30days_cli_mock():
-    res = execute_last30days_cli("BPJS upcoding", lookback_days=30, mock=True)
+def test_query_temporal_intelligence_mock():
+    res = query_temporal_intelligence("BPJS upcoding", lookback_days=30, mock=True)
     assert res.get("schema_version") == "1.4"
     assert res.get("window_days") == 30
     assert "clusters" in res
@@ -33,7 +33,7 @@ def test_generate_claim_30day_intelligence_matched():
         "biaya_riil": 15300000
     }
     brief = generate_claim_30day_intelligence("CLM-2026-TEST-01", claim_data, mock_search=True)
-    assert brief.spec_version == "3.31.0"
+    assert brief.spec_version == "1.0.0"
     assert brief.claim_id == "CLM-2026-TEST-01"
     assert len(brief.active_regulatory_circulars) >= 1
     assert brief.risk_elevation_factor == 1.20
@@ -53,27 +53,27 @@ def test_generate_claim_30day_intelligence_unmatched():
     assert "Tidak ditemukan peringatan khusus" in brief.adjudicator_guidance
 
 def test_api_get_30day_radar_endpoint():
-    response = client.get("/api/v1/radar/last30days")
+    response = client.get("/api/v1/radar/temporal")
     assert response.status_code == 200
     data = response.json()
-    assert data["spec_version"] == "3.31.0"
+    assert data["spec_version"] == "1.0.0"
     assert data["total_signals_tracked"] == 7
     assert len(data["high_priority_alerts"]) == 7
     assert len(data["radar_hash"]) == 64
 
 def test_api_get_claim_30day_intelligence_endpoint():
     claim_id = next(iter(SYNTHETIC_CLAIMS_DATABASE.keys()))
-    response = client.get(f"/api/v1/claims/{claim_id}/last30days-intelligence")
+    response = client.get(f"/api/v1/claims/{claim_id}/temporal-intelligence")
     assert response.status_code == 200
     data = response.json()
-    assert data["spec_version"] == "3.31.0"
+    assert data["spec_version"] == "1.0.0"
     assert data["claim_id"] == claim_id
     assert data["lookback_window_days"] == 30
     assert "adjudicator_guidance" in data
     assert len(data["temporal_hash"]) == 64
 
 def test_api_get_claim_30day_intelligence_not_found():
-    response = client.get("/api/v1/claims/NON-EXISTENT-CLAIM-999/last30days-intelligence")
+    response = client.get("/api/v1/claims/NON-EXISTENT-CLAIM-999/temporal-intelligence")
     assert response.status_code == 404
 
 def test_api_query_30day_radar_endpoint():
@@ -82,7 +82,7 @@ def test_api_query_30day_radar_endpoint():
         "days": 30,
         "mock": True
     }
-    response = client.post("/api/v1/radar/last30days/query", json=payload)
+    response = client.post("/api/v1/radar/temporal/query", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data.get("schema_version") == "1.4"

@@ -1,8 +1,7 @@
 """
-Last30Days Temporal Intelligence Engine for ClaimTrace JKN.
-Integrates mvanhorn/last30days-skill (v3.31.0) architecture to provide 30-day
-temporal fraud radar, active regulatory circulars, and community consensus
-signals for BPJS Kesehatan claims adjudication.
+Temporal Intelligence Engine for ClaimTrace JKN.
+Provides a 30-day rolling fraud radar, active regulatory circular tracking,
+and temporal signal correlation for BPJS Kesehatan claims adjudication.
 """
 
 from __future__ import annotations
@@ -10,13 +9,8 @@ from __future__ import annotations
 import datetime
 import hashlib
 import json
-import os
-import subprocess
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
-
-SKILL_SCRIPT_PATH = Path("/home/Khalaf-Dev/last30days-skill/skills/last30days/scripts/last30days.py")
 
 # Active 30-day temporal regulatory alerts and fraud signals (October - November 2026 window)
 ACTIVE_30DAY_REGULATORY_CIRCULARS = [
@@ -116,60 +110,50 @@ class TemporalRadarSummary(BaseModel):
     typologies_in_focus: List[str]
     radar_hash: str
 
-def execute_last30days_cli(
+def query_temporal_intelligence(
     topic: str,
     lookback_days: int = 30,
     mock: bool = True
 ) -> Dict[str, Any]:
     """
-    Executes mvanhorn/last30days-skill scripts/last30days.py CLI in JSON emit mode.
-    Falls back gracefully to deterministic signals if external processes fail.
+    Executes an internal 30-day temporal query against ClaimTrace regulatory circulars
+    and fraud signal intelligence for the requested clinical topic or INA-CBG pattern.
     """
-    if not SKILL_SCRIPT_PATH.exists():
-        return {
-            "schema_version": "1.4",
-            "clusters": [],
-            "items": [],
-            "window_days": lookback_days,
-            "error": "Skill script not found at expected path"
-        }
+    tokens = [tok.strip().lower() for tok in topic.split() if len(tok.strip()) >= 2]
+    matched_items: List[Dict[str, Any]] = []
 
-    cmd = [
-        "python3",
-        str(SKILL_SCRIPT_PATH),
-        topic,
-        "--research-only",
-        "--emit=json",
-        f"--days={lookback_days}"
-    ]
-    if mock:
-        cmd.append("--mock")
+    for circ in ACTIVE_30DAY_REGULATORY_CIRCULARS:
+        haystack = " ".join([
+            circ.get("title", ""),
+            circ.get("category", ""),
+            circ.get("summary", ""),
+            " ".join(circ.get("affected_codes", [])),
+        ]).lower()
+        hits = sum(1 for tok in tokens if tok in haystack)
+        if hits > 0 or not tokens:
+            relevance = min(0.98, 0.65 + (hits * 0.1))
+            matched_items.append({
+                "title": circ["title"],
+                "source": "claimtrace-regulatory-radar",
+                "published_at": circ["effective_date"],
+                "relevance_score": relevance,
+                "engagement": {"score": 95 if circ["severity"] == "CRITICAL" else 75},
+                "summary": circ["summary"],
+                "url": None,
+            })
 
-    try:
-        env = os.environ.copy()
-        env["SETUP_COMPLETE"] = "true"
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=15,
-            env=env
-        )
-        stdout = proc.stdout
-        start = stdout.find("{")
-        end = stdout.rfind("}")
-        if start != -1 and end != -1:
-            return json.loads(stdout[start:end + 1])
-    except Exception as e:
-        print(f"[Last30Days Engine] Subprocess notice: {e}")
-
-    # Deterministic fallback envelope
     return {
         "schema_version": "1.4",
-        "clusters": [],
-        "items": [],
+        "clusters": [
+            {
+                "topic": topic,
+                "matched_count": len(matched_items),
+                "severity_levels": sorted({c["severity"] for c in ACTIVE_30DAY_REGULATORY_CIRCULARS}),
+            }
+        ],
+        "items": matched_items,
         "window_days": lookback_days,
-        "fallback": True
+        "mode": "deterministic" if mock else "live",
     }
 
 def get_30day_temporal_radar(as_of: Optional[str] = None) -> TemporalRadarSummary:
@@ -187,11 +171,11 @@ def get_30day_temporal_radar(as_of: Optional[str] = None) -> TemporalRadarSummar
         "Sesar (SC) Non-Indikasi Medis Terverifikasi"
     ]
 
-    hash_material = f"3.31.0|{start_date.isoformat()}|{ref_date.isoformat()}|{len(ACTIVE_30DAY_REGULATORY_CIRCULARS)}"
+    hash_material = f"1.0.0|{start_date.isoformat()}|{ref_date.isoformat()}|{len(ACTIVE_30DAY_REGULATORY_CIRCULARS)}"
     radar_hash = hashlib.sha256(hash_material.encode("utf-8")).hexdigest()
 
     return TemporalRadarSummary(
-        spec_version="3.31.0",
+        spec_version="1.0.0",
         window_start=start_date.isoformat(),
         window_end=ref_date.isoformat(),
         total_signals_tracked=len(ACTIVE_30DAY_REGULATORY_CIRCULARS),
@@ -248,9 +232,9 @@ def generate_claim_30day_intelligence(
     elif matched_circulars:
         elevation_factor = 1.10
 
-    # Execute last30days skill query for broader temporal corroboration
+    # Query internal 30-day temporal intelligence store for broader corroboration
     search_topic = f"BPJS Kesehatan {dx_primary} {cbg_code} fraud"
-    engine_res = execute_last30days_cli(search_topic, lookback_days=30, mock=mock_search)
+    engine_res = query_temporal_intelligence(search_topic, lookback_days=30, mock=mock_search)
 
     findings: List[TemporalFindingItem] = []
     raw_items = engine_res.get("items", [])
@@ -282,11 +266,11 @@ def generate_claim_30day_intelligence(
         )
 
     # Compute SHA-256 integrity hash
-    hash_payload = f"3.31.0|{claim_id}|{dx_primary}|{cbg_code}|{elevation_factor}|{len(matched_circulars)}"
+    hash_payload = f"1.0.0|{claim_id}|{dx_primary}|{cbg_code}|{elevation_factor}|{len(matched_circulars)}"
     temporal_hash = hashlib.sha256(hash_payload.encode("utf-8")).hexdigest()
 
     return TemporalIntelligenceBrief(
-        spec_version="3.31.0",
+        spec_version="1.0.0",
         topic=search_topic,
         claim_id=claim_id,
         lookback_window_days=30,

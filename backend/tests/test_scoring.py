@@ -216,6 +216,7 @@ def test_bpjs_data_sample_and_bea_c0304_mapping():
         triage = evaluate_claim_triage(claim)
         assert triage.bea_process_code == "C03.04 (Klaim)"
         assert triage.bea_target_system in [
+            "VIDI (Verifikasi Digital Fast-Track)",
             "VIDI (Vedika Digital Fast-Track)",
             "VClaim Bridging RS (Klarifikasi Dokumen)",
             "SIGAP Anti-Fraud BPJS Kesehatan (Audit Khusus)"

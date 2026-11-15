@@ -1,8 +1,8 @@
 """
 ClaimTrace Enterprise Access Control & Privilege Gatekeeper
-Inspired by Internet2 Grouper Privilege Model & NIST CSF 2.0 PR.AC-04 / PR.AC-06.
+Aligned with Least-Privilege RBAC/ABAC Doctrine & NIST CSF 2.0 PR.AC-04 / PR.AC-06.
 
-Core Principles (Internet2 Grouper Doctrine):
+Core Security Principles:
 1. Hiding UI is NOT security: Real security must be enforced strictly on every API/service entry point.
 2. Read-role vs Manage-role separation: A user with READ/VIEW role must never be permitted to execute mutations (ADJUDICATE/ADMIN).
 3. Privilege Escalation Prevention: Config/Prompt/Rule updates require ADMIN privilege.
@@ -136,7 +136,7 @@ class Subject:
 
 class InsufficientPrivilegeException(HTTPException):
     """
-    Standard Grouper-inspired privilege violation exception.
+    Standard privilege violation exception.
     Always returns HTTP 403 Forbidden with detailed diagnostic metadata.
     """
     def __init__(self, required_privilege: Privilege, subject: Subject, action_description: str = ""):
@@ -145,7 +145,7 @@ class InsufficientPrivilegeException(HTTPException):
             "message": (
                 f"Akses ditolak: Aktor '{subject.name}' (NIP: {subject.nip}) dengan peran '{subject.role}' "
                 f"tidak memiliki hak akses '{required_privilege.value}'. "
-                f"Prinsip Keamanan Grouper: Hiding UI is NOT security — otorisasi server-side wajib terpenuhi."
+                f"Prinsip Keamanan Akses: Otorisasi server-side wajib terpenuhi sebelum eksekusi."
             ),
             "required_privilege": required_privilege.value,
             "assigned_privileges": [p.value for p in sorted(list(subject.privileges), key=lambda x: x.value)],
@@ -216,9 +216,15 @@ def resolve_subject(
         return resolve_subject_from_payload(payload or {})
 
     # Disallow unauthenticated client header spoofing & body parameter impersonation.
-    # Test headers and fallback verifier IDs are strictly isolated to automated test runners (pytest).
+    # Test headers and known/named test verifier IDs are strictly isolated to automated test runners (pytest).
     is_test_runner = bool(os.getenv("PYTEST_CURRENT_TEST") or os.getenv("CLAIMTRACE_ALLOW_TEST_HEADERS") == "1")
-    if is_test_runner and (x_verificator_nip or x_verificator_role or fallback_verifier_id):
+    clean_fallback = str(fallback_verifier_id or "").strip()
+    is_valid_fallback = bool(
+        clean_fallback
+        and not (set(clean_fallback) <= {"0"})
+        and clean_fallback.upper() not in {"ANONIM", "ANONYMOUS", "UNKNOWN", "NONE", "NULL"}
+    )
+    if is_test_runner and (x_verificator_nip or x_verificator_role or is_valid_fallback):
         nip = x_verificator_nip or fallback_verifier_id or "198704202011012001"
         role = x_verificator_role or ("ADMIN" if "ADMIN" in str(fallback_verifier_id).upper() else ("ANALYST" if "ANALYST" in str(fallback_verifier_id).upper() else "VERIFICATOR_MEDIS"))
         known = KNOWN_ACTORS.get(nip)

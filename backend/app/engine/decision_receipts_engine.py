@@ -1,12 +1,12 @@
 """
 ClaimTrace JKN Decision Receipts & Human Gate Engine.
-Inspired by and applying standards from OpenAgentOntology / ra-qm-team:
-- ra-qm-team/skills/agent-decision-receipts (Tamper-evident action manifests, offline verification)
-- engineering/human-gate (Human-in-the-loop review gate, blocker resolution, NIP validation)
-- engineering/agent-run-forensics (Evidence anchoring, execution integrity)
+Implements cryptographically signed action manifests and human-in-the-loop governance:
+- Tamper-evident decision receipts with offline SHA-256 verification
+- Human-in-the-loop review gate, blocker resolution, and verifier NIP validation
+- Execution integrity and evidence anchoring
 
 Complies with:
-- Perpres No. 82/2018 Pasal 76 (Verifikasi Vedika BPJS Kesehatan)
+- Perpres No. 82/2018 Pasal 76 (Verifikasi & Pembayaran Klaim BPJS Kesehatan)
 - Permenkes No. 26/2021 Pasal 74 (Pencegahan & Penanganan Fraud JKN)
 - UU PDP No. 27/2022 Pasal 35 (Pelindungan Data Pribadi & Zero-PHI)
 """
@@ -23,9 +23,10 @@ from typing import Dict, List, Any, Optional
 # Secret key for HMAC tamper-evident seals (in production loaded from HSM / KMS)
 RECEIPT_SIGNING_SALT = "CLAIMTRACE_BPJS_JKN_RECEIPT_SALT_2026_SOVEREIGN"
 
-# Consequential verbs requiring receipts under ISO 27001 / RA-QM standards
+# Consequential verbs requiring receipts under ISO 27001 / governance standards
 HIGH_CONSEQUENCE_OPERATIONS = {
     "FLAG_FRAUD",
+    "APPROVE_CLAIM",
     "APPROVE_VEDIKA",
     "REJECT_CLAIM",
     "ISSUE_TGR",
@@ -126,7 +127,7 @@ def mint_decision_receipt(
 
     receipt = {
         "receipt_id": receipt_id,
-        "spec_version": "1.0.0-oao-receipt",
+        "spec_version": "1.0.0-receipt",
         "issued_at": issued_at,
         "canonical_digest_sha256": canonical_digest,
         "digital_seal": digital_seal,
@@ -344,7 +345,7 @@ def compute_batch_receipts_manifest() -> Dict[str, Any]:
     verified_human_count = sum(1 for r in receipts if r["manifest"]["human_gate_status"] == "HUMAN_VERIFIED")
 
     return {
-        "spec_version": "1.0.0-oao-receipt",
+        "spec_version": "1.0.0-receipt",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_receipts": len(receipts),
         "master_manifest_seal_sha256": master_seal,

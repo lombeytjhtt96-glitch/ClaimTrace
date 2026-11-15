@@ -1,8 +1,7 @@
 """
-REA Forensics & Client Reverse Engineering Engine for ClaimTrace
+Client Forensics & Static Analysis Engine for ClaimTrace
 BPJS Kesehatan Healthkathon 2026 - Kategori: Efisiensi Risiko pada Faskes
 Fokus: #6 Phantom Billing & #11 Repeat Billing
-Inspired by morluto/rea (REA: Reverse Engineer Anything v6.7.0)
 
 Provides static analysis, decompilation evidence, and tampering detection for:
 1. SIMRS automated claim injection scripts (Modus #6 Phantom Billing)
@@ -115,15 +114,15 @@ IL_0035: ret""",
     }
 }
 
-class ReaForensicsEngine:
+class ClientForensicsEngine:
     """
     Engine Forensik Klien & Analisis Binary/Script Terintegrasi ClaimTrace.
-    Mengadaptasi metodologi morluto/rea (Evidence-backed client reverse engineering).
+    Metodologi analisis statis dan rekonstruksi bukti forensik klien.
     """
-    _instance: Optional["ReaForensicsEngine"] = None
+    _instance: Optional["ClientForensicsEngine"] = None
 
     @classmethod
-    def get_instance(cls) -> "ReaForensicsEngine":
+    def get_instance(cls) -> "ClientForensicsEngine":
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -181,11 +180,11 @@ class ReaForensicsEngine:
             "verdict": verdict,
             "detected_anomalies": anomalies,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "rea_framework": "morluto/rea v6.7.0 Static Analysis Engine"
+            "analysis_engine": "ClaimTrace Client Forensics Static Engine v1.0"
         }
 
-    def get_rea_tools_catalog(self) -> List[Dict[str, Any]]:
-        """Katalog tools resmi REA yang relevan dengan audit sistem BPJS"""
+    def get_forensic_tools_catalog(self) -> List[Dict[str, Any]]:
+        """Katalog modul analisis forensik klien untuk audit sistem BPJS"""
         return [
             {
                 "tool": "analyze-javascript-application",
@@ -225,4 +224,4 @@ class ReaForensicsEngine:
             }
         ]
 
-rea_engine = ReaForensicsEngine.get_instance()
+forensics_engine = ClientForensicsEngine.get_instance()

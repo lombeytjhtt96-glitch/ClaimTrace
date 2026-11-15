@@ -354,7 +354,7 @@ class AIAnomalyDetector:
                     "dan kehadiran peserta terverifikasi normal."
                 )
                 ai_recommendation = (
-                    "Loloskan klaim ke Fast-Track Vedika Digital (Jalur Hijau) untuk pembayaran tepat waktu."
+                    "Loloskan klaim ke Fast-Track Penapisan Klaim (Jalur Hijau) untuk pembayaran tepat waktu."
                 )
 
         anomaly_score = round(float(anomaly_score), 1)

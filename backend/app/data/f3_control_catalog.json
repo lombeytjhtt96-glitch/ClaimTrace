@@ -1,0 +1,660 @@
+[
+  {
+    "name": "analyzing-certificate-transparency-for-phishing",
+    "directory": "analyzing-certificate-transparency-for-phishing",
+    "domain": "cybersecurity",
+    "description": "Monitor Certificate Transparency logs using crt.sh and Certstream to",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-email-headers-for-phishing-investigation",
+    "directory": "analyzing-email-headers-for-phishing-investigation",
+    "domain": "cybersecurity",
+    "description": "Parse and analyze email headers (Received chain, Return-Path, Message-ID)",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-indicators-of-compromise",
+    "directory": "analyzing-indicators-of-compromise",
+    "domain": "cybersecurity",
+    "description": "Analyzes indicators of compromise (IOCs) including IP addresses, domains,",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-linux-elf-malware",
+    "directory": "analyzing-linux-elf-malware",
+    "domain": "cybersecurity",
+    "description": "Analyze malicious Linux ELF binaries \u2014 botnets, cryptominers, ransomware,",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-ransomware-encryption-mechanisms",
+    "directory": "analyzing-ransomware-encryption-mechanisms",
+    "domain": "cybersecurity",
+    "description": "Analyzes encryption algorithms, key management, and file encryption",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-ransomware-leak-site-intelligence",
+    "directory": "analyzing-ransomware-leak-site-intelligence",
+    "domain": "cybersecurity",
+    "description": "Safely monitor ransomware group Tor-hosted data leak sites (DLS) to collect and extract structured victim posting data, track group activity trends over time, and produce sector- a...",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-ransomware-network-indicators",
+    "directory": "analyzing-ransomware-network-indicators",
+    "domain": "cybersecurity",
+    "description": "Identify ransomware-related network indicators, including C2 beaconing patterns, TOR exit node connections, data exfiltration flows, and encryption key exchange, by analyzing Zeek ...",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-ransomware-payment-wallets",
+    "directory": "analyzing-ransomware-payment-wallets",
+    "domain": "cybersecurity",
+    "description": "Traces ransomware cryptocurrency payment flows using blockchain analysis tools such as Chainalysis Reactor, WalletExplorer, and blockchain.com APIs, identifying wallet clusters and...",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-tls-certificate-transparency-logs",
+    "directory": "analyzing-tls-certificate-transparency-logs",
+    "domain": "cybersecurity",
+    "description": "Queries Certificate Transparency logs via crt.sh and pycrtsh to detect",
+    "has_f3": true
+  },
+  {
+    "name": "analyzing-typosquatting-domains-with-dnstwist",
+    "directory": "analyzing-typosquatting-domains-with-dnstwist",
+    "domain": "cybersecurity",
+    "description": "Generate domain permutations with dnstwist and check DNS resolution",
+    "has_f3": true
+  },
+  {
+    "name": "auditing-kubernetes-cluster-rbac",
+    "directory": "auditing-kubernetes-cluster-rbac",
+    "domain": "cybersecurity",
+    "description": "Auditing Kubernetes cluster RBAC configurations to identify overly permissive",
+    "has_f3": true
+  },
+  {
+    "name": "building-identity-federation-with-saml-azure-ad",
+    "directory": "building-identity-federation-with-saml-azure-ad",
+    "domain": "cybersecurity",
+    "description": "Configure SAML 2.0 identity federation between on-premises Active Directory (via AD FS or a third-party IdP) and Microsoft Entra ID, covering federation models (AD FS, password has...",
+    "has_f3": true
+  },
+  {
+    "name": "building-identity-governance-lifecycle-process",
+    "directory": "building-identity-governance-lifecycle-process",
+    "domain": "cybersecurity",
+    "description": "Design identity governance and lifecycle (IGA) programs on platforms like SailPoint, Saviynt, or Entra ID Governance, covering joiner-mover-leaver (JML) automation, role mining, ac...",
+    "has_f3": true
+  },
+  {
+    "name": "building-phishing-reporting-button-workflow",
+    "directory": "building-phishing-reporting-button-workflow",
+    "domain": "cybersecurity",
+    "description": "Implement a phishing report button (Microsoft 365 built-in Report button",
+    "has_f3": true
+  },
+  {
+    "name": "building-ransomware-playbook-with-cisa-framework",
+    "directory": "building-ransomware-playbook-with-cisa-framework",
+    "domain": "cybersecurity",
+    "description": "Builds a structured ransomware incident response playbook aligned with",
+    "has_f3": true
+  },
+  {
+    "name": "building-soc-playbook-for-ransomware",
+    "directory": "building-soc-playbook-for-ransomware",
+    "domain": "cybersecurity",
+    "description": "Builds a structured SOC incident response playbook for ransomware attacks",
+    "has_f3": true
+  },
+  {
+    "name": "conducting-phishing-incident-response",
+    "directory": "conducting-phishing-incident-response",
+    "domain": "cybersecurity",
+    "description": "Respond to phishing incidents by analyzing reported emails, extracting indicators, sandboxing URLs/attachments, assessing credential compromise, quarantining malicious messages org...",
+    "has_f3": true
+  },
+  {
+    "name": "conducting-social-engineering-penetration-test",
+    "directory": "conducting-social-engineering-penetration-test",
+    "domain": "cybersecurity",
+    "description": "Design and execute a social engineering penetration test combining OSINT-driven target profiling with phishing, vishing, smishing, and physical pretexting campaigns using tools lik...",
+    "has_f3": true
+  },
+  {
+    "name": "conducting-social-engineering-pretext-call",
+    "directory": "conducting-social-engineering-pretext-call",
+    "domain": "cybersecurity",
+    "description": "Plan and execute authorized vishing (voice phishing) pretext calls to",
+    "has_f3": true
+  },
+  {
+    "name": "conducting-spearphishing-simulation-campaign",
+    "directory": "conducting-spearphishing-simulation-campaign",
+    "domain": "cybersecurity",
+    "description": "Run a targeted spearphishing simulation for initial access by developing OSINT-derived pretexts, building payloads (HTML smuggling, macro docs, ISO/LNK, OneNote, QR codes), standin...",
+    "has_f3": true
+  },
+  {
+    "name": "configuring-identity-aware-proxy-with-google-iap",
+    "directory": "configuring-identity-aware-proxy-with-google-iap",
+    "domain": "cybersecurity",
+    "description": "Configures Google Cloud Identity-Aware Proxy (IAP) via gcloud to enforce",
+    "has_f3": true
+  },
+  {
+    "name": "configuring-ldap-security-hardening",
+    "directory": "configuring-ldap-security-hardening",
+    "domain": "cybersecurity",
+    "description": "Hardens LDAP directory services against credential harvesting, LDAP",
+    "has_f3": true
+  },
+  {
+    "name": "configuring-oauth2-authorization-flow",
+    "directory": "configuring-oauth2-authorization-flow",
+    "domain": "cybersecurity",
+    "description": "Configures secure OAuth 2.0 authorization flows, including Authorization",
+    "has_f3": true
+  },
+  {
+    "name": "deploying-decoy-files-for-ransomware-detection",
+    "directory": "deploying-decoy-files-for-ransomware-detection",
+    "domain": "cybersecurity",
+    "description": "Deploys canary files (honeytokens) across file systems to detect ransomware",
+    "has_f3": true
+  },
+  {
+    "name": "deploying-ransomware-canary-files",
+    "directory": "deploying-ransomware-canary-files",
+    "domain": "cybersecurity",
+    "description": "Deploys and monitors ransomware canary files using Python's watchdog library, placing decoy files mimicking high-value targets (financial records, credentials, database exports) wh...",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-anomalous-authentication-patterns",
+    "directory": "detecting-anomalous-authentication-patterns",
+    "domain": "cybersecurity",
+    "description": "Detects anomalous authentication patterns using UEBA analytics, statistical",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-aws-cloudtrail-anomalies",
+    "directory": "detecting-aws-cloudtrail-anomalies",
+    "domain": "cybersecurity",
+    "description": "Detect unusual API call patterns in AWS CloudTrail logs using boto3,",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-aws-credential-exposure-with-trufflehog",
+    "directory": "detecting-aws-credential-exposure-with-trufflehog",
+    "domain": "cybersecurity",
+    "description": "Scan source code repositories, CI/CD pipelines, and configuration files",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-business-email-compromise",
+    "directory": "detecting-business-email-compromise",
+    "domain": "cybersecurity",
+    "description": "Detect Business Email Compromise (BEC) fraud, where attackers impersonate",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-business-email-compromise-with-ai",
+    "directory": "detecting-business-email-compromise-with-ai",
+    "domain": "cybersecurity",
+    "description": "Deploy AI and NLP-powered detection systems to identify business email",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-compromised-cloud-credentials",
+    "directory": "detecting-compromised-cloud-credentials",
+    "domain": "cybersecurity",
+    "description": "Detect compromised cloud credentials across AWS, Azure, and GCP by analyzing",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-credential-dumping-techniques",
+    "directory": "detecting-credential-dumping-techniques",
+    "domain": "cybersecurity",
+    "description": "Detect LSASS credential dumping, SAM database extraction, and NTDS.dit theft (e.g. via Mimikatz) using Sysmon Event ID 10 process-access logging, Windows Security logs, and SIEM co...",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-cryptomining-in-cloud",
+    "directory": "detecting-cryptomining-in-cloud",
+    "domain": "cybersecurity",
+    "description": "Control guidance for security teams how to detect and respond to unauthorized",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-deepfake-audio-in-vishing-attacks",
+    "directory": "detecting-deepfake-audio-in-vishing-attacks",
+    "domain": "cybersecurity",
+    "description": "Detect AI-generated deepfake audio used in voice phishing (vishing) by extracting spectral features (MFCC, spectral centroid, spectral contrast, zero-crossing rate) and classifying...",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-mobile-malware-behavior",
+    "directory": "detecting-mobile-malware-behavior",
+    "domain": "cybersecurity",
+    "description": "Detects and analyzes malicious behavior in mobile applications through",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-oauth-token-theft",
+    "directory": "detecting-oauth-token-theft",
+    "domain": "cybersecurity",
+    "description": "Detect and respond to OAuth token theft and replay in Microsoft Entra ID (Azure AD), covering access token theft, refresh token replay, Primary Refresh Token (PRT) abuse, pass-the-...",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-qr-code-phishing-with-email-security",
+    "directory": "detecting-qr-code-phishing-with-email-security",
+    "domain": "cybersecurity",
+    "description": "Detect and prevent QR code phishing (quishing) attacks that embed",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-ransomware-encryption-behavior",
+    "directory": "detecting-ransomware-encryption-behavior",
+    "domain": "cybersecurity",
+    "description": "Detects ransomware encryption activity in real time using entropy",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-ransomware-precursors-in-network",
+    "directory": "detecting-ransomware-precursors-in-network",
+    "domain": "cybersecurity",
+    "description": "Detects early-stage ransomware indicators in network traffic before",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-spearphishing-with-email-gateway",
+    "directory": "detecting-spearphishing-with-email-gateway",
+    "domain": "cybersecurity",
+    "description": "Detect and block spearphishing emails that use personalized, researched",
+    "has_f3": true
+  },
+  {
+    "name": "detecting-t1003-credential-dumping-with-edr",
+    "directory": "detecting-t1003-credential-dumping-with-edr",
+    "domain": "cybersecurity",
+    "description": "Detect OS credential dumping (MITRE T1003) targeting LSASS memory, the SAM",
+    "has_f3": true
+  },
+  {
+    "name": "executing-phishing-simulation-campaign",
+    "directory": "executing-phishing-simulation-campaign",
+    "domain": "cybersecurity",
+    "description": "Executes authorized phishing simulation campaigns to assess an organization''s",
+    "has_f3": true
+  },
+  {
+    "name": "extracting-credentials-from-memory-dump",
+    "directory": "extracting-credentials-from-memory-dump",
+    "domain": "cybersecurity",
+    "description": "Extracts cached credentials, password hashes, Kerberos tickets, and",
+    "has_f3": true
+  },
+  {
+    "name": "hunting-credential-stuffing-attacks",
+    "directory": "hunting-credential-stuffing-attacks",
+    "domain": "cybersecurity",
+    "description": "Detects credential stuffing attacks by analyzing authentication logs",
+    "has_f3": true
+  },
+  {
+    "name": "hunting-for-spearphishing-indicators",
+    "directory": "hunting-for-spearphishing-indicators",
+    "domain": "cybersecurity",
+    "description": "Hunt for spearphishing campaign indicators across email logs, endpoint",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-anti-phishing-training-program",
+    "directory": "implementing-anti-phishing-training-program",
+    "domain": "cybersecurity",
+    "description": "Guides designing, deploying, and measuring an anti-phishing security awareness program - baseline phishing simulations, interactive training modules, just-in-time learning, and met...",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-anti-ransomware-group-policy",
+    "directory": "implementing-anti-ransomware-group-policy",
+    "domain": "cybersecurity",
+    "description": "Configures Windows Group Policy Objects to block ransomware execution",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-azure-ad-privileged-identity-management",
+    "directory": "implementing-azure-ad-privileged-identity-management",
+    "domain": "cybersecurity",
+    "description": "Configure Microsoft Entra Privileged Identity Management (PIM) to convert",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-browser-isolation-for-zero-trust",
+    "directory": "implementing-browser-isolation-for-zero-trust",
+    "domain": "cybersecurity",
+    "description": "Deploys remote browser isolation (RBI) as a core component of a Zero",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-delinea-secret-server-for-pam",
+    "directory": "implementing-delinea-secret-server-for-pam",
+    "domain": "cybersecurity",
+    "description": "Implements Delinea Secret Server for privileged access management,",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-google-workspace-admin-security",
+    "directory": "implementing-google-workspace-admin-security",
+    "domain": "cybersecurity",
+    "description": "Hardens a Google Workspace tenant via Admin Console configuration:",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-google-workspace-phishing-protection",
+    "directory": "implementing-google-workspace-phishing-protection",
+    "domain": "cybersecurity",
+    "description": "Configures Google Workspace advanced phishing and malware protection settings in the Admin Console \u2014 pre-delivery message scanning, attachment protection, spoofing/impersonation de...",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-google-workspace-sso-configuration",
+    "directory": "implementing-google-workspace-sso-configuration",
+    "domain": "cybersecurity",
+    "description": "Configures SAML 2.0 single sign-on for Google Workspace against a third-party",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-hashicorp-vault-dynamic-secrets",
+    "directory": "implementing-hashicorp-vault-dynamic-secrets",
+    "domain": "cybersecurity",
+    "description": "Configures HashiCorp Vault dynamic secrets engines for database credentials,",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-honeypot-for-ransomware-detection",
+    "directory": "implementing-honeypot-for-ransomware-detection",
+    "domain": "cybersecurity",
+    "description": "Deploys canary files, honeypot shares, and decoy systems to detect ransomware",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-identity-governance-with-sailpoint",
+    "directory": "implementing-identity-governance-with-sailpoint",
+    "domain": "cybersecurity",
+    "description": "Deploys SailPoint IdentityNow or IdentityIQ for identity governance and",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-identity-verification-for-zero-trust",
+    "directory": "implementing-identity-verification-for-zero-trust",
+    "domain": "cybersecurity",
+    "description": "Implements continuous, risk-adaptive identity verification for zero trust",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-mimecast-targeted-attack-protection",
+    "directory": "implementing-mimecast-targeted-attack-protection",
+    "domain": "cybersecurity",
+    "description": ">-",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-pam-for-database-access",
+    "directory": "implementing-pam-for-database-access",
+    "domain": "cybersecurity",
+    "description": "Deploy privileged access management for database systems including Oracle,",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-passwordless-auth-with-microsoft-entra",
+    "directory": "implementing-passwordless-auth-with-microsoft-entra",
+    "domain": "cybersecurity",
+    "description": "Implements passwordless authentication using Microsoft Entra ID with",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-privileged-access-management-with-cyberark",
+    "directory": "implementing-privileged-access-management-with-cyberark",
+    "domain": "cybersecurity",
+    "description": "Deploy CyberArk Privileged Access Management to discover, vault, rotate,",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-proofpoint-email-security-gateway",
+    "directory": "implementing-proofpoint-email-security-gateway",
+    "domain": "cybersecurity",
+    "description": "Deploy and configure Proofpoint Email Protection as a secure email gateway",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-ransomware-backup-strategy",
+    "directory": "implementing-ransomware-backup-strategy",
+    "domain": "cybersecurity",
+    "description": "Designs a ransomware-resilient backup strategy using the 3-2-1-1-0",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-ransomware-kill-switch-detection",
+    "directory": "implementing-ransomware-kill-switch-detection",
+    "domain": "cybersecurity",
+    "description": "Analyzes ransomware kill switch mechanisms, including mutex-based execution",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-saml-sso-with-okta",
+    "directory": "implementing-saml-sso-with-okta",
+    "domain": "cybersecurity",
+    "description": "Implement SAML 2.0 Single Sign-On using Okta as the Identity Provider,",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-scim-provisioning-with-okta",
+    "directory": "implementing-scim-provisioning-with-okta",
+    "domain": "cybersecurity",
+    "description": "Implement automated user lifecycle provisioning and deprovisioning using",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-sigstore-for-software-signing",
+    "directory": "implementing-sigstore-for-software-signing",
+    "domain": "cybersecurity",
+    "description": "Implements Sigstore-based software signing and verification using Cosign",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-soar-playbook-for-phishing",
+    "directory": "implementing-soar-playbook-for-phishing",
+    "domain": "cybersecurity",
+    "description": "Automates phishing incident response by calling the Splunk SOAR (Phantom)",
+    "has_f3": true
+  },
+  {
+    "name": "implementing-zero-trust-with-hashicorp-boundary",
+    "directory": "implementing-zero-trust-with-hashicorp-boundary",
+    "domain": "cybersecurity",
+    "description": "Installs and configures HashiCorp Boundary as a default-deny, identity-aware proxy for infrastructure access, including controller/worker setup, Vault-backed credential brokering, ...",
+    "has_f3": true
+  },
+  {
+    "name": "investigating-phishing-email-incident",
+    "directory": "investigating-phishing-email-incident",
+    "domain": "cybersecurity",
+    "description": "Investigates phishing email incidents from initial user report through",
+    "has_f3": true
+  },
+  {
+    "name": "investigating-ransomware-attack-artifacts",
+    "directory": "investigating-ransomware-attack-artifacts",
+    "domain": "cybersecurity",
+    "description": "Forensically preserve memory and disk, collect ransom notes and encrypted file samples, and identify the ransomware variant using tools such as ID Ransomware, Volatility, and Chain...",
+    "has_f3": true
+  },
+  {
+    "name": "managing-cloud-identity-with-okta",
+    "directory": "managing-cloud-identity-with-okta",
+    "domain": "cybersecurity",
+    "description": ">-",
+    "has_f3": true
+  },
+  {
+    "name": "monitoring-darkweb-sources",
+    "directory": "monitoring-darkweb-sources",
+    "domain": "cybersecurity",
+    "description": "Monitors dark web forums, marketplaces, paste sites, and ransomware",
+    "has_f3": true
+  },
+  {
+    "name": "performing-access-recertification-with-saviynt",
+    "directory": "performing-access-recertification-with-saviynt",
+    "domain": "cybersecurity",
+    "description": "Configure and execute access recertification campaigns in Saviynt Enterprise",
+    "has_f3": true
+  },
+  {
+    "name": "performing-adversary-in-the-middle-phishing-detection",
+    "directory": "performing-adversary-in-the-middle-phishing-detection",
+    "domain": "cybersecurity",
+    "description": "Detect and respond to Adversary-in-the-Middle (AiTM) phishing attacks",
+    "has_f3": true
+  },
+  {
+    "name": "performing-brand-monitoring-for-impersonation",
+    "directory": "performing-brand-monitoring-for-impersonation",
+    "domain": "cybersecurity",
+    "description": "Monitor for brand impersonation attacks across domains, social media,",
+    "has_f3": true
+  },
+  {
+    "name": "performing-credential-access-with-lazagne",
+    "directory": "performing-credential-access-with-lazagne",
+    "domain": "cybersecurity",
+    "description": "Extract stored credentials from compromised endpoints using the LaZagne",
+    "has_f3": true
+  },
+  {
+    "name": "performing-cryptographic-audit-of-application",
+    "directory": "performing-cryptographic-audit-of-application",
+    "domain": "cybersecurity",
+    "description": "A cryptographic audit systematically reviews an application's use of",
+    "has_f3": true
+  },
+  {
+    "name": "performing-entitlement-review-with-sailpoint-iiq",
+    "directory": "performing-entitlement-review-with-sailpoint-iiq",
+    "domain": "cybersecurity",
+    "description": "Runs entitlement review and access certification campaigns in SailPoint",
+    "has_f3": true
+  },
+  {
+    "name": "performing-firmware-extraction-with-binwalk",
+    "directory": "performing-firmware-extraction-with-binwalk",
+    "domain": "cybersecurity",
+    "description": "Performs firmware image extraction and analysis using binwalk to identify",
+    "has_f3": true
+  },
+  {
+    "name": "performing-initial-access-with-evilginx3",
+    "directory": "performing-initial-access-with-evilginx3",
+    "domain": "cybersecurity",
+    "description": "Perform authorized initial access using EvilGinx3 adversary-in-the-middle",
+    "has_f3": true
+  },
+  {
+    "name": "performing-oauth-scope-minimization-review",
+    "directory": "performing-oauth-scope-minimization-review",
+    "domain": "cybersecurity",
+    "description": "Performs OAuth 2.0 scope minimization review to identify over-permissioned",
+    "has_f3": true
+  },
+  {
+    "name": "performing-paste-site-monitoring-for-credentials",
+    "directory": "performing-paste-site-monitoring-for-credentials",
+    "domain": "cybersecurity",
+    "description": "Monitor paste sites like Pastebin and public snippet repositories for leaked credentials,",
+    "has_f3": true
+  },
+  {
+    "name": "performing-phishing-simulation-with-gophish",
+    "directory": "performing-phishing-simulation-with-gophish",
+    "domain": "cybersecurity",
+    "description": "Deploy and run authorized phishing awareness campaigns with GoPhish, covering admin panel setup, SMTP sending profiles, email template and landing page creation, target user groups...",
+    "has_f3": true
+  },
+  {
+    "name": "performing-ransomware-response",
+    "directory": "performing-ransomware-response",
+    "domain": "cybersecurity",
+    "description": "Executes a structured ransomware incident response from detection through",
+    "has_f3": true
+  },
+  {
+    "name": "performing-ransomware-tabletop-exercise",
+    "directory": "performing-ransomware-tabletop-exercise",
+    "domain": "cybersecurity",
+    "description": "Plans and facilitates tabletop exercises simulating ransomware incidents,",
+    "has_f3": true
+  },
+  {
+    "name": "performing-red-team-phishing-with-gophish",
+    "directory": "performing-red-team-phishing-with-gophish",
+    "domain": "cybersecurity",
+    "description": "Automates GoPhish phishing simulation campaigns using the Python gophish",
+    "has_f3": true
+  },
+  {
+    "name": "performing-service-account-credential-rotation",
+    "directory": "performing-service-account-credential-rotation",
+    "domain": "cybersecurity",
+    "description": "Automates credential rotation for service accounts across Active Directory,",
+    "has_f3": true
+  },
+  {
+    "name": "recovering-from-ransomware-attack",
+    "directory": "recovering-from-ransomware-attack",
+    "domain": "cybersecurity",
+    "description": "Executes structured ransomware incident recovery following NIST/CISA",
+    "has_f3": true
+  },
+  {
+    "name": "reverse-engineering-ransomware-encryption-routine",
+    "directory": "reverse-engineering-ransomware-encryption-routine",
+    "domain": "cybersecurity",
+    "description": "Reverse engineer ransomware encryption routines to identify cryptographic",
+    "has_f3": true
+  },
+  {
+    "name": "securing-aws-iam-permissions",
+    "directory": "securing-aws-iam-permissions",
+    "domain": "cybersecurity",
+    "description": "Hardens AWS IAM configurations to enforce least-privilege access, covering",
+    "has_f3": true
+  },
+  {
+    "name": "testing-ransomware-recovery-procedures",
+    "directory": "testing-ransomware-recovery-procedures",
+    "domain": "cybersecurity",
+    "description": "Tests and validates ransomware recovery procedures - backup restore operations",
+    "has_f3": true
+  },
+  {
+    "name": "tracking-threat-actor-infrastructure",
+    "directory": "tracking-threat-actor-infrastructure",
+    "domain": "cybersecurity",
+    "description": "Discovers and maps adversary-controlled infrastructure (C2 servers,",
+    "has_f3": true
+  },
+  {
+    "name": "validating-backup-integrity-for-recovery",
+    "directory": "validating-backup-integrity-for-recovery",
+    "domain": "cybersecurity",
+    "description": "Validates backup integrity through cryptographic hash verification,",
+    "has_f3": true
+  }
+]

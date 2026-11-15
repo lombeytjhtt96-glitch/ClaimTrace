@@ -2,10 +2,9 @@
 """
 DuckDB MCP Server for ClaimTrace (BPJS Kesehatan Healthkathon 2026)
 Standard Model Context Protocol (MCP) Server using Python FastMCP
-Inspired by teaguesterling/duckdb_mcp
 
-Allows AI assistants (Antigravity, Claude, Cursor) to execute high-speed analytical
-SQL queries and pre-published forensic tools against the ClaimTrace BPJS data warehouse.
+Allows authorized tools to execute high-speed read-only analytical
+SQL queries and pre-published deterministic forensic checks against the ClaimTrace BPJS data warehouse.
 """
 
 import sys

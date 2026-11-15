@@ -80,7 +80,7 @@ class ClaimInput(BaseModel):
     catatan_verifikator: Optional[str] = None
     tanggal_verifikasi: Optional[str] = None
     adjudicated_by: Optional[str] = None
-    # VEDIKA Digital Verification Portal & FPK Operational Metadata
+    # Digital Verification Portal & FPK Operational Metadata
     no_fpk: Optional[str] = None
     bulan_pelayanan: Optional[str] = None
     jenis_pengajuan: Literal["Reguler", "Susulan", "LUPIS"] = "Reguler"
@@ -157,12 +157,12 @@ class TriageResult(BaseModel):
     sla_deadline_days: int = 5
     # BPJS Business Enterprise Architecture (BEA C03.04 Klaim)
     bea_process_code: str = "C03.04 (Klaim)"
-    bea_target_system: str = "VIDI (Vedika Digital Fast-Track)"
+    bea_target_system: str = "ClaimTrace Fast-Track Engine"
     bea_action_summary: str = ""
     # Automatic AI Anomaly Detection Prediction
     ai_anomaly_prediction: Optional[AIAnomalyPrediction] = None
 
-VEDIKA_DECISION_CODES = Literal[
+CLAIM_DECISION_CODES = Literal[
     "LOLOSKAN_KLAIM",
     "LAYAK_BAYAR",
     "KLARIFIKASI_FASKES",
@@ -171,11 +171,12 @@ VEDIKA_DECISION_CODES = Literal[
     "AUDIT_LAPANGAN",
     "TIDAK_LAYAK_FRAUD",
 ]
+VEDIKA_DECISION_CODES = CLAIM_DECISION_CODES
 
 
 class VerifierDecisionRequest(BaseModel):
     verifier_id: str
-    decision: VEDIKA_DECISION_CODES
+    decision: CLAIM_DECISION_CODES
     catatan_verifikator: str
     pending_reasons: List[str] = Field(default_factory=list)
     checklist_status: Optional[Dict[str, bool]] = None
@@ -186,9 +187,9 @@ class VerifierDecisionRequest(BaseModel):
 
 class BatchDecisionRequest(BaseModel):
     claim_ids: List[str] = Field(..., min_length=1)
-    decision: VEDIKA_DECISION_CODES
+    decision: CLAIM_DECISION_CODES
     verifier_id: str = "198704202011012001"
-    catatan_verifikator: str = "Disposisi massal verifikator pra-bayar sesuai kaidah VEDIKA & Perpres 82/2018."
+    catatan_verifikator: str = "Disposisi massal verifikator pra-bayar sesuai kaidah pengawasan klaim & Perpres 82/2018."
     pending_reasons: List[str] = Field(default_factory=list)
     tarif_verifikasi_rp: Optional[int] = Field(None, ge=0)
     ina_cbg_verified: Optional[str] = None
@@ -203,10 +204,10 @@ class ClaimChecklistRequest(BaseModel):
 
 class ClaimIngestSimulateRequest(BaseModel):
     claim_id: Optional[str] = None
-    nama_faskes: str = "RS Rujukan FKRTL Simulasi"
+    nama_faskes: str = "RS Rujukan FKRTL Nasional"
     kelas_rs: Literal["A", "B", "C", "Klinik"] = "B"
     ina_cbg_code: str = "Z-3-12-0"
-    deskripsi_cbg: str = "Prosedur Rehabilitasi / Fisioterapi (Permenkes 3/2023)"
+    deskripsi_cbg: str = "Prosedur Rehabilitasi / Fisioterapi"
     icd10_primary: str = "M54.5 (Low Back Pain)"
     icd9cm_procedure: str = "93.39 (Other Physical Therapy)"
     nilai_klaim_rp: int = Field(15300000, ge=1000)
@@ -239,13 +240,15 @@ class ClaimIngestSimulateRequest(BaseModel):
     tte_dpjp_valid: bool = True
 
 
-class VedikaPlottingRequest(BaseModel):
+class PortalPlottingRequest(BaseModel):
     claim_ids: List[str] = Field(..., min_length=1)
     verifier_nip: str
     catatan: Optional[str] = None
 
+VedikaPlottingRequest = PortalPlottingRequest
 
-class VedikaFpkPullRequest(BaseModel):
+
+class PortalFpkPullRequest(BaseModel):
     no_fpk: Optional[str] = None
     bulan_pelayanan: str = "2026-11"
     jenis_pengajuan: Literal["Reguler", "Susulan", "LUPIS"] = "Reguler"
@@ -253,6 +256,8 @@ class VedikaFpkPullRequest(BaseModel):
     nama_faskes: Optional[str] = None
     jumlah_klaim: int = Field(2, ge=1, le=5)
     auto_plot: bool = True
+
+VedikaFpkPullRequest = PortalFpkPullRequest
 
 
 class ClaimSusulanResubmitRequest(BaseModel):
@@ -274,7 +279,7 @@ class AuditLogEntry(BaseModel):
     current_hash: str
 
 
-# --- Google SecOps & Sovereign Boundary Schemas ---
+# --- Detection SOAR & Sovereign Boundary Schemas ---
 
 class YaraLRuleMetadata(BaseModel):
     author: str
@@ -294,7 +299,7 @@ class YaraLRuleItem(BaseModel):
     rule_text: str
     test_payload_udm: Dict[str, Any]
 
-class SecOpsCaseItem(BaseModel):
+class SoarCaseItem(BaseModel):
     case_id: str
     claim_id: str
     title: str
@@ -316,13 +321,13 @@ class SecOpsCaseItem(BaseModel):
     mitre_d3fend_tags: List[str]
     case_hash: str
 
-class SecOpsCaseManifest(BaseModel):
+class SoarCaseManifest(BaseModel):
     spec_version: str
     total_cases: int
     critical_cases: int
     high_cases: int
     open_cases: int
-    cases: List[SecOpsCaseItem]
+    cases: List[SoarCaseItem]
     integrity_seal: str
     generated_at: str
 
@@ -353,7 +358,7 @@ class ActionManifestSchema(BaseModel):
 
 class DecisionReceiptItem(BaseModel):
     receipt_id: str
-    spec_version: str = "1.0.0-oao-receipt"
+    spec_version: str = "1.0.0-receipt"
     issued_at: str
     canonical_digest_sha256: str
     digital_seal: str
@@ -400,10 +405,10 @@ class BatchReceiptsManifest(BaseModel):
     receipts: List[DecisionReceiptItem]
 
 # ==============================================================================
-# CYBERSECURITY SKILLS & MITRE F3 FRAMEWORK SCHEMAS (mukul975/skills)
+# THREAT DEFENSE & MITRE F3 FRAMEWORK SCHEMAS
 # ==============================================================================
 
-class CybersecurityFrameworkItem(BaseModel):
+class ThreatFrameworkItem(BaseModel):
     framework: str = Field(description="MITRE_F3, MITRE_ATTACK, MITRE_D3FEND, NIST_CSF, MITRE_ATLAS, or NIST_AI_RMF")
     technique_id: str
     technique_name: str
@@ -411,20 +416,20 @@ class CybersecurityFrameworkItem(BaseModel):
     description: str
     defense_countermeasure: Optional[str] = None
 
-class ClaimCybersecurityMatrix(BaseModel):
+class ClaimThreatMatrix(BaseModel):
     claim_id: str
     faskes_code: Optional[str] = None
     fraud_typology: str
     risk_level: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW"]
-    f3_positioning: List[CybersecurityFrameworkItem] = Field(default_factory=list)
-    f3_monetization: List[CybersecurityFrameworkItem] = Field(default_factory=list)
-    attack_ttps: List[CybersecurityFrameworkItem] = Field(default_factory=list)
-    d3fend_countermeasures: List[CybersecurityFrameworkItem] = Field(default_factory=list)
+    f3_positioning: List[ThreatFrameworkItem] = Field(default_factory=list)
+    f3_monetization: List[ThreatFrameworkItem] = Field(default_factory=list)
+    attack_ttps: List[ThreatFrameworkItem] = Field(default_factory=list)
+    d3fend_countermeasures: List[ThreatFrameworkItem] = Field(default_factory=list)
     nist_csf_alignment: List[str] = Field(default_factory=list)
     canonical_matrix_sha256: str
     generated_at: str
 
-class EvaluateCybersecurityRequest(BaseModel):
+class EvaluateThreatMatrixRequest(BaseModel):
     claim_id: str
     fraud_typology: Optional[str] = None
     faskes_code: Optional[str] = None
@@ -432,10 +437,10 @@ class EvaluateCybersecurityRequest(BaseModel):
     nominal_klaim_rp: float = 0.0
 
 class FrameworkCatalogResponse(BaseModel):
-    total_skills_count: int
+    total_controls_count: int
     mapped_frameworks: Dict[str, int]
-    f3_skills_count: int
-    top_fraud_skills: List[Dict[str, Any]]
+    f3_controls_count: int
+    top_fraud_controls: List[Dict[str, Any]]
 
 class WbsReportInput(BaseModel):
     category: str = Field(..., max_length=100)

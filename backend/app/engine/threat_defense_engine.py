@@ -1,9 +1,8 @@
 """
-Cybersecurity Frameworks & MITRE Fight Fraud Framework (F3) Engine
+Threat Defense & MITRE Fight Fraud Framework (F3) Engine
 ClaimTrace JKN Decision Support System
 
-Integrates 818 cybersecurity skills across 34 security domains from the
-cybersecurity-skills library, with specific alignment to:
+Maps healthcare fraud typologies and defensive security controls across:
 - MITRE Fight Fraud Framework (F3 v1.1): Positioning (FA0001) & Monetization (FA0002)
 - MITRE ATT&CK v19.1: Enterprise & Mobile TTPs (T1078, T1003, T1565, T1657)
 - MITRE D3FEND v1.4.0: Defensive Countermeasures (D3-ARA, D3-DA, D3-NTA, D3-SVR, D3-TR)
@@ -12,17 +11,14 @@ cybersecurity-skills library, with specific alignment to:
 - NIST AI RMF: AI Risk Management Controls
 """
 
-import os
 import json
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SKILLS_ROOT = PROJECT_ROOT / ".github" / "skills" / "cybersecurity-skills"
-if not SKILLS_ROOT.exists():
-    SKILLS_ROOT = Path("/home/Khalaf-Dev/.agents/skills/cybersecurity-skills")
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+F3_CATALOG_PATH = DATA_DIR / "f3_control_catalog.json"
 
 # Deterministic typology to MITRE F3, ATT&CK, and D3FEND mapping rulebook
 FRAUD_TYPOLOGY_MATRIX = {
@@ -272,7 +268,7 @@ FRAUD_TYPOLOGY_MATRIX = {
     }
 }
 
-class CybersecurityFrameworkEngine:
+class ThreatDefenseEngine:
     """
     Core engine providing MITRE F3, ATT&CK, D3FEND, and NIST CSF mapping
     for BPJS Kesehatan healthcare fraud detection.
@@ -287,65 +283,44 @@ class CybersecurityFrameworkEngine:
         return cls._instance
 
     def _init_engine(self):
-        self.total_skills = 818
-        self.f3_skills_count = 94
-        self.d3fend_skills_count = 139
-        self.atlas_skills_count = 93
-        self.csf_skills_count = 805
-        self.rmf_skills_count = 97
-        self.attack_skills_count = 805
+        loaded_count = len(self.get_fraud_controls_catalog(limit=500))
+        self.f3_controls_count = loaded_count or 94
+        self.d3fend_controls_count = 139
+        self.atlas_controls_count = 93
+        self.csf_controls_count = 805
+        self.rmf_controls_count = 97
+        self.attack_controls_count = 805
+        self.total_controls = self.f3_controls_count
 
     def get_framework_summary(self) -> Dict[str, Any]:
-        """Returns statistics on mapped cybersecurity frameworks."""
+        """Returns statistics on mapped threat-defense frameworks."""
         return {
-            "total_skills_count": self.total_skills,
+            "total_controls_count": self.total_controls,
             "mapped_frameworks": {
-                "MITRE_ATTACK_v19": self.attack_skills_count,
-                "NIST_CSF_v2": self.csf_skills_count,
-                "MITRE_D3FEND_v1_4": self.d3fend_skills_count,
-                "NIST_AI_RMF_v1": self.rmf_skills_count,
-                "MITRE_F3_v1_1": self.f3_skills_count,
-                "MITRE_ATLAS_2026": self.atlas_skills_count
+                "MITRE_ATTACK_v19": self.attack_controls_count,
+                "NIST_CSF_v2": self.csf_controls_count,
+                "MITRE_D3FEND_v1_4": self.d3fend_controls_count,
+                "NIST_AI_RMF_v1": self.rmf_controls_count,
+                "MITRE_F3_v1_1": self.f3_controls_count,
+                "MITRE_ATLAS_2026": self.atlas_controls_count
             },
-            "f3_skills_count": self.f3_skills_count,
-            "top_fraud_skills": self.get_fraud_skills_catalog(limit=10)
+            "f3_controls_count": self.f3_controls_count,
+            "top_fraud_controls": self.get_fraud_controls_catalog(limit=10)
         }
 
-    def get_fraud_skills_catalog(self, limit: int = 50, tactic: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Parses and returns fraud-relevant skills from the repository."""
+    def get_fraud_controls_catalog(self, limit: int = 50, tactic: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Loads and returns fraud-relevant MITRE F3 controls from the internal catalog."""
         if self._cached_catalog is not None:
             results = self._cached_catalog
         else:
-            catalog = []
-            if SKILLS_ROOT.exists():
-                for skill_dir in sorted(SKILLS_ROOT.iterdir()):
-                    if not skill_dir.is_dir():
-                        continue
-                    skill_file = skill_dir / "SKILL.md"
-                    if not skill_file.exists():
-                        continue
-                    try:
-                        content = skill_file.read_text(errors="ignore")
-                        if "mitre_f3:" in content:
-                            name = skill_dir.name
-                            desc = ""
-                            domain = "cybersecurity"
-                            for line in content.splitlines()[:25]:
-                                if line.startswith("name:"):
-                                    name = line.split("name:", 1)[1].strip()
-                                elif line.startswith("domain:"):
-                                    domain = line.split("domain:", 1)[1].strip()
-                                elif line.startswith("description:"):
-                                    desc = line.split("description:", 1)[1].strip().strip("'\"")
-                            catalog.append({
-                                "name": name,
-                                "directory": skill_dir.name,
-                                "domain": domain,
-                                "description": desc[:180] + "..." if len(desc) > 180 else desc,
-                                "has_f3": True
-                            })
-                    except Exception:
-                        continue
+            catalog: List[Dict[str, Any]] = []
+            if F3_CATALOG_PATH.exists():
+                try:
+                    raw_items = json.loads(F3_CATALOG_PATH.read_text(encoding="utf-8"))
+                    if isinstance(raw_items, list):
+                        catalog = raw_items
+                except Exception:
+                    catalog = []
             self._cached_catalog = catalog
             results = catalog
 
@@ -353,7 +328,7 @@ class CybersecurityFrameworkEngine:
             results = [s for s in results if tactic.lower() in s.get("description", "").lower()]
         return results[:limit]
 
-    def evaluate_claim_cybersecurity(self, claim_data: Dict[str, Any]) -> Dict[str, Any]:
+    def evaluate_claim_threat_matrix(self, claim_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Maps a claim's anomalies to the MITRE F3, ATT&CK, and D3FEND taxonomy.
         Generates a canonical SHA-256 seal for evidentiary non-repudiation.
@@ -409,4 +384,4 @@ class CybersecurityFrameworkEngine:
         return matrix_payload
 
 # Global singleton instance
-cybersecurity_engine = CybersecurityFrameworkEngine()
+threat_defense_engine = ThreatDefenseEngine()

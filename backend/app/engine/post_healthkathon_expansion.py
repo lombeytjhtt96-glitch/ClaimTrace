@@ -248,8 +248,8 @@ class PostHealthkathonExpansionEngine:
                     "Audit rekam medis elektronik menunjukkan tanda vital stabil, Hb 13,6 g/dL, Leukosit 7.400/uL, tanpa kultur darah."
                 ),
                 "vital_lab_evidence": {
-                    "Kadar Hemoglobin (Hb)": "13,6 g/dL (Normal — Tidak ada anemia/perdarahan GI)",
-                    "Hitung Leukosit": "7.400 /uL (Normal — Tidak memenuhi kriteria SIRS/Sepsis)",
+                    "Kadar Hemoglobin (Hb)": "13,6 g/dL (Normal: Tidak ada anemia/perdarahan GI)",
+                    "Hitung Leukosit": "7.400 /uL (Normal: Tidak memenuhi kriteria SIRS/Sepsis)",
                     "Suhu & Skor SOFA": "Suhu 36,7 C | Skor SOFA = 0 | Tanpa Vasopressor/ICU",
                     "Endoskopi & Kultur Darah": "Tidak dilakukan endoskopi maupun kultur darah"
                 },
@@ -336,7 +336,7 @@ class PostHealthkathonExpansionEngine:
                 "authentication_method": "Bypass Persetujuan Manual (Tanpa Scan Wajah FRISTA)",
                 "face_similarity_score": 0.0,
                 "face_threshold_required": 0.85,
-                "liveness_check": "Gagal — Tidak Ada Sesi Rekaman Biometrik",
+                "liveness_check": "Gagal: Tidak Ada Sesi Rekaman Biometrik",
                 "fingerprint_fallback": "Tidak Terekam",
                 "device_id": "ADM-TERM-MTH-02 (IP: 10.24.88.14 - Bulk Script Trigger)",
                 "batch_anomaly_detail": (
@@ -350,7 +350,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_3_mobile_jkn": 92.0,
                     "lapis_4_frista_biometric": 96.0,
                     "fused_quad_score": 91.8,
-                    "verdict": "Jalur Merah Kritis — Terkonfirmasi 4 Lapis Bukti"
+                    "verdict": "Jalur Merah Kritis: Terkonfirmasi 4 Lapis Bukti"
                 }
             },
             "CLM-2026-8806": {
@@ -364,7 +364,7 @@ class PostHealthkathonExpansionEngine:
                 "authentication_method": "Otentikasi Wajah FRISTA v3.2",
                 "face_similarity_score": 0.934,
                 "face_threshold_required": 0.85,
-                "liveness_check": "Valid — Kedipan Aktif & Kedalaman 3D Terverifikasi",
+                "liveness_check": "Valid: Kedipan Aktif & Kedalaman 3D Terverifikasi",
                 "fingerprint_fallback": "Cocok",
                 "device_id": "FRISTA-MPB-IGD-01",
                 "batch_anomaly_detail": (
@@ -378,7 +378,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_3_mobile_jkn": 35.0,
                     "lapis_4_frista_biometric": 15.0,
                     "fused_quad_score": 89.5,
-                    "verdict": "Jalur Merah — Ketidaksesuaian Koding Severity Level"
+                    "verdict": "Jalur Merah: Ketidaksesuaian Koding Severity Level"
                 }
             },
             "CLM-2026-8809": {
@@ -392,7 +392,7 @@ class PostHealthkathonExpansionEngine:
                 "authentication_method": "Otentikasi Wajah FRISTA v3.2",
                 "face_similarity_score": 0.892,
                 "face_threshold_required": 0.85,
-                "liveness_check": "Valid — Kedipan Aktif & Kedalaman 3D Terverifikasi",
+                "liveness_check": "Valid: Kedipan Aktif & Kedalaman 3D Terverifikasi",
                 "fingerprint_fallback": "Tidak Diperlukan",
                 "device_id": "FRISTA-BHN-POLI-04",
                 "batch_anomaly_detail": (
@@ -406,7 +406,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_3_mobile_jkn": 60.0,
                     "lapis_4_frista_biometric": 68.0,
                     "fused_quad_score": 81.4,
-                    "verdict": "Jalur Merah — Indikasi Pemecahan Episode Rawat Jalan"
+                    "verdict": "Jalur Merah: Indikasi Pemecahan Episode Rawat Jalan"
                 }
             },
             "CLM-2026-8802": {
@@ -420,7 +420,7 @@ class PostHealthkathonExpansionEngine:
                 "authentication_method": "Otentikasi Wajah FRISTA v3.2 (Indikasi Spoof)",
                 "face_similarity_score": 0.781,
                 "face_threshold_required": 0.85,
-                "liveness_check": "Gagal — Terdeteksi Pola Layar Ponsel (Moire Spoofing)",
+                "liveness_check": "Gagal: Terdeteksi Pola Layar Ponsel (Moire Spoofing)",
                 "fingerprint_fallback": "Bypass Klaim Gangguan Alat",
                 "device_id": "FRISTA-ASY-REHAB-01",
                 "batch_anomaly_detail": (
@@ -434,7 +434,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_3_mobile_jkn": 89.0,
                     "lapis_4_frista_biometric": 94.5,
                     "fused_quad_score": 86.4,
-                    "verdict": "Jalur Merah Kritis — Penagihan Berulang & Spoofing Biometrik"
+                    "verdict": "Jalur Merah Kritis: Penagihan Berulang & Spoofing Biometrik"
                 }
             }
         }

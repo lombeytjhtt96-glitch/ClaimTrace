@@ -1,7 +1,6 @@
 """
 ClaimTrace Evidence Chain Synthesizer
-Implements the Evidence -> Finding -> Path doctrine inspired by reverse-skill
-(skills/ops/evidence-finding-path.md and skills/case-review).
+Implements the Evidence -> Finding -> Path clinical forensic verification doctrine.
 
 Formalizes the cryptographic evidence graph for BPJS Kesehatan claim fraud adjudication:
 - Immutable Evidence records (E-nnn) with SHA-256 content hashes
@@ -321,7 +320,7 @@ def compute_sha256(data: str) -> str:
 def build_claim_evidence_chain(claim: ClaimInput, triage: Optional[TriageResult] = None) -> EvidenceChainGraph:
     """
     Constructs a formal Evidence -> Finding -> Path graph for a given claim.
-    Adheres strictly to the reverse-skill evidence contract.
+    Adheres strictly to the forensic evidence chain verification contract.
     """
     if triage is None:
         triage = evaluate_claim_triage(claim)
@@ -490,7 +489,7 @@ def build_academic_evidence_passport(
     chain: Optional[EvidenceChainGraph] = None
 ) -> AcademicEvidencePassport:
     """
-    Constructs an Academic Evidence Passport inspired by academic-research-skills (v3.24.2).
+    Constructs an Academic Evidence Passport for structured claim verification.
     Implements Material Passport, Stage 4.5 integrity verification, reproducibility lock,
     and statutory/clinical citation grounding without hallucination.
     """
@@ -592,10 +591,10 @@ def build_claim_audit_ledger(
     chain: Optional[EvidenceChainGraph] = None
 ) -> ClaimAuditLedger:
     """
-    Constructs a formal Atomic Predicate Ledger inspired by agentic-awesome-skills v20.6.0:
-    - audit-agent-run-evidence: Falsifiable claim predicates tested against external witnesses
-    - anti-deception: Gate against authority appeals, pressure overrides, and omission bias
-    - akf-trust-metadata: Provenance stamp with verifiable hash and compliance framework citations
+    Constructs a formal Atomic Predicate Ledger for audit evidence traceability:
+    - Falsifiable claim predicates tested against external clinical witnesses
+    - Guardrails against authority appeals, pressure overrides, and omission bias
+    - Provenance stamp with verifiable hash and regulatory compliance citations
     """
     if triage is None:
         triage = evaluate_claim_triage(claim)
@@ -767,11 +766,10 @@ def build_cds_evaluation_dossier(
     chain: Optional[EvidenceChainGraph] = None
 ) -> CdsEvaluationDossier:
     """
-    Constructs a Clinical Decision Support (CDS) Research & Evaluation Dossier
-    inspired by K-Dense-AI/scientific-agent-skills:
-    - clinical-decision-support (v2.4): Hard safety boundary, GRADE evidence profile, decision logic traceability
-    - clinical-reports (v2.3): Draft watermark, source-bound facts, verified review owner
-    - iso-standards-readiness (v1.3): ISO 14971 risk management controls, ISO 13485 SaMD design controls
+    Constructs a Clinical Decision Support (CDS) Evaluation Dossier:
+    - Hard clinical safety boundaries, GRADE evidence profile, and decision logic traceability
+    - Draft watermark, source-bound facts, and verified clinical review owner
+    - ISO 14971 risk management controls and ISO 13485 medical software design controls
     """
     if triage is None:
         triage = evaluate_claim_triage(claim)
@@ -934,7 +932,7 @@ def build_cognitive_triage_brief(
     chain: Optional[EvidenceChainGraph] = None
 ) -> CognitiveTriageBrief:
     """
-    Constructs an Action-First Cognitive Triage Brief inspired by ayghri/i-have-adhd (v0.4.1):
+    Constructs an Action-First Cognitive Triage Brief designed for rapid clinical adjudication:
     - Rule 1: Lead with the next action (no preamble)
     - Rule 2: Number multi-step tasks (bounded action per step)
     - Rule 3: End with one concrete next action

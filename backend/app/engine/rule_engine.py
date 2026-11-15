@@ -358,7 +358,7 @@ DASAR PERTIMBANGAN & TEMUAN AUDIT:
     def generate_evidence_dossier(claim_data: Dict[str, Any], audit_result: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates an evidence-traceable clinical audit dossier adhering to
-        Scientific Agent Skills (scientific-writing & database-lookup) standards.
+        structured clinical evidence documentation and database lookup standards.
         Ensures cryptographic tamper-evidence, explicit source manifests,
         and uncertainty ratings for payer audit compliance.
         """
@@ -405,7 +405,7 @@ DASAR PERTIMBANGAN & TEMUAN AUDIT:
             "evidence_manifest": evidence_manifest,
             "analysis_intent": "confirmatory_payer_audit",
             "uncertainty_aggregate": "low" if any(v.get("severity") == "CRITICAL" for v in violations) else "moderate",
-            "governance_notice": "DRAFT — EVIDENCE-BASED AUDIT DOSSIER — BPJS VERIFIKATOR AUTHORIZED SIGN-OFF REQUIRED",
+            "governance_notice": "DRAFT: EVIDENCE-BASED AUDIT DOSSIER - BPJS VERIFIKATOR AUTHORIZED SIGN-OFF REQUIRED",
             "standards_compliance": [
                 "UU PDP No. 27/2022 (Data Protection)",
                 "Permenkes No. 26/2021 (Pedoman Pencegahan & Penanganan Fraud)",

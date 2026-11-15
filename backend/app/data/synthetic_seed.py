@@ -17,7 +17,7 @@ def get_initial_claims() -> Dict[str, ClaimInput]:
             peserta_token_aes="AES256_9f8a7b6c5d4e",
             tanggal_layanan=date(2026, 10, 14),
             ina_cbg_code="Z-3-12-0",
-            deskripsi_cbg="Prosedur Rehabilitasi / Fisioterapi (Permenkes 3/2023)",
+            deskripsi_cbg="Prosedur Rehabilitasi / Fisioterapi",
             icd10_primary="M54.5 (Low Back Pain)",
             icd9cm_procedure="93.39 (Other Physical Therapy)",
             nilai_klaim_rp=15300000,
