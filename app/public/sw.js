@@ -1,42 +1,85 @@
-const CACHE_NAME = 'claimtrace-v1.2.0';
+const CACHE_NAME = 'claimtrace-v1.3.0';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/assets/images/bpjs_icon.png'
 ];
 
-// Install: Cache critical static shell
+const IS_LOCAL_HOST =
+  self.location.hostname === 'localhost' ||
+  self.location.hostname === '127.0.0.1' ||
+  self.location.hostname === '[::1]';
+
+// Install: Avoid caching local HTML shells so rebuilds/dev reloads never serve stale chunk hashes
 self.addEventListener('install', (event) => {
+  if (IS_LOCAL_HOST) {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch(() => null)
+      .then(() => self.skipWaiting())
   );
 });
 
-// Activate: Clean old caches and claim clients immediately
+// Activate: Clean old caches; on localhost unregister stale SW and reload open tabs cleanly
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => IS_LOCAL_HOST || key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       );
-    }).then(() => self.clients.claim())
+      await self.clients.claim();
+      if (IS_LOCAL_HOST) {
+        const windowClients = await self.clients.matchAll({
+          type: 'window',
+          includeUncontrolled: true,
+        });
+        await self.registration.unregister().catch(() => false);
+        await Promise.all(
+          windowClients.map((client) => client.navigate(client.url).catch(() => null))
+        );
+      }
+    })()
   );
 });
 
-// Fetch: Network-first with cache fallback for resilience during hospital field audits
+// Fetch: Bypass SW on localhost; in production use Network-First for HTML navigations & APIs
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  // Skip non-GET requests or WebSocket connections
-  if (req.method !== 'GET' || url.protocol.startsWith('ws')) {
+  if (IS_LOCAL_HOST) {
     return;
   }
 
-  // API requests: Network first, fall back to cache for offline Wasrik review
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // Skip non-GET, cross-origin, or WebSocket requests
+  if (req.method !== 'GET' || url.origin !== self.location.origin || url.protocol.startsWith('ws')) {
+    return;
+  }
+
+  // HTML navigations: ALWAYS Network-First so asset chunk hashes remain in sync
+  if (req.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(req)
+        .then((response) => {
+          if (response && response.ok) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(req).then((cached) => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  // API requests: Network-first with cache fallback for offline field audits
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(req)
@@ -59,7 +102,7 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
       return fetch(req).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        if (networkResponse && networkResponse.ok) {
           const resClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
         }
