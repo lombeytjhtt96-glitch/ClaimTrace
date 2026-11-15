@@ -49,26 +49,31 @@ Tujuan :
 --------------------------------------------------------------------------------
 Live Prototype Web App : https://claimtrace-healthkathon.vercel.app/
 GitHub Repository     : https://github.com/lombeytjhtt96-glitch/ClaimTrace
-Kredensial Verifikator : Email: verifikator.bpjs@jkn.go.id | Password: demo123
+Kredensial Verifikator : NIP: 198704202011012001 | Username: siti.rahma
+                         Email: siti.rahma@bpjs-kesehatan.go.id
+                         Password: Password123! | PIN MFA: 123456
+                         (Dilengkapi Fail-Closed Auth + 3-Layer Google reCAPTCHA)
 Tautan Video YouTube   : [MASUKKAN LINK REKAMAN YOUTUBE UNLISTED DI SINI]
 
 
 4. ARTIFAK DAN FILE PRESENTASI TERSEDIA
 --------------------------------------------------------------------------------
-1. Slide Presentasi (PowerPoint) : ClaimTrace_Healthkathon_2026_Final.pptx
-2. Slide Presentasi (PDF Vector) : ClaimTrace_Healthkathon_2026_Final.pdf
-3. Panduan Rekaman Video Zoom    : PANDUAN_RECORDING_VIDEO_DEMO.md
-4. Ringkasan Eksekutif Proposal  : RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
-5. Arsip Lengkap Submisi (.ZIP)  : SUBMISSION_HEALTHKATHON_2026_TINEERENSE.zip
+1. Slide Presentasi Final (PDF)  : submissions/healthkathon/deck/TINEERENSE.pdf (8 Slide Canva)
+2. Tautan Canva Edit Deck Final  : https://www.canva.com/d/gNc6UVMGQ0EJQju
+3. Panduan Rekaman Video Zoom    : submissions/healthkathon/demo_video/PANDUAN_RECORDING_VIDEO_DEMO.md
+4. Ringkasan Eksekutif Proposal  : submissions/healthkathon/proposal/RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
+5. Dosir Mentoring & Coaching    : submissions/healthkathon/proposal/ClaimTrace_Mentoring_Coaching_Dossier_Final.md
 
 
-5. METRIK PENGUJIAN & VALIDASI
+5. METRIK PENGUJIAN & VALIDASI (HKEVAL BENCHMARK & REGRESSION SUITE)
 --------------------------------------------------------------------------------
-• Precision@100               : 100% (100 kasus teratas terbukti anomali #6/#11)
-• False Positive Rate (Merah) : 0,00% (Zero false allegations against compliant faskes)
-• Recall Antrean Triase       : 100% (Semua klaim anomali tertapis ke verifikator)
-• Automated Test Suite        : 106/106 Tests Passed (100% Green)
-• Estimasi Efisiensi Waktu    : 72% (Dari 15 menit menjadi <4,2 menit/berkas)
-• Potensi Penyelamatan Dana   : Rp 34,2 Miliar / tahun (Tingkat Regional)
-• Standar Regulasi            : Perpres 82/2018, Permenkes 26/2021, UU PDP 27/2022
+• Precision@50                : 86,0% (43,0x Lift; +30,0% vs aturan baku, Paired p = 0,0012)
+• Rupiah Recall@100           : 96,8% (58/60 kasus fraud teratas di Top-100 antrean)
+• Blind Review Eksternal      : 95,0% akurat (19/20 terdeteksi vs 0/20 manual RS uji)
+• False Positive Rate (Merah) : 0,0% across 512 Hard-Negative (HD Z49.1/Thalassemia aman)
+• Latensi Inferensi & API     : 11,90 ms API live (< 15 ms core on-premise, Rp 0 API luar)
+• Automated Test Suite        : 300/300 Backend Tests + 112/112 E2E Tests = 412 Passed (100%)
+• Endpoint & Stack Check      : 197 FastAPI Endpoints | 16/16 Smoke Stack Check OK
+• Cakupan Data Empiris        : 6.264.346 baris (1.699.219 klaim FKRTL | 2.091 RS | Rp 1,536 T)
+• Standar Regulasi            : Perpres 82/2018, Permenkes 26/2021, Permenkes 3/2023, UU PDP 27/2022
 ================================================================================

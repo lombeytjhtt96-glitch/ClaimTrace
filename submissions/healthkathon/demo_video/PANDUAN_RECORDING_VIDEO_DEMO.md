@@ -1,11 +1,12 @@
-# PANDUAN REKAMAN VIDEO DEMO & PITCH SCRIPT HEALTHKATHON 2026
-## Proyek: ClaimTrace - Decision Support System Deteksi Anomali Klaim FKRTL Berbasis AI
+# PANDUAN REKAMAN VIDEO DEMO & PITCH SCRIPT FINAL 20 BESAR HEALTHKATHON 2026
+## Proyek: ClaimTrace - Decision Support System Pra-Adjudikasi FKRTL On-Premise
 **Tim:** TINEERENSE - MAN 1 Surakarta  
 **Ketua Tim:** Khalaf Faith Pradyatama (Lead Systems Architect & AppSec Engineer)  
 **Anggota Tim:** Gaudiansyah Abiyu Mahya (AI/ML Engineer & Healthcare Data Analyst)  
 **Kategori:** Efisiensi Risiko pada Fasilitas Kesehatan (FKRTL)  
-**Sub-Kategori:** #6: Phantom Billing (Klaim Fiktif Fisioterapi/Baksos) & #11: Repeat Billing (Penagihan Klaim Berulang)  
-**Target Durasi Video:** 08:30 – 09:30 Menit (Maksimal 10 Menit Sesuai Ketentuan Panitia)  
+**Sub-Kategori:** #6 Phantom Billing & #11 Repeat Billing  
+**Deck Presentasi Acuan:** `submissions/healthkathon/deck/TINEERENSE.pdf` (8 Slide Canva Final)  
+**Target Durasi Video:** 08:30 - 09:30 Menit (Maksimal 10 Menit Sesuai Panduan 20 Besar HealthKathon 2026)  
 **Media Rekaman:** Zoom Meeting (Kamera On, Screen Share 1080p)
 
 ---
@@ -13,192 +14,121 @@
 ## 1. PANDUAN PERSIAPAN TEKNIS SEBELUM REKAMAN (CHECKLIST)
 
 1. **Aplikasi Zoom:**
-   - Gunakan fitur Zoom Meeting Recording (pilih "Record on this Computer" untuk kualitas audio/video lokal tanpa kompresi jaringan).
-   - Pastikan layout "Side-by-side: Speaker" aktif agar wajah kedua presenter (Khalaf dan Gaudiansyah) tetap terlihat di pojok kanan atas saat screen share berlangsung.
+   - Gunakan fitur Zoom Meeting Recording ("Record on this Computer" untuk kualitas audio/video lokal 1080p tanpa jitter jaringan).
+   - Aktifkan layout "Side-by-side: Speaker" agar wajah kedua presenter terlihat jelas di pojok layar saat screen share berlangsung.
 2. **Kesiapan Browser & Tab:**
-   - Buka Google Chrome dengan tab berikut yang sudah siap:
-     - Tab 1: Slide Presentasi (`ClaimTrace_Healthkathon_2026_Final.pdf` atau PowerPoint presentation mode).
-     - Tab 2: Live Prototype Web App: `https://claimtrace-healthkathon.vercel.app/`
-     - Tab 3: Repositori GitHub: `https://github.com/lombeytjhtt96-glitch/ClaimTrace`
-   - Pastikan resolusi layar berada pada 1920x1080 (1080p) dan zoom browser pada 100% atau 90% agar seluruh elemen dashboard tampak proporsional.
-3. **Pengaturan Suara & Pencahayaan:**
-   - Gunakan mikrofon headset atau condenser mic yang jernih.
-   - Ruangan kondusif tanpa backsound bising.
-4. **Pengaturan YouTube Pasca-Rekam:**
-   - Format: MP4 1080p.
-   - Visibilitas: **Unlisted** (Tidak Publik - siapapun yang memiliki tautan dapat menonton, juri dapat langsung menilai).
-   - Judul Video YouTube: `BPJS Kesehatan Healthkathon 2026 - Finalist Demo ClaimTrace - Tim TINEERENSE MAN 1 Surakarta`.
+   - Tab 1: Slide Presentasi Final (`submissions/healthkathon/deck/TINEERENSE.pdf` -- 8 Slide Canva Final, mode layar penuh).
+   - Tab 2: Live Prototype Web App (`http://localhost:3000` atau URL deployment aktif) -- pastikan mode terang default (`#F7F8FA`) aktif dan akun verifikator siap:
+     - Username: `siti.rahma` | NIP: `198704202011012001` | Email: `siti.rahma@bpjs-kesehatan.go.id` | Sandi: `Password123!` | PIN MFA: `123456`
+   - Tab 3: Repositori GitHub (`https://github.com/lombeytjhtt96-glitch/ClaimTrace`).
+   - Resolusi layar 1920x1080 (1080p), zoom browser 100%.
+3. **Pengaturan YouTube Pasca-Rekam:**
+   - Format MP4 1080p, Visibilitas **Unlisted**.
+   - Judul Video YouTube: `BPJS Kesehatan Healthkathon 2026 - Final 20 Besar ClaimTrace - Tim TINEERENSE MAN 1 Surakarta`.
 
 ---
 
-## 2. STRUKTUR RUNDOWN & DISTRIBUSI WAKTU VIDEO (TOTAL ~9 MENIT)
+## 2. STRUKTUR RUNDOWN & DISTRIBUSI WAKTU VIDEO (SESUAI 8 SLIDE `TINEERENSE.pdf`)
 
-| Segmen Waktu | Bagian Wajib Panitia | Tampilan Layar | Pembicara Utama |
+| Segmen Waktu | Bagian Wajib Panduan 20 Besar | Tampilan Layar | Pembicara Utama |
 | :--- | :--- | :--- | :--- |
-| **00:00 – 00:45** | 1. Cover & Perkenalan Tim | Slide 1 & Slide 2 (Kamera Aktif) | Khalaf Faith & Gaudiansyah |
-| **00:45 – 02:00** | 2. Judul, Masalah & Dampak | Slide 3 & Slide 4 | Gaudiansyah Abiyu Mahya |
-| **02:00 – 03:15** | 3. Alur Proses & Arsitektur | Slide 5 & Slide 7 | Khalaf Faith Pradyatama |
-| **03:15 – 06:45** | 4. Demo Aplikasi Live Berjalan | Browser Live: Vercel App | Khalaf Faith & Gaudiansyah |
-| **06:45 – 08:00** | 5. Keamanan, UU PDP & Validasi | Slide 8 & Slide 9 | Gaudiansyah & Khalaf |
-| **08:00 – 08:45** | 6. Roadmap, Bisnis & Penutup | Slide 10 | Khalaf Faith Pradyatama |
+| **00:00 - 00:55** | 1. Cover & Perkenalan Tim | Slide 1 & Slide 2 `TINEERENSE.pdf` | Khalaf Faith & Gaudiansyah |
+| **00:55 - 02:45** | 2. Perubahan Setelah Coaching (+ Jujur Belum Sempat) | Slide 3 `TINEERENSE.pdf` | Khalaf Faith & Gaudiansyah |
+| **02:45 - 04:00** | 3. Solusi & Alur Sidecar BEA C01-S06 | Slide 4 `TINEERENSE.pdf` | Khalaf Faith Pradyatama |
+| **04:00 - 07:15** | 4. Demo Aplikasi Live Versi Terbaru | Slide 5 & Browser Live App | Khalaf Faith & Gaudiansyah |
+| **07:15 - 08:35** | 5. Dampak, Benchmark HKEval, & Hold-Out | Slide 6 `TINEERENSE.pdf` | Gaudiansyah Abiyu Mahya |
+| **08:35 - 09:30** | 6. Model Bisnis On-Premise, Roadmap, & Penutup | Slide 7 & Slide 8 `TINEERENSE.pdf` | Khalaf Faith & Gaudiansyah |
 
 ---
 
-## 3. PITCH SCRIPT KATA-PER-KATA (TRANSKRIP BICARA DENGAN CUE SCREEN SHARE)
+## 3. PITCH SCRIPT TERSTRUKTUR (CUE SLIDE `TINEERENSE.pdf` & LIVE DEMO)
 
-### SEGMEN 1: OPENING & PERKENALAN TIM (00:00 - 00:45)
-**Tampilan Layar:** Slide 1 (Cover) lalu transisi ke Slide 2 (Perkenalan Tim).  
-**Kamera:** On (Kedua presenter tersenyum percaya diri dan profesional).
+### SEGMEN 1: COVER & PERKENALAN TIM (00:00 - 00:55)
+**Tampilan Layar:** Slide 1 (Cover) lalu Slide 2 (Perkenalan Tim).
 
-**Khalaf Faith Pradyatama:**  
-> "Assalamu’alaikum Warahmatullahi Wabarakatuh, salam sejahtera bagi kita semua, Syalom, Oom Swastiastu, Namo Buddhaya, Salam Kebajikan.  
-> Yang terhormat Dewan Juri BPJS Kesehatan Healthkathon 2026 dan seluruh panitia penyelenggara.  
-> Kami dari Tim **TINEERENSE**, perwakilan siswa Madrasah Aliyah Negeri 1 Surakarta, dengan bangga mempersembahkan solusi inovasi kami: **ClaimTrace** — Decision Support System pra-bayar berbasis Artificial Intelligence untuk efisiensi risiko fasilitas kesehatan rujukan tingkat lanjutan (FKRTL)."
+**Khalaf Faith Pradyatama:**
+> "Assalamu'alaikum Warahmatullahi Wabarakatuh, salam sejahtera bagi kita semua. Yang terhormat Dewan Juri dan Pembina BPJS Kesehatan Healthkathon 2026. Kami dari Tim **TINEERENSE**, MAN 1 Surakarta, mempersembahkan **ClaimTrace** — sistem pendukung keputusan pra-adjudikasi klaim FKRTL on-premise untuk Efisiensi Risiko Faskes, khususnya Sub-kategori #6 Phantom Billing dan #11 Repeat Billing."
 
-*(Ganti slide ke Slide 2: Perkenalan Tim)*
+*(Ganti ke Slide 2: Perkenalan Tim)*
 
-**Khalaf Faith Pradyatama:**  
-> "Perkenalkan, saya **Khalaf Faith Pradyatama**, siswa kelas XII MIPA MAN 1 Surakarta selaku Ketua Tim sekaligus Lead Systems Architect dan AppSec Engineer. Saya bertanggung jawab atas arsitektur backend Python FastAPI, integrasi telemetri reaktif Mobile JKN, standar keamanan siber, serta implementasi audit ledger kriptografis SHA-256."
-
-**Gaudiansyah Abiyu Mahya:**  
-> "Dan saya **Gaudiansyah Abiyu Mahya**, siswa kelas XII MIPA MAN 1 Surakarta selaku AI/ML Engineer dan Healthcare Data Analyst. Saya bertanggung jawab atas pemodelan deteksi anomali berbasis Isolation Forest dan semantic embeddings, penelaahan regulasi penjaminan JKN, perancangan antarmuka Verificator Cockpit, serta kalibrasi matematis ambang batas risiko 3 lapis bukti."
+**Khalaf & Gaudiansyah:**
+> **Khalaf:** "Saya **Khalaf Faith Pradyatama**, Ketua Tim, bertanggung jawab pada arsitektur backend Python FastAPI, integrasi gudang SQL on-premise, keamanan siber, dan rantai audit kriptografis SHA-256."
+> **Gaudiansyah:** "Saya **Gaudiansyah Abiyu Mahya**, bertanggung jawab pada perancangan antarmuka klinis UI/UX, riset regulasi JKN, skenario uji, dan penyusunan komunikasi solusi."
 
 ---
 
-### SEGMEN 2: JUDUL IDE, URGENSI MASALAH, & DAMPAK (00:45 - 02:00)
-**Tampilan Layar:** Slide 3 (Judul Ide, Deskripsi, Tujuan) lalu Slide 4 (Latar Belakang & Dampak).
+### SEGMEN 2: TRANSFORMASI PASCA-COACHING & KETERBUKAAN JUJUR (00:55 - 02:45)
+**Tampilan Layar:** Slide 3 (`FOKUS: COACHING` + grafik `Transformasi Pasca-Coaching`).
 
-*(Ganti slide ke Slide 3)*
+**Khalaf Faith Pradyatama:**
+> "Pasca sesi mentoring dan coaching bersama pembina BPJS Kesehatan, kami mengeksekusi lima transformasi kode nyata di sistem produksi:
+> Pertama, menyelaraskan posisi ClaimTrace sebagai **sidecar BEA di titik C03.04** antara C03 dan S06 tanpa mengubah skema VClaim maupun Smart Vedika.
+> Kedua, menghilangkan 100% ketergantungan API LLM cloud publik demi kepatuhan **UU PDP No. 27 Tahun 2022** — memigrasikan seluruh model RandomForest/IsolationForest (`.pkl`) dan Clinical NLP `all-MiniLM-L6-v2` secara **on-premise** sehingga latensi API live turun drastis dari di atas 4.000 ms menjadi **11,90 ms** (`< 15 ms` core) dengan **Rp 0 biaya token eksternal**."
 
-**Gaudiansyah Abiyu Mahya:**  
-> "Inovasi **ClaimTrace** dirancang dengan satu kalimat nilai utama: *Membantu verifikator BPJS Kesehatan agar mempermudah dalam mendeteksi anomali klaim faskes secara otomatis berbasis Artificial Intelligence*.  
-> Solusi ini kami dedikasikan secara spesifik pada Kategori Efisiensi Risiko FKRTL, dengan fokus penanganan Sub-kategori #6: Phantom Billing atau klaim fiktif pada layanan fisioterapi dan bakti sosial, serta Sub-kategori #11: Repeat Billing atau penagihan klaim berulang."
-
-*(Ganti slide ke Slide 4: Latar Belakang & Dampak)*
-
-**Gaudiansyah Abiyu Mahya:**  
-> "Bapak dan Ibu Dewan Juri, mengapa inovasi ini sangat penting dan mendesak?  
-> Berdasarkan paparan BPJS Kesehatan tahun 2025, Program JKN melayani lebih dari 1,9 juta pemanfaatan layanan kesehatan setiap harinya di ribuan faskes mitra se-Indonesia.  
-> Di tengah volume yang sedemikian masif, temuan bersama KPK dan Kementerian Kesehatan pada Juli 2024 mengungkap adanya dugaan klaim fiktif hingga mencapai kurang lebih Rp34 Miliar pada 3 rumah sakit khusus, dengan modus manipulasi berkas baksos dan klaim fisioterapi berulang.  
-> Verifikator BPJS berada di garis terdepan dengan batas waktu SLA yang sangat ketat: hanya 10 hari kerja sesuai amanat Perpres No. 82 Tahun 2018. Menelaah puluhan ribu berkas PDF manual satu demi satu membuka celah lolosnya klaim anomali.  
-> Melalui ClaimTrace, kami menghadirkan dampak nyata terukur:  
-> Pertama, memangkas durasi telaah berkas anomali dari 15-25 menit menjadi di bawah 4,2 menit per kasus, atau efisiensi waktu sebesar 72%.  
-> Kedua, potensi pencegahan kebocoran dana amanat umat JKN hingga Rp34,2 Miliar per tahun di level regional.  
-> Dan ketiga, menekan False Positive Rate ke Jalur Merah hingga 0,00%, sehingga faskes yang patuh tidak akan pernah dirugikan."
+**Gaudiansyah Abiyu Mahya:**
+> "Ketiga, kami memperkuat Lapis 4 melalui verifikasi dokumen **RME-TTE BSrE & FRISTA**, menambah modul **Cek Dokumen RS** dan **Peringkat Risiko Faskes**, serta menanamkan 5 aturan **FairGuard Z49.1** sehingga **0,0% False Positive Rate** pada 512 klaim sah terapi kronis seperti hemodialisis.
+> Keempat, pengamanan otentikasi **Fail-Closed 4-Field + 3-Lapis Google reCAPTCHA Enterprise**, putusan 2-Tier Human-in-the-Loop, dan **BAHV kolektif bersegel QR SHA-256**.
+> Dan secara jujur kami sampaikan poin yang belum dikerjakan di sandbox publik: koneksi API produksi live SATUSEHAT, FRISTA, BSrE, dan key produksi reCAPTCHA menunggu kredensial resmi BPJS, sementara kalibrasi aturan hold-out *Unbundling* (`66,7%`) dan *Prolonged LOS* (`0,0%`) kami jadwalkan pada Tahap 1 Pilot 12 RS."
 
 ---
 
-### SEGMEN 3: ALUR PROSES & FITUR UNGGULAN (02:00 - 03:15)
-**Tampilan Layar:** Slide 5 (Alur Proses Aplikasi) lalu Slide 7 (Penjelasan Fitur).
+### SEGMEN 3: SOLUSI & ALUR ARSITEKTUR SIDECAR BEA (02:45 - 04:00)
+**Tampilan Layar:** Slide 4 (`Solusi & Alur` + diagram `BEA C01-S06`).
 
-*(Ganti slide ke Slide 5)*
-
-**Khalaf Faith Pradyatama:**  
-> "Bagaimana cara kerja ClaimTrace? Sistem bekerja secara preventif pada tahap pra-bayar melalui 5 tahapan utama:  
-> 1. Input: Data klaim FKRTL masuk secara otomatis melalui standard API VClaim.  
-> 2. Proses: Sistem melakukan triangulasi lintas data — mengekstraksi parameter spatiotemporal, memvalidasi nomor SIP dokter ke registri SATUSEHAT SDMK Kemenkes, dan menyinkronkan status konfirmasi pasien di Mobile JKN.  
-> 3. Analisis AI: Model Isolation Forest dan ChromaDB cosine semantic embeddings bekerja secara real-time mendeteksi lonjakan klaim serentak, pola copy-paste resume medis, serta repeat billing.  
-> 4. Output: Triase cerdas 3 jalur (Hijau untuk lolos otomatis, Kuning untuk klarifikasi data, dan Merah untuk investigasi mendalam).  
-> 5. Tindak Lanjut: Rekomendasi verifikator terkunci otomatis pada ledger kriptografi SHA-256 yang berkekuatan hukum."
-
-*(Ganti slide ke Slide 7: Penjelasan Fitur Unggulan)*
-
-**Khalaf Faith Pradyatama:**  
-> "ClaimTrace mengintegrasikan 4 pilar fitur inti:  
-> Pertama, Automated AI Anomaly Detection dengan Explainable AI (XAI) feature attribution.  
-> Kedua, Matriks Bukti 3 Lapis yang menghilangkan ketergantungan pada berkas sepihak faskes.  
-> Ketiga, Dual Cockpit yang menggabungkan antarmuka verifikator BPJS dengan Simulator Mobile JKN secara real-time.  
-> Dan keempat, Ledger Kriptografis SHA-256 anti-tamper untuk memastikan integritas bukti telaah klaim."
+**Khalaf Faith Pradyatama:**
+> "Alur kerja ClaimTrace berjalan mulus dalam 3 tahap:
+> 1. **Ingesti Sidecar BEA (C01-C02) & Gudang SQL On-Premise:** Menyerap feed VClaim dan INA-CBG dengan validasi skema dan hash SHA-256 terhadap gudang analitik lokal berisi **6,26 juta baris** termasuk **1.699.219 klaim FKRTL** di **2.091 RS**.
+> 2. **Triangulasi 4-Lapis & Scoring AI On-Premise (`< 15 ms`):** Menghitung skor deterministik skala 0-100 (`0,50*S1 + 0,30*S2 + 0,20*S3`) beserta pemeriksaan dokumen RME-TTE dan biometrik FRISTA.
+> 3. **FairGuard Z49.1 & Disposisi 3-Jalur SLA <= 10 Hari Kerja:** Meloloskan RS jujur ke Jalur Hijau (`< 50`) langsung menuju pembayaran S06, Jalur Kuning (`50-74,9`) untuk klarifikasi administratif, dan Jalur Merah (`>= 75` atau *hard trigger*) ke penahanan pra-bayar + BAHV QR."
 
 ---
 
-### SEGMEN 4: LIVE DEMO APLIKASI BERJALAN (DURASI: ±2 MENIT 15 DETIK — AMAN DI BAWAH 3 MENIT)
-**Tampilan Layar:** Beralih dari Slide 5 ke layar aplikasi ClaimTrace yang sedang berjalan: `https://claimtrace-healthkathon.vercel.app/`
+### SEGMEN 4: LIVE DEMO APLIKASI VERSI TERBARU (04:00 - 07:15)
+**Tampilan Layar:** Slide 5 singkat -> beralih penuh ke browser live ClaimTrace (`localhost:3000` atau URL aktif).
 
-**Transisi di Slide 5 (±10 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
-> "Sekarang, mari kita buktikan cara kerja ClaimTrace secara langsung melalui empat skenario pengujian pada prototype interaktif kami!"  
-*(Langsung beralih ke layar aplikasi ClaimTrace yang sedang berjalan)*
-
----
-
-**Langkah 1: Triage Antrean & Deteksi Klaster (±30 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
-*(Aksi di layar: Tampilkan halaman utama Dashboard Verifikator, arahkan kursor ke barisan Triage Hijau/Kuning/Merah, lalu sorot baris RS Mitra Husada)*
-
-> "Saat verifikator membuka dashboard utama ClaimTrace, sistem langsung melakukan triage otomatis terhadap ribuan berkas klaim yang masuk ke dalam Jalur Hijau, Kuning, dan Merah. Klaim wajar di Jalur Hijau dapat langsung diproses fast-track. Namun perhatikan di bagian atas antrean prioritas: sistem mendeteksi klaster mencolok pada RS Mitra Husada, di mana terdapat 85 klaim fisioterapi pasca-baksos yang otomatis masuk ke Jalur Merah dengan Skor Risiko 87."
-
----
-
-**Langkah 2: Inspeksi Matriks Bukti Lapis 1 & 2 (±35 Detik) — Amay (Gaudiansyah Abiyu Mahya):**  
-*(Aksi di layar: Klik klaster RS Mitra Husada hingga panel Matriks Bukti 3 Lapis terbuka. Tunjukkan grafik lonjakan klaim Lapis 1 dan status merah SIP dokter pada Lapis 2)*
-
-> "Ketika kita klik klaster tersebut untuk menginspeksi Matriks Bukti 3 Lapis:  
-> 
-> Pada Lapis 1 (Radar Pola & Episode Fingerprint), terlihat lonjakan volume klaim mencapai 8,5 kali lipat dari baseline normal faskes, disertai kemiripan pola tindakan berulang.  
-> 
-> Lebih krusial lagi pada Lapis 2 (Uji Jejak SATUSEHAT SDMK), rekonsiliasi otomatis dengan database Kemenkes mengungkap bahwa Surat Izin Praktik (SIP) dokter DPJP terkait ternyata sudah berakhir pada tanggal pelayanan, sehingga memicu Hard Trigger risiko merah!"
+1. **Login Fail-Closed + 3-Lapis Google reCAPTCHA (35 detik) — Khalaf:**
+   Tunjukkan halaman Sign-In mode terang bersih (*Clinical Precision*) dengan validasi 4-field (`Username`, `Email`, `NIP`, `Password`), indikator 3 lapis Google reCAPTCHA (`v2 Checkbox`, `Enterprise`, `v3 Score`), dan 3 tahap MFA menuju kokpit.
+2. **Dashboard Ringkasan (35 detik) — Khalaf:**
+   Tunjukkan **1.699.219 klaim FKRTL** senilai Rp 1,536 Triliun di **2.091 RS** (**496 Kab/Kota**) serta tingkat kepatuhan **SLA 99,9%** dalam koridor 10 hari kerja Perpres No. 82/2018.
+3. **Antrean Klaim & Telaah 4-Lapis + FairGuard Z49.1 (50 detik) — Gaudiansyah:**
+   Buka satu klaim Jalur Merah (#6 Phantom Billing / #11 Repeat Billing). Tunjukkan bukti Lapis 1 (lonjakan & kemiripan semantik), Lapis 2 (SIP SATUSEHAT & Geovelocity OSRM), Lapis 3 (konfirmasi *Zero-PHI* Mobile JKN), dan Lapis 4 (biometrik FRISTA & FairGuard Z49.1 yang melindungi klaim hemodialisis kronis agar tetap di Jalur Hijau).
+4. **Cek Dokumen RS & Peringkat Risiko Faskes (40 detik) — Gaudiansyah:**
+   Tunjukkan modul **Cek Dokumen RS** (audit 7 berkas wajib RME-TTE & deteksi inversi kronologi waktu) dan **Peringkat Risiko Faskes** lintas 2.091 rumah sakit.
+5. **Konsol Putusan 2-Tier & BAHV Kolektif QR SHA-256 (35 detik) — Khalaf:**
+   Tunjukkan persetujuan berjenjang *Human-in-the-Loop*, penerbitan dokumen **BAHV** dengan matriks QR dan checksum SHA-256 pada tab **Laporan Resmi (BAHV)**, serta **Jejak Audit Sistem** anti-tamper.
 
 ---
 
-**Langkah 3: Simulasi Live Mobile JKN Lapis 3 (±30 Detik) — Khalaf Faith Pradyatama:**  
-*(Aksi di layar: Buka panel Simulator Mobile JKN di samping/layar terpisah, klik kirim notifikasi, lalu tekan tombol [Tidak Pernah] pada tampilan HP peserta)*
+### SEGMEN 5: DAMPAK, BENCHMARK HKEVAL, & KETERBUKAAN HOLD-OUT (07:15 - 08:35)
+**Tampilan Layar:** Slide 6 (`Dampak & Bukti Terukur` + grafik `HKEval`).
 
-> "Selanjutnya, untuk membuktikan apakah pasien benar-benar hadir pada Lapis 3, kita jalankan Simulasi Live Mobile JKN. Sistem mengirimkan notifikasi verifikasi satu-klik ke ponsel peserta dengan prinsip minimasi privasi—tanpa menampilkan rincian diagnosa sensitif. Ketika peserta menekan tombol [Tidak Pernah] karena merasa hanya ikut acara baksos pemeriksaan biasa dan tidak pernah menjalani terapi fisioterapi di RS tersebut, perhatikan bagaimana skor dan indikator di cockpit verifikator seketika bereaksi secara real-time mengonfirmasi adanya Phantom Billing!"
-
----
-
-**Langkah 4: Eksekusi Keputusan & Cetak Audit SHA-256 (±30 Detik) — Khalaf Faith Pradyatama:**  
-*(Aksi di layar: Klik tombol [Tunda Berita Acara & Minta Klarifikasi], lalu tampilkan modal/dokumen Berkas Telaah Siap-Audit beserta kode hash SHA-256 di bagian bawahnya)*
-
-> "Berbekal bukti tiga lapis yang objektif dan bebas debat ini, verifikator dengan prinsip Human-in-the-Loop cukup mengeksekusi tombol [Tunda Berita Acara & Minta Klarifikasi] sebelum batas regulasi 10 hari kerja. Seketika itu juga, ClaimTrace menerbitkan Berkas Telaah Siap-Audit yang merangkum seluruh temuan anomali dan menguncinya dengan stempel kriptografis hash SHA-256 sehingga sah, transparan, dan tidak dapat dimanipulasi!"
-
----
-
-### SEGMEN 5: KEAMANAN, KEPATUHAN UU PDP, & HASIL UJI VALIDASI (06:45 - 08:00)
-**Tampilan Layar:** Kembali ke presentasi: Slide 8 (Arsitektur Teknis & Kepatuhan) lalu Slide 9 (Hasil Uji Validasi & Roadmap).
-
-*(Ganti slide ke Slide 8)*
-
-**Khalaf Faith Pradyatama:**  
-> "Dalam aspek keamanan dan tata kelola teknologi, ClaimTrace dibangun dengan kepatuhan penuh terhadap **Undang-Undang Perlindungan Data Pribadi No. 27 Tahun 2022**:  
-> • Seluruh NIK dan identitas peserta dipseudonimisasi menggunakan salted-hashing.  
-> • Seluruh data at-rest dienkripsi dengan standar militer AES-256-GCM dan komunikasi data dilindungi TLS 1.3.  
-> • Dan yang paling fundamental: kami menjunjung etika **Human-in-the-Loop**. Sistem AI hanya bertindak sebagai Decision Support System yang merekomendasikan bukti dan probabilitas, sedangkan vonis akhir klaim 100% tetap berada di tangan verifikator manusia."
-
-*(Ganti slide ke Slide 9: Hasil Uji Validasi & Kesiapan Implementasi)*
-
-**Gaudiansyah Abiyu Mahya:**  
-> "Kesiapan produk kami telah diuji secara komprehensif melalui holdout validation dataset berukuran 3.002 transaksi klaim:  
-> • Precision@100 mencapai 100%: 100 kasus teratas prioritas telaah seluruhnya terbukti valid anomali.  
-> • False Positive Rate ke Jalur Merah adalah 0,00%: tidak ada faskes patuh yang salah dituduh.  
-> • Recall Antrean adalah 100%: seluruh klaim bermasalah berhasil ditapis masuk antrean verifikasi.  
-> • Dari sisi engineering, seluruh 106 unit test dan integration test otomatis telah lolos 100% hijau."
+**Gaudiansyah Abiyu Mahya:**
+> "Pada evaluasi terkontrol `HKEval` (`n=3.002` klaim, prevalensi 2,0%, lulus **5/5 checklist REFORMS** dengan korelasi kebocoran label mendekati nol):
+> - **Precision@50 mencapai 86,0%** (43x *lift*, meningkat **+30,0% poin** dibanding aturan baku dengan `p = 0,0012`).
+> - **Rupiah Recall@100 mencapai 96,8%** (58 dari 60 kasus fraud terdeteksi di Top-100 antrean).
+> - **Blind Review eksternal akurat 95,0%** (19/20 kasus anomali RS uji teridentifikasi vs 0/20 metode manual).
+> - **False Positive Rate Hard-Negative 0,0%** (0/512 klaim sah HD Z49.1/Thalassemia terblokir keliru) dan **RS Jujur Teraudit@50 hanya 21,9% (7/32)**.
+> Dari sisi rekayasa, **300 dari 300 uji backend** serta **112 uji E2E** lulus 100% hijau across **197 endpoint FastAPI aktif**, dan pada pola *hold-out* kami melaporkan secara terbuka temuan **Unbundling 66,7% (2/3)** dan **Prolonged LOS 0,0% (0/11)** untuk dikalibrasi di Tahap 1 Pilot."
 
 ---
 
-### SEGMEN 6: MODEL BISNIS, KEBERLANJUTAN, & PENUTUP (08:00 - 08:45)
-**Tampilan Layar:** Slide 10 (Penutup, Link & Kontak).
+### SEGMEN 6: MODEL BISNIS ON-PREMISE, PETA JALAN, & PENUTUP (08:35 - 09:30)
+**Tampilan Layar:** Slide 7 (`Bisnis Model & Rencana`) lalu Slide 8 (`Terima Kasih`).
 
-*(Ganti slide ke Slide 10)*
+**Khalaf Faith Pradyatama:**
+> "ClaimTrace beroperasi 100% di infrastruktur internal BPJS Kesehatan dengan **Rp 0 biaya API cloud maupun lisensi SaaS per kursi**. TCO infrastruktur berada di rentang **Rp 0,45 Miliar hingga Rp 4,20 Miliar per tahun** dengan estimasi rasio manfaat terhadap biaya **41,1x hingga 115,5x** across tiga tahap implementasi 18 bulan (Pilot 12 FKRTL -> 126 KC / 850 FKRTL -> Skala Nasional 3.221 FKRTL & 23.816 FKTP)."
 
-**Khalaf Faith Pradyatama:**  
-> "Dari perspektif model bisnis dan keberlanjutan, ClaimTrace dirancang sebagai **Non-Disruptive Middleware Add-on** yang sangat mudah diadopsi oleh BPJS Kesehatan tanpa perlu mengubah sistem core yang ada.  
-> Kami merencanakan roadmap 4 fase yang realistis: diawali asistensi teknis di bulan ke-1, piloting terbatas di kantor cabang percontohan pada bulan ke-3, hingga ekspansi ke seluruh 14 tipologi kecurangan JKN.  
-> Dengan biaya komputasi cloud serverless yang sangat hemat, yakni kurang dari Rp120 per berkas klaim, potensi Return on Investment (ROI) mencapai ratusan kali lipat melalui penyelamatan potensi kebocoran dana puluhan miliar rupiah.  
-> 
-> Seluruh kode sumber, dokumentasi PRD, arsitektur teknis, dan suite pengujian dapat diakses secara transparan pada repositori GitHub kami di `github.com/lombeytjhtt96-glitch/ClaimTrace`, serta prototipe live di `claimtrace-healthkathon.vercel.app`.  
-> 
-> Mari bersama-sama kita wujudkan tata kelola jaminan kesehatan nasional yang lebih tangguh, berintegritas, dan akuntabel.  
-> *Detect Smarter, Protect JKN — Smarter Protection for a Stronger JKN!*  
-> Terima kasih, Wassalamu’alaikum Warahmatullahi Wabarakatuh."
+*(Ganti ke Slide 8: Terima Kasih)*
+
+**Khalaf & Gaudiansyah:**
+> "Mari bersama wujudkan pertahanan pra-adjudikasi 4-Lapis yang presisi, adil bagi RS patuh, dan menjaga keberlanjutan Dana Jaminan Sosial BPJS Kesehatan. Terima kasih, Wassalamu'alaikum Warahmatullahi Wabarakatuh."
 
 ---
 
-## 4. CHECKLIST FINAL SUBMISI SEBELUM TENGGAT WAKTU
+## 4. CHECKLIST FINAL SUBMISI 20 BESAR
 
-- [x] Slide Presentasi Resmi (`ClaimTrace_Healthkathon_2026_Final.pptx` & `ClaimTrace_Healthkathon_2026_Final.pdf`)
-- [x] URL Live Web App terverifikasi aktif di Vercel: `https://claimtrace-healthkathon.vercel.app/`
-- [x] Repositori GitHub publik & up-to-date: `https://github.com/lombeytjhtt96-glitch/ClaimTrace`
-- [x] Seluruh 106 test automated passed (100%)
-- [x] Video berdurasi di bawah 10 menit direkam via Zoom Meeting
-- [x] Video diunggah ke YouTube dengan status "Unlisted"
-- [x] Tautan video dan berkas di-submit pada portal Healthkathon BPJS Kesehatan
+- [x] Deck Presentasi Final (`submissions/healthkathon/deck/TINEERENSE.pdf` -- 8 Slide Canva Final, `2,0 MB`)
+- [x] Aplikasi Web Live & Backend Terverifikasi (`300/300` Backend + `112/112` E2E = `412 Passed`, `197` API Endpoints, `16/16` Stack OK)
+- [x] Repositori GitHub Terkini (`github.com/lombeytjhtt96-glitch/ClaimTrace`)
+- [ ] Rekam Video Demo Zoom sesuai 6 bagian rundown di atas (`<= 10 menit`, MP4 1080p)
+- [ ] Unggah ke YouTube (`Unlisted`) & kirim berkas final ke `hackathonbpjs@bpjs-kesehatan.go.id` (periode 14-17 Nov 2026)

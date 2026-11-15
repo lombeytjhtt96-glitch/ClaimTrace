@@ -182,7 +182,7 @@ Eksekusi mesin kolumnar DuckDB OLAP pada dataset terintegrasi (`6.264.346` total
 
 1. **Prinsip Zero-PHI Redaction:**
    Sebelum data diproses oleh modul analitik atau dikirimkan ke antarmuka pengguna, seluruh data identitas (NIK, Nomor Kartu BPJS, Nama Pasien, Rekam Medis) disamarkan (masking) menjadi data sintetis bertanda format `3372************` dan nama generik.
-2. **Kontrol Akses Berbasis Hak Istimewa (Internet2 Grouper Model):**
+2. **Kontrol Akses Berbasis Hak Istimewa (Enterprise RBAC Model):**
    Setiap endpoint API krusial dilindungi otorisasi bertingkat:
    - Verifikator Lapangan: Akses baca (`READ`) dan pengusulan klarifikasi (`CLARIFY`).
    - Tim Analis Anti-Fraud / Pengawas Cabang: Hak eksekusi putusan (`ADJUDICATE`) dan penerbitan BAKB.

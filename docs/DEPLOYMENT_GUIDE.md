@@ -59,22 +59,24 @@ start_all.bat
    npm run dev -- --host 0.0.0.0 --port 3000
    ```
    - Akses Cockpit: `http://localhost:3000`
-   - Akun Verifikator Default: `verifikator.bpjs@jkn.go.id` / `demo123`
+   - Akun Verifikator Default (Fail-Closed + MFA + reCAPTCHA):
+     - NIP: `198704202011012001` | Username: `siti.rahma` | Email: `siti.rahma@bpjs-kesehatan.go.id` | Sandi: `Password123!` | PIN: `123456`
 
 ---
 
 ## 3. PENGUJIAN KUALITAS OTOMATIS (TESTING & VERIFIKASI)
 
-### Uji Backend Otomatis (113 Test Suite)
+### Uji Backend & E2E Otomatis (300 Backend + 112 E2E = 412 Tests Passed)
 ```bash
-python3 -m pytest backend/tests/ -v
+python3 -m pytest backend/tests/ -q
+python3 -m pytest tests_e2e/ -q
 ```
-Seluruh 113 pengujian mencakup:
-- Formula fusi risiko dan *hard triggers* pelanggaran fatal
-- Rantai integritas audit kriptografis SHA-256 anti-tamper
-- Deteksi anomali *phantom billing*, *repeat billing*, dan *upcoding*
+Seluruh 412 skenario pengujian otomatis mencakup:
+- Formula fusi risiko, FairGuard Z49.1 (0,0% FPR hard-negative), & *hard triggers* pelanggaran fatal
+- Rantai integritas audit kriptografis SHA-256 anti-tamper & penyegelan BAHV/BAKB QR
+- Deteksi anomali *phantom billing*, *repeat billing*, *upcoding*, serta Cek Dokumen RS & Peringkat Faskes
 - Kalkulasi hari kerja murni (SLA 10 hari kerja Perpres 82/2018)
-- Keamanan otorisasi RBAC Internet2 Grouper & sanitasi Zero-PHI UU PDP
+- Keamanan otorisasi Fail-Closed 4-Field + 3-Layer Google reCAPTCHA + RBAC & sanitasi Zero-PHI UU PDP
 
 ### Verifikasi Kompilasi Frontend
 ```bash

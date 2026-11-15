@@ -59,7 +59,7 @@ Graf pengetahuan memetakan seluruh modul ke dalam 6 lapisan arsitektur independe
   - `file:backend/app/engine/osrm_geovelocity.py` - Mesin kalkulasi kecepatan fisik DPJP berbasis jarak rute jalan raya riil (OpenStreetMap OSRM).
   - `file:backend/app/engine/episode_graph.py` - Graf relasi episode pelayanan pasien untuk mendeteksi fragmentasi klaim (*unbundling*).
   - `file:backend/app/engine/fhir_adapter.py` - Adapter interoperabilitas standar HL7/FHIR R4 untuk integrasi SATUSEHAT Kemenkes.
-  - `file:backend/app/engine/prometheus_metrics.py` - Eksportir telemetri performa dan metrik pemantauan operasional.
+  - `file:backend/app/engine/telemetry_metrics.py` - Eksportir telemetri performa dan metrik pemantauan operasional.
 
 ### Lapisan 5: Pengujian & Jaminan Mutu Otomatis (`layer:tests-and-quality`)
 - **Deskripsi**: Suite pengujian unit, integrasi, dan verifikasi webapp menyeluruh dengan kepastian 100% lulus tanpa regresi.
@@ -102,19 +102,19 @@ Graf pengetahuan memetakan seluruh modul ke dalam 6 lapisan arsitektur independe
 Untuk mempelajari kode program secara terstruktur, ikuti urutan langkah berikut:
 
 - **Langkah 1: Tinjauan Umum Proyek & Milestone Finalis**
-  Pelajari [README.md](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/README.md), [CHANGELOG.md](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/CHANGELOG.md), dan [GLOSSARY.md](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/GLOSSARY.md).
+  Pelajari [README.md](../README.md), [CHANGELOG.md](../CHANGELOG.md), dan [GLOSSARY.md](GLOSSARY.md).
 - **Langkah 2: Landasan Keputusan Arsitektur (ADR)**
   Pelajari dokumen ADR di folder `docs/adr/` untuk memahami alasan di balik pemilihan arsitektur triase dan ledger.
 - **Langkah 3: Gateway Backend & Pengamanan Siber**
-  Periksa [`backend/app/main.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/main.py) dan modul di `backend/app/security/`.
+  Periksa [`backend/app/main.py`](../backend/app/main.py) dan modul di `backend/app/security/`.
 - **Langkah 4: Mesin Triase Multi-Sinyal**
-  Pelajari cara kerja penilaian di [`backend/app/engine/rule_engine.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/engine/rule_engine.py), [`backend/app/engine/ai_anomaly_detector.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/engine/ai_anomaly_detector.py), dan [`backend/app/engine/scoring.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/engine/scoring.py).
+  Pelajari cara kerja penilaian di [`backend/app/engine/rule_engine.py`](../backend/app/engine/rule_engine.py), [`backend/app/engine/ai_anomaly_detector.py`](../backend/app/engine/ai_anomaly_detector.py), dan [`backend/app/engine/scoring.py`](../backend/app/engine/scoring.py).
 - **Langkah 5: Mesin Forensik Lanjutan & Geovelocity**
-  Tinjau modul [`backend/app/engine/osrm_geovelocity.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/engine/osrm_geovelocity.py) dan [`backend/app/engine/episode_graph.py`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/backend/app/engine/episode_graph.py).
+  Tinjau modul [`backend/app/engine/osrm_geovelocity.py`](../backend/app/engine/osrm_geovelocity.py) dan [`backend/app/engine/episode_graph.py`](../backend/app/engine/episode_graph.py).
 - **Langkah 6: Kokpit Keputusan Verifikator**
-  Buka komponen antarmuka di [`app/src/components/Dashboard/DecisionConsole.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/DecisionConsole.jsx) dan [`app/src/components/Dashboard/AuditLedger.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/AuditLedger.jsx).
+  Buka komponen antarmuka di [`app/src/components/Dashboard/DecisionConsole.jsx`](../app/src/components/Dashboard/DecisionConsole.jsx) dan [`app/src/components/Dashboard/AuditLedger.jsx`](../app/src/components/Dashboard/AuditLedger.jsx).
 - **Langkah 7: Suite Ekspansi Pasca-Healthkathon**
-  Eksplorasi 4 pilar ekspansi pada [`DatabaseViewerView.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/DatabaseViewerView.jsx), [`DpjpIntelligence.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/DpjpIntelligence.jsx), [`FaskesSurveillance.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/FaskesSurveillance.jsx), dan [`ConversationsView.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/ConversationsView.jsx).
+  Eksplorasi 4 pilar ekspansi pada [`DatabaseViewerView.jsx`](../app/src/components/Dashboard/DatabaseViewerView.jsx), [`DpjpIntelligence.jsx`](../app/src/components/Dashboard/DpjpIntelligence.jsx), [`FaskesSurveillance.jsx`](../app/src/components/Dashboard/FaskesSurveillance.jsx), dan [`ConversationsView.jsx`](../app/src/components/Dashboard/ConversationsView.jsx).
 
 ---
 

@@ -3,14 +3,16 @@
 
 Folder ini berisi seluruh artefak pendaftaran, proposal, materi presentasi (deck), dan skrip rekaman video demo:
 
-```
+```text
 submissions/
 └── healthkathon/
+    ├── assets/                                     # Tangkapan layar UI live & grafik HKEval / Coaching
     ├── deck/
-    │   ├── ClaimTrace_Healthkathon_2026_Final.pptx   # Master Slide PowerPoint (16:9 4K)
-    │   ├── ClaimTrace_Healthkathon_2026_Final.pdf    # Ekspor Vektor PDF Presentasi
-    │   ├── build_final_deck.py                      # Skrip Otomasi Pembuat PPTX
-    │   └── export_final_deck_to_pdf.py              # Skrip Konversi PPTX ke PDF
+    │   ├── TINEERENSE.pdf                          # Deck Final Resmi 20 Besar (8 Slide Canva, <= 15 MB)
+    │   ├── deck_data.py                            # Single-source-of-truth metrik & konten presentasi
+    │   ├── build_charts.py                         # Generator grafik HKEval, Before-After, & TCO
+    │   ├── build_final_deck.py                     # Generator PPTX cadangan berbasis python-pptx
+    │   └── export_final_deck_to_pdf.py             # Konverter PDF cadangan berbasis Chromium
     ├── proposal/
     │   ├── RINGKASAN_EKSEKUTIF_PROPOSAL_HEALTHKATHON.md
     │   ├── ClaimTrace_Mentoring_Coaching_Dossier_Final.md
@@ -18,6 +20,6 @@ submissions/
     │   ├── healthkathon_logo.png
     │   └── SUBMISSION_HEALTHKATHON_2026_TINEERENSE.zip
     └── demo_video/
-        ├── ClaimTrace_Official_3Min_YouTube_Demo_Script.md
-        └── PANDUAN_RECORDING_VIDEO_DEMO.md
+        ├── PANDUAN_RECORDING_VIDEO_DEMO.md         # Panduan & naskah video final 6 bagian (<= 10 menit, 8 slide)
+        └── ClaimTrace_Official_3Min_YouTube_Demo_Script.md
 ```

@@ -1,5 +1,5 @@
 {
-  "schema": "drawio-skill/diagram-ir/v1",
+  "schema": "claimtrace-diagram/diagram-ir/v1",
   "metadata": {
     "title": "ClaimTrace DSS Architecture - BPJS Kesehatan Anti-Fraud System",
     "version": "2.4.0",
@@ -61,7 +61,7 @@
       "kind": "security",
       "properties": {
         "tier": "security",
-        "technology": "Internet2 Grouper RBAC, HMAC-SHA256, Anti-Replay Idempotency",
+        "technology": "Enterprise Privilege RBAC, HMAC-SHA256, Anti-Replay Idempotency",
         "trust_boundary": "app",
         "description": "Penegakan hak akses peran verifikator, mitigasi brute-force, dan limitasi kuota 15-200 req/min."
       },
@@ -116,8 +116,8 @@
       "provenance": {"path": "backend/app/engine/duckdb_analytics.py", "type": "data"}
     },
     {
-      "id": "rea_graph",
-      "label": "REA Forensics Syndicate Graph",
+      "id": "forensics_graph",
+      "label": "Client Forensics Syndicate Graph",
       "kind": "service",
       "properties": {
         "tier": "graph",
@@ -125,7 +125,7 @@
         "trust_boundary": "app",
         "description": "Deteksi sindikat rujukan berulang dan kolusi rujukan sirkular faskes."
       },
-      "provenance": {"path": "backend/app/engine/rea_forensics.py", "type": "graph"}
+      "provenance": {"path": "backend/app/engine/client_forensics.py", "type": "graph"}
     },
     {
       "id": "claims_state_db",
@@ -207,7 +207,7 @@
       "target": "security_engine",
       "label": "Validasi RBAC & Rate Limiting",
       "kind": "sync",
-      "properties": {"standard": "Internet2 Grouper"}
+      "properties": {"standard": "Enterprise Privilege RBAC"}
     },
     {
       "id": "e_sec_triage",
@@ -250,9 +250,9 @@
       "properties": {"firewall": "sql_guard.py"}
     },
     {
-      "id": "e_triage_rea",
+      "id": "e_triage_forensics",
       "source": "triage_core",
-      "target": "rea_graph",
+      "target": "forensics_graph",
       "label": "Audit Kolusi Sindikat Rujukan",
       "kind": "sync",
       "properties": {"detection": "circular_referrals"}

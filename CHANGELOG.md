@@ -4,6 +4,22 @@ Semua perubahan terdokumentasi secara kronologis untuk platform **ClaimTrace JKN
 
 ---
 
+## [1.1.0-final-defense] - 2026-11-15
+
+### Ringkasan Rilis
+Finalisasi menyeluruh sistem produksi, kepatuhan UX Clinical Precision, keamanan autentikasi Fail-Closed 3-Lapis reCAPTCHA, dan materi submisi Final 20 Besar Healthkathon BPJS Kesehatan 2026 (`submissions/healthkathon/deck/TINEERENSE.pdf`).
+
+### [Keamanan Autentikasi & UX Clinical Precision]
+- **Fail-Closed Auth & 3-Layer Google reCAPTCHA:** Penegakan login 4-field (`username/NIP`, `email`, `NIP`, `password`) dengan 3 lapisan Google reCAPTCHA (`v2 Checkbox`, `v3 Score`, dan `Enterprise`) pada mode terang bersih (`SignInPage` & lupa/reset password tanpa toggle tema gelap).
+- **Eliminasi Slop Visual & Vendor Leaks:** Penghapusan seluruh label merek DBMS eksternal dari antarmuka React serta API deskriptif pengguna, penyeragaman ikon Lucide, dan kepatuhan penuh Zero Emoji Policy.
+
+### [Modul Pra-Adjudikasi & Uji Regresi Final]
+- **Integrasi Penuh Sidecar BEA C03.04 & Lapis 4:** Penyelarasan modul `Cek Dokumen RS` (7 berkas RME-TTE & inversi kronologi), `Peringkat Risiko Faskes` (2.091 RS), FairGuard `Z49.1` (`0,0% FPR` pada 512 kasus hard-negative), dan BAHV kolektif bersegel QR SHA-256.
+- **Benchmark Ilmiah HKEval & Regresi Penuh:** Validasi `300/300` uji backend + `112/112` uji E2E (`412` total uji lulus), `197` endpoint FastAPI aktif, `16/16` smoke stack check, Precision@50 `86,0%` (`43,0x` Lift), Rupiah Recall@100 `96,8%`, dan Blind Review `95,0%`.
+- **Deck Presentasi Final 20 Besar:** Penyusunan & ekspor dek Canva 8-slide resmi (`submissions/healthkathon/deck/TINEERENSE.pdf`) beserta sinkronisasi panduan rekaman video 6 bagian (`<= 10 menit`).
+
+---
+
 ## [1.0.0-finalist] - 2026-11-06
 
 ### Ringkasan Rilis

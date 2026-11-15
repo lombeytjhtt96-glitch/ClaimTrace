@@ -1,11 +1,13 @@
-# PANDUAN & NASKAH RESMI VIDEO DEMO 3 MENIT (YOUTUBE)
-## HEALTHKATHON BPJS KESEHATAN 2026 - TAHAP FINAL
+# ARSIP SKRIP VIDEO PITCH SINGKAT (3 MENIT — VERSI PRA-COACHING)
+## HEALTHKATHON BPJS KESEHATAN 2026
+
+> **Catatan Pembaruan (15 November 2026):** Panduan rekaman video **Final 20 Besar** terbaru (`<= 10 menit`, 6 bagian wajib, mengacu pada dek Canva 8 slide `submissions/healthkathon/deck/TINEERENSE.pdf`) tersedia di [`PANDUAN_RECORDING_VIDEO_DEMO.md`](./PANDUAN_RECORDING_VIDEO_DEMO.md). Dokumen ringkas 3 menit di bawah telah diselaraskan kredensial dan metrik terkininya untuk keperluan presentasi kilat (*elevator pitch*).
 
 **Proyek:** CLAIMTRACE — Sistem Pendukung Keputusan Verifikator Klaim JKN Berbasis Triase Multi-Sinyal Independen  
 **Tim:** TINEERENSE (MAN 1 Surakarta)  
 **Ketua Tim:** Khalaf Faith Pradyatama  
 **Anggota Tim:** Gaudiansyah Abiyu Mahya  
-**Target Durasi:** Tepat 03:00 Menit (180 Detik)  
+**Target Durasi:** 03:00 Menit (Elevator Pitch) | Rekaman Utama 20 Besar: `<= 10:00` Menit  
 **Resolusi:** 1080p (1920x1080), 60 fps  
 **Visibilitas YouTube:** Unlisted (Tidak Publik)  
 **Tautan Localhost:** `http://localhost:3000` (Backend API: `http://localhost:8000`)  
@@ -16,12 +18,12 @@
 
 | Waktu | Segmen | Tampilan Layar | Narator | Poin Utama |
 | :--- | :--- | :--- | :--- | :--- |
-| **00:00 - 00:25** | 1. Urgensi & Masalah | Slide 1 (Cover) & Slide 4 | Khalaf Faith | Kasus KPK Phantom Billing Rp 34M & Keterbatasan Verifikasi Sepihak |
-| **00:25 - 00:55** | 2. Solusi: Quad-Triangulation | Slide 5 (Arsitektur 4 Sinyal) | Gaudiansyah | 4 Sinyal Independen (Klinis, SATUSEHAT, Mobile JKN, FRISTA) |
-| **00:55 - 01:30** | 3. Live Demo: Triage & Radar | Browser: `localhost:3000` | Khalaf Faith | Triase 4.341 klaim, 85 klaim Merah Rp 72,45 Juta ditahan pra-bayar |
-| **01:30 - 02:05** | 4. Live Demo: Dual Cockpit & Mobile JKN | Browser: Dual Screen Split | Gaudiansyah | Konfirmasi Zero-PHI peserta & perubahan skor risiko seketika |
-| **02:05 - 02:35** | 5. Live Demo: Berita Acara QR & SLA Engine | Browser: Decision Console & PDF | Khalaf Faith | BAKB berstempel SHA-256 & Kepatuhan 10 Hari Kerja Perpres 82/2018 |
-| **02:35 - 03:00** | 6. Validasi, Kesiapan & Closing | Slide 9 & Slide 10 | Khalaf & Gaudi | Precision 100%, 113 Tests Passed, Kesiapan Plug-in VClaim BPJS |
+| **00:00 - 00:25** | 1. Urgensi & Masalah | `TINEERENSE.pdf` Slide 1-2 | Khalaf Faith | Kasus KPK Phantom Billing Rp 34M & Audit 1.699.219 Klaim FKRTL |
+| **00:25 - 00:55** | 2. Solusi: Sidecar & Coaching | `TINEERENSE.pdf` Slide 3-4 | Gaudiansyah | Sidecar BEA C03.04, 4-Lapis + FairGuard Z49.1, On-Premise `< 15 ms` |
+| **00:55 - 01:30** | 3. Live Demo: Auth & Triage | Browser: `localhost:3000` | Khalaf Faith | Auth Fail-Closed + reCAPTCHA, Triase 1,699 Jt Klaim & FairGuard Z49.1 |
+| **01:30 - 02:05** | 4. Live Demo: 4-Lapis & Dokumen | Browser: Telaah & Cek Dokumen | Gaudiansyah | SDMK SATUSEHAT, Mobile JKN Zero-PHI, Cek Dokumen RS & FRISTA |
+| **02:05 - 02:35** | 5. Live Demo: Putusan & BAHV QR | Browser: Putusan & BAHV | Khalaf Faith | Putusan 2-Tier, BAHV QR SHA-256 & Kepatuhan SLA 10 Hari Kerja |
+| **02:35 - 03:00** | 6. HKEval, TCO & Closing | `TINEERENSE.pdf` Slide 6-8 | Khalaf & Gaudi | Precision@50 86,0%, Rupiah@100 96,8%, 300+112 Tests Passed |
 
 ---
 
@@ -53,8 +55,8 @@ Keempat, **Biometrik Terminal FRISTA**, validasi presensi fisik wajah peserta di
 
 ---
 
-### [00:55 - 01:30] SEGMEN 3: LIVE DEMO COCKPIT — TRIASE 4.341 KLAIM NASIONAL
-**Tampilan Layar:** Pindah ke browser live `http://localhost:3000`. Verifikator login (`verifikator.bpjs@jkn.go.id`). Menampilkan Command Center & Triage Overview.
+### [00:55 - 01:30] SEGMEN 3: LIVE DEMO COCKPIT — TRIASE 1,699 JUTA KLAIM FKRTL
+**Tampilan Layar:** Pindah ke browser live `http://localhost:3000`. Verifikator login (`NIP: 198704202011012001` / `siti.rahma@bpjs-kesehatan.go.id` / `Password123!`). Menampilkan Dashboard Ringkasan & Antrean Klaim.
 
 *(Khalaf Faith Pradyatama - Cursor menunjuk ringkasan triase dan tabel klaim)*:
 "Mari kita saksikan sistem yang telah beroperasi 100% ini.
@@ -90,11 +92,11 @@ Yang paling krusial, modul **Statutory Business Days Engine** kami secara cerdas
 ---
 
 ### [02:35 - 03:00] SEGMEN 6: HASIL UJI, KESIAPAN IMPLEMENTASI & PENUTUP
-**Tampilan Layar:** Kembali ke Slide 9 (Hasil Uji Validasi) dan Slide 10 (Penutup).
+**Tampilan Layar:** Kembali ke `TINEERENSE.pdf` Slide 6 (Dampak & Bukti) hingga Slide 8 (Penutup).
 
 *(Khalaf Faith & Gaudiansyah bergantian - Nada Semangat, Kuat, Menutup)*:
 *(Gaudiansyah)*:
-"Dalam pengujian holdout dataset, ClaimTrace membuktikan **Precision@100 sebesar 100%**, False Positive Rate ke Jalur Merah 0,00%, dan lulus 113 dari 113 automated unit tests."
+"Pada benchmark HKEval terukur (`n=3.002` klaim, 5/5 REFORMS lolos), ClaimTrace mencatat **Precision@50 86,0%** (43x lift), **Rupiah Recall@100 96,8%**, False Positive Rate Hard-Negative **0,00%** across 512 kasus, serta lulus **300 uji backend + 112 uji E2E (412 tes hijau)**."
 
 *(Khalaf Faith)*:
 "ClaimTrace siap diintegrasikan sebagai middleware non-disruptif melalui standar HL7 FHIR R4 di sistem VClaim BPJS Kesehatan.

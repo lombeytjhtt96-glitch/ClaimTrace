@@ -1,6 +1,6 @@
-# Model Arsitektur Sistem ClaimTrace DSS (Draw.io Architecture Studio)
+# Model Arsitektur Sistem ClaimTrace DSS (Architecture Diagram Studio)
 
-Dokumen ini memuat model arsitektur sistem resmi **ClaimTrace DSS** yang dihasilkan menggunakan toolchain **drawio-skill** (Agents365-ai). Seluruh diagram bersifat *maintainable*, terstruktur dalam format Diagram IR v1, dan dapat diedit secara langsung menggunakan draw.io / diagrams.net.
+Dokumen ini memuat model arsitektur sistem resmi **ClaimTrace DSS** yang disusun menggunakan pipeline **Diagram IR v1**. Seluruh diagram bersifat *maintainable*, terstruktur dalam format Diagram IR v1, dan dapat diedit secara langsung menggunakan draw.io / diagrams.net.
 
 ---
 
@@ -9,9 +9,9 @@ Dokumen ini memuat model arsitektur sistem resmi **ClaimTrace DSS** yang dihasil
 1. **`claimtrace_architecture.ir.json`**
    - Model representasi menengah kanonik (*Diagram IR v1*) yang memetakan seluruh komponen:
      - **Client Tier**: Web Verifier Portal, Mobile JKN Screen, Whistleblowing System (WBS).
-     - **Gateway Tier**: FastAPI Ingress, Internet2 Grouper RBAC, Rate Limiter.
+     - **Gateway Tier**: FastAPI Ingress, Role-Based Access Control (RBAC), Rate Limiter.
      - **Intelligence Core**: Triangulation Engine (S1, S2, S3), AI Anomaly Detector (XGBoost/RF), ChromaDB Vector DB.
-     - **Analytics & Storage**: DuckDB OLAP (1.7M Klaim BPJS) dengan Firewall `sql_guard.py`, REA Graph, Claims State Store.
+     - **Analytics & Storage**: DuckDB OLAP (1.7M Klaim BPJS) dengan Firewall `sql_guard.py`, Episode & Forensics Graph, Claims State Store.
      - **Audit & Governance**: SHA-256 Tamper-Evident Audit Ledger & Decision Receipts.
 
 2. **`claimtrace_architecture.drawio`**

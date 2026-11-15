@@ -1,16 +1,16 @@
-# GOOGLE STITCH DESIGN PROMPTS & UI SPECIFICATIONS
+# CLAIMTRACE UI WIREFRAME & COMPONENT SPECIFICATIONS
 ## Project: ClaimTrace Verificator Suite (Healthkathon 2026)
-**Target Tool:** Google Stitch (UI Prompt Engine / Design System Generator)  
-**Output Format:** Screen-by-Screen Prompts ready to copy-paste or execute in Stitch  
+**Target:** ClaimTrace Frontend UI Component Architecture  
+**Output Format:** Screen-by-Screen UI Layout Specifications  
 
 ---
 
 ## Screen 1: Dashboard Overview & Triage Queue (Main Workspace)
 
-### [LAYAR STITCH] Nama Layar di Stitch:
+### [LAYAR UI] Identitas Layar:
 `claimtrace-triage-overview`
 
-### [PROMPT] Prompt Lengkap untuk Google Stitch:
+### [SPESIFIKASI] Deskripsi Tata Letak Antarmuka:
 ```text
 Design a high-density, professional enterprise web dashboard for BPJS Kesehatan claim verification officers called "ClaimTrace: Evidence-First Pre-Payment Triage". 
 
@@ -38,10 +38,10 @@ Main Section - Triage Queue Table:
 
 ## Screen 2: Evidence-First Case Investigation & 3-Layer Matrix
 
-### [LAYAR STITCH] Nama Layar di Stitch:
+### [LAYAR UI] Identitas Layar:
 `claimtrace-case-investigation`
 
-### [PROMPT] Prompt Lengkap untuk Google Stitch:
+### [SPESIFIKASI] Deskripsi Tata Letak Antarmuka:
 ```text
 Design an in-depth case investigation view in dark theme (#020617) for BPJS claim verifiers investigating a high-risk claim cluster (#6 Phantom Billing).
 
@@ -77,10 +77,10 @@ The 3-Layer Evidence Matrix (3 Equal Cards Grid):
 
 ## Screen 3: Graph Network Cluster Visualizer (Entity Relationship)
 
-### [LAYAR STITCH] Nama Layar di Stitch:
+### [LAYAR UI] Identitas Layar:
 `claimtrace-graph-visualizer`
 
-### [PROMPT] Prompt Lengkap untuk Google Stitch:
+### [SPESIFIKASI] Deskripsi Tata Letak Antarmuka:
 ```text
 Design an interactive Graph Network Topology view for fraud investigation inside ClaimTrace.
 
@@ -103,10 +103,10 @@ Legend & Controls:
 
 ## Screen 4: Human-in-the-Loop Verificator Decision & Audit Trail
 
-### [LAYAR STITCH] Nama Layar di Stitch:
+### [LAYAR UI] Identitas Layar:
 `claimtrace-decision-console`
 
-### [PROMPT] Prompt Lengkap untuk Google Stitch:
+### [SPESIFIKASI] Deskripsi Tata Letak Antarmuka:
 ```text
 Design a decision modal and tamper-evident audit trail console for BPJS claim verification officers.
 
@@ -132,10 +132,10 @@ Audit Trail Section (Bottom Panel):
 
 ## Screen 5: Split-Sync Unified Presentation Layout
 
-### [LAYAR STITCH] Nama Layar di Stitch:
+### [LAYAR UI] Identitas Layar:
 `claimtrace-split-sync-suite`
 
-### [PROMPT] Prompt Lengkap untuk Google Stitch:
+### [SPESIFIKASI] Deskripsi Tata Letak Antarmuka:
 ```text
 Design the ultimate hackathon presentation view combining two synchronized devices on one widescreen (16:9 1920x1080):
 

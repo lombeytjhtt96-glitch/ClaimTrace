@@ -1,6 +1,6 @@
 # INTEGRATION & DEPLOYMENT ROADMAP (INTEGRATION_PLAN.md)
 ## Project: ClaimTrace Unified Suite (Healthkathon 2026)
-**Objective:** Menggabungkan Frontend Hasil Desain Google Stitch dengan Engine Mobile JKN Developer Edition  
+**Objective:** Menggabungkan Frontend Dashboard Verifikator dengan Engine Mobile JKN Developer Edition  
 
 ---
 
@@ -8,10 +8,10 @@
 
 ```mermaid
 flowchart LR
-    Stitch["Google Stitch (Prompt & UI Design)"] -->|Generate Screens| StitchAssets["Komponen Dashboard Baru (React/Tailwind)"]
-    MobileEngine["Mobile JKN Engine (Reverse Engineered 100% Asli)"] --> MobileClient["Simulasi Smartphone Client"]
+    UISpec["Spesifikasi Wireframe & Desain UI"] -->|Implement Screens| UIComponents["Komponen Dashboard Baru (React/Tailwind)"]
+    MobileEngine["Mobile JKN Engine"] --> MobileClient["Simulasi Smartphone Client"]
     
-    StitchAssets --> UnifiedSuite["ClaimTrace Master Suite (http://localhost:3000)"]
+    UIComponents --> UnifiedSuite["ClaimTrace Master Suite (http://localhost:3000)"]
     MobileClient --> UnifiedSuite
     
     UnifiedSuite --> StateSync["Reactive Event Bridge (Live State Sync)"]
@@ -22,18 +22,18 @@ flowchart LR
 
 ## 2. Langkah-Langkah Integrasi Langkah demi Langkah (Step-by-Step)
 
-### Tahap 1: Eksekusi Prompt di Google Stitch
-1. Buka antarmuka Google Stitch.
-2. Gunakan prompt dari file [`STITCH_PROMPTS.md`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/docs/STITCH_PROMPTS.md):
+### Tahap 1: Implementasi Komponen Berdasarkan Spesifikasi UI
+1. Buka referensi tata letak antarmuka ClaimTrace JKN.
+2. Gunakan spesifikasi layar dari file [`UI_WIREFRAME_PROMPTS.md`](UI_WIREFRAME_PROMPTS.md):
    - **Layar 1:** `claimtrace-triage-overview` (Dashboard Antrean Utama)
    - **Layar 2:** `claimtrace-case-investigation` (Matriks Bukti 3 Lapis)
    - **Layar 3:** `claimtrace-graph-visualizer` (Visualisasi Graf Jejaring Anomali)
    - **Layar 4:** `claimtrace-decision-console` (Konsol Keputusan & Stempel SHA-256)
-3. Ambil kode JSX / Tailwind hasil generate Google Stitch.
+3. Implementasikan kode JSX / Tailwind sesuai token pada [`UI_DESIGN_SYSTEM_SPEC.md`](UI_DESIGN_SYSTEM_SPEC.md).
 
 ### Tahap 2: Penempatan Komponen ke Kode Proyek
-1. Simpan komponen hasil Stitch ke dalam direktori:
-   [`claimtrace-jkn/app/src/components/Dashboard/`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/components/Dashboard/)
+1. Simpan komponen antarmuka ke dalam direktori:
+   [`app/src/components/Dashboard/`](../app/src/components/Dashboard/)
 2. Komponen yang telah disiapkan:
    - `TriageOverview.jsx`
    - `CaseInvestigationMatrix.jsx`
@@ -41,7 +41,7 @@ flowchart LR
    - `DecisionConsole.jsx`
 
 ### Tahap 3: Penyambungan State Management (Reactive Bridge)
-Sambungkan state antara dashboard verifikator dan smartphone simulator di [`src/App.jsx`](file:///home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app/src/App.jsx):
+Sambungkan state antara dashboard verifikator dan smartphone simulator di [`src/App.jsx`](../app/src/App.jsx):
 - Handler `handlePatientAnswer('denied')` dari Mobile JKN meneruskan nilai ke prop dashboard:
   ```jsx
   <CaseInvestigationMatrix 
@@ -56,7 +56,7 @@ Sambungkan state antara dashboard verifikator dan smartphone simulator di [`src/
 ### Tahap 4: Pengujian & Final Polish Build
 Jalankan verifikasi build di terminal:
 ```bash
-cd /home/Khalaf-Dev/.gemini/antigravity/scratch/claimtrace-jkn/app
+cd app
 npm run build
 ```
 Pastikan kompilasi sukses dengan status `0 errors` dan buka `http://localhost:3000`.

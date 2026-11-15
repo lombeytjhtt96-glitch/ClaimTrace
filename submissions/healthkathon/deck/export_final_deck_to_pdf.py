@@ -1,862 +1,810 @@
-import os
+"""Pixel-synchronized 16:9 PDF exporter for ClaimTrace JKN Final Deck.
+
+Consumes the exact same deck_data.SLIDES, assets/ screenshots, and
+assets/charts/ figures as build_final_deck.py so ClaimTrace_Healthkathon_2026_Final.pdf
+and TINEERENSE.pdf stay 100% identical to the editable .pptx deck.
+
+Prints via headless Chromium (13.333in x 7.5in) and validates page count,
+<= 15 MB size limit, and zero banned substrings via pdftotext/pypdf.
+"""
+
+from __future__ import annotations
+
+import html
+import shutil
 import subprocess
-from pptx import Presentation
+from pathlib import Path
 
-DECK_DIR = os.path.dirname(os.path.abspath(__file__))
-pptx_path = os.path.join(DECK_DIR, 'ClaimTrace_Healthkathon_2026_Final.pptx')
-pdf_output_local = os.path.join(DECK_DIR, 'ClaimTrace_Healthkathon_2026_Final.pdf')
-pdf_output_win = '/mnt/c/Users/Asus/Downloads/HealthKathon/ClaimTrace_Healthkathon_2026_Final.pdf'
+from pypdf import PdfReader
 
-html_slides = """<!DOCTYPE html>
+import deck_data as dd
+
+MAX_PDF_BYTES = 15 * 1024 * 1024
+
+
+def _esc(val: str) -> str:
+    return html.escape(val, quote=True)
+
+
+def _fmt_labeled_lines(items: list[str], extra_cls: str = "") -> str:
+    out = []
+    for raw in items:
+        dd.assert_clean_text(raw, "pdf_labeled_line")
+        if ":" in raw and raw.index(":") <= 34:
+            lead, rest = raw.split(":", 1)
+            out.append(
+                f'<div class="bullet-row {extra_cls}">'
+                f'<strong class="lead">{_esc(lead)}:</strong>{_esc(rest)}'
+                f"</div>"
+            )
+        else:
+            out.append(f'<div class="bullet-row {extra_cls}">{_esc(raw)}</div>')
+    return "".join(out)
+
+
+def _img_uri(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing image asset for PDF: {path}")
+    return f"file://{path}"
+
+
+def _chrome_header(spec: dict) -> str:
+    title_sz = "19pt" if len(spec["title"]) > 74 else "20.5pt"
+    return f"""
+    <div class="header-zone">
+      <div class="section-pill">{_esc(spec["section"])}</div>
+      <h1 class="slide-title" style="font-size:{title_sz};">{_esc(spec["title"])}</h1>
+      <div class="slide-sub">{_esc(spec["subtitle"])}</div>
+    </div>"""
+
+
+def _chrome_footer(idx: int, total: int) -> str:
+    return f"""
+    <div class="footer-zone">
+      <span>ClaimTrace JKN | Tim TINEERENSE (MAN 1 Surakarta) | HealthKathon BPJS Kesehatan 2026</span>
+      <strong>{idx:02d} / {total:02d}</strong>
+    </div>"""
+
+
+def _html_cover(spec: dict, _idx: int, _total: int) -> str:
+    pills = "".join(
+        f'<div class="cover-pill">{_esc(p)}</div>' for p in spec["pills"]
+    )
+    meta = "".join(
+        f"""<div class="cover-meta-card">
+          <div class="meta-k">{_esc(k)}</div>
+          <div class="meta-v">{_esc(v)}</div>
+        </div>"""
+        for k, v in spec["meta_items"]
+    )
+    kpis = "".join(
+        f"""<div class="cover-kpi-card">
+          <div class="kpi-v">{_esc(n)}</div>
+          <div class="kpi-l">{_esc(l)}</div>
+        </div>"""
+        for n, l in spec["preview_kpis"]
+    )
+    return f"""
+    <section class="slide slide-navy">
+      <div class="cover-grid">
+        <div class="cover-left">
+          <img class="hk-logo" src="{_img_uri(dd.ASSETS_DIR / 'healthkathon_logo.png')}" alt="HealthKathon 2026" />
+          <div class="cover-badge">{_esc(spec["section"])}</div>
+          <h1 class="cover-title">{_esc(spec["title"])}</h1>
+          <p class="cover-sub">{_esc(spec["subtitle"])}</p>
+          <div class="cover-pills-grid">{pills}</div>
+          <div class="cover-meta-grid">{meta}</div>
+        </div>
+        <div class="cover-right">
+          <div class="cover-preview-title">{_esc(spec["preview_caption"])}</div>
+          <div class="cover-shot-frame">
+            <img src="{_img_uri(dd.ASSETS_DIR / spec['preview_image'])}" alt="Dashboard" />
+          </div>
+          <div class="cover-kpis-grid">{kpis}</div>
+        </div>
+      </div>
+    </section>"""
+
+
+def _html_team_problem(spec: dict, idx: int, total: int) -> str:
+    kpis_html = []
+    for i, (num, lbl) in enumerate(spec["kpis"]):
+        hl = " kpi-highlight" if i == 3 else ""
+        kpis_html.append(
+            f'<div class="kpi-tile{hl}"><div class="kpi-num">{_esc(num)}</div><div class="kpi-lbl">{_esc(lbl)}</div></div>'
+        )
+    tbl = spec["anomaly_table"]
+    ths = "".join(f"<th>{_esc(h)}</th>" for h in tbl["headers"])
+    trs = []
+    for r in tbl["rows"]:
+        tds = "".join(
+            f'<td class="{"col-strong" if ci == 0 else ("col-em" if ci == 2 else "")}">{_esc(c)}</td>'
+            for ci, c in enumerate(r)
+        )
+        trs.append(f"<tr>{tds}</tr>")
+
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area team-grid">
+        <div class="stack-col">
+          <div class="card">
+            <div class="card-h">{_esc(spec["team_card"]["heading"])}</div>
+            {_fmt_labeled_lines(spec["team_card"]["items"])}
+          </div>
+          <div class="card">
+            <div class="card-h">{_esc(spec["problem_card"]["heading"])}</div>
+            {_fmt_labeled_lines(spec["problem_card"]["items"])}
+          </div>
+        </div>
+        <div class="stack-col-right">
+          <div class="kpi-grid-2x2">{"".join(kpis_html)}</div>
+          <div class="card table-card">
+            <div class="card-h" style="margin-bottom:0.08in;">{_esc(tbl["heading"])}</div>
+            <table class="cp-table compact-table">
+              <thead><tr>{ths}</tr></thead>
+              <tbody>{"".join(trs)}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_table_focus(spec: dict, idx: int, total: int) -> str:
+    ths = "".join(f"<th>{_esc(h)}</th>" for h in spec["headers"])
+    trs = []
+    for r in spec["rows"]:
+        tds = "".join(
+            f'<td class="{"col-strong" if ci == 0 else ("col-em" if ci == 3 else "")}">{_esc(c)}</td>'
+            for ci, c in enumerate(r)
+        )
+        trs.append(f"<tr>{tds}</tr>")
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area">
+        <table class="cp-table matrix-table">
+          <colgroup>
+            <col style="width:17.5%;" />
+            <col style="width:25.5%;" />
+            <col style="width:31.0%;" />
+            <col style="width:26.0%;" />
+          </colgroup>
+          <thead><tr>{ths}</tr></thead>
+          <tbody>{"".join(trs)}</tbody>
+        </table>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_before_after(spec: dict, idx: int, total: int) -> str:
+    cards = []
+    for ev in spec["evidence_cards"]:
+        cards.append(
+            f"""<div class="card ev-card">
+              <div class="ev-text">
+                <div class="mini-pill">{_esc(ev["badge"])}</div>
+                <div class="ev-title">{_esc(ev["title"])}</div>
+                <div class="ev-cap">{_esc(ev["caption"])}</div>
+              </div>
+              <div class="ev-img-box">
+                <img src="{_img_uri(dd.ASSETS_DIR / ev['image'])}" alt="{_esc(ev['title'])}" />
+              </div>
+            </div>"""
+        )
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area ba-grid">
+        <div class="card chart-frame">
+          <img src="{_img_uri(dd.CHARTS_DIR / spec['chart_image'])}" alt="Coaching Delta" />
+        </div>
+        <div class="ev-stack">{"".join(cards)}</div>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_solution_flow(spec: dict, idx: int, total: int) -> str:
+    cards = []
+    for c in spec["bottom_cards"]:
+        cards.append(
+            f"""<div class="card sol-card">
+              <div class="card-h" style="font-size:10.8pt;color:{c['accent']};">{_esc(c["title"])}</div>
+              {_fmt_labeled_lines(c["lines"], "small-row")}
+            </div>"""
+        )
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area sol-layout">
+        <div class="card diagram-frame">
+          <img src="{_img_uri(dd.CHARTS_DIR / spec['diagram_image'])}" alt="Architecture Diagram" />
+        </div>
+        <div class="sol-bottom-grid">{"".join(cards)}</div>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_demo_dual(spec: dict, idx: int, total: int) -> str:
+    panels = []
+    for p in spec["panels"]:
+        panels.append(
+            f"""<div class="card demo-card">
+              <div class="mini-pill">{_esc(p["badge"])}</div>
+              <div class="demo-title">{_esc(p["title"])}</div>
+              <div class="demo-shot-box">
+                <img src="{_img_uri(dd.ASSETS_DIR / p['image'])}" alt="{_esc(p['title'])}" />
+              </div>
+              <div class="demo-points">{_fmt_labeled_lines(p["points"], "demo-row")}</div>
+            </div>"""
+        )
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area dual-grid">{"".join(panels)}</div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_demo_trio_mobile(spec: dict, idx: int, total: int) -> str:
+    lefts = []
+    for p in spec["left_panels"]:
+        lefts.append(
+            f"""<div class="card demo-card">
+              <div class="mini-pill">{_esc(p["badge"])}</div>
+              <div class="demo-title">{_esc(p["title"])}</div>
+              <div class="trio-shot-box">
+                <img src="{_img_uri(dd.ASSETS_DIR / p['image'])}" alt="{_esc(p['title'])}" />
+              </div>
+              <div class="demo-points">{_fmt_labeled_lines(p["points"], "demo-row")}</div>
+            </div>"""
+        )
+    mob = spec["mobile_panel"]
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area trio-grid">
+        {"".join(lefts)}
+        <div class="card demo-card mobile-card">
+          <div class="mini-pill" style="text-align:center;">{_esc(mob["badge"])}</div>
+          <div class="demo-title" style="text-align:center;">{_esc(mob["title"])}</div>
+          <div class="mobile-shot-box">
+            <img src="{_img_uri(dd.ASSETS_DIR / mob['image'])}" alt="Mobile Cockpit" />
+          </div>
+          <div class="mobile-cap">{_esc(mob["caption"])}</div>
+        </div>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_chart_plus_cards(
+    spec: dict, idx: int, total: int, banner: str
+) -> str:
+    right = []
+    for i, card in enumerate(spec["right_cards"]):
+        cls = "card-tall" if i == 0 else "card-short"
+        right.append(
+            f"""<div class="card {cls}">
+              <div class="card-h" style="color:{card['accent']};">{_esc(card["heading"])}</div>
+              {_fmt_labeled_lines(card["items"], "evidence-row")}
+            </div>"""
+        )
+    return f"""
+    <section class="slide slide-light">
+      {_chrome_header(spec)}
+      <div class="content-area chart-cards-grid">
+        <div class="chart-left-col">
+          <div class="card chart-frame-tall">
+            <img src="{_img_uri(dd.CHARTS_DIR / spec['chart_image'])}" alt="Benchmark Chart" />
+          </div>
+          <div class="emerald-banner">{_esc(banner)}</div>
+        </div>
+        <div class="chart-right-col">{"".join(right)}</div>
+      </div>
+      {_chrome_footer(idx, total)}
+    </section>"""
+
+
+def _html_impact_evidence(spec: dict, idx: int, total: int) -> str:
+    return _html_chart_plus_cards(
+        spec,
+        idx,
+        total,
+        "Ringkasan Juri: ClaimTrace mencapai 86,0% Precision@50 (43,0x Lift, +30,0% p=0,0012), "
+        "96,8% pemulihan Rupiah pada Top-100, serta 0,0% False Positive di 512 kasus rutin sah.",
+    )
+
+
+def _html_business_roadmap(spec: dict, idx: int, total: int) -> str:
+    return _html_chart_plus_cards(
+        spec,
+        idx,
+        total,
+        "Keunggulan Ekonomi: Rp 0 biaya token/API eksternal dan Rp 0 SaaS; proyeksi skala nasional "
+        "menyelamatkan Rp 485 Miliar/tahun dengan TCO infrastruktur Rp 4,2 Miliar/tahun (115,5x).",
+    )
+
+
+def _html_closing(spec: dict, _idx: int, _total: int) -> str:
+    cards = "".join(
+        f"""<div class="closing-card">
+          <div class="closing-pill">{_esc(lbl)}</div>
+          <div class="closing-val">{_esc(val)}</div>
+          <div class="closing-desc">{_esc(desc)}</div>
+        </div>"""
+        for lbl, val, desc in spec["cards"]
+    )
+    return f"""
+    <section class="slide slide-navy closing-slide">
+      <img class="hk-logo-center" src="{_img_uri(dd.ASSETS_DIR / 'healthkathon_logo.png')}" alt="HealthKathon 2026" />
+      <h1 class="closing-title">{_esc(spec["title"])}</h1>
+      <div class="closing-sub">{_esc(spec["subtitle"])}</div>
+      <div class="closing-grid">{cards}</div>
+      <div class="closing-foot">{_esc(spec["footer_note"])}</div>
+    </section>"""
+
+
+HTML_RENDERERS = {
+    "cover": _html_cover,
+    "team_problem": _html_team_problem,
+    "table_focus": _html_table_focus,
+    "before_after": _html_before_after,
+    "solution_flow": _html_solution_flow,
+    "demo_dual": _html_demo_dual,
+    "demo_trio_mobile": _html_demo_trio_mobile,
+    "impact_evidence": _html_impact_evidence,
+    "business_roadmap": _html_business_roadmap,
+    "closing": _html_closing,
+}
+
+PAGE_CSS = """
+@page {
+  size: 13.333in 7.5in;
+  margin: 0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'Lato', 'Liberation Sans', 'DejaVu Sans', sans-serif;
+  background: #F7F8FA;
+  color: #061B31;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.slide {
+  width: 13.333in;
+  height: 7.5in;
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  padding: 0.24in 0.50in;
+  display: flex;
+  flex-direction: column;
+}
+.slide:last-child { page-break-after: auto; break-after: auto; }
+.slide-light { background: #F7F8FA; color: #061B31; }
+.slide-navy { background: #061B31; color: #FFFFFF; padding: 0.42in 0.50in; }
+
+/* Standard Chrome */
+.header-zone { margin-bottom: 0.12in; }
+.section-pill {
+  display: inline-block;
+  background: #ECFDF5;
+  color: #00733B;
+  border: 1px solid #A7F3D0;
+  border-radius: 999px;
+  font-size: 8.5pt;
+  font-weight: 900;
+  padding: 0.03in 0.16in;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.06in;
+}
+.slide-title {
+  font-weight: 900;
+  color: #061B31;
+  line-height: 1.15;
+  margin-bottom: 0.04in;
+}
+.slide-sub {
+  font-size: 11pt;
+  color: #475569;
+  line-height: 1.25;
+}
+.content-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.footer-zone {
+  margin-top: 0.10in;
+  padding-top: 0.06in;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5pt;
+  color: #64748B;
+}
+.footer-zone strong { color: #061B31; }
+
+.card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.13in 0.16in;
+}
+.card-h {
+  font-size: 12pt;
+  font-weight: 900;
+  color: #061B31;
+  margin-bottom: 0.08in;
+}
+.bullet-row {
+  font-size: 9.8pt;
+  line-height: 1.32;
+  color: #475569;
+  margin-bottom: 0.07in;
+}
+.bullet-row:last-child { margin-bottom: 0; }
+.bullet-row .lead { color: #061B31; font-weight: 900; }
+.small-row { font-size: 8.7pt; line-height: 1.24; margin-bottom: 0.04in; }
+.demo-row { font-size: 9.5pt; line-height: 1.28; margin-bottom: 0.05in; }
+.evidence-row { font-size: 9.3pt; line-height: 1.28; margin-bottom: 0.06in; }
+
+.mini-pill {
+  display: inline-block;
+  align-self: flex-start;
+  background: #ECFDF5;
+  color: #00733B;
+  border: 1px solid #A7F3D0;
+  border-radius: 999px;
+  font-size: 7.8pt;
+  font-weight: 900;
+  padding: 0.025in 0.12in;
+  margin-bottom: 0.05in;
+}
+
+/* Cover */
+.cover-grid { display: grid; grid-template-columns: 6.30in 5.78in; gap: 0.25in; height: 100%; align-items: stretch; }
+.cover-left { display: flex; flex-direction: column; justify-content: space-between; }
+.hk-logo { width: 2.55in; height: 0.88in; object-fit: contain; object-position: left center; }
+.cover-badge {
+  display: inline-block;
+  align-self: flex-start;
+  background: #00733B;
+  color: #FFFFFF;
+  font-size: 8.5pt;
+  font-weight: 900;
+  padding: 0.05in 0.16in;
+  border-radius: 999px;
+}
+.cover-title { font-size: 40pt; font-weight: 900; color: #FFFFFF; line-height: 1.05; }
+.cover-sub { font-size: 13.5pt; color: #E2E8F0; line-height: 1.35; }
+.cover-pills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.10in 0.14in; }
+.cover-pill {
+  background: #0D2742;
+  border: 1px solid #1E3A5F;
+  color: #34D399;
+  font-size: 9.3pt;
+  font-weight: 900;
+  text-align: center;
+  padding: 0.06in 0.10in;
+  border-radius: 999px;
+}
+.cover-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.10in 0.14in; }
+.cover-meta-card {
+  background: #0D2742;
+  border: 1px solid #1E3A5F;
+  border-radius: 8px;
+  padding: 0.09in 0.14in;
+}
+.meta-k { font-size: 8pt; font-weight: 900; color: #34D399; margin-bottom: 0.02in; }
+.meta-v { font-size: 11.8pt; font-weight: 900; color: #FFFFFF; }
+
+.cover-right {
+  background: #0D2742;
+  border: 1px solid #1E3A5F;
+  border-radius: 10px;
+  padding: 0.16in 0.18in;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cover-preview-title { font-size: 10.5pt; font-weight: 900; color: #34D399; }
+.cover-shot-frame {
+  background: #FFFFFF;
+  border: 1px solid #1E3A5F;
+  border-radius: 6px;
+  height: 3.45in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.04in;
+}
+.cover-shot-frame img { width: 100%; height: 100%; object-fit: contain; }
+.cover-kpis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.12in; }
+.cover-kpi-card {
+  background: #061B31;
+  border: 1px solid #1E3A5F;
+  border-radius: 8px;
+  padding: 0.09in 0.14in;
+}
+.kpi-v { font-size: 17pt; font-weight: 900; color: #34D399; }
+.kpi-l { font-size: 9.2pt; color: #CBD5E1; margin-top: 0.02in; }
+
+/* Slide 2 Team & Problem */
+.team-grid { display: grid; grid-template-columns: 5.05in 7.08in; gap: 0.20in; }
+.stack-col { display: grid; grid-template-rows: 1fr 1fr; gap: 0.14in; }
+.stack-col-right { display: flex; flex-direction: column; gap: 0.14in; }
+.kpi-grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.12in; }
+.kpi-tile {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0.10in 0.16in;
+}
+.kpi-highlight { background: #ECFDF5; border-color: #A7F3D0; }
+.kpi-num { font-size: 17.5pt; font-weight: 900; color: #061B31; }
+.kpi-highlight .kpi-num { color: #00733B; }
+.kpi-lbl { font-size: 9.3pt; font-weight: 700; color: #475569; margin-top: 0.02in; }
+.table-card { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.12in; }
+
+/* Tables */
+.cp-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.cp-table th {
+  background: #061B31;
+  color: #FFFFFF;
+  font-weight: 900;
+  text-align: left;
+  padding: 0.08in 0.10in;
+  font-size: 10pt;
+}
+.cp-table td {
+  padding: 0.09in 0.10in;
+  border-bottom: 1px solid #E2E8F0;
+  font-size: 9.3pt;
+  line-height: 1.28;
+  color: #475569;
+  vertical-align: middle;
+}
+.cp-table tbody tr:nth-child(odd) { background: #FFFFFF; }
+.cp-table tbody tr:nth-child(even) { background: #F3F5F8; }
+.matrix-table { height: 100%; }
+.matrix-table td { font-size: 9.5pt; padding: 0.11in 0.12in; }
+.compact-table { flex: 1; }
+.compact-table td { font-size: 9.2pt; padding: 0.11in 0.09in; }
+.col-strong { font-weight: 900; color: #061B31 !important; }
+.col-em { font-weight: 900; color: #047857 !important; }
+
+/* Slide 4 Before After */
+.ba-grid { display: grid; grid-template-columns: 7.10in 5.05in; gap: 0.18in; }
+.chart-frame { display: flex; align-items: center; justify-content: center; padding: 0.10in; }
+.chart-frame img { width: 100%; height: 100%; object-fit: contain; }
+.ev-stack { display: grid; grid-template-rows: 1fr 1fr; gap: 0.14in; }
+.ev-card { display: grid; grid-template-columns: 2.12in 1fr; gap: 0.12in; align-items: stretch; }
+.ev-text { display: flex; flex-direction: column; }
+.ev-title { font-size: 11pt; font-weight: 900; color: #061B31; line-height: 1.22; margin-bottom: 0.06in; }
+.ev-cap { font-size: 9.3pt; color: #475569; line-height: 1.32; }
+.ev-img-box {
+  background: #F3F5F8;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.04in;
+  overflow: hidden;
+}
+.ev-img-box img { width: 100%; height: 100%; object-fit: contain; }
+
+/* Slide 5 Solution Flow */
+.sol-layout { display: flex; flex-direction: column; gap: 0.12in; }
+.diagram-frame {
+  height: 3.82in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.06in;
+}
+.diagram-frame img { width: 100%; height: 100%; object-fit: contain; }
+.sol-bottom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.21in; flex: 1; }
+.sol-card { padding: 0.11in 0.14in; }
+
+/* Demo Dual & Trio */
+.dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.28in; }
+.demo-card { display: flex; flex-direction: column; padding: 0.12in 0.16in; }
+.demo-title { font-size: 12pt; font-weight: 900; color: #061B31; margin-bottom: 0.07in; }
+.demo-shot-box {
+  background: #F3F5F8;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  height: 3.55in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.04in;
+  margin-bottom: 0.08in;
+}
+.demo-shot-box img, .trio-shot-box img, .mobile-shot-box img { width: 100%; height: 100%; object-fit: contain; }
+.demo-points { flex: 1; }
+
+.trio-grid { display: grid; grid-template-columns: 4.48in 4.48in 1fr; gap: 0.20in; }
+.trio-shot-box {
+  background: #F3F5F8;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  height: 2.68in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.04in;
+  margin-bottom: 0.10in;
+}
+.mobile-card { align-items: stretch; }
+.mobile-card .mini-pill { align-self: center; }
+.mobile-shot-box {
+  background: #F3F5F8;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  height: 3.92in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.05in;
+  margin-bottom: 0.08in;
+}
+.mobile-cap { font-size: 9pt; color: #475569; text-align: center; line-height: 1.3; }
+
+/* Slide 10 & 11 Chart + Two Cards */
+.chart-cards-grid { display: grid; grid-template-columns: 7.65in 1fr; gap: 0.20in; }
+.chart-left-col { display: flex; flex-direction: column; gap: 0.10in; }
+.chart-frame-tall {
+  height: 4.66in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.08in;
+}
+.chart-frame-tall img { width: 100%; height: 100%; object-fit: contain; }
+.emerald-banner {
+  flex: 1;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 8px;
+  padding: 0.10in 0.16in;
+  font-size: 10pt;
+  font-weight: 900;
+  color: #061B31;
+  display: flex;
+  align-items: center;
+  line-height: 1.32;
+}
+.chart-right-col { display: flex; flex-direction: column; gap: 0.14in; }
+.card-tall { flex: 1.45; }
+.card-short { flex: 1; }
+
+/* Closing */
+.closing-slide { justify-content: center; align-items: center; text-align: center; gap: 0.20in; }
+.hk-logo-center { width: 3.00in; height: 1.04in; object-fit: contain; }
+.closing-title { font-size: 28pt; font-weight: 900; color: #FFFFFF; }
+.closing-sub { font-size: 13.5pt; color: #CBD5E1; margin-bottom: 0.10in; }
+.closing-grid { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.30in; margin-top: 0.08in; }
+.closing-card {
+  background: #0D2742;
+  border: 1px solid #1E3A5F;
+  border-radius: 10px;
+  padding: 0.22in 0.20in;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.14in;
+  min-height: 2.05in;
+}
+.closing-pill {
+  background: #00733B;
+  color: #FFFFFF;
+  border-radius: 999px;
+  font-size: 8.5pt;
+  font-weight: 900;
+  padding: 0.05in 0.14in;
+}
+.closing-val { font-size: 11.8pt; font-weight: 900; color: #34D399; word-break: break-word; }
+.closing-desc { font-size: 10pt; color: #E2E8F0; line-height: 1.35; }
+.closing-foot { font-size: 13pt; font-weight: 900; color: #34D399; margin-top: 0.12in; }
+"""
+
+
+def _find_chromium() -> str:
+    for candidate in ("chromium-browser", "chromium", "google-chrome"):
+        found = shutil.which(candidate)
+        if found:
+            return found
+    raise FileNotFoundError("Chromium binary not found for PDF generation.")
+
+
+def build_html_document() -> str:
+    total = len(dd.SLIDES)
+    sections = []
+    for idx, spec in enumerate(dd.SLIDES, start=1):
+        sections.append(HTML_RENDERERS[spec["layout"]](spec, idx, total))
+    return f"""<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<title>ClaimTrace - Healthkathon 2026 Final Deck</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
-  
-  @page {
-    size: 16in 9in;
-    margin: 0;
-  }
-  
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  
-  body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #020617;
-    color: #f8fafc;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  .slide {
-    width: 16in;
-    height: 9in;
-    page-break-after: always;
-    position: relative;
-    padding: 0.55in 0.85in;
-    background: radial-gradient(circle at 10% 20%, #031525 0%, #020914 100%);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .slide-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.35in;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    padding-bottom: 0.2in;
-  }
-  
-  .slide-badge-title {
-    display: flex;
-    align-items: center;
-    gap: 0.25in;
-  }
-  
-  .num-badge {
-    width: 0.65in;
-    height: 0.65in;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    color: #ffffff;
-    font-weight: 800;
-    font-size: 24pt;
-    border-radius: 0.15in;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
-  }
-  
-  .title-group h2 {
-    font-size: 26pt;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #ffffff;
-  }
-  
-  .title-group p {
-    font-size: 11.5pt;
-    color: #94a3b8;
-    margin-top: 0.04in;
-    font-weight: 500;
-  }
-  
-  .header-tag {
-    font-size: 9.5pt;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.08);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    padding: 0.08in 0.18in;
-    border-radius: 0.1in;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1.15fr 1.85fr;
-    gap: 0.35in;
-    flex: 1;
-  }
-  
-  .grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.28in;
-    flex: 1;
-  }
-  
-  .grid-4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.22in;
-    flex: 1;
-  }
-  
-  .card {
-    background: rgba(10, 25, 47, 0.75);
-    border: 1px solid rgba(16, 185, 129, 0.28);
-    border-radius: 0.2in;
-    padding: 0.32in;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  }
-  
-  .card-highlight {
-    background: linear-gradient(145deg, rgba(6, 44, 46, 0.85) 0%, rgba(10, 25, 47, 0.9) 100%);
-    border: 1.5px solid #10b981;
-    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
-  }
-  
-  .card-tag {
-    font-size: 9.5pt;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #10b981;
-    text-transform: uppercase;
-    margin-bottom: 0.12in;
-  }
-  
-  .card-title {
-    font-size: 16pt;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 0.14in;
-    line-height: 1.25;
-  }
-  
-  .card p, .card li {
-    font-size: 10.5pt;
-    line-height: 1.55;
-    color: #cbd5e1;
-  }
-  
-  .card ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.08in;
-  }
-  
-  .card li {
-    position: relative;
-    padding-left: 0.2in;
-  }
-  
-  .card li::before {
-    content: "•";
-    color: #10b981;
-    position: absolute;
-    left: 0;
-    font-weight: bold;
-  }
-  
-  .card-subtext {
-    font-size: 9.5pt;
-    color: #38bdf8;
-    font-weight: 600;
-    margin-bottom: 0.1in;
-  }
-  
-  .stat-banner {
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    border-radius: 0.15in;
-    padding: 0.18in 0.24in;
-    margin-bottom: 0.15in;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .stat-val {
-    font-size: 24pt;
-    font-weight: 800;
-    color: #10b981;
-    font-family: 'JetBrains Mono', monospace;
-  }
-  
-  .stat-lbl {
-    font-size: 10pt;
-    color: #94a3b8;
-    font-weight: 600;
-  }
-  
-  .badge-row {
-    display: flex;
-    gap: 0.1in;
-    flex-wrap: wrap;
-    margin-top: 0.12in;
-  }
-  
-  .tech-pill {
-    font-size: 8.5pt;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    padding: 0.04in 0.1in;
-    border-radius: 0.06in;
-    color: #94a3b8;
-    font-weight: 600;
-  }
-  
-  .slide-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.25in;
-    padding-top: 0.15in;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    font-size: 9.5pt;
-    color: #64748b;
-  }
-  
-  .accent-cyan {
-    color: #38bdf8;
-  }
-  
-  .accent-emerald {
-    color: #10b981;
-  }
-</style>
+  <meta charset="utf-8" />
+  <title>{_esc(dd.DECK_META["title"])}</title>
+  <style>{PAGE_CSS}</style>
 </head>
 <body>
-
-  <!-- SLIDE 1: COVER -->
-  <div class="slide" style="justify-content: center; align-items: center; text-align: center;">
-    <div style="font-size: 13pt; font-weight: 700; letter-spacing: 0.12em; color: #10b981; text-transform: uppercase; margin-bottom: 0.1in;">
-      PANDUAN PROJECT FINAL HEALTHKATHON 2026
-    </div>
-    <h1 style="font-size: 54pt; font-weight: 800; letter-spacing: -0.03em; color: #ffffff; margin-bottom: 0.05in;">
-      CLAIM<span style="color: #10b981;">TRACE</span>
-    </h1>
-    <p style="font-size: 16pt; color: #38bdf8; font-weight: 600; max-width: 12in; line-height: 1.4; margin-bottom: 0.45in;">
-      Inovasi Sinergi Penapisan Pra-Bayar: Radar Pola, Uji Jejak SATUSEHAT SDMK, & Konfirmasi Mobile JKN Terarah
-    </p>
-    
-    <div style="display: grid; grid-template-columns: repeat(4, 2.8in); gap: 0.25in; text-align: left;">
-      <div class="card card-highlight">
-        <div class="card-tag">NAMA SOLUSI</div>
-        <div style="font-size: 16pt; font-weight: 800; color: #ffffff; margin-bottom: 0.08in;">ClaimTrace</div>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">Decision Support System (DSS) pra-bayar sinergi 3 lapis bukti analitik terkalibrasi.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">NAMA TIM</div>
-        <div style="font-size: 16pt; font-weight: 800; color: #ffffff; margin-bottom: 0.08in;">TINEERENSE</div>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">MAN 1 Surakarta (Khalaf Faith Pradyatama & Gaudiansyah Abiyu Mahya).</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">ID TIM</div>
-        <div style="font-size: 16pt; font-weight: 800; color: #ffffff; margin-bottom: 0.08in;">HK2026-TINEERENSE</div>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">Finalist Project Healthkathon 2026 BPJS Kesehatan.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">KATEGORI</div>
-        <div style="font-size: 14pt; font-weight: 800; color: #ffffff; margin-bottom: 0.08in;">Efisiensi Risiko FKRTL</div>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">Sub #6: Phantom Billing & Sub #11: Repeat Billing (Fisioterapi FKRTL).</p>
-      </div>
-    </div>
-    
-    <div class="slide-footer" style="width: 100%; position: absolute; bottom: 0.4in; left: 0.85in; right: 0.85in; width: calc(100% - 1.7in);">
-      <span>Detect Smarter, Protect JKN - Smarter Protection for a Stronger JKN</span>
-      <span>Healthkathon 2026 BPJS Kesehatan</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 2: PERKENALAN TIM -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">1</div>
-        <div class="title-group">
-          <h2>Perkenalan Tim Pengembang</h2>
-          <p>Nama Tim: TINEERENSE | Institusi: MAN 1 Surakarta | Kategori: Efisiensi Risiko Faskes (FKRTL)</p>
-        </div>
-      </div>
-      <div class="header-tag">Healthkathon 2026 Finalist</div>
-    </div>
-    
-    <div class="grid-3">
-      <div class="card card-highlight">
-        <div class="card-tag">KETUA TIM</div>
-        <div class="card-title">Khalaf Faith Pradyatama</div>
-        <div class="card-subtext">Lead Architect, Full-Stack & AppSec</div>
-        <ul>
-          <li>Siswa Kelas XII MIPA, MAN 1 Surakarta.</li>
-          <li>Perancangan arsitektur backend Python / FastAPI & sistem database terdistribusi.</li>
-          <li>Penerapan Application Security (AppSec), enkripsi AES-256 & proteksi data.</li>
-          <li>Reverse-engineering telemetri Mobile JKN & bridge reaktif WebSocket.</li>
-          <li>Implementasi tamper-evident audit ledger berbasis SHA-256 anti-repudiasi.</li>
-          <li>Pengalaman mendalam dalam evaluasi keamanan siber dan integritas sistem.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">ANGGOTA TIM</div>
-        <div class="card-title">Gaudiansyah Abiyu Mahya</div>
-        <div class="card-subtext">AI/ML Engineer & Health Data Analyst</div>
-        <ul>
-          <li>Siswa Kelas XII MIPA, MAN 1 Surakarta.</li>
-          <li>Pemodelan AI deteksi anomali (Isolation Forest & ChromaDB Vector Embeddings).</li>
-          <li>Analisis regulasi program JKN & kaidah koding klaim INA-CBG Permenkes 26/2021.</li>
-          <li>Perancangan UI/UX high-density Verificator Cockpit yang ergonomis.</li>
-          <li>Evaluasi metrik performa holdout (Precision@k, Recall, FPR, ROC-AUC).</li>
-          <li>Kalibrasi ambang batas matematis fusi skor risiko 3 lapis bukti.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">PENDAMPING & KOLABORASI</div>
-        <div class="card-title">Tim Pembimbing & Mentor</div>
-        <div class="card-subtext">Regulatory Advisor & Domain Specialist</div>
-        <ul>
-          <li>Pembimbing Akademik: Tim Pembina KIR MAN 1 Surakarta.</li>
-          <li>Supervisi kepatuhan riset dan kaidah etika akademis kompetisi.</li>
-          <li>Kepatuhan yuridis UU PDP No. 27/2022 pada skema data sintetis terkalibrasi.</li>
-          <li>Penyelarasan SLA 10 hari verifikasi klaim sesuai Perpres 82/2018.</li>
-          <li>Konsultasi pemisahan episode fisioterapi sesuai Permenkes No. 3/2023.</li>
-          <li>Pendampingan persiapan teknis, uji stres sistem, dan materi presentasi finalis.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 1 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 3: JUDUL IDE, DESKRIPSI, TUJUAN -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">2</div>
-        <div class="title-group">
-          <h2>Judul Ide, Deskripsi, dan Tujuan</h2>
-          <p>Identitas Inovasi Solusi Efisiensi Risiko pada Fasilitas Kesehatan (FKRTL)</p>
-        </div>
-      </div>
-      <div class="header-tag">Sub-kategori #6 & #11</div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card card-highlight">
-        <div class="card-tag">CLAIMTRACE</div>
-        <div style="font-size: 26pt; font-weight: 800; color: #ffffff; margin-bottom: 0.12in;">CLAIMTRACE</div>
-        <div style="font-size: 11pt; font-weight: 700; color: #38bdf8; line-height: 1.45; margin-bottom: 0.2in;">
-          Inovasi ini membantu verifikator BPJS agar mempermudah dalam mendeteksi anomali klaim faskes secara otomatis berbasis Artificial Intelligence
-        </div>
-        <div class="card-tag" style="margin-top: 0.15in;">KATEGORI DAN SUB KATEGORI</div>
-        <p style="font-size: 10pt; color: #cbd5e1; line-height: 1.5;">
-          <strong>Efisiensi Risiko pada Fasilitas Kesehatan (FKRTL)</strong><br><br>
-          Sub-kategori:<br>
-          <span style="color: #38bdf8; font-weight: 600;">#6: Phantom Billing</span> (Klaim Fiktif Fisioterapi/Baksos)<br>
-          <span style="color: #38bdf8; font-weight: 600;">#11: Repeat Billing</span> (Penagihan Klaim Berulang)
-        </p>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 0.28in;">
-        <div class="card">
-          <div class="card-tag">DESKRIPSI SINGKAT</div>
-          <p style="font-size: 11pt; line-height: 1.6; color: #e2e8f0;">
-            Sistem pendukung keputusan berbasis <strong>Artificial Intelligence</strong> yang mempermudah verifikator BPJS Kesehatan dalam mendeteksi anomali klaim faskes, khususnya pada kasus Phantom Billing dan Repeat Billing. Sistem ini bekerja secara preventif pada tahap pra-bayar melalui <strong>Matriks Bukti 3 Lapis</strong>: menganalisis lonjakan klaster klaim spatiotemporal serta kemiripan Episode Fingerprint, memvalidasi silang keaktifan SIP dan beban harian dokter pada registry SATUSEHAT SDMK, serta mengonfirmasi kehadiran pasien secara langsung melalui aplikasi Mobile JKN.
-          </p>
-        </div>
-
-        <div class="card">
-          <div class="card-tag">TUJUAN STRATEGIS</div>
-          <ul>
-            <li style="font-size: 11pt;"><strong>Mendeteksi anomali klaim secara otomatis</strong> sebelum klaim dibayarkan (tahap pra-bayar), mengeliminasi risiko kebocoran dana JKN sejak pintu masuk.</li>
-            <li style="font-size: 11pt;"><strong>Memvalidasi jejak operasional faskes secara lintas sumber</strong> secara objektif tanpa relying pada berkas internal sepihak faskes.</li>
-            <li style="font-size: 11pt;"><strong>Menghasilkan berkas siap audit yang objektif dan transparan</strong> bagi verifikator, memangkas durasi telaah hingga 72% dalam batas SLA 10 hari.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 2 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 4: LATAR BELAKANG DAN DAMPAK -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">3</div>
-        <div class="title-group">
-          <h2>Latar Belakang dan Dampak</h2>
-          <p>Urgensi Masalah Klaim Anomali Faskes & Dampak Finansial Terukur bagi Dana Amanat Umat JKN</p>
-        </div>
-      </div>
-      <div class="header-tag">KPK & Kemenkes Context</div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-tag">LATAR BELAKANG & URGENSI</div>
-        <div class="card-title">Mengapa Masalah Ini Mendesak?</div>
-        <ul>
-          <li><strong>Skala Masif Pelayanan JKN:</strong> Melayani >1,9 juta pemanfaatan layanan/hari di ribuan faskes mitra se-Indonesia.</li>
-          <li><strong>Temuan Riil KPK & Kemenkes (Juli 2024):</strong> Dugaan klaim fiktif sebesar ±Rp34 Miliar pada 3 RS khusus (rentang Rp1–3 M, Rp4–10 M, Rp20–30 M) dengan modus penagihan fisioterapi fiktif & manipulasi berkas baksos.</li>
-          <li><strong>Tantangan Verifikator BPJS:</strong> Verifikator menghadapi batas SLA ketat 10 hari kerja (Perpres 82/2018), sementara berkas medis fisik/PDF mencapai puluhan ribu lembar yang sulit ditelaah secara manual satu-persatu.</li>
-          <li><strong>Celah Verifikasi Sepihak:</strong> Verifikasi konvensional hanya memeriksa berkas internal faskes tanpa ada cross-validation independen ke tenaga medis (SATUSEHAT) maupun pasien (Mobile JKN).</li>
-        </ul>
-      </div>
-
-      <div class="card card-highlight">
-        <div class="card-tag">INDIKATOR DAMPAK TERUKUR</div>
-        <div class="card-title">Perbaikan Terukur Dibandingkan Kondisi Eksisting</div>
-        
-        <div class="stat-banner">
-          <div>
-            <div class="stat-lbl">DURASI TELAAH KASUS ANOMALI</div>
-            <div style="font-size: 9.5pt; color: #cbd5e1;">Sebelum: 15–25 menit/kasus &nbsp;→&nbsp; Sesudah: <strong>&lt;4,2 menit/kasus</strong></div>
-          </div>
-          <div class="stat-val">72%</div>
-        </div>
-
-        <div class="stat-banner">
-          <div>
-            <div class="stat-lbl">ESTIMASI MITIGASI KEBOCORAN DANA JKN</div>
-            <div style="font-size: 9.5pt; color: #cbd5e1;">Potensi penyelamatan klaim phantom & repeat regional</div>
-          </div>
-          <div class="stat-val">Rp 34,2 M</div>
-        </div>
-
-        <div class="stat-banner">
-          <div>
-            <div class="stat-lbl">FALSE POSITIVE RATE KE JALUR MERAH</div>
-            <div style="font-size: 9.5pt; color: #cbd5e1;">Baseline: &gt;12% &nbsp;→&nbsp; ClaimTrace Triangulasi: <strong>0,00%</strong></div>
-          </div>
-          <div class="stat-val">0.00%</div>
-        </div>
-
-        <p style="font-size: 9.5pt; color: #cbd5e1; margin-top: 0.05in;">
-          * Berdasarkan uji validasi pada dataset holdout 4.341 klaim nasional terkalibrasi.
-        </p>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 3 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 5: ALUR PROSES APLIKASI -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">4</div>
-        <div class="title-group">
-          <h2>Alur Proses Aplikasi ClaimTrace</h2>
-          <p>Arsitektur Pipeline 5 Tahap dari Ingest Data hingga Keputusan Siap Audit</p>
-        </div>
-      </div>
-      <div class="header-tag">Pipeline Workflow</div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.18in; margin-bottom: 0.3in;">
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">1. INPUT</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.06in;">Ingest Klaim</div>
-        <p style="font-size: 9pt; color: #cbd5e1;">Data klaim FKRTL masuk via VClaim API (identitas pasien, faskes, diagnosis, prosedur, tanggal pelayanan).</p>
-      </div>
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">2. PROSES</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.06in;">Triangulasi</div>
-        <p style="font-size: 9pt; color: #cbd5e1;">Ekstraksi fitur spatiotemporal, validasi SIP SATUSEHAT SDMK, dan query telemetri Mobile JKN.</p>
-      </div>
-      <div class="card card-highlight" style="padding: 0.22in;">
-        <div class="card-tag">3. ANALISIS AI</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #10b981; margin-bottom: 0.06in;">AI Anomaly</div>
-        <p style="font-size: 9pt; color: #cbd5e1;">Isolation Forest + ChromaDB vector embeddings mendeteksi lonjakan klaim, copy-paste resume & repeat billing.</p>
-      </div>
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">4. OUTPUT</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.06in;">Triase Risiko</div>
-        <p style="font-size: 9pt; color: #cbd5e1;">Skor risiko fusi (0-100) dan klasifikasi jalur: Hijau (Otomatis Lolos), Kuning (Klarifikasi), Merah (Audit Lapangan).</p>
-      </div>
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">5. TINDAK LANJUT</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.06in;">Audit Ledger</div>
-        <p style="font-size: 9pt; color: #cbd5e1;">Verifikator memvalidasi bukti, putusan terkunci di ledger kriptografis SHA-256 yang sah di mata hukum.</p>
-      </div>
-    </div>
-
-    <div class="grid-3" style="flex: initial;">
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">PENGGUNA / AKTOR</div>
-        <p style="font-size: 9.5pt; color: #e2e8f0;">
-          <strong>Verifikator BPJS Kesehatan</strong> (evaluasi bukti & otorisasi), <strong>Peserta JKN</strong> (konfirmasi via Mobile JKN), dan <strong>Auditor Internal / KPK</strong> (inspeksi tamper-evident ledger).
-        </p>
-      </div>
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">DATA YANG DIPAKAI</div>
-        <p style="font-size: 9.5pt; color: #e2e8f0;">
-          Data klaim sintetis 10.000 record terstandar FHIR, registri dokter SATUSEHAT SDMK, telemetri lokasi terenkripsi, dan baseline baksos resmi BPJS.
-        </p>
-      </div>
-      <div class="card" style="padding: 0.22in;">
-        <div class="card-tag">TEKNOLOGI & MODEL</div>
-        <p style="font-size: 9.5pt; color: #e2e8f0;">
-          FastAPI, React 18, Tailwind CSS, scikit-learn Isolation Forest, ChromaDB MiniLM-L6-v2, NetworkX Graph Traversal, SHA-256 Ledger.
-        </p>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 4 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 6: DEMO APLIKASI / PROTOTYPE -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">5</div>
-        <div class="title-group">
-          <h2>Demo Aplikasi & Prototype Live</h2>
-          <p>Aplikasi Produksi Telah Berjalan Live di Cloud & Siap Diuji Secara Interaktif</p>
-        </div>
-      </div>
-      <div class="header-tag">Live Production Ready</div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card card-highlight">
-        <div class="card-tag">LIVE PROTOTYPE DEPLOYMENT</div>
-        <div style="font-size: 22pt; font-weight: 800; color: #ffffff; margin-bottom: 0.08in;">
-          claimtrace-healthkathon.vercel.app
-        </div>
-        <p style="font-size: 10pt; color: #38bdf8; font-weight: 600; margin-bottom: 0.18in;">
-          Deploy Produksi di Vercel Edge Network | Protokol HTTPS & Enkripsi TLS 1.3
-        </p>
-        <div class="card-tag">KREDENSIAL LOGIN VERIFIKATOR</div>
-        <p style="font-size: 10pt; color: #cbd5e1; margin-bottom: 0.15in;">
-          Email: <code style="color: #10b981; font-family: monospace;">verifikator.bpjs@jkn.go.id</code><br>
-          Password: <code style="color: #10b981; font-family: monospace;">demo123</code>
-        </p>
-        <div class="card-tag">FITUR INTERAKTIF UTAMA</div>
-        <ul>
-          <li>Dual Cockpit: Dashboard Verifikator berdampingan dengan Simulator Mobile JKN.</li>
-          <li>Split-Sync Telemetry: Konfirmasi peserta langsung memperbarui radar risiko.</li>
-          <li>Full Interactive Theme: Dukungan penuh Dark Mode & Light Mode BPJS.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">SKENARIO DEMO</div>
-        <ul style="gap: 0.1in;">
-          <li>
-            <strong style="color: #10b981;">Langkah 1: Triage Antrean & Deteksi Klaster:</strong>
-            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator membuka dashboard utama; sistem otomatis menempatkan klaster 85 klaim fisioterapi RS Mitra Husada pasca-baksos ke Jalur Merah (Skor Risiko 87).</span>
-          </li>
-          <li>
-            <strong style="color: #10b981;">Langkah 2: Inspeksi Matriks Bukti (Lapis 1 & 2):</strong>
-            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator memeriksa detail anomali yang mengungkap lonjakan klaim 8,5x baseline normal (Lapis 1) serta validasi SATUSEHAT SDMK bahwa SIP dokter DPJP telah berakhir (Lapis 2).</span>
-          </li>
-          <li>
-            <strong style="color: #10b981;">Langkah 3: Simulasi Live Mobile JKN (Lapis 3):</strong>
-            <span style="font-size: 9.5pt; color: #cbd5e1;">Sistem mengirim notifikasi konfirmasi kehadiran 1-klik ke ponsel peserta; saat peserta memilih [Tidak Pernah], skor risiko di cockpit langsung ter-update secara real-time.</span>
-          </li>
-          <li>
-            <strong style="color: #10b981;">Langkah 4: Keputusan & Cetak Audit Trail:</strong>
-            <span style="font-size: 9.5pt; color: #cbd5e1;">Verifikator mengeksekusi [Tunda Berita Acara & Minta Klarifikasi] sebelum batas 10 hari kerja dan mencetak berkas siap-audit berstempel hash SHA-256.</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 5 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 7: PENJELASAN FITUR -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">6</div>
-        <div class="title-group">
-          <h2>Penjelasan Fitur Unggulan</h2>
-          <p>Fitur Spesifik Penyelesai Masalah Phantom Billing (#6) & Repeat Billing (#11)</p>
-        </div>
-      </div>
-      <div class="header-tag">Core Capabilities</div>
-    </div>
-
-    <div class="grid-4">
-      <div class="card card-highlight">
-        <div class="card-tag">FITUR 1</div>
-        <div class="card-title" style="font-size: 14pt;">Deteksi Anomali AI & Radar Upcoding</div>
-        <div class="card-subtext">Solusi: Pemindaian Cepat Tanpa Bias</div>
-        <p style="font-size: 9pt; color: #cbd5e1; line-height: 1.5;">
-          Memadukan Isolation Forest & ChromaDB Vector Embeddings untuk mendeteksi lonjakan klaim massal (#6), duplikasi resume (#11), serta manipulasi tingkat keparahan klaim (Upcoding Level I ke III) patuh Permenkes 26/2021 & 3/2023.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">FITUR 2</div>
-        <div class="card-title" style="font-size: 14pt;">SATUSEHAT SDMK & Geovelocity (25%)</div>
-        <div class="card-subtext">Solusi: Mengeliminasi Bukti Sepihak</div>
-        <p style="font-size: 9pt; color: #cbd5e1; line-height: 1.5;">
-          Merekonsiliasi keaktifan SIP dokter DPJP di registry Kemenkes dan menghitung kemungkinan kecepatan fisik antar-faskes dengan mesin rute OSRM untuk menggagalkan dokter fiktif dan impossible travel.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">FITUR 3</div>
-        <div class="card-title" style="font-size: 14pt;">Konfirmasi Presensi Mobile JKN (25%)</div>
-        <div class="card-subtext">Solusi: Verifikasi Partisipatif Zero-PHI</div>
-        <p style="font-size: 9pt; color: #cbd5e1; line-height: 1.5;">
-          Mengirimkan verifikasi biner (1-klik Ya/Tidak) secara acak-terarah ke aplikasi peserta dengan prinsip minimasi data tanpa rincian klinis sensitif (patuh penuh UU PDP No. 27/2022).
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">FITUR 4</div>
-        <div class="card-title" style="font-size: 14pt;">Biometrik FRISTA & Berita Acara QR</div>
-        <div class="card-subtext">Solusi: Dokumen Siap Audit Anti-Sengketa</div>
-        <p style="font-size: 9pt; color: #cbd5e1; line-height: 1.5;">
-          Lapis 4 memvalidasi presensi wajah terminal FRISTA di faskes, serta menerbitkan Berita Acara Klarifikasi Bersama (BAKB) resmi berstempel QR Code dan hash SHA-256 yang mengikat hukum.
-        </p>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 6 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 8: ARSITEKTUR, KEAMANAN & TATA KELOLA -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">+</div>
-        <div class="title-group">
-          <h2>Arsitektur Teknis, Keamanan & Tata Kelola AI</h2>
-          <p>Kepatuhan Hukum UU PDP No. 27/2022, Enkripsi Berlapis & Kepatuhan SLA 10 Hari Kerja</p>
-        </div>
-      </div>
-      <div class="header-tag">Security & Compliance</div>
-    </div>
-
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-tag">ARSITEKTUR & MODEL AI</div>
-        <div class="card-title" style="font-size: 15pt;">Model AI Multi-Modal</div>
-        <ul>
-          <li><strong>scikit-learn Isolation Forest:</strong> Mendeteksi deviasi multivariat volume klaim, rasio frekuensi prosedur, dan biaya abnormal.</li>
-          <li><strong>ChromaDB Vector Embeddings:</strong> Model <code>all-MiniLM-L6-v2</code> mendeteksi duplikasi semantik resume medis lintas pasien dalam faskes yang sama.</li>
-          <li><strong>Upcoding & Kaidah Koding:</strong> Engine rule-based Permenkes 26/2021 & 3/2023 membedakan komplikasi riil vs inflasi tingkat keparahan dengan pengecualian obat PRB.</li>
-          <li><strong>Explainable AI (XAI):</strong> Setiap rekomendasi disertai transparansi kontribusi faktor penyebab anomali.</li>
-        </ul>
-      </div>
-
-      <div class="card card-highlight">
-        <div class="card-tag">KEAMANAN & UU PDP 27/2022</div>
-        <div class="card-title" style="font-size: 15pt;">Proteksi Data Pasien</div>
-        <ul>
-          <li><strong>Kepatuhan Penuh UU PDP No. 27/2022:</strong> Zero-PHI Automatic Redaction dan pemisahan data pribadi sensitif secara ketat.</li>
-          <li><strong>Kontrol Akses Terverifikasi:</strong> Internet2 Grouper RBAC (READ, CLARIFY, ADJUDICATE, ADMIN) & token sesi kriptografis 256-bit.</li>
-          <li><strong>Tamper-Evident SHA-256 Ledger:</strong> Seluruh keputusan verifikator dikunci dengan rantai stempel hash persisten anti-manipulasi.</li>
-          <li><strong>Kepatuhan SLA 10 Hari Kerja:</strong> Statutory Business Days Engine mengecualikan akhir pekan & 16 libur nasional (Perpres 82/2018).</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">TATA KELOLA & ETIKA HITL</div>
-        <div class="card-title" style="font-size: 15pt;">Human-in-the-Loop</div>
-        <ul>
-          <li><strong>Sistem Pendukung Keputusan:</strong> AI hanya memberikan rekomendasi probabilitas anomali, putusan akhir 100% di tangan verifikator manusia.</li>
-          <li><strong>Mitigasi Bias Faskes:</strong> Baseline kegiatan bakti sosial resmi dimasukkan ke dalam model agar faskes patuh tidak dirugikan.</li>
-          <li><strong>Transparansi Hak Faskes:</strong> Faskes diberikan hak klarifikasi data SIP/berkas dalam SLA yang adil sebelum penahanan klaim.</li>
-          <li><strong>Keamanan Kanal Peserta:</strong> Konfirmasi hanya melalui aplikasi resmi Mobile JKN, bukan kanal SMS terbuka yang rentan phishing.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 7 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 9: HASIL UJI VALIDASI & ROADMAP -->
-  <div class="slide">
-    <div class="slide-header">
-      <div class="slide-badge-title">
-        <div class="num-badge">+</div>
-        <div class="title-group">
-          <h2>Hasil Uji Validasi & Kesiapan Implementasi</h2>
-          <p>Pengujian Holdout Dataset, Kesiapan Integrasi VClaim, dan Roadmap Pengembangan</p>
-        </div>
-      </div>
-      <div class="header-tag">Evaluation & Roadmap</div>
-    </div>
-
-    <div class="grid-3">
-      <div class="card card-highlight">
-        <div class="card-tag">HASIL UJI DATASET HOLDOUT</div>
-        <div class="card-title" style="font-size: 15pt;">Akurasi Teruji 100%</div>
-        <ul>
-          <li><strong>Dataset Uji:</strong> 4.341 record transaksi klaim nasional (3.892 Hijau, 364 Kuning, 85 Merah prioritas telaah).</li>
-          <li><strong>Precision@100 = 100%:</strong> 100 kasus teratas prioritas telaah seluruhnya terbukti mengandung anomali (#6/#11/Upcoding).</li>
-          <li><strong>FPR ke Jalur Merah = 0,00%:</strong> Tidak ada satu pun klaim sah faskes patuh yang salah ditandai sebagai fraud kritis.</li>
-          <li><strong>Recall Antrean = 100%:</strong> Seluruh klaim bermasalah berhasil terjaring masuk antrean verifikator (Kuning/Merah).</li>
-          <li><strong>113/113 Tests Passed:</strong> 100% suite testing otomatis lolos sempurna (keamanan, SLA engine, dan audit chain).</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">KESIAPAN IMPLEMENTASI</div>
-        <div class="card-title" style="font-size: 15pt;">Non-Disruptive Add-on</div>
-        <ul>
-          <li><strong>Standar Skema BPJS:</strong> Mengadopsi struktur data standar VClaim, TrustMark, INA-CBG, dan SATUSEHAT SDMK.</li>
-          <li><strong>Plug-and-Play Middleware:</strong> Bekerja sebagai lapisan kecerdasan komplementer tanpa merombak core system BPJS.</li>
-          <li><strong>10 Modul Interaktif Selesai:</strong> Master Suite React & FastAPI beroperasi 100% live di localhost dan siap didemokan.</li>
-          <li><strong>Penyelamatan Finansial:</strong> Menahan potensi kebocoran Rp 72.450.000,- langsung di gerbang pra-bayar dari 85 klaim Merah.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">ROADMAP PENGEMBANGAN</div>
-        <div class="card-title" style="font-size: 15pt;">Tahapan Pascakompetisi</div>
-        <ul>
-          <li><strong>Fase 1 (Bulan 1–2):</strong> Bimbingan teknis bersama mentor & verifikator BPJS untuk kalibrasi bobot parameter di lapangan.</li>
-          <li><strong>Fase 2 (Bulan 3–4):</strong> Piloting terbatas di 1 Kantor Cabang percontohan (fokus klaster klaim fisioterapi FKRTL).</li>
-          <li><strong>Fase 3 (Bulan 5–6):</strong> Evaluasi akurasi deteksi pra-bayar terhadap temuan audit pasca-bayar (VPK & AAK).</li>
-          <li><strong>Fase 4 (Bulan 7+):</strong> Rollout nasional terintegrasi VClaim & ekspansi ke 14 tipologi kecurangan JKN lainnya.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="slide-footer">
-      <span>Project Final Healthkathon 2026 - Smarter Protection for a Stronger JKN</span>
-      <span>Slide 8 / 10</span>
-    </div>
-  </div>
-
-  <!-- SLIDE 10: PENUTUP & KONTAK -->
-  <div class="slide" style="justify-content: center; align-items: center; text-align: center;">
-    <div style="font-size: 14pt; font-weight: 700; letter-spacing: 0.12em; color: #10b981; text-transform: uppercase; margin-bottom: 0.1in;">
-      KOLABORASI DIGITAL UNTUK KEBERLANJUTAN JKN
-    </div>
-    <h1 style="font-size: 46pt; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; margin-bottom: 0.15in;">
-      Terima Kasih
-    </h1>
-    <p style="font-size: 15pt; color: #38bdf8; font-weight: 600; max-width: 11in; line-height: 1.4; margin-bottom: 0.45in;">
-      Detect Smarter, Protect JKN - Smarter Protection for a Stronger JKN: Efisiensi Risiko Program JKN
-    </p>
-
-    <div style="display: grid; grid-template-columns: repeat(3, 3.8in); gap: 0.28in; text-align: left;">
-      <div class="card card-highlight">
-        <div class="card-tag">TAUTAN PROTOTYPE / DEMO</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.08in;">Live Web App:</div>
-        <p style="font-size: 10pt; color: #38bdf8; font-family: monospace; word-break: break-all; margin-bottom: 0.1in;">
-          claimtrace-healthkathon.vercel.app
-        </p>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">
-          Dual Cockpit Verifikator & Simulator Mobile JKN aktif real-time.
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">TAUTAN REPOSITORI</div>
-        <div style="font-size: 13pt; font-weight: 700; color: #fff; margin-bottom: 0.08in;">GitHub Repository:</div>
-        <p style="font-size: 10pt; color: #38bdf8; font-family: monospace; word-break: break-all; margin-bottom: 0.1in;">
-          github.com/lombeytjhtt96-glitch/ClaimTrace
-        </p>
-        <p style="font-size: 9.5pt; color: #cbd5e1;">
-          Kode sumber lengkap (Frontend & Backend) + 106/106 Automated Tests Passed (100%).
-        </p>
-      </div>
-
-      <div class="card">
-        <div class="card-tag">KONTAK TIM TINEERENSE</div>
-        <div style="font-size: 12.5pt; font-weight: 700; color: #fff; margin-bottom: 0.04in;">
-          Khalaf Faith Pradyatama
-        </div>
-        <p style="font-size: 9pt; color: #10b981; font-weight: 600; margin-bottom: 0.06in;">
-          Ketua Tim · khalaf.pradyatama@gmail.com
-        </p>
-        <div style="font-size: 12.5pt; font-weight: 700; color: #fff; margin-bottom: 0.04in;">
-          Gaudiansyah Abiyu Mahya
-        </div>
-        <p style="font-size: 9pt; color: #38bdf8; font-weight: 600; margin-bottom: 0.06in;">
-          Anggota Tim · MAN 1 Surakarta
-        </p>
-      </div>
-    </div>
-
-    <div class="slide-footer" style="width: 100%; position: absolute; bottom: 0.4in; left: 0.85in; right: 0.85in; width: calc(100% - 1.7in);">
-      <span>Detect Smarter, Protect JKN - Smarter Protection for a Stronger JKN</span>
-      <span>Tim TINEERENSE - MAN 1 Surakarta</span>
-    </div>
-  </div>
-
+{"".join(sections)}
 </body>
 </html>
 """
 
-html_temp = '/tmp/claimtrace_deck_print.html'
-with open(html_temp, 'w', encoding='utf-8') as f:
-    f.write(html_slides)
 
-chrome_path = '/home/Khalaf-Dev/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome'
-cmd = [
-    chrome_path,
-    '--headless',
-    '--no-sandbox',
-    '--disable-gpu',
-    f'--print-to-pdf={pdf_output_local}',
-    '--no-pdf-header-footer',
-    html_temp
-]
+def validate_pdf_output(pdf_path: Path) -> None:
+    size_bytes = pdf_path.stat().st_size
+    if size_bytes > MAX_PDF_BYTES:
+        raise AssertionError(
+            f"{pdf_path.name} exceeds 15 MB limit: {size_bytes / (1024*1024):.2f} MB"
+        )
+    reader = PdfReader(str(pdf_path))
+    if len(reader.pages) != len(dd.SLIDES):
+        raise AssertionError(
+            f"{pdf_path.name} page count {len(reader.pages)} != {len(dd.SLIDES)}"
+        )
+    if shutil.which("pdftotext"):
+        proc = subprocess.run(
+            ["pdftotext", str(pdf_path), "-"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        dd.assert_clean_text(proc.stdout, f"pdftotext:{pdf_path.name}")
 
-print("Rendering PDF from HTML slides...")
-res = subprocess.run(cmd, capture_output=True, text=True)
-if res.returncode == 0:
-    print(f"Success! PDF generated at: {pdf_output_local} ({os.path.getsize(pdf_output_local)} bytes)")
-    # Copy to Windows folder
-    if os.path.exists(os.path.dirname(pdf_output_win)):
-        import shutil
-        shutil.copy2(pdf_output_local, pdf_output_win)
-        print(f"Copied to Windows folder: {pdf_output_win}")
-else:
-    print(f"Error rendering PDF: {res.stderr}")
+
+def export_pdfs() -> list[Path]:
+    html_file = dd.DECK_DIR / "_render_deck.html"
+    primary_pdf = dd.DECK_DIR / "ClaimTrace_Healthkathon_2026_Final.pdf"
+    team_pdf = dd.DECK_DIR / "TINEERENSE.pdf"
+
+    html_file.write_text(build_html_document(), encoding="utf-8")
+    try:
+        chromium = _find_chromium()
+        cmd = [
+            chromium,
+            "--headless",
+            "--no-sandbox",
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--no-pdf-header-footer",
+            f"--print-to-pdf={primary_pdf}",
+            f"file://{html_file}",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if proc.returncode != 0 or not primary_pdf.exists():
+            raise RuntimeError(
+                f"Chromium PDF export failed ({proc.returncode}): {proc.stderr}"
+            )
+    finally:
+        if html_file.exists():
+            html_file.unlink()
+
+    shutil.copy2(primary_pdf, team_pdf)
+    validate_pdf_output(primary_pdf)
+    validate_pdf_output(team_pdf)
+    return [primary_pdf, team_pdf]
+
+
+if __name__ == "__main__":
+    pdfs = export_pdfs()
+    for p in pdfs:
+        mb = p.stat().st_size / (1024 * 1024)
+        pages = len(PdfReader(str(p)).pages)
+        print(f"OK {p.name}: {pages} pages, {mb:.2f} MB (<= 15 MB, clean text)")
