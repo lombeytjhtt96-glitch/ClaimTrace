@@ -8,10 +8,24 @@ HL7 FHIR R4 Bundles compliant with Kementerian Kesehatan Republik Indonesia (SAT
 and BPJS Kesehatan interoperability profiles (UU PDP No. 27/2022 compliant).
 """
 
+import re
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional, Tuple
 from app.models.schemas import ClaimInput, TriageResult
 from app.engine.scoring import evaluate_claim_triage
+
+
+def _split_icd10_code_and_display(raw_icd: str) -> Tuple[str, str]:
+    """Extract canonical ICD-10 code and human-readable display label for HL7 FHIR R4 coding."""
+    raw = (raw_icd or "").strip()
+    match = re.match(r"^([A-Za-z][0-9]{2}(?:\.[0-9A-Za-z]{1,4})?)\s*(?:\((.+)\))?$", raw)
+    if match:
+        code = match.group(1).upper()
+        display = (match.group(2) or f"Primary Diagnosis ({code})").strip()
+        return code, display
+    token = raw.split()[0].upper() if raw else ""
+    return token, raw or token
+
 
 def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = None) -> Dict[str, Any]:
     """
@@ -31,6 +45,7 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
         triage = evaluate_claim_triage(claim)
 
     cid_slug = claim.claim_id.lower().replace("_", "-")
+    icd10_code, icd10_display = _split_icd10_code_and_display(claim.icd10_primary)
     patient_ref_id = f"pat-{claim.peserta_token_aes[:12].lower()}"
     practitioner_ref_id = f"prac-{claim.dpjp_meta.dpjp_id_hash[:12].lower()}"
     org_ref_id = f"org-{claim.faskes_id.lower().replace('_', '-')}"
@@ -225,8 +240,8 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
             "coding": [
                 {
                     "system": "http://hl7.org/fhir/sid/icd-10",
-                    "code": claim.icd10_primary,
-                    "display": f"Primary Diagnosis ({claim.icd10_primary})"
+                    "code": icd10_code,
+                    "display": icd10_display
                 }
             ]
         },
@@ -319,7 +334,8 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
                     "coding": [
                         {
                             "system": "http://hl7.org/fhir/sid/icd-10",
-                            "code": claim.icd10_primary
+                            "code": icd10_code,
+                            "display": icd10_display
                         }
                     ]
                 }

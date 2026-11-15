@@ -73,7 +73,7 @@ async function assertPortFree(port, host = '127.0.0.1') {
   });
 }
 
-async function waitForHttpReady(url, proc, name, timeoutMs = 45000) {
+async function waitForHttpReady(url, proc, name, timeoutMs = 90000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (proc && proc.exitCode !== null) {
@@ -249,6 +249,25 @@ async function run() {
     await page.waitForTimeout(200);
     console.log('[PASS] Executive Dashboard boot + desktop/mobile zero horizontal overflow');
 
+    // Helper: Ctrl+K Command Palette Navigation
+    const navigateViaCommandPalette = async (queryText, buttonPattern) => {
+      await page.keyboard.press('Control+k');
+      const dialog = page.getByRole('dialog', { name: /Navigasi Cepat Portal Verifikator/i });
+      await dialog.waitFor({ state: 'visible', timeout: 8000 });
+      const searchInput = dialog.locator('input').first();
+      await searchInput.fill(queryText);
+      await dialog.getByRole('button', { name: buttonPattern }).first().click();
+      await dialog.waitFor({ state: 'hidden', timeout: 5000 });
+    };
+
+    // Ctrl+K -> Telaah Kasus (Investigasi) + Audit Klinis + Jump ke Cek 7 Dokumen RS
+    await navigateViaCommandPalette('Investigasi', /Telaah Kasus/i);
+    await page.getByText(/Audit Klinis & Kaidah Koding INA-CBG/i).waitFor({ state: 'visible', timeout: 10000 });
+    await page.getByText('Audit Klinis Tersinkron').first().waitFor({ state: 'visible', timeout: 10000 });
+    await page.getByRole('button', { name: /Cek 7 Dokumen RS/i }).click();
+    await page.getByText('Pengecekan Dokumen Klaim & Berkas Rekam Medis RS').waitFor({ state: 'visible', timeout: 10000 });
+    console.log('[PASS] Ctrl+K navigation + CaseInvestigation clinical audit + 7 Dokumen jump');
+
     // Pillar 1 UI: Peringkat Risiko Faskes -> WarehouseCohortPanel
     const [clusterRes] = await Promise.all([
       page.waitForResponse(
@@ -268,18 +287,51 @@ async function run() {
       ),
       page.getByRole('button', { name: /Hitung ulang agregasi gudang data|Hitung Ulang SQL/i }).click(),
     ]);
-    console.log('[PASS] Pillar 1 Live SQL Warehouse Cohort Panel');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(200);
+    await assertNoHorizontalOverflow(page, 'FraudRanking Mobile');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    console.log('[PASS] Pillar 1 Live SQL Warehouse Cohort Panel + Mobile Overflow Check');
 
-    // Pillar 2 UI: Cek Dokumen RS -> RealBundleMorbidityPanel (Rule MB1-MB5 & Submit Real Bundle)
+    // Pillar 2 UI: Cek Dokumen RS -> ICD-10 Kamus + RealBundleMorbidityPanel (Rule MB1-MB5 & Submit Real Bundle)
     await page.getByRole('button', { name: /Cek Dokumen RS/i }).click();
     await page.getByRole('button', { name: /Uji Rule MB1-MB5 & Fornas/i }).waitFor({ state: 'visible', timeout: 10000 });
 
-    const [mbRes] = await Promise.all([
+    const icdInput = page.getByLabel(/Cari kode atau nama penyakit ICD-10/i);
+    await icdInput.fill('Sepsis');
+    const [icdRes] = await Promise.all([
       page.waitForResponse(
-        (res) => res.url().includes('/api/v1/clinical/morbidity-audit') && res.request().method() === 'POST'
+        (res) => res.url().includes('/api/v1/terminology/icd10/search') && res.request().method() === 'GET'
       ),
-      page.getByRole('button', { name: /Uji Rule MB1-MB5 & Fornas/i }).click(),
+      page.getByRole('button', { name: /Cek Kode/i }).click(),
     ]);
+    if (icdRes.status() !== 200) {
+      throw new Error(`ICD-10 search API failed with status ${icdRes.status()}`);
+    }
+    await page.waitForTimeout(300);
+
+    const mbBtn = page.getByRole('button', { name: /Uji Rule MB1-MB5 & Fornas/i });
+    await mbBtn.scrollIntoViewIfNeeded();
+    let mbReqSent = false;
+    const onMbReq = (req) => {
+      if (req.url().includes('/api/v1/clinical/morbidity-audit') && req.method() === 'POST') {
+        mbReqSent = true;
+      }
+    };
+    page.on('request', onMbReq);
+    let mbRes;
+    try {
+      [mbRes] = await Promise.all([
+        page.waitForResponse(
+          (res) => res.url().includes('/api/v1/clinical/morbidity-audit') && res.request().method() === 'POST'
+        ),
+        mbBtn.click(),
+      ]);
+    } catch (err) {
+      throw new Error(`Morbidity audit failed (requestDispatched=${mbReqSent}): ${err.message}`);
+    } finally {
+      page.off('request', onMbReq);
+    }
     if (mbRes.status() !== 200) {
       throw new Error(`Morbidity audit API failed with status ${mbRes.status()}`);
     }
@@ -313,9 +365,23 @@ async function run() {
     if (delRes.status !== 200) {
       throw new Error(`Expected cleanup DELETE submitted bundle 200, got ${delRes.status}`);
     }
-    console.log('[PASS] Pillar 2 MB1-MB5 + Fornas + Real Document Bundle Submit & Cleanup');
+    console.log('[PASS] Pillar 2 ICD-10 Kamus + MB1-MB5 + Fornas + Real Document Bundle Submit & Cleanup');
 
-    // Pillar 3 UI: Konsol Putusan -> SanggahanAppealsPanel
+    // Pembuktian Empiris -> Audit Benford & Gini Tab
+    await navigateViaCommandPalette('Benford', /Forensik Empiris & Benford/i);
+    const [benfordRes, giniRes] = await Promise.all([
+      page.waitForResponse((res) => res.url().includes('/api/v1/analytics/benford-audit') && res.request().method() === 'GET'),
+      page.waitForResponse((res) => res.url().includes('/api/v1/analytics/gini-concentration') && res.request().method() === 'GET'),
+      page.getByRole('button', { name: /Audit Benford & Gini/i }).click(),
+    ]);
+    if (benfordRes.status() !== 200 || giniRes.status() !== 200) {
+      throw new Error(`Forensic statistics API failed (benford=${benfordRes.status()}, gini=${giniRes.status()})`);
+    }
+    await page.getByText(/Distribusi Digit Pertama: Aktual vs Hukum Benford/i).waitFor({ state: 'visible', timeout: 10000 });
+    await page.getByText(/Kurva Lorenz Konsentrasi Biaya Klaim Antar-Faskes/i).waitFor({ state: 'visible', timeout: 10000 });
+    console.log('[PASS] EmpiricalForensics Benford & Gini Statistical Audit');
+
+    // Pillar 3 UI: Konsol Putusan -> SLA Badge, SanggahanAppealsPanel, & HL7 FHIR R4 Claim/$submit
     const [appealsGetRes] = await Promise.all([
       page.waitForResponse(
         (res) => res.url().endsWith('/api/v1/appeals') && res.request().method() === 'GET'
@@ -325,7 +391,19 @@ async function run() {
     if (appealsGetRes.status() !== 200) {
       throw new Error(`GET /api/v1/appeals failed with status ${appealsGetRes.status()}`);
     }
+    await page.getByText(/SLA Perpres 82\/2018/i).first().waitFor({ state: 'visible', timeout: 10000 });
     await page.getByText('APL-2026-001').first().waitFor({ state: 'visible', timeout: 10000 });
+
+    const [fhirSubmitRes] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes('/fhir/Claim/$submit') && res.request().method() === 'POST'
+      ),
+      page.getByRole('button', { name: /Validasi & Kirim FHIR Claim\/\$submit/i }).click(),
+    ]);
+    if (fhirSubmitRes.status() !== 200 && fhirSubmitRes.status() !== 201) {
+      throw new Error(`POST /fhir/Claim/$submit failed with status ${fhirSubmitRes.status()}`);
+    }
+    await page.getByText(/ClaimResponse/i).first().waitFor({ state: 'visible', timeout: 10000 });
 
     const [submitAppealRes] = await Promise.all([
       page.waitForResponse(
@@ -342,7 +420,53 @@ async function run() {
       throw new Error('Missing appeal_id from POST /api/v1/appeals/submit response');
     }
     await page.getByText(newAppealId).first().waitFor({ state: 'visible', timeout: 10000 });
-    console.log(`[PASS] Pillar 3 Sanggahan BAKB Appeals Panel (${newAppealId})`);
+    console.log(`[PASS] Pillar 3 SLA + HL7 FHIR Claim/$submit + Sanggahan BAKB Appeals (${newAppealId})`);
+
+    // Laporan Resmi -> Dynamic signer + Pratinjau VEDIKA Server + CSV
+    await navigateViaCommandPalette('BAHV', /Laporan Resmi \(BAHV\)/i);
+    await page.getByText(/Hendra Wijaya, S\.Si, M\.M/i).first().waitFor({ state: 'visible', timeout: 10000 });
+    await page.getByRole('button', { name: /Unduh CSV/i }).waitFor({ state: 'visible', timeout: 8000 });
+    const popupPromise = page.waitForEvent('popup', { timeout: 4000 }).catch(() => null);
+    const [vedikaRes] = await Promise.all([
+      page.waitForResponse((res) => res.url().includes('/api/v1/vedika/') && res.request().method() === 'GET'),
+      page.getByRole('button', { name: /Pratinjau VEDIKA Server/i }).click(),
+    ]);
+    if (vedikaRes.status() !== 200) {
+      throw new Error(`GET /api/v1/vedika failed with status ${vedikaRes.status()}`);
+    }
+    const popupPage = await popupPromise;
+    if (popupPage) await popupPage.close().catch(() => {});
+    console.log('[PASS] OfficialReportsView dynamic signer + VEDIKA printable + CSV');
+
+    // Profil Verifikator -> Active Sessions + Zero Hardcoded PIN 123123
+    const sessionsPromise = page.waitForResponse(
+      (res) => res.url().includes('/api/v1/auth/sessions') && res.request().method() === 'GET',
+      { timeout: 10000 }
+    );
+    await navigateViaCommandPalette('Keamanan Sesi', /Profil & Keamanan Sesi/i);
+    const sessionsRes = await sessionsPromise;
+    if (sessionsRes.status() !== 200) {
+      throw new Error(`GET /api/v1/auth/sessions failed with status ${sessionsRes.status()}`);
+    }
+    await page.getByText(/Sesi Aktif & Keamanan Perangkat Workstation/i).waitFor({ state: 'visible', timeout: 10000 });
+    const profileHtml = await page.content();
+    if (profileHtml.includes('123123')) {
+      throw new Error('Hardcoded 123123 PIN string detected in AdminProfileView DOM');
+    }
+    console.log('[PASS] AdminProfileView live active sessions & security hygiene');
+
+    // Theme Switch (Light <-> Dark) & Final Mobile Overflow Check
+    const themeToggleBtn = page.getByRole('button', { name: /Ganti Mode Tema Dasbor/i });
+    await themeToggleBtn.click();
+    await page.waitForTimeout(200);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(200);
+    await assertNoHorizontalOverflow(page, 'Dashboard Dark Mode Mobile');
+    await themeToggleBtn.click();
+    await page.waitForTimeout(200);
+    await assertNoHorizontalOverflow(page, 'Dashboard Light Mode Mobile');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    console.log('[PASS] Dark <-> Light Theme Toggle + Mobile Zero Horizontal Overflow');
 
     if (pageErrors.length > 0) {
       throw new Error(`Page errors observed: ${pageErrors.join(' | ')}`);

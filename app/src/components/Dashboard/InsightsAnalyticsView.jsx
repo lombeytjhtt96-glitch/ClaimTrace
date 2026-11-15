@@ -239,7 +239,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
 
   const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
 
-  // Privacy status state (dynamically tracked from backend DuckDB)
+  // Privacy status state (dynamically tracked from backend analytics warehouse)
   const [status, setStatus] = useState({
     k_value: 5,
     k_threshold: 5,
@@ -300,7 +300,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
     }
   };
 
-  // Execute live analytical query against backend DuckDB
+  // Execute live analytical query against backend analytics warehouse
   const executeLiveQuery = async (queryType, sDate, eDate, sev) => {
     const qName = queryType || selectedQuery;
     if (!qName) return;
@@ -322,7 +322,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
         await fetchPrivacyStatus();
       }
     } catch (err) {
-      console.error('Gagal mengeksekusi kueri analitik DuckDB', err);
+      console.error('Gagal mengeksekusi kueri gudang analitik', err);
     } finally {
       setLoading(false);
     }

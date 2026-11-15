@@ -94,8 +94,12 @@ def validate_fhir_resource_payload(
                 continue
             sys_uri = str(ident.get("system", ""))
             val = str(ident.get("value", ""))
-            if "nik" in sys_uri.lower() or len(val) > 0:
-                if not re.match(r"^\d{16}$", val):
+            sys_low = sys_uri.lower()
+            is_nik_field = "nik" in sys_low or not sys_uri
+            if is_nik_field and len(val) > 0:
+                is_raw_nik = bool(re.match(r"^\d{16}$", val))
+                is_uupdp_masked_nik = bool(re.match(r"^\d{6}\*{4,8}\d{4}$", val))
+                if not (is_raw_nik or is_uupdp_masked_nik):
                     issues.append(
                         _issue(
                             "error",
@@ -106,6 +110,7 @@ def validate_fhir_resource_payload(
                     )
 
     elif resource_type == "Condition":
+        ina_cbg_who_extensions = {"N18.5", "K35.8"}
         codings = (payload.get("code") or {}).get("coding", [])
         if not codings:
             issues.append(
@@ -127,7 +132,7 @@ def validate_fhir_resource_payload(
                         f"{path}Condition.code.coding[{idx}].code",
                     )
                 )
-            elif not icd10_service.is_valid_code(code_val):
+            elif not (icd10_service.is_valid_code(code_val) or code_val in ina_cbg_who_extensions):
                 issues.append(
                     _issue(
                         "error",

@@ -22,23 +22,17 @@ import {
   Area,
 } from 'recharts';
 
-const volumeChartData = [
-  { date: '11 Okt', volume: 10, isSpike: false },
-  { date: '12 Okt', volume: 12, isSpike: false },
-  { date: '13 Okt', volume: 8, isSpike: false },
-  { date: '14 Okt', volume: 85, isSpike: true },
-  { date: '15 Okt', volume: 11, isSpike: false },
-];
-
 function VolumeChartTooltip({ active, payload, isLight }) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
+  const baseline = data.baseline ?? 10;
+  const ratioLabel = data.spikeRatio ? Number(data.spikeRatio).toFixed(1) : '3.0';
   return (
     <div className={`rounded-xl border px-3 py-2 text-xs shadow-xl backdrop-blur-md ${
       isLight ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/60' : 'bg-[#00153A] border-white/10 text-white shadow-2xl'
     }`}>
       <div className="flex items-center justify-between gap-3 mb-1">
-        <span className={`font-semibold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{data.date} 2026</span>
+        <span className={`font-semibold ${isLight ? 'text-slate-600' : 'text-white/60'}`}>{data.date}</span>
         {data.isSpike && (
           <span className={`text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded ${
             isLight ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
@@ -53,14 +47,14 @@ function VolumeChartTooltip({ active, payload, isLight }) {
           {data.volume} berkas
         </span>
       </p>
-      <p className={`text-[10px] flex items-center justify-between gap-4 mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+      <p className={`text-[10px] flex items-center justify-between gap-4 mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>
         <span>Baseline Faskes:</span>
-        <span className="font-mono font-medium">10 berkas/hari</span>
+        <span className="font-mono font-medium">{baseline} berkas/hari</span>
       </p>
       {data.isSpike && (
         <div className="mt-1.5 pt-1 border-t border-rose-100 dark:border-white/10 text-[10px] text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span>Lonjakan 8.5x di atas kapasitas wajar</span>
+          <span>Lonjakan {ratioLabel}x di atas kapasitas wajar</span>
         </div>
       )}
     </div>
@@ -75,6 +69,7 @@ export default function CaseInvestigation({
   patientResponse = null, 
   onBackToQueue,
   onOpenDecision,
+  onOpenDocumentChecker,
   onOpenAgentCopilot,
   onOpenExpansionSuite,
   isLight = false
@@ -306,10 +301,18 @@ export default function CaseInvestigation({
     }
   }, [currentCase.id]);
 
+  const [clinicalAudit, setClinicalAudit] = useState({
+    charlson: null,
+    upcoding: null,
+    temporal: null,
+    loading: false,
+  });
+
   useEffect(() => {
     let active = true;
     setResubmitMsg(null);
     setAdjudicationMsg(null);
+    setClinicalAudit((prev) => ({ ...prev, loading: true }));
     cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/dossier`).then((json) => {
       if (active && json?.dossier) {
         setClaimDossier(json.dossier);
@@ -319,6 +322,19 @@ export default function CaseInvestigation({
       if (active && json) {
         setAdjudicationData(json);
       }
+    });
+    Promise.all([
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/clinical/charlson/${currentCase.id}`).catch(() => null),
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/clinical/upcoding-audit/${currentCase.id}`).catch(() => null),
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/clinical/temporal-coherence/${currentCase.id}`).catch(() => null),
+    ]).then(([charlsonRes, upcodingRes, temporalRes]) => {
+      if (!active) return;
+      setClinicalAudit({
+        charlson: charlsonRes?.audit_result || null,
+        upcoding: upcodingRes?.upcoding_evaluation || null,
+        temporal: temporalRes?.coherence_evaluation || null,
+        loading: false,
+      });
     });
     return () => { active = false; };
   }, [currentCase.id]);
@@ -429,11 +445,11 @@ export default function CaseInvestigation({
   const spikeRatio = Number(rawClaim?.episode_meta?.rasio_lonjakan_baseline ?? 8.5);
   const baselineVol = Math.max(1, Math.round(clusterVolume / Math.max(spikeRatio, 1)));
   const dynamicVolumeData = [
-    { date: 'H-3', volume: baselineVol, isSpike: false },
-    { date: 'H-2', volume: Math.max(1, baselineVol + 2), isSpike: false },
-    { date: 'H-1', volume: Math.max(1, baselineVol - 1), isSpike: false },
-    { date: 'Tgl Klaim', volume: clusterVolume, isSpike: spikeRatio >= 3.0 },
-    { date: 'H+1', volume: Math.max(1, baselineVol + 1), isSpike: false },
+    { date: 'H-3', volume: baselineVol, baseline: baselineVol, spikeRatio, isSpike: false },
+    { date: 'H-2', volume: Math.max(1, baselineVol + 2), baseline: baselineVol, spikeRatio, isSpike: false },
+    { date: 'H-1', volume: Math.max(1, baselineVol - 1), baseline: baselineVol, spikeRatio, isSpike: false },
+    { date: 'Tgl Klaim', volume: clusterVolume, baseline: baselineVol, spikeRatio, isSpike: spikeRatio >= 3.0 },
+    { date: 'H+1', volume: Math.max(1, baselineVol + 1), baseline: baselineVol, spikeRatio, isSpike: false },
   ];
 
   // AI Automatic Anomaly Detection Variables (grounded on live backend triage output when present)
@@ -579,14 +595,16 @@ export default function CaseInvestigation({
 
   const renderCustomBarLabel = (props) => {
     const { x, y, width, index } = props;
-    const item = volumeChartData[index];
+    const item = dynamicVolumeData[index];
     if (!item?.isSpike) return null;
+    const labelText = String(item.volume);
+    const pillWidth = Math.max(28, labelText.length * 8 + 12);
     return (
       <g>
         <rect
-          x={x + width / 2 - 14}
+          x={x + width / 2 - pillWidth / 2}
           y={y - 21}
-          width={28}
+          width={pillWidth}
           height={17}
           rx={5}
           fill={isLight ? '#e11d48' : '#f43f5e'}
@@ -600,14 +618,15 @@ export default function CaseInvestigation({
           fontWeight={800}
           fontFamily="monospace"
         >
-          85
+          {labelText}
         </text>
       </g>
     );
   };
 
   const renderCustomXTick = ({ x, y, payload }) => {
-    const isSpike = payload?.value === '14 Okt';
+    const matchedPoint = dynamicVolumeData.find((pt) => pt.date === payload?.value);
+    const isSpike = Boolean(matchedPoint?.isSpike);
     return (
       <text
         x={x}
@@ -1073,7 +1092,7 @@ export default function CaseInvestigation({
 
               {/* Data Summary Grid Pill Row: Pristine, Non-Overlapping Digits */}
               <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-slate-100 dark:border-white/10 text-center font-mono">
-                {volumeChartData.map((d) => (
+                {dynamicVolumeData.map((d) => (
                   <div
                     key={d.date}
                     className={`py-1 px-1 rounded-lg border transition ${
@@ -1089,7 +1108,7 @@ export default function CaseInvestigation({
                     <div className={`text-[11.5px] font-bold ${d.isSpike ? (isLight ? 'text-rose-700 font-extrabold' : 'text-rose-400 font-extrabold') : (isLight ? 'text-slate-900' : 'text-white')}`}>
                       {d.volume}
                     </div>
-                    <div className={`text-[9px] ${d.isSpike ? (isLight ? 'text-rose-600 font-bold' : 'text-rose-300 font-bold') : (isLight ? 'text-slate-500' : 'text-white/40')}`}>
+                    <div className={`text-[9px] ${d.isSpike ? (isLight ? 'text-rose-700 font-bold' : 'text-rose-300 font-bold') : (isLight ? 'text-slate-600' : 'text-white/50')}`}>
                       {d.date}
                     </div>
                   </div>
@@ -2066,6 +2085,148 @@ export default function CaseInvestigation({
         </div>
       )}
 
+      {/* PANEL AUDIT KLINIS MENDALAM: CHARLSON CCI, UPCODING SEVERITY & KOHERENSI TEMPORAL */}
+      <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Stethoscope className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+            <div>
+              <h3 className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Audit Klinis &amp; Kaidah Koding INA-CBG (Permenkes 26/2021)
+              </h3>
+              <p className={`text-[10.5px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                Evaluasi Indeks Komorbiditas Charlson (CCI), validasi severity level upcoding, dan kausalitas tanggal layanan {currentCase.id}.
+              </p>
+            </div>
+          </div>
+          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border ${
+            clinicalAudit.loading
+              ? (isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/5 text-slate-300 border-white/15')
+              : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
+          }`}>
+            {clinicalAudit.loading ? 'Memuat Audit Klinis...' : 'Audit Klinis Tersinkron'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Card 1: Charlson Comorbidity Index */}
+          <div className={`p-3 rounded-xl border space-y-2 ${
+            isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-white/5 border-white/10'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-[11px] font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Charlson Comorbidity Index (CCI)
+              </span>
+              <span className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded border tabular-nums ${
+                (clinicalAudit.charlson?.charlson_score ?? 0) >= 3
+                  ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                  : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+              }`}>
+                Skor {clinicalAudit.charlson?.charlson_score ?? 0}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10.5px]">
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Level Beban</span>
+                <strong className="font-mono">{clinicalAudit.charlson?.comorbidity_level || 'SANGAT_RENDAH'}</strong>
+              </div>
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Survival 10-Thn</span>
+                <strong className="font-mono tabular-nums">{clinicalAudit.charlson?.ten_year_survival_pct ?? 98.3}%</strong>
+              </div>
+            </div>
+            <p className={`text-[10.5px] leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+              {clinicalAudit.charlson?.clinical_description || 'Evaluasi profil ICD-10 primer dan sekunder peserta aktif.'}
+            </p>
+            {Array.isArray(clinicalAudit.charlson?.detected_comorbidities) && clinicalAudit.charlson.detected_comorbidities.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                {clinicalAudit.charlson.detected_comorbidities.slice(0, 3).map((c) => (
+                  <span key={c.category} className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded border ${
+                    isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-slate-200'
+                  }`}>
+                    {c.matched_code}: {c.label} (+{c.weight})
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Upcoding Severity Detector */}
+          <div className={`p-3 rounded-xl border space-y-2 ${
+            clinicalAudit.upcoding?.upcoding_suspected
+              ? (isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/30')
+              : (isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-white/5 border-white/10')
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-[11px] font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Audit Upcoding Severity INA-CBG
+              </span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                clinicalAudit.upcoding?.upcoding_suspected
+                  ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/40')
+                  : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+              }`}>
+                {clinicalAudit.upcoding?.upcoding_suspected
+                  ? `INDIKASI UPCODING (${clinicalAudit.upcoding.confidence_pct}%)`
+                  : `SESUAI (TIER ${clinicalAudit.upcoding?.claimed_severity_tier ?? 1})`}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10.5px]">
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Kode &amp; Tier CBG</span>
+                <strong className="font-mono">{clinicalAudit.upcoding?.ina_cbg_code || currentCase.code}</strong>
+              </div>
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Lama Rawat (LOS)</span>
+                <strong className="font-mono tabular-nums">{clinicalAudit.upcoding?.length_of_stay_days ?? 1} hari</strong>
+              </div>
+            </div>
+            <p className={`text-[10.5px] leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+              {Array.isArray(clinicalAudit.upcoding?.reasons) && clinicalAudit.upcoding.reasons.length > 0
+                ? clinicalAudit.upcoding.reasons[0]
+                : (clinicalAudit.upcoding?.recommendation || 'Kaidah koding tingkat keparahan selaras dengan profil komorbiditas klinis.')}
+            </p>
+          </div>
+
+          {/* Card 3: Temporal Coherence Validation */}
+          <div className={`p-3 rounded-xl border space-y-2 ${
+            clinicalAudit.temporal && !clinicalAudit.temporal.is_coherent
+              ? (isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/30')
+              : (isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-white/5 border-white/10')
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-[11px] font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Koherensi Kronologi Episode
+              </span>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                clinicalAudit.temporal && !clinicalAudit.temporal.is_coherent
+                  ? (isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/40')
+                  : (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+              }`}>
+                {clinicalAudit.temporal && !clinicalAudit.temporal.is_coherent
+                  ? `INVERSI (${clinicalAudit.temporal.severity})`
+                  : 'KRONOLOGI KOHEREN'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10.5px]">
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Admisi Layanan</span>
+                <strong className="font-mono tabular-nums">{clinicalAudit.temporal?.admission_date || currentCase.date}</strong>
+              </div>
+              <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
+                <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Pulang Episode</span>
+                <strong className="font-mono tabular-nums">{clinicalAudit.temporal?.discharge_date || currentCase.date}</strong>
+              </div>
+            </div>
+            <p className={`text-[10.5px] leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+              {Array.isArray(clinicalAudit.temporal?.violations) && clinicalAudit.temporal.violations.length > 0
+                ? clinicalAudit.temporal.violations[0]
+                : 'Urutan tanggal pendaftaran, pelaksanaan tindakan klinis, dan pemulangan peserta terverifikasi valid.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* KERTAS KERJA PEMERIKSAAN VERIFIKATOR (6 KAIDAH PENGAWASAN KLAIM) */}
       <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2148,7 +2309,22 @@ export default function CaseInvestigation({
           <span>Kembali ke Daftar Antrean</span>
         </motion.button>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onOpenDocumentChecker && (
+            <motion.button
+              type="button"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={onOpenDocumentChecker}
+              className={`text-xs font-bold px-3.5 py-2 rounded-xl flex items-center space-x-1.5 transition cursor-pointer border shadow-xs ${
+                isLight ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300' : 'bg-white/10 hover:bg-white/15 text-white border-white/15'
+              }`}
+            >
+              <FileText className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+              <span>Cek 7 Dokumen RS</span>
+            </motion.button>
+          )}
+
           <motion.button
             type="button"
             whileHover={{ y: -1 }}

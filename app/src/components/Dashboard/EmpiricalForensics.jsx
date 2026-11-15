@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -6,6 +6,18 @@ import {
   ExternalLink, ArrowRight, FileText, Activity, ShieldAlert,
   Play, RefreshCw, Terminal, Layers, TrendingUp, AlertTriangle
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 // 12 Kasus Riil Klaim Ganda Hari Sama yang Ditemukan Algoritma ClaimTrace pada Data Transaksi Resmi BPJS 2024
 const REAL_BPJS_ANOMALIES = [
@@ -278,7 +290,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
   }, [propIsLight]);
 
   const [selectedCase, setSelectedCase] = useState(REAL_BPJS_ANOMALIES[0]);
-  const [activeTab, setActiveTab] = useState('anomalies'); // 'anomalies' | 'cbg' | 'sql'
+  const [activeTab, setActiveTab] = useState('anomalies'); // 'anomalies' | 'cbg' | 'statistics' | 'sql'
   const [sqlQuery, setSqlQuery] = useState(PRESET_QUERIES[0].sql);
   const [activePresetIndex, setActivePresetIndex] = useState(0);
   const [queryResult, setQueryResult] = useState(null);
@@ -286,6 +298,37 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
   const [queryDuration, setQueryDuration] = useState('4.2 ms');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRisk, setFilterRisk] = useState('ALL'); // 'ALL' | 'MERAH' | 'KUNING'
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState('');
+  const [benfordData, setBenfordData] = useState(null);
+  const [giniData, setGiniData] = useState(null);
+
+  const loadForensicStatistics = useCallback(async () => {
+    setStatsLoading(true);
+    setStatsError('');
+    try {
+      const [benfordRes, giniRes] = await Promise.all([
+        authFetch(`${API_BASE_URL}/api/v1/analytics/benford-audit?sample_limit=1000`),
+        authFetch(`${API_BASE_URL}/api/v1/analytics/gini-concentration?top_k=30`),
+      ]);
+      if (!benfordRes.ok || !giniRes.ok) {
+        throw new Error(`HTTP ${!benfordRes.ok ? benfordRes.status : giniRes.status}`);
+      }
+      const [bJson, gJson] = await Promise.all([benfordRes.json(), giniRes.json()]);
+      setBenfordData(bJson?.analysis || bJson);
+      setGiniData(gJson?.concentration_analysis || gJson);
+    } catch (err) {
+      setStatsError(err?.message ? `Gagal memuat analisis statistika forensik (${err.message}).` : 'Gagal memuat analisis statistika forensik.');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'statistics' && !benfordData && !statsLoading) {
+      loadForensicStatistics();
+    }
+  }, [activeTab, benfordData, statsLoading, loadForensicStatistics]);
 
   // Format Rupiah
   const formatRp = (num) => {
@@ -478,7 +521,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
         </div>
 
         {/* SUB-TAB NAVIGATOR */}
-        <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-white/10 pb-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
           <button type="button"
             onClick={() => setActiveTab('anomalies')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
@@ -500,6 +543,17 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
           >
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Analisis Pola Casemix INA-CBG</span>
+          </button>
+          <button type="button"
+            onClick={() => setActiveTab('statistics')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+              activeTab === 'statistics'
+                ? isLight ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20 font-bold'
+                : isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200' : 'text-white/60 hover:text-white hover:bg-white/5 border border-white/10'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Audit Benford &amp; Gini</span>
           </button>
           <button type="button"
             onClick={() => setActiveTab('sql')}
@@ -912,7 +966,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
           </div>
 
           {/* TABEL BREAKDOWN CASEMIX */}
-          <div className={`border rounded-xl overflow-hidden ${
+          <div className={`border rounded-xl overflow-x-auto ${
             isLight ? 'border-slate-200 bg-white' : 'border-white/10 bg-[#00134A]'
           }`}>
             <table className="w-full text-left border-collapse text-xs">
@@ -1041,6 +1095,200 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: AUDIT STATISTIKA FORENSIK (HUKUM BENFORD & GINI/LORENZ) */}
+      {activeTab === 'statistics' && (
+        <div className="space-y-4">
+          <div className={`p-5 rounded-2xl border backdrop-blur-xl space-y-4 transition-all ${
+            isLight
+              ? 'bg-white border-slate-200 shadow-sm text-slate-800'
+              : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className={`text-sm font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <Activity className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+                  <span>Uji Statistika Forensik: Hukum Benford &amp; Koefisien Gini Konsentrasi Faskes</span>
+                </h3>
+                <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  Pengujian goodness-of-fit Chi-Square digit pertama tagihan klaim serta Kurva Lorenz konsentrasi tarif antar FKRTL.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={loadForensicStatistics}
+                disabled={statsLoading}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border cursor-pointer transition disabled:opacity-50 ${
+                  isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${statsLoading ? 'animate-spin' : ''}`} />
+                <span>{statsLoading ? 'Menghitung...' : 'Hitung Ulang Audit'}</span>
+              </button>
+            </div>
+
+            {statsError && (
+              <div className="p-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 text-xs font-medium flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{statsError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className={`p-3.5 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Statistik Chi-Square (df=8)</span>
+                <div className="text-xl font-bold font-mono tabular-nums mt-1">
+                  {benfordData ? (benfordData.chi_square_statistic ?? 0).toFixed(2) : '-'}
+                </div>
+                <span className={`text-[11px] block mt-0.5 ${
+                  benfordData?.high_risk_fabrication
+                    ? 'text-rose-600 dark:text-rose-400 font-semibold'
+                    : benfordData?.conforms_to_benford === false
+                    ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                    : isLight ? 'text-emerald-700 font-semibold' : 'text-emerald-400 font-semibold'
+                }`}>
+                  {benfordData?.high_risk_fabrication
+                    ? 'Indikasi Anomali Kritis (> 20,09)'
+                    : benfordData?.conforms_to_benford === false
+                    ? 'Penyimpangan Moderat (> 15,51)'
+                    : 'Konform Hukum Benford'}
+                </span>
+              </div>
+
+              <div className={`p-3.5 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Sampel &amp; Deviasi Maks</span>
+                <div className="text-xl font-bold font-mono tabular-nums mt-1">
+                  {benfordData ? `${benfordData.sample_size ?? 0} Klaim` : '-'}
+                </div>
+                <span className={`text-[11px] block mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  Deviasi Maksimum: {benfordData?.max_single_digit_deviation_pct ?? 0}%
+                </span>
+              </div>
+
+              <div className={`p-3.5 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Koefisien Gini FKRTL</span>
+                <div className="text-xl font-bold font-mono tabular-nums mt-1">
+                  {giniData ? (giniData.gini_coefficient ?? 0).toFixed(3) : '-'}
+                </div>
+                <span className={`text-[11px] block mt-0.5 font-semibold ${
+                  (giniData?.gini_coefficient ?? 0) > 0.65
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : isLight ? 'text-emerald-700' : 'text-emerald-400'
+                }`}>
+                  {giniData?.concentration_level ? giniData.concentration_level.replace(/_/g, ' ') : 'Memuat level'}
+                </span>
+              </div>
+
+              <div className={`p-3.5 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Total Paparan Sampel</span>
+                <div className="text-lg font-bold font-mono tabular-nums mt-1">
+                  {giniData?.total_value != null ? formatRp(giniData.total_value) : '-'}
+                </div>
+                <span className={`text-[11px] block mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  Cakupan: {giniData?.sample_size ?? 0} Faskes
+                </span>
+              </div>
+            </div>
+
+            {benfordData?.assessment && (
+              <div className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                benfordData.high_risk_fabrication
+                  ? isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-950/30 border-rose-500/30 text-rose-200'
+                  : isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+              }`}>
+                <strong className="font-bold">Kesimpulan Uji Benford: </strong>
+                {benfordData.assessment}
+                {giniData?.description ? ` | Konsentrasi Gini: ${giniData.description}` : ''}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* GRAFIK HUKUM BENFORD */}
+              <div className={`p-4 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-[#00134A] border-white/10'}`}>
+                <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                  Distribusi Digit Pertama: Aktual vs Hukum Benford (%)
+                </h4>
+                <p className={`text-[11px] mb-3 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>
+                  Digit 1-9 nominal tagihan klaim FKRTL terhadap probabilitas logaritmik teoretis.
+                </p>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={Object.entries(benfordData?.digit_distribution || {}).map(([digit, metrics]) => ({
+                        digit: `Digit ${digit}`,
+                        aktual: metrics.observed_pct ?? 0,
+                        teoretis: metrics.expected_pct ?? 0,
+                      }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'} />
+                      <XAxis dataKey="digit" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
+                      <YAxis unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <Bar dataKey="aktual" name="Aktual Tagihan (%)" fill="#059669" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="teoretis" name="Teoretis Benford (%)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* GRAFIK KURVA LORENZ */}
+              <div className={`p-4 rounded-xl border ${isLight ? 'bg-white border-slate-200' : 'bg-[#00134A] border-white/10'}`}>
+                <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                  Kurva Lorenz Konsentrasi Biaya Klaim Antar-Faskes
+                </h4>
+                <p className={`text-[11px] mb-3 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>
+                  Jarak antara kurva aktual dan garis pemerataan sempurna menggambarkan tingkat monopoli klaim.
+                </p>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={(giniData?.lorenz_points || []).map((pt) => ({
+                        populasi: pt.cum_population_pct ?? 0,
+                        nilaiAktual: pt.cum_value_pct ?? 0,
+                        pemerataan: pt.cum_population_pct ?? 0,
+                      }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'} />
+                      <XAxis dataKey="populasi" unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
+                      <YAxis unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
+                      <Line type="monotone" dataKey="nilaiAktual" name="Kumulatif Nilai Klaim (%)" stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3 }} />
+                      <Line type="linear" dataKey="pemerataan" name="Pemerataan Sempurna (%)" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {Array.isArray(giniData?.top_providers_sample) && giniData.top_providers_sample.length > 0 && (
+              <div className={`border rounded-xl overflow-x-auto ${isLight ? 'border-slate-200 bg-white' : 'border-white/10 bg-[#00134A]'}`}>
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className={`border-b text-[10.5px] font-mono ${isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/70'}`}>
+                      <th className="p-2.5">Fasilitas Kesehatan (FKRTL)</th>
+                      <th className="p-2.5 text-right">Volume Klaim</th>
+                      <th className="p-2.5 text-right">Total Nilai Tagihan</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/5'}`}>
+                    {giniData.top_providers_sample.slice(0, 8).map((prov, idx) => (
+                      <tr key={`${prov.faskes_name}-${idx}`} className={isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}>
+                        <td className="p-2.5 font-medium">{prov.faskes_name || '-'}</td>
+                        <td className="p-2.5 text-right font-mono tabular-nums">{Number(prov.volume_klaim || 0).toLocaleString('id-ID')}</td>
+                        <td className="p-2.5 text-right font-mono font-bold tabular-nums">{formatRp(Number(prov.total_biaya || 0))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -87,7 +87,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
               <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 border border-rose-300 uppercase tracking-wider">
                 Indeks Pengawasan Nasional
               </span>
-              <span className="text-xs text-slate-400">· Permenkes No. 16/2019 Pencegahan Fraud JKN</span>
+              <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>· Permenkes No. 16/2019 Pencegahan Fraud JKN</span>
             </div>
             <h1 className={`text-xl font-bold tracking-tight mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
               Peringkat Risiko Kecurangan Faskes (Hospital Risk Leaderboard)
@@ -117,49 +117,49 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
           <div className={`p-3.5 rounded-xl border ${
             isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-900 border-slate-800'
           }`}>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Faskes Dipantau</span>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Faskes Dipantau</span>
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-display font-semibold tabular-nums text-[#061B31] dark:text-[#F3F5F8]">{rankingData.total_faskes_evaluated}</span>
-              <span className="text-xs text-slate-400">FKRTL Terdaftar</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">FKRTL Terdaftar</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Data FKRTL terintegrasi BPJS Kesehatan</p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">Data FKRTL terintegrasi BPJS Kesehatan</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border ${
             isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-900 border-slate-800'
           }`}>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Rata-rata Skor Risiko Nasional</span>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Rata-rata Skor Risiko Nasional</span>
             <div className="flex items-baseline space-x-2 mt-1">
               <span className={`text-2xl font-black ${
                 rankingData.national_average_risk_score >= 70 ? 'text-rose-600' : rankingData.national_average_risk_score >= 50 ? 'text-amber-600' : 'text-emerald-700'
               }`}>
                 {rankingData.national_average_risk_score}
               </span>
-              <span className="text-xs text-slate-400">/ 100</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">/ 100</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Indeks anomali agregat multi-lapis</p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">Indeks anomali agregat multi-lapis</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border ${
             isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-900 border-slate-800'
           }`}>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Paparan Potensi Fraud DJS</span>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Paparan Potensi Fraud DJS</span>
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-display font-semibold tabular-nums text-rose-600 dark:text-rose-400">
                 Rp {(rankingData.total_potential_fraud_exposure_rp / 1000000000).toFixed(1)} M
               </span>
-              <span className="text-xs text-slate-400">Rupiah</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Rupiah</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Total estimasi risiko anggaran JKN</p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">Total estimasi risiko anggaran JKN</p>
           </div>
 
           <div className={`p-3.5 rounded-xl border ${
             isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-900 border-slate-800'
           }`}>
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Faskes Risiko Kritis</span>
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Faskes Risiko Kritis</span>
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-display font-semibold tabular-nums text-rose-700 dark:text-rose-400">{rankingData.top_high_risk_faskes.length}</span>
-              <span className="text-xs text-slate-400">Rumah Sakit (Skor &ge; 75)</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Rumah Sakit (Skor &ge; 75)</span>
             </div>
             <p className="text-[11px] text-rose-600 font-semibold mt-1">Target Audit Mendalam Tim Fraud</p>
           </div>
@@ -250,7 +250,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                   Tabel Peringkat Risiko Faskes ({filteredRankings.length})
                 </h3>
               </div>
-              <span className="text-[11px] text-slate-400 font-mono">Pembaruan: Real-time Komputasi</span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">Pembaruan: Real-time Komputasi</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -330,17 +330,17 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                           <span className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
                             {faskes.dominant_anomaly_modus}
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400">
                             Upcoding: {faskes.upcoding_rate_pct}% · Hold: {faskes.triage_hold_count} klaim
                           </span>
                         </td>
 
                         {/* POTENTIAL LOSS */}
                         <td className="py-2.5 px-3 text-right">
-                          <span className="font-mono font-bold text-rose-600 block">
+                          <span className="font-mono font-bold text-rose-600 dark:text-rose-400 block">
                             Rp {(faskes.total_potensi_fraud_rp / 1000000).toFixed(0)} Jt
                           </span>
-                          <span className="text-[10px] text-slate-400 font-mono">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
                             Vol: {faskes.total_volume_klaim.toLocaleString()}
                           </span>
                         </td>
@@ -348,12 +348,14 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                         {/* ACTION */}
                         <td className="py-2.5 px-3 text-center">
                           <button
+                            type="button"
+                            aria-label={`Lihat detail profil risiko ${faskes.faskes_name}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedFaskesDetail(faskes);
                               if (onSelectFaskes) onSelectFaskes(faskes.faskes_id);
                             }}
-                            className="p-1 rounded text-slate-400 hover:text-emerald-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            className="p-1 rounded text-slate-600 dark:text-slate-400 hover:text-emerald-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                             title="Lihat Detail Profil Risiko"
                           >
                             <ChevronRight className="w-4 h-4" />
@@ -428,9 +430,9 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                 </div>
 
                 <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-700/60 text-xs space-y-1">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Wilayah Kerja Kedinasan</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold">Wilayah Kerja Kedinasan</span>
                   <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{selectedFaskesDetail.kepedutian_wilayah}</p>
-                  <p className="text-xs text-slate-500">{selectedFaskesDetail.kantor_cabang} · Akreditasi: {selectedFaskesDetail.accreditation_status}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{selectedFaskesDetail.kantor_cabang} · Akreditasi: {selectedFaskesDetail.accreditation_status}</p>
                 </div>
 
                 {selectedFaskesDetail.cohort_hhi_specialty != null && (
@@ -462,7 +464,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
               </div>
             </div>
           ) : (
-            <div className="p-8 rounded-xl border border-dashed text-center text-slate-400 text-xs">
+            <div className="p-8 rounded-xl border border-dashed text-center text-slate-600 dark:text-slate-400 text-xs">
               Pilih faskes pada tabel leaderboard untuk melihat profil risiko detail.
             </div>
           )}

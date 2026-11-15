@@ -619,7 +619,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
   });
 
   return (
-    <div className="space-y-4 font-inter text-white">
+    <div className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
       {/* HEADER, METRICS & FILTERS - GLASSMORPHISM */}
       <div className="space-y-3">
         <div className={`backdrop-blur-xl border rounded-2xl p-4 shadow-xl space-y-3 ${

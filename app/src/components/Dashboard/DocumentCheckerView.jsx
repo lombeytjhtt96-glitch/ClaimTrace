@@ -30,8 +30,16 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 
-export default function DocumentCheckerView({ isLight = true, currentUser }) {
-  const [activeClaimId, setActiveClaimId] = useState('CLM-2026-8801');
+const BASELINE_CLAIM_OPTIONS = [
+  { id: 'CLM-2026-8801', label: 'RS Medika Prima (Upcoding Severity III / Inversi Temporal)', badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800' },
+  { id: 'CLM-2026-8802', label: 'RS Khusus Mitra Husada (Phantom Billing Baksos)', badge: 'Fiktif', badgeColor: 'bg-rose-100 text-rose-800' },
+  { id: 'CLM-2026-8803', label: 'RS Jantung Harapan Sehat (Unbundling Kateterisasi)', badge: 'Fragmentasi', badgeColor: 'bg-amber-100 text-amber-800' },
+  { id: 'CLM-2026-8804', label: 'RS Daerah Kartini (Repeat Billing Dialisis)', badge: 'Ganda', badgeColor: 'bg-amber-100 text-amber-800' },
+];
+
+export default function DocumentCheckerView({ isLight = true, currentUser, initialClaimId, onSelectClaim }) {
+  const [claimOptions, setClaimOptions] = useState(BASELINE_CLAIM_OPTIONS);
+  const [activeClaimId, setActiveClaimId] = useState(() => initialClaimId || 'CLM-2026-8801');
   const [selectedDocType, setSelectedDocType] = useState('RESUME_MEDIS');
   const [auditReport, setAuditReport] = useState(null);
   const [documentsBundle, setDocumentsBundle] = useState([]);
@@ -39,14 +47,53 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
   const [actionSuccessMessage, setActionSuccessMessage] = useState('');
   const [actionErrorMessage, setActionErrorMessage] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
+  const [icdQuery, setIcdQuery] = useState('');
+  const [icdResults, setIcdResults] = useState([]);
+  const [icdLoading, setIcdLoading] = useState(false);
+  const [icdSearched, setIcdSearched] = useState(false);
 
-  // Daftar berkas klaim FKRTL yang diaudit kelengkapan klinisnya
-  const claimOptions = [
-    { id: 'CLM-2026-8801', label: 'RS Medika Prima (Upcoding Severity III / Inversi Temporal)', badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800' },
-    { id: 'CLM-2026-8802', label: 'RS Khusus Mitra Husada (Phantom Billing Baksos)', badge: 'Fiktif', badgeColor: 'bg-rose-100 text-rose-800' },
-    { id: 'CLM-2026-8803', label: 'RS Jantung Harapan Sehat (Unbundling Kateterisasi)', badge: 'Fragmentasi', badgeColor: 'bg-amber-100 text-amber-800' },
-    { id: 'CLM-2026-8804', label: 'RS Daerah Kartini (Repeat Billing Dialisis)', badge: 'Ganda', badgeColor: 'bg-amber-100 text-amber-800' },
-  ];
+  useEffect(() => {
+    let active = true;
+    const loadClaimsList = async () => {
+      try {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`);
+        if (!res.ok || !active) return;
+        const payload = await res.json();
+        const rawList = Array.isArray(payload) ? payload : (payload?.claims || payload?.data || []);
+        if (!Array.isArray(rawList) || rawList.length === 0) return;
+
+        const merged = [...BASELINE_CLAIM_OPTIONS];
+        const seen = new Set(merged.map((c) => c.id));
+        rawList.forEach((item) => {
+          const id = item.claim_id || item.id;
+          if (!id || seen.has(id)) return;
+          seen.add(id);
+          const faskes = item.faskes_name || item.hospital || item.nama_faskes || 'FKRTL Mitra JKN';
+          const modus = item.modus_label || item.modus || item.triage_lane || 'Audit Forensik';
+          merged.push({
+            id,
+            label: `${faskes} (${modus})`,
+            badge: item.triage_lane || 'Klaim Aktif',
+            badgeColor: 'bg-slate-100 text-slate-800',
+          });
+        });
+        if (active) setClaimOptions(merged);
+      } catch {
+        // Pertahankan daftar dasar saat mode offline
+      }
+    };
+    loadClaimsList();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!initialClaimId) return;
+    setActiveClaimId(initialClaimId);
+    setClaimOptions((prev) => {
+      if (prev.some((c) => c.id === initialClaimId)) return prev;
+      return [{ id: initialClaimId, label: `Klaim Kasus Aktif (${initialClaimId})`, badge: 'Dipilih', badgeColor: 'bg-emerald-100 text-emerald-800' }, ...prev];
+    });
+  }, [initialClaimId]);
 
   useEffect(() => {
     fetchDocumentAudit(activeClaimId);
@@ -54,20 +101,48 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
 
   const fetchDocumentAudit = async (claimId) => {
     setLoading(true);
+    setActionErrorMessage('');
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/documents/audit/${claimId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setAuditReport(data);
-        setDocumentsBundle(data.documents || []);
-        if (data.documents && data.documents.length > 0) {
-          setSelectedDocType(data.documents[0].doc_type);
-        }
+      const res = await authFetch(`${API_BASE_URL}/api/v1/documents/audit/${encodeURIComponent(claimId)}`);
+      if (!res.ok) {
+        const errPayload = await res.json().catch(() => ({}));
+        throw new Error(errPayload?.detail || `Gagal memuat audit berkas (${res.status}).`);
+      }
+      const data = await res.json();
+      setAuditReport(data);
+      setDocumentsBundle(data.documents || []);
+      if (data.documents && data.documents.length > 0) {
+        setSelectedDocType(data.documents[0].doc_type);
       }
     } catch (err) {
-      console.error('Failed to load document audit:', err);
+      setActionErrorMessage(err?.message || 'Gagal memuat audit kelengkapan berkas RS dari server.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleIcdSearch = async (e) => {
+    e?.preventDefault?.();
+    const cleanQ = icdQuery.trim();
+    if (cleanQ.length < 2) {
+      setIcdResults([]);
+      setIcdSearched(false);
+      return;
+    }
+    setIcdLoading(true);
+    setIcdSearched(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/terminology/icd10/search?q=${encodeURIComponent(cleanQ)}&limit=8`);
+      if (res.ok) {
+        const data = await res.json();
+        setIcdResults(Array.isArray(data?.results) ? data.results : []);
+      } else {
+        setIcdResults([]);
+      }
+    } catch {
+      setIcdResults([]);
+    } finally {
+      setIcdLoading(false);
     }
   };
 
@@ -139,7 +214,7 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
               <span className="text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                 Modul Verifikasi Dokumen RS
               </span>
-              <span className="text-xs text-slate-400">· Petunjuk Teknis Verifikasi Digital Klaim</span>
+              <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>· Petunjuk Teknis Verifikasi Digital Klaim</span>
             </div>
             <h1 className={`text-xl font-display font-semibold tracking-tight mt-1 ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
               Pengecekan Dokumen Klaim & Berkas Rekam Medis RS
@@ -151,11 +226,17 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
 
           {/* CLAIM SELECTOR */}
           <div className="flex items-center space-x-2 shrink-0">
-            <span className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Pilih Kasus:</span>
+            <label htmlFor="doc-checker-claim-select" className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Pilih Kasus:</label>
             <select
+              id="doc-checker-claim-select"
+              aria-label="Pilih kasus klaim untuk verifikasi berkas"
               value={activeClaimId}
-              onChange={(e) => setActiveClaimId(e.target.value)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer ${
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setActiveClaimId(nextId);
+                if (onSelectClaim) onSelectClaim({ id: nextId });
+              }}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[260px] sm:max-w-xs ${
                 isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-slate-800 border-slate-700 text-white'
               }`}
             >
@@ -166,9 +247,11 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
               ))}
             </select>
             <button
+              type="button"
               onClick={() => fetchDocumentAudit(activeClaimId)}
+              aria-label="Muat ulang audit kelengkapan berkas"
               title="Muat Ulang Audit"
-              className={`p-1.5 rounded-lg border transition ${
+              className={`p-1.5 rounded-lg border transition cursor-pointer ${
                 isLight ? 'hover:bg-slate-100 border-slate-200 text-slate-600' : 'hover:bg-slate-800 border-slate-700 text-slate-300'
               }`}
             >
@@ -496,11 +579,11 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
               isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-900 border-slate-800 text-white'
             }`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+                <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                   <AlertTriangle className="w-4 h-4 text-rose-600" />
                   <span>Daftar Temuan Anomali Berkas ({auditReport.findings.length})</span>
                 </h3>
-                <span className="text-[10px] font-mono text-slate-400">Permenkes 26/2021</span>
+                <span className={`text-[10px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Permenkes 26/2021</span>
               </div>
 
               {auditReport.findings.length === 0 ? (
@@ -545,6 +628,81 @@ export default function DocumentCheckerView({ isLight = true, currentUser }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* KAMUS & VERIFIKATOR TERMINOLOGI ICD-10 KEMENKES RI */}
+      <div className={`p-4 rounded-xl border transition-colors ${
+        isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#11141A] border-white/[0.08] text-white'
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>
+              <Stethoscope className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Kamus &amp; Verifikator ICD-10 Kemenkes RI (PMK No. 24/2022)</span>
+            </h3>
+            <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              Uji kesesuaian kode diagnosis primer/sekunder pada Resume Medis terhadap nomenklatur resmi WHO/Kemenkes.
+            </p>
+          </div>
+          <form onSubmit={handleIcdSearch} className="flex items-center gap-2 w-full sm:w-auto">
+            <div className={`flex items-center px-2.5 py-1.5 rounded-lg border flex-1 sm:w-64 ${
+              isLight ? 'bg-slate-50 border-slate-200 focus-within:border-emerald-500' : 'bg-slate-900 border-slate-700 focus-within:border-emerald-400'
+            }`}>
+              <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
+              <input
+                type="text"
+                aria-label="Cari kode atau nama penyakit ICD-10"
+                value={icdQuery}
+                onChange={(e) => setIcdQuery(e.target.value)}
+                placeholder="Mis. Sepsis, I21, E11.9..."
+                className={`w-full text-xs bg-transparent focus:outline-none ${isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-slate-500'}`}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={icdLoading || icdQuery.trim().length < 2}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold transition cursor-pointer shrink-0"
+            >
+              {icdLoading ? 'Mencari...' : 'Cek Kode'}
+            </button>
+          </form>
+        </div>
+
+        {icdSearched && (
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+            {icdResults.length === 0 && !icdLoading ? (
+              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                Tidak ada entri ICD-10 yang cocok untuk kata kunci "{icdQuery}".
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {icdResults.map((item, idx) => (
+                  <div
+                    key={item.code || idx}
+                    className={`p-2.5 rounded-lg border text-xs ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-slate-900/70 border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{item.code}</span>
+                      {item.chapter && (
+                        <span
+                          title={typeof item.chapter === 'object' ? `${item.chapter.block}: ${item.chapter.title_id || item.chapter.title_en}` : ''}
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${isLight ? 'bg-slate-200/70 text-slate-700' : 'bg-slate-800 text-slate-300'}`}
+                        >
+                          {typeof item.chapter === 'object'
+                            ? `Bab ${item.chapter.chapter_number} (${item.chapter.block})`
+                            : `Bab ${item.chapter}`}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium mt-1 line-clamp-2">{item.name_id || item.description_id || item.name_en || item.title}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* RULE MB1-MB5, FORNAS & REAL BUNDLE SUBMISSION */}

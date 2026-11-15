@@ -11,15 +11,25 @@ export default function OfficialReportsView({
   initialReportType = 'bahv-kolektif',
   onBack,
   isLight = false,
-  currentUser = null
+  currentUser = null,
+  selectedCase = null
 }) {
   const [activeTab, setActiveTab] = useState(initialReportType);
-  const [selectedHospital, setSelectedHospital] = useState('RS Khusus Mitra Husada');
+  const [selectedHospital, setSelectedHospital] = useState(selectedCase?.hospital || 'RS Khusus Mitra Husada');
   const [selectedBatch, setSelectedBatch] = useState('FPK-2026-03-A');
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [serverPrintBusy, setServerPrintBusy] = useState(false);
+  const [reportNotice, setReportNotice] = useState('');
   const [claimsList, setClaimsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ledgerHeadHash, setLedgerHeadHash] = useState('');
   const [sha256Seal, setSha256Seal] = useState('8f9b2a7c4e1d3b5f6a8e0c2d4f6b8a1c3e5d7f9a2b4c6e8d0f1a3b5c7e9d1f3a');
+
+  useEffect(() => {
+    if (selectedCase?.hospital) {
+      setSelectedHospital(selectedCase.hospital);
+    }
+  }, [selectedCase?.hospital]);
 
   const defaultHospitals = [
     { id: 'RS Khusus Mitra Husada', name: 'RS Khusus Mitra Husada (Kelas B - DKI Jakarta)', code: 'FSK-RSX-01' },
@@ -50,18 +60,30 @@ export default function OfficialReportsView({
     { id: 'FPK-2026-01-A', label: 'Batch Januari 2026 - Periode 1 (Rawat Jalan)' },
   ];
 
-  // Fetch real claim data from backend FastAPI
+  // Fetch real claim data & ledger head hash from backend FastAPI
   useEffect(() => {
     let active = true;
     const fetchClaims = async () => {
       setLoading(true);
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`);
-        if (res.ok) {
-          const json = await res.json();
+        const [claimsRes, ledgerRes] = await Promise.all([
+          authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`),
+          authFetch(`${API_BASE_URL}/api/v1/audit-logs`).catch(() => null),
+        ]);
+        if (claimsRes.ok) {
+          const json = await claimsRes.json();
           const items = Array.isArray(json) ? json : (json?.claims || []);
           if (active && items.length > 0) {
             setClaimsList(items);
+          }
+        }
+        if (ledgerRes && ledgerRes.ok) {
+          const ledgerJson = await ledgerRes.json();
+          const latestEntry = Array.isArray(ledgerJson?.chain)
+            ? ledgerJson.chain[0]
+            : (Array.isArray(ledgerJson?.entries) ? ledgerJson.entries[0] : (Array.isArray(ledgerJson) ? ledgerJson[0] : null));
+          if (active && latestEntry?.current_hash) {
+            setLedgerHeadHash(latestEntry.current_hash);
           }
         }
       } catch (e) {
@@ -170,8 +192,75 @@ export default function OfficialReportsView({
     window.print();
   };
 
+  const handleOpenServerPrintable = async (endpointPath, fallbackName) => {
+    setServerPrintBusy(true);
+    setReportNotice('');
+    try {
+      const params = new URLSearchParams({
+        no_fpk: selectedBatch,
+        signer_name: currentUser?.name || 'dr. Siti Rahma, Sp.PK',
+        signer_nip: currentUser?.nip || '19870420 201101 2 001',
+      });
+      const res = await authFetch(`${API_BASE_URL}${endpointPath}?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const htmlStr = data?.html_printable;
+      if (!htmlStr) throw new Error('Templat cetak server kosong');
+      const win = typeof window !== 'undefined' ? window.open('', '_blank', 'width=1024,height=780') : null;
+      if (win) {
+        win.document.open();
+        win.document.write(htmlStr);
+        win.document.close();
+        win.focus();
+        setReportNotice(`Templat resmi ${fallbackName} dibuka dari server.`);
+      } else {
+        const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fallbackName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setReportNotice(`Berkas resmi ${fallbackName} berhasil diunduh.`);
+      }
+    } catch (err) {
+      setReportNotice(`Gagal memuat pratinjau cetak server (${err?.message || 'offline'}).`);
+    } finally {
+      setServerPrintBusy(false);
+    }
+  };
+
+  const handleExportCsv = () => {
+    const header = ['No. SEP', 'Peserta', 'Diagnosis', 'ICD-9', 'Tarif Diajukan (Rp)', 'Tarif Disetujui (Rp)', 'Status', 'Catatan'];
+    const rows = activeClaims.map((c) => [
+      c.sep,
+      c.patient,
+      c.diagnosis,
+      c.icd9,
+      c.tariff_submitted,
+      c.tariff_approved,
+      statusBadgeLabels[c.status] || c.status,
+      c.note,
+    ]);
+    const csvContent = [header, ...rows]
+      .map((r) => r.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Laporan_${activeTab}_${selectedBatch}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setReportNotice('Lampiran CSV berhasil diunduh.');
+  };
+
   const copyHash = () => {
-    navigator.clipboard.writeText(sha256Seal);
+    navigator.clipboard.writeText(ledgerHeadHash || sha256Seal);
     setCopyFeedback(true);
     setTimeout(() => setCopyFeedback(false), 2000);
   };
@@ -183,8 +272,10 @@ export default function OfficialReportsView({
         <div className="flex items-center space-x-3">
           {onBack && (
             <button
+              type="button"
               onClick={onBack}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+              aria-label="Kembali ke konsol putusan"
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
               title="Kembali"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -199,24 +290,47 @@ export default function OfficialReportsView({
                 Dokumen & Laporan Kedinasan BPJS Kesehatan
               </h2>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Format baku Berita Acara Hasil Verifikasi Klaim Kolektif & Tindak Lanjut Perpres No. 82/2018
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Format baku Berita Acara Hasil Verifikasi Klaim Kolektif &amp; Tindak Lanjut Perpres No. 82/2018
+              {reportNotice ? ` · ${reportNotice}` : ''}
             </p>
           </div>
         </div>
 
         {/* PRINT & EXPORT BUTTONS */}
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
+            type="button"
             onClick={copyHash}
-            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>{copyFeedback ? 'Hash Tersalin!' : 'Salin SHA-256'}</span>
           </button>
           <button
+            type="button"
+            onClick={handleExportCsv}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <span>Unduh CSV</span>
+          </button>
+          <button
+            type="button"
+            disabled={serverPrintBusy}
+            onClick={() => handleOpenServerPrintable(
+              activeTab === 'ba-pending' ? '/api/v1/vedika/ba-pending-printable' : '/api/v1/vedika/fpk-bahv-printable',
+              activeTab === 'ba-pending' ? `BA_Pending_${selectedBatch}.html` : `BAHV_${selectedBatch}.html`
+            )}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition cursor-pointer disabled:opacity-60"
+          >
+            <FileText className="w-4 h-4" />
+            <span>{serverPrintBusy ? 'Memuat...' : 'Pratinjau VEDIKA Server'}</span>
+          </button>
+          <button
+            type="button"
             onClick={handlePrint}
-            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-md transition"
+            className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-md transition cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Cetak Dokumen Resmi</span>
@@ -501,8 +615,8 @@ export default function OfficialReportsView({
             </div>
 
             {/* CRYPTOGRAPHIC AUDIT SEAL */}
-            <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500 font-mono">
-              <span>SHA-256 INTEGRITY SEAL: {sha256Seal}</span>
+            <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-[9px] text-slate-600 font-mono">
+              <span>SHA-256 INTEGRITY SEAL: {ledgerHeadHash || sha256Seal}</span>
               <span>VERIFIED TIMESTAMP: {verifiedTimestampIso}</span>
             </div>
           </div>
@@ -539,20 +653,18 @@ export default function OfficialReportsView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  <tr>
-                    <td className="p-2 border-r border-slate-200 font-mono font-bold">0301R0010326V000102</td>
-                    <td className="p-2 border-r border-slate-200">Infark Miokard Akut (I21.9)</td>
-                    <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-amber-800">Rp 32.400.000</td>
-                    <td className="p-2 border-r border-slate-200 text-slate-700">Belum melampirkan hasil EKG serial 12-lead dan enzim jantung (Troponin I/T) pada saat admisi IGD.</td>
-                    <td className="p-2 text-center font-bold text-rose-700">14 Hari Kerja</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2 border-r border-slate-200 font-mono font-bold">0301R0010326V000108</td>
-                    <td className="p-2 border-r border-slate-200">Pneumonia Berat (J18.9)</td>
-                    <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-amber-800">Rp 16.750.000</td>
-                    <td className="p-2 border-r border-slate-200 text-slate-700">Foto rontgen thorax PA dan hasil analisis gas darah (AGD) tidak terunggah secara jelas di e-Dossier.</td>
-                    <td className="p-2 text-center font-bold text-rose-700">14 Hari Kerja</td>
-                  </tr>
+                  {(activeClaims.filter((c) => c.status === 'PENDING' || c.status === 'DISPUTE').length > 0
+                    ? activeClaims.filter((c) => c.status === 'PENDING' || c.status === 'DISPUTE')
+                    : activeClaims.slice(0, 2)
+                  ).map((pc) => (
+                    <tr key={pc.id}>
+                      <td className="p-2 border-r border-slate-200 font-mono font-bold">{pc.sep}</td>
+                      <td className="p-2 border-r border-slate-200">{pc.diagnosis}</td>
+                      <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-amber-800">{formatIDR(pc.tariff_submitted)}</td>
+                      <td className="p-2 border-r border-slate-200 text-slate-700">{pc.note}</td>
+                      <td className="p-2 text-center font-bold text-rose-700">10 Hari Kerja</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -600,9 +712,20 @@ export default function OfficialReportsView({
             </p>
 
             <ul className="list-disc list-inside text-xs space-y-1.5 pl-2 text-slate-800">
-              <li><strong>Anomali Geovelocity & SIP DPJP:</strong> Ditemukan 14 klaim dengan DPJP dr. Hendra, Sp.A tercatat melakukan tindakan operasi di {selectedHospital} pada saat bersamaan tercatat aktif di faskes lain berjarak &gt; 45 KM.</li>
-              <li><strong>Unbundling / Readmisi Rekayasa:</strong> Pola pasien katarak yang dipulangkan dalam waktu 24 jam lalu didaftarkan ulang dengan SEP baru (readmisi berulang &lt; 3 hari tanpa indikasi darurat).</li>
-              <li><strong>Ketidaksesuaian Konfirmasi Peserta Mobile JKN:</strong> Sebanyak 42% peserta yang dikonfirmasi menyatakan tidak menerima tindakan penunjang radiologi CT-Scan yang ditagihkan.</li>
+              <li>
+                <strong>Ikhtisar Klaster Temuan ({selectedHospital}):</strong> Terdapat{' '}
+                {activeClaims.filter((c) => c.status === 'FRAUD_SUSPECT').length} berkas berindikasi risiko tinggi/fraud dan{' '}
+                {activeClaims.filter((c) => c.status === 'PENDING' || c.status === 'DISPUTE').length} berkas pending/dispute dengan total nilai pengajuan ditahan sebesar{' '}
+                {formatIDR(totalSubmitted - totalApproved)}.
+              </li>
+              {activeClaims.filter((c) => c.status !== 'LAYAK').slice(0, 2).map((item) => (
+                <li key={item.id}>
+                  <strong>Berkas {item.id} (SEP {item.sep}):</strong> {item.diagnosis} senilai {formatIDR(item.tariff_submitted)} · Catatan Verifikator: {item.note}
+                </li>
+              ))}
+              <li>
+                <strong>Kepatuhan Konfirmasi Mobile JKN &amp; Rekam Medis:</strong> FKRTL wajib menyerahkan bukti pendukung sah serta rekonsiliasi kehadiran peserta sesuai Perpres No. 82 Tahun 2018.
+              </li>
             </ul>
 
             <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs space-y-1 text-amber-900">
@@ -617,13 +740,13 @@ export default function OfficialReportsView({
             <div className="pt-8 grid grid-cols-2 gap-8 text-xs text-center">
               <div className="space-y-16">
                 <p className="font-bold">Mengetahui,<br />Deputi Direksi Wilayah BPJS Kesehatan</p>
-                <p className="font-bold underline">Dr. Ir. Wahyudi Pratama, M.H.Kes</p>
+                <p className="font-bold underline">Pejabat Pengawas Wilayah Terotorisasi</p>
               </div>
               <div className="space-y-16">
-                <p className="font-bold">Pemeriksa Investigasi,<br />Ketua Tim Anti-Fraud BPJS Kesehatan</p>
+                <p className="font-bold">Pemeriksa Investigasi,<br />{currentUser?.roleTitle || currentUser?.role || 'Verifikator Medis BPJS Kesehatan'}</p>
                 <div className="space-y-0.5">
-                  <p className="font-bold underline">Budi Santoso, S.Kom, M.TI</p>
-                  <p className="text-[10px] text-slate-500 font-mono">NIP: 19920815 201503 1 002</p>
+                  <p className="font-bold underline">{currentUser?.name || 'dr. Siti Rahma, Sp.PK'}</p>
+                  <p className="text-[10px] text-slate-600 font-mono">NIP: {currentUser?.nip || '19870420 201101 2 001'}</p>
                 </div>
               </div>
             </div>

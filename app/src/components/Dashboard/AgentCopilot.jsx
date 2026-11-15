@@ -2476,8 +2476,9 @@ export default function AgentCopilot({
               </h3>
               <button
                 type="button"
+                aria-label="Tutup dialog keputusan"
                 onClick={() => setNoteDialog((prev) => ({ ...prev, isOpen: false }))}
-                className={`p-1 rounded-lg transition-colors ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/50 hover:text-white'}`}
+                className={`p-1 rounded-lg transition-colors ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/60 hover:text-white'}`}
               >
                 <X className="w-4 h-4" />
               </button>

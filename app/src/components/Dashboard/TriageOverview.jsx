@@ -673,7 +673,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         },
         {
           stage: 3,
-          name: 'Tahap 3 · SDMK, Geovelocity & NLP ChromaDB',
+          name: 'Tahap 3 · SDMK, Geovelocity & NLP Semantik',
           rule: 'Uji SIP Expired (Hard Trigger >= 75), kecepatan antar-RS OSRM > 120 km/jam, dan duplikasi teks >= 90%.',
           metric_label: 'S2 memisahkan SIP Expired (Merah) vs Unsynced (Kuning)',
         },

@@ -19,7 +19,7 @@ export const INITIAL_SETTINGS_CATEGORIES = [
       {
         key: 'ui_theme_mode',
         label: 'Mode Tema Dasbor (Theme Mode)',
-        help_text: 'Tersedia pilihan Tema Gelap (Cosmic Obsidian, Tema Terang (Clinical White resmi faskes BPJS), atau Otomatis mengikuti sistem OS.',
+        help_text: 'Tersedia pilihan Tema Gelap (Cosmic Obsidian), Tema Terang (Clinical White resmi faskes BPJS), atau Otomatis mengikuti sistem OS.',
         type: 'theme_selector',
         value: 'dark', // 'dark', 'light', 'system'
         editable: true,

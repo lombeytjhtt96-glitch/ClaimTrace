@@ -1,4 +1,5 @@
 import os
+import sys
 import io
 import csv
 import json
@@ -94,8 +95,13 @@ from app.engine.vedika_portal import (
 
 CLAIMS_STATE_FILE = Path(__file__).resolve().parent.parent / "data" / "claims_state.json"
 
+
+def _is_test_runtime() -> bool:
+    return bool(os.getenv("PYTEST_CURRENT_TEST") or "pytest" in sys.modules)
+
+
 def _load_persisted_claims() -> Dict[str, ClaimInput]:
-    if not os.getenv("PYTEST_CURRENT_TEST") and CLAIMS_STATE_FILE.exists():
+    if not _is_test_runtime() and CLAIMS_STATE_FILE.exists():
         try:
             with open(CLAIMS_STATE_FILE, "r", encoding="utf-8") as f:
                 raw_dict = json.load(f)
@@ -107,7 +113,7 @@ def _load_persisted_claims() -> Dict[str, ClaimInput]:
     return enrich_claims_map(get_initial_claims())
 
 def _persist_claims_state(claims_map: Dict[str, ClaimInput]) -> None:
-    if os.getenv("PYTEST_CURRENT_TEST"):
+    if _is_test_runtime():
         return
     try:
         CLAIMS_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)

@@ -650,7 +650,7 @@ export async function generateClaimTraceInterventionCampaign(iaSummary) {
 
 /**
  * Hugging Face Clinical Semantic AI Services
- * Powered by sentence-transformers/all-MiniLM-L6-v2 & ChromaDB
+ * Powered by sentence-transformers/all-MiniLM-L6-v2 & Indeks Vektor Lokal
  * Zero-PHI on-premise local inference in compliance with UU PDP No. 27/2022
  */
 export async function getHFSemanticStats() {
@@ -664,7 +664,7 @@ export async function getHFSemanticStats() {
     collection_name: 'claimtrace_clinical_resumes',
     total_documents: 9,
     metric: 'cosine',
-    model: 'all-MiniLM-L6-v2 (Chroma ONNX Local)',
+    model: 'all-MiniLM-L6-v2 (Vektor Semantik Lokal ONNX)',
     status: 'ONLINE_ACTIVE',
     cluster_count: 6,
   };

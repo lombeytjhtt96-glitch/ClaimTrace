@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import {
   Shield,
@@ -18,6 +18,8 @@ import {
   BadgeCheck,
   ShieldCheck,
   Award,
+  Monitor,
+  LogOut,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -94,10 +96,65 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    securityPin: '123123',
   });
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState('');
+  const [revokingJti, setRevokingJti] = useState('');
+
+  const loadActiveSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    setSessionsError('');
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/auth/sessions`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setSessions(Array.isArray(data?.sessions) ? data.sessions : []);
+    } catch (err) {
+      setSessionsError(`Gagal memuat daftar sesi aktif (${err?.message || 'error'}).`);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadActiveSessions();
+  }, [loadActiveSessions]);
+
+  const handleRevokeSession = async ({ jti = null, revokeOthers = false }) => {
+    const key = revokeOthers ? 'ALL_OTHERS' : jti;
+    setRevokingJti(key || '');
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/auth/sessions/revoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jti,
+          revoke_others: revokeOthers,
+          revoke_all: false,
+        }),
+      });
+      if (!res.ok) {
+        const errPayload = await res.json().catch(() => ({}));
+        throw new Error(errPayload?.detail || `HTTP ${res.status}`);
+      }
+      showToast(
+        revokeOthers
+          ? 'Seluruh sesi workstation lain berhasil dicabut dari server'
+          : 'Sesi perangkat tersebut berhasil dicabut',
+        'success'
+      );
+      await loadActiveSessions();
+    } catch (err) {
+      showToast(`Gagal mencabut sesi: ${err.message}`, 'error');
+    } finally {
+      setRevokingJti('');
+    }
+  };
 
   // Auto-dismiss Toast Notification setelah 3.5 detik
   useEffect(() => {
@@ -242,7 +299,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
       await authFetch(`${API_BASE_URL}/api/v1/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ security_pin_rotated_at: new Date().toISOString() }),
+        body: JSON.stringify({ credential_audit_checked_at: new Date().toISOString() }),
       });
       setPasswordForm((prev) => ({
         ...prev,
@@ -705,10 +762,12 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             }`}>
               <Lock className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`} />
               <span>
-                PIN Otorisasi Eksekusi (6 Angka) Aktif:{' '}
-                <strong className={`font-mono font-bold tracking-widest ${
+                Otorisasi Multi-Faktor &amp; Device Lock:{' '}
+                <strong className={`font-mono font-bold ${
                   isLight ? 'text-emerald-800' : 'text-[#FFCA40]'
-                }`}>123123</strong>
+                }`}>
+                  {sessions.length > 0 ? `Aktif (${sessions.length} Sesi Tervalidasi)` : 'Aktif · HMAC-SHA256'}
+                </strong>
               </span>
             </div>
 
@@ -731,6 +790,130 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             </button>
           </div>
         </form>
+      </section>
+
+      {/* Section 3: Sesi Aktif & Keamanan Perangkat */}
+      <section className={`rounded-2xl border p-5 md:p-6 backdrop-blur-xl space-y-4 ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+          : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl shadow-[#00081c]/50'
+      }`}>
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b ${
+          isLight ? 'border-slate-200' : 'border-white/10'
+        }`}>
+          <div>
+            <h2 className={`flex items-center gap-2 text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <ShieldCheck className={`h-5 w-5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
+              Sesi Aktif &amp; Keamanan Perangkat Workstation
+            </h2>
+            <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+              Pantau workstation yang sedang memegang token sesi MFA dan cabut sesi perangkat lain jika diperlukan.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={loadActiveSessions}
+              disabled={sessionsLoading}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer disabled:opacity-50 ${
+                isLight
+                  ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                  : 'bg-white/5 hover:bg-white/10 border-white/15 text-white'
+              }`}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${sessionsLoading ? 'animate-spin' : ''}`} />
+              <span>Segarkan Sesi</span>
+            </button>
+            {sessions.filter((s) => !s.is_current).length > 0 && (
+              <button
+                type="button"
+                onClick={() => handleRevokeSession({ revokeOthers: true })}
+                disabled={revokingJti === 'ALL_OTHERS'}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{revokingJti === 'ALL_OTHERS' ? 'Mencabut...' : 'Cabut Sesi Lain'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {sessionsError && (
+          <div className="p-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{sessionsError}</span>
+          </div>
+        )}
+
+        {sessions.length === 0 && !sessionsLoading ? (
+          <div className={`p-4 rounded-xl border border-dashed text-xs text-center ${
+            isLight ? 'border-slate-300 text-slate-600' : 'border-white/15 text-white/60'
+          }`}>
+            Belum ada catatan sesi aktif yang dikembalikan server.
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {sessions.map((sess) => {
+              const issuedLabel = sess.issued_at
+                ? new Date(sess.issued_at * 1000).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+                : '-';
+              const idleMin = Math.max(0, Math.round((sess.idle_remaining_seconds || 0) / 60));
+              return (
+                <div
+                  key={sess.jti}
+                  className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    sess.is_current
+                      ? isLight ? 'bg-emerald-50/70 border-emerald-200' : 'bg-emerald-950/30 border-emerald-500/30'
+                      : isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`p-2 rounded-lg shrink-0 ${
+                      isLight ? 'bg-white border border-slate-200 text-slate-700' : 'bg-white/10 text-white/80'
+                    }`}>
+                      <Monitor className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 space-y-0.5 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold truncate">{sess.user_agent || 'Workstation Verifikator'}</span>
+                        {sess.is_current && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
+                            Perangkat Ini
+                          </span>
+                        )}
+                        {sess.strict_ip_lock && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+                            isLight ? 'bg-white border-slate-300 text-slate-700' : 'bg-white/10 border-white/15 text-white/80'
+                          }`}>
+                            Strict IP Lock
+                          </span>
+                        )}
+                      </div>
+                      <div className={`text-[11px] font-mono flex flex-wrap gap-x-3 gap-y-0.5 ${
+                        isLight ? 'text-slate-600' : 'text-white/60'
+                      }`}>
+                        <span>IP: {sess.ip_address || '-'}</span>
+                        <span>Sidik Perangkat: {sess.device_fingerprint || '-'}</span>
+                        <span>Masuk: {issuedLabel} WIB</span>
+                        <span>Sisa Idle: {idleMin} mnt</span>
+                      </div>
+                    </div>
+                  </div>
+                  {!sess.is_current && (
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeSession({ jti: sess.jti })}
+                      disabled={revokingJti === sess.jti}
+                      className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 dark:border-rose-500/40 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                      {revokingJti === sess.jti ? 'Mencabut...' : 'Cabut Sesi'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

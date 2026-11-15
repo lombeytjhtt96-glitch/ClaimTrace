@@ -173,7 +173,7 @@ const INITIAL_TYPOLOGY_CASES = [
     ai_confidence: 0.945,
     risk_score: 84.2,
     clinical_discrepancy:
-      'ChromaDB mendeteksi kesamaan semantik teks resume fisioterapi sebesar 98,4% pada 6 tagihan tambahan. Hash tanda tangan digital dan tanda vital identik 100% dengan kunjungan minggu sebelumnya.',
+      'Mesin vektor semantik mendeteksi kesamaan teks resume fisioterapi sebesar 98,4% pada 6 tagihan tambahan. Hash tanda tangan digital dan tanda vital identik 100% dengan kunjungan minggu sebelumnya.',
     vital_lab_evidence: {
       'Kemiripan Semantik Resume': '0,984 (Identik 98,4% pada 6 lembar asesmen fisioterapi)',
       'Duplikasi Tanda Vital': 'TD 128/82 mmHg, Nadi 78x/mnt, VAS 6/10 sama persis di 6 tanggal berbeda',
@@ -619,7 +619,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
       confidence: 0.972,
       model_used: llmRes.modelUsed,
       total_tokens: llmRes.totalTokens,
-      vector_engine: 'ChromaDB Cosine HNSW (all-MiniLM-L6-v2)',
+      vector_engine: 'Vektor Semantik Cosine HNSW (all-MiniLM-L6-v2)',
       retrieved_regulations: [
         {
           doc_id: 'PMK-16-2019-FRAUD-JKN',
@@ -1497,7 +1497,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 {
                   label: 'Lapis 1: Radar Spatiotemporal & AI Anomaly (Bobot 30%)',
                   score: selectedFrista.quad_triangulation.lapis_1_spatiotemporal_ai,
-                  desc: 'Isolation Forest + ChromaDB Episode Fingerprint'
+                  desc: 'Isolation Forest + Jejak Semantik Episode Klaim'
                 },
                 {
                   label: 'Lapis 2: Validasi Registry SATUSEHAT SDMK (Bobot 25%)',
@@ -1933,7 +1933,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
       {/* =========================================================================
           MODUL 5: HUGGING FACE CLINICAL NLP & SEMANTIC PLAGIARISM HUB
-          Powered by sentence-transformers/all-MiniLM-L6-v2 & ChromaDB Vector Core
+          Powered by sentence-transformers/all-MiniLM-L6-v2 & Indeks Vektor Semantik Lokal
           Zero-PHI On-Premise Air-Gapped Architecture (UU PDP No. 27/2022 Compliant)
       ========================================================================= */}
       {activePillar === 'huggingface_semantic' && (
@@ -1968,9 +1968,9 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
               <div className="flex items-center gap-3 shrink-0">
                 <div className={`p-3 rounded-xl border text-right font-mono ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold">Vektor Indeks</div>
-                  <div className="text-sm font-extrabold text-emerald-500">384-Dimensi Dense</div>
-                  <div className="text-[10px] text-slate-500">{hfStats?.total_documents || 9} Resume Medis Terindeks</div>
+                  <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Vektor Indeks</div>
+                  <div className={`text-sm font-extrabold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>384-Dimensi Dense</div>
+                  <div className={`text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{hfStats?.total_documents || 9} Resume Medis Terindeks</div>
                 </div>
               </div>
             </div>
@@ -1978,27 +1978,27 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-xs">
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Model Hugging Face</div>
-                <div className="font-mono font-bold text-slate-200 mt-0.5 truncate">all-MiniLM-L6-v2</div>
-                <div className="text-[10px] text-emerald-400 mt-0.5">ONNX Local Runtime</div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Model Lokal On-Premise</div>
+                <div className={`font-mono font-bold mt-0.5 truncate ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>all-MiniLM-L6-v2</div>
+                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-emerald-700 font-semibold' : 'text-emerald-400'}`}>ONNX Local Runtime</div>
               </div>
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Metrik Similaritas</div>
-                <div className="font-mono font-bold text-slate-200 mt-0.5">Cosine Distance (HNSW)</div>
-                <div className="text-[10px] text-cyan-400 mt-0.5">Batas Plagiarisme: 90%</div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Metrik Similaritas</div>
+                <div className={`font-mono font-bold mt-0.5 ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>Cosine Distance (HNSW)</div>
+                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-cyan-700 font-semibold' : 'text-cyan-400'}`}>Batas Plagiarisme: 90%</div>
               </div>
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Status Engine</div>
-                <div className="font-mono font-bold text-emerald-400 mt-0.5 flex items-center gap-1.5">
+                <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Status Engine</div>
+                <div className={`font-mono font-bold mt-0.5 flex items-center gap-1.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>{hfStats?.status || 'ONLINE_ACTIVE'}</span>
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">6 Klaster Sindikat Terpantau</div>
+                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>6 Klaster Sindikat Terpantau</div>
               </div>
               <div className={`p-3 rounded-xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Kedaulatan Data</div>
-                <div className="font-mono font-bold text-amber-300 mt-0.5">Zero Egress Cloud</div>
-                <div className="text-[10px] text-slate-400 mt-0.5">100% In-Perimeter Faskes</div>
+                <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kedaulatan Data</div>
+                <div className={`font-mono font-bold mt-0.5 ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>Zero Egress Cloud</div>
+                <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>100% In-Perimeter Faskes</div>
               </div>
             </div>
           </div>
@@ -2008,11 +2008,13 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             {/* Left: Claim Selector */}
             <div className={`lg:col-span-4 p-4 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/90 border-white/10 shadow-xl'} space-y-3`}>
               <div className="flex items-center justify-between border-b pb-2 border-slate-200/20">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-emerald-400" />
+                <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                  <FileText className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                   <span>Pilih Berkas Klaim Klinis</span>
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                }`}>
                   {hfResumes.length || 6} Kasus Telisik
                 </span>
               </div>

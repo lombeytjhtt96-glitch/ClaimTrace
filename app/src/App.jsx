@@ -274,7 +274,7 @@ export default function App() {
     };
   }, [dashboardTab, authView, selectedCase, viewMode]);
 
-  // Live Sidebar Badges synchronized with DuckDB Queue & Operations Store
+  // Live Sidebar Badges synchronized with Claim Queue & Operations Store
   const badgesUrl = `${API_BASE_URL}/api/v1/system/sidebar-badges`;
   const [sidebarBadges, setSidebarBadges] = useState(() => (
     getCachedJsonSync(badgesUrl) || {
@@ -308,35 +308,86 @@ export default function App() {
     };
   }, [authView, authStatusVerified, badgesUrl]);
 
-  // Navigasi Cockpit Sidebar Terstruktur & Terfokus (Alur Kerja Intuitif Tanpa Slop)
+  // Navigasi Cockpit Sidebar Terstruktur & Terfokus (Seluruh 27 Modul Portal Verifikator)
   const sidebarNavGroups = [
     {
       group: 'Alur Kerja Utama',
       items: [
-        { id: 'executive', label: 'Dashboard Ringkasan', icon: LayoutDashboard },
-        { id: 'queue', label: 'Antrean Klaim', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { id: 'investigation', label: 'Telaah Kasus', icon: FileText },
-        { id: 'decision', label: 'Konsol Putusan', icon: ShieldAlert },
+        { id: 'executive', label: 'Dashboard Ringkasan', keywords: 'ringkasan eksekutif home beranda kpi', icon: LayoutDashboard },
+        { id: 'queue', label: 'Antrean Klaim', keywords: 'antrean daftar sep prioritas top-k triase', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
+        { id: 'investigation', label: 'Telaah Kasus', keywords: 'investigasi 4 lapis charlson upcoding koherensi klinis', icon: FileText },
+        { id: 'decision', label: 'Konsol Putusan', keywords: 'putusan bakb bahv sanggahan fhir claim submit', icon: ShieldAlert },
       ],
     },
     {
-      group: 'Alat Investigasi',
+      group: 'Forensik & Intelijen',
       items: [
-        { id: 'document_checker', label: 'Cek Dokumen RS', icon: FileCheck2 },
-        { id: 'fraud_ranking', label: 'Peringkat Risiko Faskes', icon: Building2 },
+        { id: 'document_checker', label: 'Cek Dokumen RS', keywords: '7 dokumen rm sep icd-10 kemenkes pnpk', icon: FileCheck2 },
+        { id: 'fraud_ranking', label: 'Peringkat Risiko Faskes', keywords: 'ranking faskes graf sindikat rujukan', icon: Building2 },
+        { id: 'faskes', label: 'Surveilans Faskes (FRI)', keywords: 'fri profil rs klaim faskes', icon: Activity },
+        { id: 'dpjp', label: 'Intelijen DPJP & SIP', keywords: 'dpjp dokter sip geovelocity impossible travel', icon: Stethoscope },
+        { id: 'empirical', label: 'Forensik Empiris & Benford', keywords: 'benford lorenz gini phantom repeat billing', icon: Zap },
+        { id: 'database_viewer', label: 'Gudang Data & SQL', keywords: 'sql query tabel analitik gudang', icon: Database },
       ],
     },
     {
-      group: 'Laporan & Audit',
+      group: 'Laporan & Tata Kelola',
       items: [
-        { id: 'official_reports', label: 'Laporan Resmi (BAHV)', icon: Printer },
-        { id: 'audit', label: 'Jejak Audit Sistem', icon: Key },
-        { id: 'settings', label: 'Pengaturan', icon: Settings },
+        { id: 'official_reports', label: 'Laporan Resmi (BAHV)', keywords: 'cetak pdf sp-1 bahv ba pending berita acara', icon: Printer },
+        { id: 'audit', label: 'Jejak Audit Sistem', keywords: 'audit sha-256 ledger log forensik', icon: Key },
+        { id: 'agent_copilot', label: 'Kopilot Agen Audit', keywords: 'kopilot agent analisis otonom', icon: Bot },
+        { id: 'expansion_suite', label: 'Standar & Tata Kelola BEA', keywords: 'bea fairguard pdr healthkathon', icon: Trophy },
+        { id: 'settings', label: 'Pengaturan', keywords: 'setting tema kebijakan ambang rbac', icon: Settings },
+      ],
+    },
+    {
+      group: 'Operasional Cabang',
+      collapsible: true,
+      items: [
+        { id: 'command_center', label: 'Pusat Komando Cabang', keywords: 'komando sla monitoring cabang', icon: Radio },
+        { id: 'cases_mgmt', label: 'Manajemen Berkas', keywords: 'manajemen kasus berkas', icon: Briefcase },
+        { id: 'quick_triage', label: 'Triase Cepat', keywords: 'triase cepat jalur merah kuning', icon: ClipboardList },
+        { id: 'flagged_sessions', label: 'Berkas Ditandai', keywords: 'flagged ditandai anomali', icon: Flag },
+        { id: 'mobile_bridge', label: 'Telemetri Mobile JKN', keywords: 'mobile jkn lapis 3 konfirmasi peserta', icon: Smartphone },
+        { id: 'appointments', label: 'Jadwal Klarifikasi RS', keywords: 'jadwal panggilan klarifikasi faskes', icon: Calendar },
+        { id: 'conversations', label: 'Konfirmasi Peserta', keywords: 'percakapan respon peserta', icon: MessageSquare },
+        { id: 'interventions', label: 'Intervensi & Tindak Lanjut', keywords: 'intervensi s06 hold pembayaran', icon: ShieldCheck },
+        { id: 'insights', label: 'Analitik Tren Klaim', keywords: 'insights tren statistik', icon: Sparkles },
+        { id: 'retention', label: 'Kepatuhan & Retensi RS', keywords: 'retensi kepatuhan faskes', icon: Users },
+        { id: 'health_ai_chat', label: 'Asisten Klinis JKN', keywords: 'asisten chat tanya regulasi jkn', icon: HelpCircle },
+        { id: 'profile', label: 'Profil & Keamanan Sesi', keywords: 'profil sandi sesi perangkat dipercaya', icon: User },
       ],
     },
   ];
 
   const sidebarNavItems = sidebarNavGroups.flatMap((g) => g.items);
+  const opsGroupIds = sidebarNavGroups.find((g) => g.collapsible)?.items.map((i) => i.id) || [];
+  const [opsGroupExpanded, setOpsGroupExpanded] = useState(() => opsGroupIds.includes(dashboardTab));
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [commandPaletteQuery, setCommandPaletteQuery] = useState('');
+
+  useEffect(() => {
+    if (opsGroupIds.includes(dashboardTab)) {
+      setOpsGroupExpanded(true);
+    }
+  }, [dashboardTab]);
+
+  useEffect(() => {
+    if (authView !== 'dashboard' || !authStatusVerified) return;
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      } else if (e.key === 'Escape' && commandPaletteOpen) {
+        setCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authView, authStatusVerified, commandPaletteOpen]);
+
+  const activeNavGroup = sidebarNavGroups.find((g) => g.items.some((i) => i.id === dashboardTab)) || sidebarNavGroups[0];
+  const activeNavItem = sidebarNavItems.find((i) => i.id === dashboardTab) || { id: dashboardTab, label: 'Portal Verifikator' };
 
   // User Profile & Roles (Standar Kepegawaian BPJS Kesehatan)
   const sanitizeOfficialField = (val, fallback) =>
@@ -1038,7 +1089,10 @@ export default function App() {
               {/* Left: Sidebar Toggle, Brand Logo & Quick Search */}
               <div className="flex items-center space-x-3 shrink-0">
                 <button 
+                  type="button"
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  aria-label={sidebarCollapsed ? "Buka Menu Modul" : "Ciutkan Menu Modul"}
+                  aria-expanded={!sidebarCollapsed}
                   className={`p-2 rounded-xl transition cursor-pointer border flex items-center justify-center ${
                     isLight ? 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200' : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10'
                   }`}
@@ -1087,48 +1141,77 @@ export default function App() {
                   onSubmit={(e) => {
                     e.preventDefault();
                     const q = headerSearch.trim();
-                    if (!q) return;
+                    if (!q) {
+                      setCommandPaletteOpen(true);
+                      return;
+                    }
                     const ql = q.toLowerCase();
                     if (ql.includes('kebijakan') || ql.includes('setting') || ql.includes('rbac') || ql.includes('ambang')) {
                       setDashboardTab('settings');
-                    } else if (ql.includes('bakb') || ql.includes('bahv') || ql.includes('putusan')) {
+                    } else if (ql.includes('sp-1') || ql.includes('sp1') || ql.includes('laporan') || ql.includes('berita acara')) {
+                      setDashboardTab('official_reports');
+                    } else if (ql.includes('bakb') || ql.includes('bahv') || ql.includes('putusan') || ql.includes('fhir')) {
                       setDashboardTab('decision');
                     } else if (ql.includes('audit') || ql.includes('sha')) {
                       setDashboardTab('audit');
-                    } else if (ql.includes('sql') || ql.includes('gudang') || ql.includes('duckdb')) {
+                    } else if (ql.includes('dokumen') || ql.includes('icd') || ql.includes('kelengkapan')) {
+                      setDashboardTab('document_checker');
+                    } else if (ql.includes('benford') || ql.includes('lorenz') || ql.includes('gini') || ql.includes('empiris')) {
+                      setDashboardTab('empirical');
+                    } else if (ql.includes('sql') || ql.includes('gudang') || ql.includes('tabel') || ql.includes('analitik')) {
                       setDashboardTab('database_viewer');
                     } else if (ql.includes('faskes') || ql.includes('fri')) {
                       setDashboardTab('faskes');
                     } else if (ql.includes('dpjp') || ql.includes('sip') || ql.includes('geovelocity')) {
                       setDashboardTab('dpjp');
-                    } else if (ql.includes('graf') || ql.includes('sindikat')) {
+                    } else if (ql.includes('graf') || ql.includes('sindikat') || ql.includes('peringkat')) {
                       setDashboardTab('fraud_ranking');
+                    } else if (ql.includes('kopilot') || ql.includes('copilot')) {
+                      setDashboardTab('agent_copilot');
+                    } else if (ql.includes('profil') || ql.includes('sesi') || ql.includes('perangkat')) {
+                      setDashboardTab('profile');
                     } else {
                       setGlobalSearchQuery(q);
                       setDashboardTab('queue');
                     }
                   }}
-                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-60 xl:w-72 2xl:w-80 relative ml-2 transition-colors focus-within:ring-2 ${
+                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-64 xl:w-72 2xl:w-80 relative ml-2 transition-colors focus-within:ring-2 ${
                     isLight
                       ? 'bg-slate-50 border-slate-200 text-slate-900 focus-within:bg-white focus-within:border-emerald-500/60 focus-within:ring-emerald-500/20'
                       : 'bg-white/10 border-white/15 text-white focus-within:border-emerald-400/60 focus-within:ring-emerald-400/20'
                   }`}
                 >
-                  <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/50'}`} />
+                  <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/50'}`} />
                   <input
                     type="text"
-                    placeholder="Cari modul, No. SEP, Faskes..."
+                    aria-label="Cari modul, No. SEP, atau faskes"
+                    placeholder="Cari modul, SEP, Faskes..."
                     value={headerSearch}
                     onChange={(e) => setHeaderSearch(e.target.value)}
-                    className={`bg-transparent border-none outline-none text-xs w-full pr-14 pl-0.5 focus:ring-0 ${
-                      isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/45'
+                    className={`bg-transparent border-none outline-none text-xs w-full pr-24 pl-0.5 focus:ring-0 ${
+                      isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-white/50'
                     }`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCommandPaletteQuery(headerSearch);
+                      setCommandPaletteOpen(true);
+                    }}
+                    title="Buka Navigasi Cepat Portal (Ctrl+K)"
+                    className={`absolute right-14 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-mono border transition cursor-pointer ${
+                      isLight
+                        ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                        : 'bg-white/5 text-white/70 border-white/15 hover:bg-white/10'
+                    }`}
+                  >
+                    Ctrl+K
+                  </button>
                   <button
                     type="submit"
                     className={`absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md px-2 py-0.5 text-[11px] font-medium border transition-colors cursor-pointer ${
                       isLight 
-                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200/80' 
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200/90' 
                         : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
                     }`}
                   >
@@ -1561,20 +1644,39 @@ export default function App() {
           } ${
             isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800'
           }`}>
-            {sidebarNavGroups.map((group, gIdx) => (
+            {sidebarNavGroups.map((group, gIdx) => {
+              const isGroupCollapsed = Boolean(group.collapsible && !opsGroupExpanded);
+              return (
               <div key={group.group} className="space-y-0.5">
                 {!sidebarCollapsed ? (
-                  <div className={`px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none ${
-                    isLight ? 'text-slate-400' : 'text-slate-400'
-                  }`}>
-                    <span>{group.group}</span>
-                    <span className={`text-[9px] font-mono font-normal ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>{group.items.length}</span>
-                  </div>
+                  group.collapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpsGroupExpanded((prev) => !prev)}
+                      aria-expanded={opsGroupExpanded}
+                      className={`w-full px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none rounded-lg transition cursor-pointer ${
+                        isLight ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {opsGroupExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                        <span>{group.group}</span>
+                      </span>
+                      <span className={`text-[9px] font-mono font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{group.items.length}</span>
+                    </button>
+                  ) : (
+                    <div className={`px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none ${
+                      isLight ? 'text-slate-600' : 'text-slate-300'
+                    }`}>
+                      <span>{group.group}</span>
+                      <span className={`text-[9px] font-mono font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{group.items.length}</span>
+                    </div>
+                  )
                 ) : (
                   gIdx > 0 && <div className={`my-1.5 border-t ${isLight ? 'border-slate-200' : 'border-slate-800/80'}`} />
                 )}
 
-                {group.items.map((item) => {
+                {(!isGroupCollapsed || sidebarCollapsed) && group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = dashboardTab === item.id;
                   return (
@@ -1602,7 +1704,7 @@ export default function App() {
                                 ? 'text-emerald-950 font-semibold bg-emerald-50/95 border border-emerald-200/90 shadow-xs'
                                 : 'text-emerald-300 font-semibold bg-emerald-500/15 border border-emerald-500/35 shadow-xs')
                             : (isLight
-                                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border border-transparent font-medium'
+                                ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100/80 border border-transparent font-medium'
                                 : 'text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent font-medium')
                         }`}
                       >
@@ -1613,7 +1715,7 @@ export default function App() {
                           <Icon className={`${sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4'} shrink-0 ${
                             isActive 
                               ? (isLight ? 'text-emerald-700' : 'text-emerald-400') 
-                              : (isLight ? 'text-slate-400 group-hover:text-slate-600' : 'text-slate-400 group-hover:text-slate-200')
+                              : (isLight ? 'text-slate-600 group-hover:text-slate-800' : 'text-slate-400 group-hover:text-slate-200')
                           }`} />
                           {!sidebarCollapsed && (
                             <span className="truncate text-left text-[12px] tracking-tight">{item.label}</span>
@@ -1647,7 +1749,7 @@ export default function App() {
                               </span>
                             )}
                           </div>
-                          <p className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          <p className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                             {group.group}
                           </p>
                         </div>
@@ -1656,7 +1758,8 @@ export default function App() {
                   );
                 })}
               </div>
-            ))}
+              );
+            })}
           </div>
         </motion.aside>
 
@@ -2186,6 +2289,129 @@ export default function App() {
               <div className={`flex flex-col space-y-4 ${
                 viewMode === 'split' ? 'flex-1 min-w-0' : 'w-full'
               }`}>
+
+                {/* ACTIVE WORKSPACE BREADCRUMB & CASE CONTEXT STRIP */}
+                <div className={`flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2 rounded-xl border text-xs transition-colors ${
+                  isLight
+                    ? 'bg-white/95 border-slate-200 text-slate-700 shadow-2xs'
+                    : 'bg-[#0E1116]/90 border-white/10 text-slate-200'
+                }`}>
+                  <nav aria-label="Breadcrumb Portal Verifikator" className="flex items-center gap-1.5 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setDashboardTab('executive')}
+                      className={`font-semibold transition cursor-pointer ${
+                        isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-emerald-400 hover:text-emerald-300'
+                      }`}
+                    >
+                      Portal Verifikator
+                    </button>
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <span className={`truncate hidden sm:inline ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {activeNavGroup?.group}
+                    </span>
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 hidden sm:inline ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                    <span className={`font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      {activeNavItem?.label}
+                    </span>
+                  </nav>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedCase ? (
+                      <div className={`flex items-center gap-2 px-2.5 py-1 rounded-lg border text-[11px] ${
+                        isLight
+                          ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                      }`}>
+                        <span className="font-mono font-bold tabular-nums">{selectedCase.id}</span>
+                        {selectedCase.hospital && (
+                          <span className={`hidden md:inline truncate max-w-[180px] ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                            · {selectedCase.hospital}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1 pl-1 border-l border-emerald-500/30">
+                          <button
+                            type="button"
+                            onClick={() => setDashboardTab('investigation')}
+                            className={`px-1.5 py-0.5 rounded font-semibold transition cursor-pointer ${
+                              dashboardTab === 'investigation'
+                                ? (isLight ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-slate-950')
+                                : (isLight ? 'hover:bg-emerald-100 text-emerald-800' : 'hover:bg-white/10 text-emerald-300')
+                            }`}
+                          >
+                            Telaah
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDashboardTab('document_checker')}
+                            className={`px-1.5 py-0.5 rounded font-semibold transition cursor-pointer ${
+                              dashboardTab === 'document_checker'
+                                ? (isLight ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-slate-950')
+                                : (isLight ? 'hover:bg-emerald-100 text-emerald-800' : 'hover:bg-white/10 text-emerald-300')
+                            }`}
+                          >
+                            7 Dokumen
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDashboardTab('decision')}
+                            className={`px-1.5 py-0.5 rounded font-semibold transition cursor-pointer ${
+                              dashboardTab === 'decision'
+                                ? (isLight ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-slate-950')
+                                : (isLight ? 'hover:bg-emerald-100 text-emerald-800' : 'hover:bg-white/10 text-emerald-300')
+                            }`}
+                          >
+                            Putusan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCase(null)}
+                            aria-label="Lepas berkas aktif"
+                            title="Lepas berkas aktif"
+                            className={`p-0.5 rounded transition cursor-pointer ${
+                              isLight ? 'text-slate-600 hover:bg-rose-100 hover:text-rose-700' : 'text-slate-300 hover:bg-rose-500/20 hover:text-rose-300'
+                            }`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      headerAlerts[0]?.claimData && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCase(headerAlerts[0].claimData);
+                            setDashboardTab('investigation');
+                          }}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
+                            isLight
+                              ? 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
+                              : 'bg-rose-500/15 border-rose-500/30 text-rose-300 hover:bg-rose-500/25'
+                          }`}
+                        >
+                          <Clock className="w-3 h-3 shrink-0" />
+                          <span>Fokus Prioritas #1: {headerAlerts[0].claimData.id}</span>
+                        </button>
+                      )
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setCommandPaletteOpen(true)}
+                      aria-label="Buka navigasi cepat semua modul portal"
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                          : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
+                      }`}
+                    >
+                      <Search className="w-3 h-3" />
+                      <span className="hidden sm:inline">Semua Modul ({sidebarNavItems.length})</span>
+                      <span className={`font-mono text-[10px] px-1 rounded ${isLight ? 'bg-slate-200/80 text-slate-700' : 'bg-white/10 text-slate-300'}`}>Ctrl+K</span>
+                    </button>
+                  </div>
+                </div>
                 
                 {/* ACTIVE MODULE VIEW RENDERER WITH MOTION TRANSITION */}
                 <AnimatePresence mode="wait">
@@ -2403,6 +2629,7 @@ export default function App() {
                         patientResponse={patientResponse}
                         onBackToQueue={() => setDashboardTab('queue')}
                         onOpenDecision={() => setDashboardTab('decision')}
+                        onOpenDocumentChecker={() => setDashboardTab('document_checker')}
                         onOpenAgentCopilot={() => setDashboardTab('agent_copilot')}
                         onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
                         isLight={isLight}
@@ -2506,6 +2733,10 @@ export default function App() {
                       <DocumentCheckerView
                         isLight={isLight}
                         currentUser={currentUser}
+                        initialClaimId={selectedCase?.id}
+                        onSelectClaim={(claimObj) => {
+                          if (claimObj?.id) setSelectedCase(claimObj);
+                        }}
                       />
                     )}
 
@@ -2652,6 +2883,7 @@ export default function App() {
                         onBack={() => setDashboardTab('decision')}
                         isLight={isLight}
                         currentUser={currentUser}
+                        selectedCase={selectedCase}
                       />
                     )}
 
@@ -2686,6 +2918,121 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* PALET PERINTAH NAVIGASI PORTAL (CTRL+K) */}
+      <AnimatePresence>
+        {commandPaletteOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCommandPaletteOpen(false)}
+            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 px-4"
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigasi Cepat Portal Verifikator"
+              initial={{ opacity: 0, scale: 0.96, y: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.14 }}
+              onClick={(e) => e.stopPropagation()}
+              className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden ${
+                isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0E1116] border-white/15 text-slate-100'
+              }`}
+            >
+              <div className={`px-4 py-3 border-b flex items-center gap-2.5 ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+              }`}>
+                <Search className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                <input
+                  type="text"
+                  autoFocus
+                  value={commandPaletteQuery}
+                  onChange={(e) => setCommandPaletteQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const q = commandPaletteQuery.trim().toLowerCase();
+                      const match = sidebarNavItems.find((m) =>
+                        `${m.label} ${m.keywords || ''} ${m.id}`.toLowerCase().includes(q)
+                      );
+                      if (match) {
+                        setDashboardTab(match.id);
+                      } else if (q) {
+                        setGlobalSearchQuery(commandPaletteQuery.trim());
+                        setDashboardTab('queue');
+                      }
+                      setCommandPaletteOpen(false);
+                    }
+                  }}
+                  placeholder="Ketik nama modul (mis. Benford, BAHV, FHIR, Sesi) atau No. SEP..."
+                  className={`flex-1 bg-transparent border-none outline-none text-sm focus:ring-0 ${
+                    isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-slate-400'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setCommandPaletteOpen(false)}
+                  aria-label="Tutup navigasi cepat"
+                  className={`px-2 py-0.5 rounded border text-[10px] font-mono cursor-pointer ${
+                    isLight ? 'bg-white border-slate-200 text-slate-600' : 'bg-white/5 border-white/15 text-slate-300'
+                  }`}
+                >
+                  ESC
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto p-2.5 space-y-3">
+                {sidebarNavGroups.map((grp) => {
+                  const q = commandPaletteQuery.trim().toLowerCase();
+                  const matches = grp.items.filter((it) =>
+                    !q || `${it.label} ${it.keywords || ''} ${it.id}`.toLowerCase().includes(q)
+                  );
+                  if (matches.length === 0) return null;
+                  return (
+                    <div key={grp.group} className="space-y-1">
+                      <p className={`px-2.5 text-[10px] font-bold uppercase tracking-wider ${
+                        isLight ? 'text-slate-600' : 'text-slate-400'
+                      }`}>
+                        {grp.group}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                        {matches.map((it) => {
+                          const Icon = it.icon;
+                          const isCurrent = dashboardTab === it.id;
+                          return (
+                            <button
+                              key={it.id}
+                              type="button"
+                              onClick={() => {
+                                setDashboardTab(it.id);
+                                setCommandPaletteOpen(false);
+                                setCommandPaletteQuery('');
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition cursor-pointer border ${
+                                isCurrent
+                                  ? (isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-950 font-semibold' : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 font-semibold')
+                                  : (isLight ? 'bg-white border-transparent hover:bg-slate-100 text-slate-800' : 'bg-transparent border-transparent hover:bg-white/5 text-slate-200')
+                              }`}
+                            >
+                              <span className="flex items-center gap-2 min-w-0">
+                                <Icon className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                                <span className="truncate">{it.label}</span>
+                              </span>
+                              <ArrowRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FOOTER (CLEAN SINGLE-ROW ENTERPRISE STATUS STRIP) */}
       <footer className={`py-2 px-4 flex flex-col lg:flex-row items-center justify-between text-[11px] gap-2 shrink-0 z-20 select-none transition-colors ${

@@ -251,6 +251,43 @@ export default function DecisionConsole({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
   const [isDraftingAiNotes, setIsDraftingAiNotes] = useState(false);
+  const [fhirSubmitState, setFhirSubmitState] = useState({
+    busy: false,
+    error: null,
+    claimResponse: null,
+  });
+
+  const handleSubmitFhirClaim = async () => {
+    setFhirSubmitState({ busy: true, error: null, claimResponse: null });
+    try {
+      const bundleRes = await authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/fhir`);
+      if (!bundleRes.ok) {
+        throw new Error(`Gagal memuat FHIR Bundle klaim (HTTP ${bundleRes.status})`);
+      }
+      const bundlePayload = await bundleRes.json();
+      const submitRes = await authFetch(`${API_BASE_URL}/fhir/Claim/$submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bundlePayload),
+      });
+      const responseJson = await submitRes.json().catch(() => ({}));
+      if (!submitRes.ok) {
+        const diag = responseJson?.issue?.[0]?.diagnostics || responseJson?.detail || `HTTP ${submitRes.status}`;
+        throw new Error(diag);
+      }
+      setFhirSubmitState({
+        busy: false,
+        error: null,
+        claimResponse: responseJson,
+      });
+    } catch (err) {
+      setFhirSubmitState({
+        busy: false,
+        error: err?.message || 'Gagal mengirim Claim/$submit ke gateway SATUSEHAT FHIR R4.',
+        claimResponse: null,
+      });
+    }
+  };
 
   const consoleRef = useRef(null);
   const modalRef = useRef(null);
@@ -764,6 +801,11 @@ export default function DecisionConsole({
                   }`}>
                     HITL Mutlak Verifikator
                   </span>
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                    isLight ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-blue-500/15 text-blue-200 border-blue-500/30'
+                  }`}>
+                    SLA Perpres 82/2018: {rawTriage?.sla_deadline_days ?? 10} HK
+                  </span>
                 </div>
               </div>
             </div>
@@ -1162,17 +1204,17 @@ export default function DecisionConsole({
                 <div className={`p-2 rounded-lg border text-[11px] ${
                   isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700/60'
                 }`}>
-                  <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Tier 1: Verifikator Medis</span>
+                  <span className="text-[9.5px] uppercase font-bold text-slate-600 dark:text-slate-400 block">Tier 1: Verifikator Medis</span>
                   <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{verifierInfo.name}</p>
-                  <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">Rekomendasi Awal: Selesai</p>
+                  <p className="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold mt-0.5">Rekomendasi Awal: Selesai</p>
                 </div>
 
                 <div className={`p-2 rounded-lg border text-[11px] ${
                   isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700/60'
                 }`}>
-                  <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Tier 2: Dokter Penelaah Senior</span>
+                  <span className="text-[9.5px] uppercase font-bold text-slate-600 dark:text-slate-400 block">Tier 2: Dokter Penelaah Senior</span>
                   <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">dr. H. Ahmad Fauzi, Sp.A</p>
-                  <p className={`text-[10px] font-semibold mt-0.5 ${tier2Signed ? 'text-emerald-700' : 'text-amber-600'}`}>
+                  <p className={`text-[10px] font-semibold mt-0.5 ${tier2Signed ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>
                     {tier2Signed ? 'Pengesahan Sah' : 'Second Opinion Aktif'}
                   </p>
                 </div>
@@ -1239,7 +1281,7 @@ export default function DecisionConsole({
 
               {/* SIGN-OFF BUTTON */}
               <div className="pt-1 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-600 dark:text-slate-400">
                   {tier2Signed ? 'Disahkan dengan Segel SHA-256' : 'Belum disahkan'}
                 </span>
                 <button
@@ -1431,6 +1473,75 @@ export default function DecisionConsole({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* GATEWAY INTEROPERABILITAS HL7 FHIR R4 ($submit -> ClaimResponse) */}
+          <div className={`rounded-2xl p-4 space-y-3 border ${
+            isLight
+              ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
+              : 'bg-[#00153A]/80 backdrop-blur-md border-white/10 text-white shadow-xl shadow-[#00081c]/40'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <h4 className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                <ShieldCheck className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`} />
+                <span>Gateway HL7 FHIR R4 (Claim/$submit)</span>
+              </h4>
+              <span className={`text-[9.5px] font-mono px-2 py-0.5 rounded font-bold border ${
+                isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+              }`}>
+                SATUSEHAT R4
+              </span>
+            </div>
+            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+              Uji dan kirim Bundle FHIR R4 berkas {resolvedApiClaimId} melalui operasi <code className="font-mono font-semibold">/fhir/Claim/$submit</code> untuk menerbitkan respons ajudikasi standar HL7 <code className="font-mono font-semibold">ClaimResponse</code>.
+            </p>
+            <button
+              type="button"
+              onClick={handleSubmitFhirClaim}
+              disabled={fhirSubmitState.busy}
+              className={`w-full font-bold text-xs py-2 px-3 rounded-xl border transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
+                isLight
+                  ? 'bg-cyan-700 hover:bg-cyan-800 text-white border-cyan-800'
+                  : 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40'
+              }`}
+            >
+              <span>{fhirSubmitState.busy ? 'Mengirim ke Gateway FHIR R4...' : 'Validasi & Kirim FHIR Claim/$submit'}</span>
+            </button>
+
+            {fhirSubmitState.error && (
+              <div className={`p-2.5 rounded-xl border text-[11px] font-medium ${
+                isLight ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+              }`}>
+                {fhirSubmitState.error}
+              </div>
+            )}
+
+            {fhirSubmitState.claimResponse && (
+              <div className={`p-3 rounded-xl border text-[10.5px] font-mono space-y-1.5 ${
+                isLight ? 'bg-emerald-50/70 border-emerald-200 text-slate-800' : 'bg-black/30 border-emerald-500/30 text-slate-200'
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                    {fhirSubmitState.claimResponse.resourceType} · {fhirSubmitState.claimResponse.id}
+                  </span>
+                  <span className={`px-1.5 py-0.5 rounded border text-[9.5px] font-bold uppercase ${
+                    fhirSubmitState.claimResponse.outcome === 'complete'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300'
+                  }`}>
+                    Outcome: {fhirSubmitState.claimResponse.outcome}
+                  </span>
+                </div>
+                <p className="text-[10.5px] leading-snug font-sans">
+                  {fhirSubmitState.claimResponse.disposition || 'Respons ajudikasi FHIR R4 berhasil diterbitkan.'}
+                </p>
+                {fhirSubmitState.claimResponse.preAuthRef && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Ref BAKB: {fhirSubmitState.claimResponse.preAuthRef}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
