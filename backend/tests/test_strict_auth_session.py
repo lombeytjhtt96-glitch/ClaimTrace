@@ -848,3 +848,102 @@ def test_recaptcha_v2_and_invisible_v3_enforced_without_enterprise(monkeypatch, 
     )
     assert ok_forgot.status_code == 200
     assert len(forgot_calls) == 2
+
+
+def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path):
+    monkeypatch.setenv("BIRD_API_BASE_URL", "")
+    assert main_mod._resolve_bird_base_url("bk_eu1_dummy") == "https://eu1.platform.bird.com"
+    assert main_mod._resolve_bird_base_url("bk_us1_dummy") == "https://us1.platform.bird.com"
+    monkeypatch.setenv("BIRD_API_BASE_URL", "https://custom-proxy.example.id/")
+    assert main_mod._resolve_bird_base_url("bk_eu1_dummy") == "https://custom-proxy.example.id"
+
+    bird_calls = []
+
+    class _FakeResp:
+        def __init__(self, status_code, body):
+            self.status_code = status_code
+            self._body = body
+
+        def json(self):
+            return self._body
+
+    class _RoutingHttpClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def post(self, url, headers=None, json=None, data=None):
+            if "siteverify" in url:
+                return _FakeResp(200, {"success": True, "score": 0.9, "action": (data or {}).get("action", "forgot_password")})
+            if "/v1/email/messages" in url:
+                bird_calls.append({"url": url, "headers": headers or {}, "json": json or {}})
+                return _FakeResp(202, {"id": f"msg_{len(bird_calls)}", "status": "accepted"})
+            return _FakeResp(404, {"message": "not found"})
+
+    monkeypatch.setenv("CLAIMTRACE_ENABLE_BIRD_IN_TEST", "1")
+    monkeypatch.setenv("BIRD_API_KEY", "bk_eu1_test_workspace_key")
+    monkeypatch.setenv("BIRD_API_BASE_URL", "")
+    monkeypatch.setenv("BIRD_FROM_EMAIL", "onboarding@messagebird.dev")
+    monkeypatch.setenv("BIRD_FROM_NAME", "ClaimTrace JKN Test")
+    monkeypatch.setenv("RECAPTCHA_ENFORCE_ALL_LAYERS", "false")
+    monkeypatch.setenv("RECAPTCHA_SECRET_KEY", "test-recaptcha-secret")
+    monkeypatch.setenv("CLAIMTRACE_PUBLIC_URL", "http://localhost:3000")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setattr(main_mod.httpx, "Client", _RoutingHttpClient)
+
+    otp_spool = tmp_path / "otp_spool_bird.json"
+    reset_spool = tmp_path / "reset_spool_bird.json"
+    monkeypatch.setattr(main_mod, "OTP_MAIL_SPOOL_FILE", otp_spool)
+    monkeypatch.setattr(main_mod, "PASSWORD_RESET_SPOOL_FILE", reset_spool)
+
+    acct = VERIFICATOR_DIRECTORY["198704202011012001"]
+    main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_OTP")
+
+    assert len(bird_calls) == 1
+    otp_req = bird_calls[0]
+    assert otp_req["url"] == "https://eu1.platform.bird.com/v1/email/messages"
+    assert otp_req["headers"]["Authorization"] == "Bearer bk_eu1_test_workspace_key"
+    assert otp_req["json"]["from"] == {"email": "onboarding@messagebird.dev", "name": "ClaimTrace JKN Test"}
+    assert otp_req["json"]["to"] == [acct["email"]]
+    assert otp_req["json"]["category"] == "transactional"
+    otp_entries = json.loads(otp_spool.read_text(encoding="utf-8"))
+    assert otp_entries[-1]["bird_sent"] is True
+    assert otp_entries[-1]["otp"] in otp_req["json"]["html"]
+    assert otp_entries[-1]["otp"] in otp_req["json"]["text"]
+
+    forgot_res = client.post(
+        "/api/v1/auth/forgot-password",
+        json={
+            "username": acct["username"],
+            "email": acct["email"],
+            "nip": acct["nip"],
+            "recaptcha_token": "valid-google-token",
+        },
+    )
+    assert forgot_res.status_code == 200
+    assert len(bird_calls) == 2
+    rst_req = bird_calls[1]
+    assert rst_req["url"] == "https://eu1.platform.bird.com/v1/email/messages"
+    assert "/?view=reset_password&amp;token=ctrst." in rst_req["json"]["html"]
+    assert "/?view=reset_password&token=ctrst." in rst_req["json"]["text"]
+    rst_entries = json.loads(reset_spool.read_text(encoding="utf-8"))
+    assert rst_entries[-1]["bird_sent"] is True
+    assert rst_entries[-1]["bird_message_id"] == "msg_2"
+
+    # Graceful fallback when Bird rejects with HTTP 422
+    class _FailingBirdClient(_RoutingHttpClient):
+        def post(self, url, headers=None, json=None, data=None):
+            if "/v1/email/messages" in url:
+                return _FakeResp(422, {"code": "E04001", "message": "sender domain unverified"})
+            return super().post(url, headers=headers, json=json, data=data)
+
+    monkeypatch.setattr(main_mod.httpx, "Client", _FailingBirdClient)
+    main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_BIRD_FALLBACK")
+    otp_entries_after = json.loads(otp_spool.read_text(encoding="utf-8"))
+    assert otp_entries_after[-1]["bird_sent"] is False
+    assert otp_entries_after[-1]["smtp_sent"] is False

@@ -12,10 +12,13 @@ import hashlib
 import hmac
 import base64
 import html as _html
+import logging
 import smtplib
 from email.message import EmailMessage
 from pathlib import Path
 from dotenv import load_dotenv
+
+logger = logging.getLogger("claimtrace")
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -650,6 +653,123 @@ def _validate_password_strength(password: str, current_hash: Optional[str] = Non
         )
 
 
+def _resolve_bird_base_url(api_key: str) -> str:
+    """Resolve HTTPS Bird platform base URL from BIRD_API_BASE_URL or key region prefix (e.g. bk_eu1_*)."""
+    configured = os.getenv("BIRD_API_BASE_URL", "").strip().rstrip("/")
+    if configured.startswith("https://"):
+        return configured
+    parts = (api_key or "").strip().split("_")
+    if len(parts) >= 3 and parts[0] in {"bk", "bm"} and re.match(r"^[a-z]{2}[0-9]+$", parts[1]):
+        return f"https://{parts[1]}.platform.bird.com"
+    return "https://platform.bird.com"
+
+
+def _render_auth_email_html(
+    *,
+    heading: str,
+    greeting_name: str,
+    intro: str,
+    badge_label: str,
+    highlight_html: str,
+    footnote: str,
+) -> str:
+    """Render an accessible transactional HTML email for ClaimTrace auth OTP & reset links."""
+    safe_heading = _html.escape(heading)
+    safe_name = _html.escape(greeting_name)
+    safe_intro = _html.escape(intro)
+    safe_badge = _html.escape(badge_label)
+    safe_note = _html.escape(footnote)
+    return (
+        "<div style=\"font-family:Inter,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;"
+        "padding:24px;background:#f8fafc;color:#0f172a;border-radius:16px;border:1px solid #cbd5e1;\">"
+        "<div style=\"margin-bottom:16px;\">"
+        "<span style=\"display:inline-block;padding:4px 10px;border-radius:999px;background:#ecfdf5;"
+        "color:#065f46;font-size:11px;font-weight:700;letter-spacing:0.04em;\">CLAIMTRACE JKN · BPJS KESEHATAN</span>"
+        "</div>"
+        f"<h2 style=\"margin:0 0 12px;font-size:18px;color:#061b31;\">{safe_heading}</h2>"
+        f"<p style=\"margin:0 0 10px;font-size:14px;line-height:1.5;\">Yth. <strong>{safe_name}</strong>,</p>"
+        f"<p style=\"margin:0 0 16px;font-size:14px;line-height:1.5;color:#334155;\">{safe_intro}</p>"
+        "<div style=\"background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;\">"
+        f"<div style=\"font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:8px;\">{safe_badge}</div>"
+        f"{highlight_html}"
+        "</div>"
+        f"<p style=\"margin:0;font-size:12px;line-height:1.5;color:#64748b;\">{safe_note}</p>"
+        "</div>"
+    )
+
+
+def _send_via_bird_api(
+    *,
+    to_email: str,
+    subject: str,
+    body_text: str,
+    body_html: Optional[str],
+    log_tag: str,
+) -> tuple[bool, Optional[str], Optional[str]]:
+    """Send transactional auth email through Bird REST API (/v1/email/messages) using BIRD_API_KEY."""
+    bird_api_key = os.getenv("BIRD_API_KEY", "").strip()
+    allow_in_test = os.getenv("CLAIMTRACE_ENABLE_BIRD_IN_TEST") == "1"
+    is_test_ctx = bool(os.getenv("PYTEST_CURRENT_TEST") or "pytest" in sys.modules)
+    if not bird_api_key or (is_test_ctx and not allow_in_test):
+        return False, None, None
+
+    from_email = os.getenv("BIRD_FROM_EMAIL", "").strip() or "onboarding@messagebird.dev"
+    from_name = os.getenv("BIRD_FROM_NAME", "").strip() or "ClaimTrace JKN BPJS Kesehatan"
+    endpoint = f"{_resolve_bird_base_url(bird_api_key)}/v1/email/messages"
+    fallback_html = "".join(
+        f"<p style=\"margin:0 0 10px;\">{_html.escape(line)}</p>"
+        for line in body_text.splitlines()
+        if line.strip()
+    )
+    payload = {
+        "from": {"email": from_email, "name": from_name},
+        "to": [to_email],
+        "subject": subject,
+        "html": body_html or fallback_html,
+        "text": body_text,
+        "category": "transactional",
+    }
+
+    try:
+        with httpx.Client(timeout=8.0) as bird_client:
+            resp = bird_client.post(
+                endpoint,
+                headers={
+                    "Authorization": f"Bearer {bird_api_key}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                json=payload,
+            )
+        if 200 <= resp.status_code < 300:
+            msg_id: Optional[str] = None
+            msg_status: Optional[str] = None
+            try:
+                resp_json = resp.json()
+                if isinstance(resp_json, dict):
+                    msg_id = str(resp_json.get("id")) if resp_json.get("id") else None
+                    msg_status = str(resp_json.get("status")) if resp_json.get("status") else None
+            except Exception:
+                pass
+            logger.info(f"{log_tag} Bird transactional mail accepted for {_mask_email(to_email)} status={msg_status or resp.status_code} id={msg_id or 'n/a'}")
+            return True, msg_id, msg_status
+
+        err_summary = f"HTTP {resp.status_code}"
+        try:
+            err_body = resp.json()
+            if isinstance(err_body, dict):
+                code = err_body.get("code") or err_body.get("type")
+                detail = err_body.get("message") or err_body.get("detail")
+                if code or detail:
+                    err_summary = f"HTTP {resp.status_code} ({code}: {detail})"
+        except Exception:
+            pass
+        logger.warning(f"{log_tag} Bird API rejected mail for {_mask_email(to_email)}: {err_summary}")
+    except Exception as bird_err:
+        logger.warning(f"{log_tag} Bird API request error for {_mask_email(to_email)}: {type(bird_err).__name__}")
+    return False, None, None
+
+
 def _send_email_or_spool(
     *,
     to_email: str,
@@ -658,11 +778,20 @@ def _send_email_or_spool(
     spool_file: Path,
     spool_entry: Dict[str, Any],
     log_tag: str,
+    body_html: Optional[str] = None,
 ) -> bool:
-    """Sends notification mail via SMTP if configured and records encrypted-perm local spool outside pytest."""
+    """Send notification mail via Bird API first, then SMTP fallback, and record 0600 local spool."""
+    sent_via_bird, bird_msg_id, bird_status = _send_via_bird_api(
+        to_email=to_email,
+        subject=subject,
+        body_text=body_text,
+        body_html=body_html,
+        log_tag=log_tag,
+    )
+
     sent_via_smtp = False
     smtp_host = os.getenv("SMTP_HOST", "").strip()
-    if smtp_host and not os.getenv("PYTEST_CURRENT_TEST"):
+    if (not sent_via_bird) and smtp_host and not os.getenv("PYTEST_CURRENT_TEST"):
         try:
             smtp_port = int(os.getenv("SMTP_PORT", "587"))
             smtp_user = os.getenv("SMTP_USER", "").strip()
@@ -675,6 +804,8 @@ def _send_email_or_spool(
             msg["From"] = smtp_from
             msg["To"] = to_email
             msg.set_content(body_text)
+            if body_html:
+                msg.add_alternative(body_html, subtype="html")
 
             with smtplib.SMTP(smtp_host, smtp_port, timeout=8.0) as server:
                 if use_tls:
@@ -695,7 +826,13 @@ def _send_email_or_spool(
                     raw = json.load(f)
                     if isinstance(raw, list):
                         entries = raw[-19:]
-            entries.append({**spool_entry, "smtp_sent": sent_via_smtp})
+            entries.append({
+                **spool_entry,
+                "bird_sent": sent_via_bird,
+                "bird_message_id": bird_msg_id,
+                "bird_status": bird_status,
+                "smtp_sent": sent_via_smtp,
+            })
             tmp = spool_file.with_suffix(".tmp")
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(entries, f, indent=2)
@@ -703,7 +840,7 @@ def _send_email_or_spool(
             tmp.replace(spool_file)
         except Exception:
             pass
-    return sent_via_smtp
+    return bool(sent_via_bird or sent_via_smtp)
 
 
 def _load_otp_map_unlocked() -> Dict[str, Dict[str, Any]]:
@@ -757,6 +894,18 @@ def _dispatch_otp_and_spool(account: Dict[str, Any], reason: str = "MFA_STEP_2")
     _store_otp_challenge(account, generated_otp, ttl_seconds=180)
     print(f"[BPJS SECURE MAIL DISPATCH] reason={reason} nip={account['nip']} email={account['email']} ttl=180s")
     now_dt = datetime.now(timezone.utc)
+    otp_html = _render_auth_email_html(
+        heading="Kode Verifikasi OTP Masuk Portal",
+        greeting_name=account["name"],
+        intro="Gunakan kode OTP sekali pakai di bawah ini untuk menyelesaikan autentikasi Multi-Factor Authentication (MFA) pada Portal ClaimTrace JKN.",
+        badge_label="Kode OTP 6 Digit (Berlaku 3 Menit)",
+        highlight_html=(
+            f"<div style=\"font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:28px;"
+            f"font-weight:800;letter-spacing:0.25em;color:#047857;text-align:center;padding:8px 0;\">"
+            f"{_html.escape(generated_otp)}</div>"
+        ),
+        footnote="Demi keamanan akun BPJS Kesehatan Anda, jangan pernah membagikan kode OTP ini kepada siapa pun termasuk petugas TI.",
+    )
     _send_email_or_spool(
         to_email=account["email"],
         subject="ClaimTrace JKN - Kode Verifikasi OTP",
@@ -765,6 +914,7 @@ def _dispatch_otp_and_spool(account: Dict[str, Any], reason: str = "MFA_STEP_2")
             f"Kode OTP verifikasi masuk Anda: {generated_otp}\n"
             "Berlaku selama 3 menit. Jangan bagikan kode ini kepada siapa pun."
         ),
+        body_html=otp_html,
         spool_file=OTP_MAIL_SPOOL_FILE,
         spool_entry={
             "nip": account["nip"],
@@ -1738,6 +1888,21 @@ def forgot_password_request(payload: ForgotPasswordRequest, request: Request, re
                 prefix="ctrst",
             )
             reset_link = f"{_resolve_frontend_base_url()}/?view=reset_password&token={reset_token}"
+            safe_reset_url = _html.escape(reset_link, quote=True)
+            reset_html = _render_auth_email_html(
+                heading="Tautan Ubah Password Akun",
+                greeting_name=account["name"],
+                intro="Kami menerima permintaan ubah password untuk akun Portal ClaimTrace JKN Anda. Klik tombol di bawah ini untuk mengatur ulang kata sandi.",
+                badge_label="Tautan Pemulihan (Berlaku 15 Menit, Sekali Pakai)",
+                highlight_html=(
+                    "<div style=\"text-align:center;margin:8px 0 12px;\">"
+                    f"<a href=\"{safe_reset_url}\" style=\"display:inline-block;padding:11px 22px;"
+                    "border-radius:10px;background:#047857;color:#ffffff;font-size:13px;font-weight:700;"
+                    "text-decoration:none;\">Atur Ulang Password</a></div>"
+                    f"<div style=\"font-size:11px;color:#475569;word-break:break-all;\">{safe_reset_url}</div>"
+                ),
+                footnote="Jika Anda tidak mengajukan permintaan ini, abaikan email ini. Tautan hanya berlaku satu kali selama 15 menit.",
+            )
             _send_email_or_spool(
                 to_email=account["email"],
                 subject="ClaimTrace JKN - Tautan Ubah Password",
@@ -1747,6 +1912,7 @@ def forgot_password_request(payload: ForgotPasswordRequest, request: Request, re
                     f"Buka tautan berikut (berlaku 15 menit, sekali pakai):\n{reset_link}\n\n"
                     "Jika Anda tidak mengajukan permintaan ini, abaikan email ini."
                 ),
+                body_html=reset_html,
                 spool_file=PASSWORD_RESET_SPOOL_FILE,
                 spool_entry={
                     "nip": account["nip"],
