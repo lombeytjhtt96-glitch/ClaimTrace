@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -172,23 +173,20 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
     const headers = ['ID', 'Nama', 'Email', 'Faskes', 'Kode Faskes', 'Peran', 'Risiko', 'Skor', 'Status'];
     const rows = filteredUsers.map((u) => [
       u.id,
-      `"${u.name}"`,
-      `"${u.email}"`,
-      `"${u.faskes}"`,
+      u.name,
+      u.email,
+      u.faskes,
       u.faskes_code,
       u.role,
       u.screening_risk,
       u.screening_score,
       u.is_active ? 'AKTIF' : 'NONAKTIF',
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CommandCenter_JKN_Users_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportCsvFile({
+      filename: `CommandCenter_JKN_Users_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers,
+      rows,
+    });
   };
 
   return (
@@ -886,7 +884,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                       </div>
                     </div>
                   </div>
-                  <button type="button"
+                  <button
+                    type="button"
+                    aria-label="Tutup laci detail pengguna faskes"
                     onClick={() => setDrawerOpen(false)}
                     className={`p-2 rounded-lg transition-colors cursor-pointer ${
                       isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-200' : 'text-white/40 hover:text-white hover:bg-white/10'
@@ -1181,7 +1181,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
               <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 Catat Interaksi CRM JKN
               </h3>
-              <button type="button"
+              <button
+                type="button"
+                aria-label="Tutup modal catatan interaksi CRM"
                 onClick={() => setCrmNoteModal({ isOpen: false, user: null, note: '' })}
                 className={`cursor-pointer ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-white/40 hover:text-white'}`}
               >
@@ -1206,7 +1208,8 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
               }`}
             />
             <div className="flex justify-end gap-2">
-              <button type="button"
+              <button
+                type="button"
                 onClick={() => setCrmNoteModal({ isOpen: false, user: null, note: '' })}
                 className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
                   isLight ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' : 'text-white/60 hover:text-white hover:bg-white/10'

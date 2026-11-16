@@ -285,6 +285,7 @@ from app.security.access_control import (
     ROLE_PRIVILEGES_MAP,
     InsufficientPrivilegeException,
     resolve_subject,
+    resolve_subject_from_payload,
     verify_privilege,
     require_privilege,
     require_adjudicator,
@@ -319,6 +320,50 @@ STRICT_AUTH_EXEMPT_PATHS = {
     "/api/v1/auth/trust-device",
     "/api/v1/webhooks/sendcorex",
 }
+
+_ADMIN_EXACT_ROUTES = {
+    ("PUT", "/api/v1/settings"),
+    ("POST", "/api/v1/claims/reset"),
+    ("POST", "/api/v1/detection/rules/compile"),
+}
+
+_ADJUDICATE_PREFIXES = (
+    "/api/v1/adjudication/tier-",
+    "/api/v1/documents/audit/submit",
+    "/api/v1/appeals/submit",
+    "/api/v1/operations/",
+    "/api/v1/portal/",
+    "/api/v1/vedika/",
+)
+
+_ADJUDICATE_EXACT_ROUTES = {
+    ("POST", "/api/v1/claims/batch-decision"),
+    ("POST", "/api/v1/receipts/mint"),
+    ("POST", "/api/v1/agent/approve"),
+    ("POST", "/api/v1/expansion/berita-acara"),
+    ("POST", "/api/v1/analytics/mobile-telemetry/push"),
+}
+
+
+def _resolve_required_route_privilege(method: str, path: str) -> Privilege:
+    """Centralized route-level RBAC matrix enforced on all live /api/v1 and /fhir requests."""
+    m = method.upper()
+    if (m, path) in _ADMIN_EXACT_ROUTES:
+        return Privilege.ADMIN
+    if m in ("POST", "PUT", "PATCH", "DELETE"):
+        if (m, path) in _ADJUDICATE_EXACT_ROUTES:
+            return Privilege.ADJUDICATE
+        if any(path.startswith(prefix) for prefix in _ADJUDICATE_PREFIXES):
+            return Privilege.ADJUDICATE
+        if path.startswith("/api/v1/claims/") and (
+            path.endswith("/decision") or path.endswith("/resubmit-susulan")
+        ):
+            return Privilege.ADJUDICATE
+        if path.startswith("/api/v1/receipts/") and path.endswith("/human-gate"):
+            return Privilege.ADJUDICATE
+        if path.startswith("/api/v1/appeals/") and path.endswith("/adjudicate"):
+            return Privilege.ADJUDICATE
+    return Privilege.READ
 
 
 class StrictSessionGateMiddleware(BaseHTTPMiddleware):
@@ -387,6 +432,35 @@ class StrictSessionGateMiddleware(BaseHTTPMiddleware):
                     "status": "error",
                     "error_code": "DEVICE_FINGERPRINT_MISSING",
                     "detail": "Verifikasi sidik perangkat (X-Device-Fingerprint) wajib disertakan untuk sesi ini.",
+                },
+                headers={"Cache-Control": "no-store, max-age=0"},
+            )
+
+        subject = resolve_subject_from_payload(payload)
+        request.state.subject = subject
+        required_priv = _resolve_required_route_privilege(request.method, path)
+        if not subject.has_privilege(required_priv):
+            audit_logger.record_event(
+                event_type="RBAC_MIDDLEWARE_DENIED",
+                claim_id="SEC-RBAC",
+                actor=subject.nip,
+                payload={
+                    "method": request.method,
+                    "path": path,
+                    "role": subject.role,
+                    "required_privilege": required_priv.value,
+                },
+            )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "status": "error",
+                    "error_code": "INSUFFICIENT_PRIVILEGE",
+                    "detail": (
+                        f"Akses ditolak: peran '{subject.role}' tidak memiliki hak '{required_priv.value}' "
+                        f"untuk {request.method} {path}."
+                    ),
+                    "required_privilege": required_priv.value,
                 },
                 headers={"Cache-Control": "no-store, max-age=0"},
             )
@@ -1145,6 +1219,21 @@ def _register_directory_record(directory: Dict[str, Dict[str, Any]], record: Dic
     directory[record["username"].lower()] = record
 
 
+def _demo_accounts_enabled() -> bool:
+    """Allow seeded demo credentials unless explicitly disabled outside pytest for field rollout."""
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return True
+    flag = os.getenv("CLAIMTRACE_ALLOW_DEMO_ACCOUNTS", "1").strip().lower()
+    return flag not in {"0", "false", "no", "off"}
+
+
+def _pytest_fallback_id(default_id: str) -> Optional[str]:
+    """Provide fallback actor ID strictly inside non-strict pytest compatibility runs."""
+    if os.getenv("PYTEST_CURRENT_TEST") and os.getenv("CLAIMTRACE_STRICT_API_AUTH") != "1":
+        return default_id
+    return None
+
+
 def _build_verificator_directory() -> Dict[str, Dict[str, Any]]:
     persisted_hashes = _load_persisted_password_hashes()
     seed_accounts = [
@@ -1200,7 +1289,7 @@ def _build_verificator_directory() -> Dict[str, Dict[str, Any]]:
             "avatar": "AP",
             "allowedRoles": ["AUDITOR_VIEWER", "ANALYST"],
         },
-    ]
+    ] if _demo_accounts_enabled() else []
     directory: Dict[str, Dict[str, Any]] = {}
     for item in seed_accounts:
         record = {
@@ -3174,10 +3263,24 @@ def get_detection_rule_endpoint(rule_id: str):
     raise HTTPException(status_code=404, detail=f"Aturan YARA-L dengan ID '{rule_id}' tidak ditemukan")
 
 @app.post("/api/v1/detection/rules/compile")
-def compile_detection_rule_endpoint(req: DynamicYaraLCompileRequest):
+def compile_detection_rule_endpoint(
+    req: DynamicYaraLCompileRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Dynamically compiles claim triage indicators into a validated YARA-L 2.0 detection rule.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=_pytest_fallback_id("ADMIN_SYSTEM"),
+    )
+    verify_privilege(subject, Privilege.ADMIN, action_name="COMPILE_DETECTION_RULE")
     return compile_dynamic_yara_l_rule(
         rule_name=req.rule_name,
         description=req.description,
@@ -3252,10 +3355,24 @@ def get_decision_receipt_endpoint(receipt_or_claim_id: str):
     return rcp
 
 @app.post("/api/v1/receipts/mint", response_model=DecisionReceiptItem)
-def mint_decision_receipt_endpoint(req: MintReceiptRequest):
+def mint_decision_receipt_endpoint(
+    req: MintReceiptRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Mints a new tamper-evident Agent Decision Receipt with SHA-256 canonical digest and digital seal.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001"),
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="MINT_DECISION_RECEIPT")
     try:
         receipt = mint_decision_receipt(
             agent_id=req.agent_id,
@@ -3275,11 +3392,26 @@ def mint_decision_receipt_endpoint(req: MintReceiptRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/v1/receipts/{receipt_id}/human-gate", response_model=DecisionReceiptItem)
-def submit_human_gate_review_endpoint(receipt_id: str, req: HumanGateReviewRequest):
+def submit_human_gate_review_endpoint(
+    receipt_id: str,
+    req: HumanGateReviewRequest,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Applies human gate sign-off or blocker resolution by an authorized BPJS Verifikator (with official NIP).
     Enforces Permenkes No. 26/2021 Pasal 74.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001"),
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="HUMAN_GATE_SIGNOFF")
     rcp = get_decision_receipt(receipt_id)
     if not rcp:
         raise HTTPException(status_code=404, detail=f"Decision receipt '{receipt_id}' tidak ditemukan")
@@ -5018,6 +5150,11 @@ def get_security_posture_endpoint():
             "total_blocks": len(audit_logger.chain),
             "cryptographic_integrity_valid": valid,
             "broken_block_index": broken_idx
+        },
+        "runtime_posture": {
+            "demo_seed_accounts_enabled": _demo_accounts_enabled(),
+            "strict_session_gate_active": (os.getenv("CLAIMTRACE_STRICT_API_AUTH") == "1") or (not os.getenv("PYTEST_CURRENT_TEST")),
+            "strict_rbac_middleware_active": True,
         }
     }
 
@@ -5878,8 +6015,9 @@ def trigger_mobile_telemetry_push(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="MOBILE_TELEMETRY_PUSH")
     entry = operations_store.record_mobile_push(
         SYNTHETIC_CLAIMS_DATABASE,
         claim_id=req.claim_id,
@@ -6428,8 +6566,9 @@ def create_operational_case(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="CREATE_OPERATIONAL_CASE")
     created = operations_store.create_case(
         SYNTHETIC_CLAIMS_DATABASE,
         req.model_dump(),
@@ -6460,8 +6599,9 @@ def update_operational_case(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="UPDATE_OPERATIONAL_CASE")
     updated = operations_store.update_case(
         SYNTHETIC_CLAIMS_DATABASE,
         case_id=case_id,
@@ -6496,8 +6636,9 @@ def create_operational_flag(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="CREATE_OPERATIONAL_FLAG")
     item = operations_store.create_flag(SYNTHETIC_CLAIMS_DATABASE, payload, actor=subject.name)
     return {"status": "success", "flag": item}
 
@@ -6516,8 +6657,9 @@ def update_operational_flag(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="UPDATE_OPERATIONAL_FLAG")
     item = operations_store.update_flag(SYNTHETIC_CLAIMS_DATABASE, flag_id, payload, actor=subject.name)
     if not item:
         raise HTTPException(status_code=404, detail=f"Flag '{flag_id}' tidak ditemukan")
@@ -6544,8 +6686,9 @@ def create_clarification_schedule(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="CREATE_CLARIFICATION_SCHEDULE")
     item = operations_store.create_schedule(SYNTHETIC_CLAIMS_DATABASE, payload, actor=subject.name)
     return {"status": "success", "schedule": item}
 
@@ -6564,8 +6707,9 @@ def update_clarification_schedule(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="UPDATE_CLARIFICATION_SCHEDULE")
     item = operations_store.update_schedule(SYNTHETIC_CLAIMS_DATABASE, sched_id, payload, actor=subject.name)
     if not item:
         raise HTTPException(status_code=404, detail=f"Jadwal '{sched_id}' tidak ditemukan")
@@ -6592,8 +6736,9 @@ def create_intervention(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="CREATE_INTERVENTION")
     item = operations_store.create_intervention(SYNTHETIC_CLAIMS_DATABASE, payload, actor=subject.name)
     return {"status": "success", "intervention": item}
 
@@ -6612,8 +6757,9 @@ def update_intervention(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="UPDATE_INTERVENTION")
     item = operations_store.update_intervention(SYNTHETIC_CLAIMS_DATABASE, plan_id, payload, actor=subject.name)
     if not item:
         raise HTTPException(status_code=404, detail=f"Rencana intervensi '{plan_id}' tidak ditemukan")
@@ -6656,14 +6802,15 @@ def update_system_settings(
     x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
     x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
 ):
-    """Menyimpan pengaturan sistem ke persistence store dan mencatat blok audit SHA-256."""
+    """Menyimpan pengaturan sistem ke persistence store dan mencatat blok audit SHA-256 (Privilege.ADMIN)."""
     subject = resolve_subject(
         authorization=authorization,
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("ADMIN_SYSTEM")
     )
+    verify_privilege(subject, Privilege.ADMIN, action_name="UPDATE_SYSTEM_SETTINGS")
     try:
         return operations_store.update_settings(
             SYNTHETIC_CLAIMS_DATABASE,
@@ -6698,8 +6845,9 @@ def update_verifier_profile(
         x_bpjs_token=x_bpjs_token,
         x_verificator_role=x_verificator_role,
         x_verificator_nip=x_verificator_nip,
-        fallback_verifier_id="198704202011012001"
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001")
     )
+    verify_privilege(subject, Privilege.READ, action_name="UPDATE_VERIFIER_PROFILE")
     return operations_store.update_profile(
         SYNTHETIC_CLAIMS_DATABASE,
         updates=updates,
@@ -6907,10 +7055,24 @@ def get_two_tier_adjudication_status(claim_id: str):
 
 
 @app.post("/api/v1/adjudication/tier-1-review")
-def submit_tier_1_human_review(payload: Tier1ReviewPayload):
+def submit_tier_1_human_review(
+    payload: Tier1ReviewPayload,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
-    Submit telaah awal oleh Verifikator Medis Pertama (Tier 1).
+    Submit telaah awal oleh Verifikator Medis Pertama (Tier 1). Memerlukan hak ADJUDICATE.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001"),
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="SUBMIT_TIER1_REVIEW")
     from app.engine.human_adjudication import human_adjudication_mgr
     dossier = human_adjudication_mgr.submit_tier_1_review(
         claim_id=payload.claim_id,
@@ -6933,11 +7095,25 @@ def submit_tier_1_human_review(payload: Tier1ReviewPayload):
 
 
 @app.post("/api/v1/adjudication/tier-2-override")
-def submit_tier_2_human_override(payload: Tier2OverridePayload):
+def submit_tier_2_human_override(
+    payload: Tier2OverridePayload,
+    authorization: Optional[str] = Header(None),
+    x_bpjs_token: Optional[str] = Header(None, alias="X-BPJS-Token"),
+    x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
+    x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
+):
     """
     Submit putusan akhir & pengesahan oleh Dokter Penelaah Klinis Senior / Supervisor (Tier 2).
-    Mendukung hak koreksi (override) putusan sistem dengan justifikasi regulasi/klinis.
+    Mendukung hak koreksi (override) putusan sistem dengan justifikasi regulasi/klinis. Memerlukan hak ADJUDICATE.
     """
+    subject = resolve_subject(
+        authorization=authorization,
+        x_bpjs_token=x_bpjs_token,
+        x_verificator_role=x_verificator_role,
+        x_verificator_nip=x_verificator_nip,
+        fallback_verifier_id=_pytest_fallback_id("198704202011012001"),
+    )
+    verify_privilege(subject, Privilege.ADJUDICATE, action_name="SUBMIT_TIER2_OVERRIDE")
     from app.engine.human_adjudication import human_adjudication_mgr
     dossier = human_adjudication_mgr.submit_tier_2_override(
         claim_id=payload.claim_id,

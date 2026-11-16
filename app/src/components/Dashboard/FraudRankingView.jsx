@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import WarehouseCohortPanel from './WarehouseCohortPanel';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy,
   Award,

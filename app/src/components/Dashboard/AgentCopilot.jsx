@@ -1773,6 +1773,7 @@ export default function AgentCopilot({
                   <button
                     type="button"
                     role="switch"
+                    aria-label="Aktifkan autopilot penapisan latar belakang"
                     aria-checked={policyForm.autopilot_enabled}
                     onClick={() =>
                       setPolicyForm((prev) => ({
@@ -1807,6 +1808,7 @@ export default function AgentCopilot({
                   <button
                     type="button"
                     role="switch"
+                    aria-label="Aktifkan penyegelan audit kriptografis SHA-256"
                     aria-checked={policyForm.onchain_placeholder}
                     onClick={() =>
                       setPolicyForm((prev) => ({
@@ -2510,6 +2512,7 @@ export default function AgentCopilot({
                   </div>
                   <button
                     type="button"
+                    aria-label="Tutup pesan galat catatan"
                     onClick={() => setNoteDialog((prev) => ({ ...prev, errorMessage: '' }))}
                     className="p-0.5 rounded hover:bg-rose-500/10 cursor-pointer"
                   >

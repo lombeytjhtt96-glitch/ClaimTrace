@@ -9,6 +9,7 @@ Exposes:
 
 from __future__ import annotations
 
+import os
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -17,6 +18,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
+from app.security.access_control import Privilege, Subject, resolve_subject, verify_privilege
 from app.security.audit_log import get_audit_logger
 from app.engine.appeals_engine import (
     adjudicate_appeal,
@@ -41,7 +43,7 @@ audit_logger = get_audit_logger()
 
 
 def _resolve_actor(request: Request, fallback: str = "Verifikator JKN") -> str:
-    """Resolve authenticated actor from cookie or Bearer header without failing test mode."""
+    """Resolve authenticated actor from cookie, Bearer header, or test headers without failing test mode."""
     token = request.cookies.get("claimtrace_access_token")
     if not token:
         auth_hdr = request.headers.get("authorization", "")
@@ -51,12 +53,43 @@ def _resolve_actor(request: Request, fallback: str = "Verifikator JKN") -> str:
         try:
             from app.security.token_manager import verify_access_token
 
-            payload = verify_access_token(token)
-            if payload and payload.get("sub"):
+            is_valid, payload, _ = verify_access_token(
+                token,
+                user_agent=request.headers.get("user-agent"),
+                device_fingerprint=request.headers.get("x-device-fingerprint"),
+                touch_activity=False,
+            )
+            if is_valid and payload and payload.get("sub"):
                 return str(payload["sub"])
         except Exception:
             pass
     return fallback
+
+
+def _resolve_pillar_subject(
+    request: Request,
+    required_privilege: Optional[Privilege] = None,
+    action_name: str = "",
+) -> Subject:
+    """Resolve caller Subject and enforce fail-closed RBAC privilege gating."""
+    auth_hdr = request.headers.get("authorization")
+    if not auth_hdr and request.cookies.get("claimtrace_access_token"):
+        auth_hdr = f"Bearer {request.cookies.get('claimtrace_access_token')}"
+    fallback_id = (
+        "198704202011012001"
+        if os.getenv("PYTEST_CURRENT_TEST") and os.getenv("CLAIMTRACE_STRICT_API_AUTH") != "1"
+        else None
+    )
+    subject = resolve_subject(
+        authorization=auth_hdr,
+        x_bpjs_token=request.headers.get("x-bpjs-token"),
+        x_verificator_role=request.headers.get("x-verificator-role"),
+        x_verificator_nip=request.headers.get("x-verificator-nip"),
+        fallback_verifier_id=fallback_id,
+    )
+    if required_privilege is not None:
+        verify_privilege(subject, required_privilege, action_name=action_name)
+    return subject
 
 
 # ---------------------------------------------------------------------------
@@ -253,7 +286,12 @@ def submit_and_audit_real_documents(req: SubmitDocumentBundleRequest, request: R
     """Persist Faskes-submitted real document bundle and run full Document + ICD-10 MB1-MB5 audit."""
     from app.engine.document_auditor import document_auditor
 
-    actor = _resolve_actor(request)
+    subject = _resolve_pillar_subject(
+        request,
+        required_privilege=Privilege.ADJUDICATE,
+        action_name="SUBMIT_DOCUMENT_BUNDLE",
+    )
+    actor = subject.nip or _resolve_actor(request)
     raw_docs = [d.model_dump() for d in req.documents]
     saved = save_submitted_bundle(
         claim_id=req.claim_id,
@@ -363,7 +401,12 @@ def get_effective_document_audit(
 @pillar_router.delete("/api/v1/documents/audit/submitted/{claim_id}")
 def remove_submitted_document_bundle(claim_id: str, request: Request) -> Dict[str, Any]:
     """Remove a submitted real document bundle so claim reverts to synthetic reference baseline."""
-    actor = _resolve_actor(request)
+    subject = _resolve_pillar_subject(
+        request,
+        required_privilege=Privilege.ADJUDICATE,
+        action_name="DELETE_DOCUMENT_BUNDLE",
+    )
+    actor = subject.nip or _resolve_actor(request)
     deleted = delete_submitted_bundle(claim_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Submitted document bundle for '{claim_id}' not found.")
@@ -390,7 +433,12 @@ def get_claims_appeals(status_filter: Optional[str] = Query(default=None)) -> Di
 @pillar_router.post("/api/v1/appeals/submit")
 def create_claim_appeal(req: SubmitAppealRequest, request: Request) -> Dict[str, Any]:
     """Submit a formal Faskes Sanggahan BAKB dossier against hold/rejection."""
-    actor = _resolve_actor(request, fallback="Tim JKN Faskes")
+    subject = _resolve_pillar_subject(
+        request,
+        required_privilege=Privilege.ADJUDICATE,
+        action_name="SUBMIT_CLAIM_APPEAL",
+    )
+    actor = subject.name or _resolve_actor(request, fallback="Tim JKN Faskes")
     created = submit_appeal(
         claim_id=req.claim_id,
         faskes_name=req.faskes_name,
@@ -420,7 +468,12 @@ def create_claim_appeal(req: SubmitAppealRequest, request: Request) -> Dict[str,
 @pillar_router.post("/api/v1/appeals/{appeal_id}/adjudicate")
 def adjudicate_claim_appeal(appeal_id: str, req: AdjudicateAppealRequest, request: Request) -> Dict[str, Any]:
     """Adjudicate a formal Sanggahan BAKB appeal with final payment recovery disposition."""
-    actor = _resolve_actor(request, fallback="Verifikator Senior BPJS")
+    subject = _resolve_pillar_subject(
+        request,
+        required_privilege=Privilege.ADJUDICATE,
+        action_name="ADJUDICATE_CLAIM_APPEAL",
+    )
+    actor = subject.name or _resolve_actor(request, fallback="Verifikator Senior BPJS")
     updated = adjudicate_appeal(
         appeal_id=appeal_id,
         decision=req.decision,

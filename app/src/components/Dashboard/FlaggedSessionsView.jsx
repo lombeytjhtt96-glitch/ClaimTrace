@@ -930,6 +930,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                                 #{tag}
                                 <button
                                   type="button"
+                                  aria-label={`Hapus tag ${tag}`}
                                   onClick={() => toggleEditTag(tag)}
                                   className="text-slate-400 hover:text-rose-600 dark:text-white/40 dark:hover:text-rose-400 cursor-pointer ml-0.5"
                                 >
@@ -1029,6 +1030,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
               </h3>
               <button
                 type="button"
+                aria-label="Tutup modal tambah tag"
                 onClick={() => {
                   setShowBulkTagModal(false);
                   setBulkTagsToAdd([]);

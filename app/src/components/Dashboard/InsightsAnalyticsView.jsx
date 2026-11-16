@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
+import { exportCsvFile } from '../../utils/exportCsv';
 import {
   ResponsiveContainer,
   BarChart,
@@ -379,18 +380,13 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
     if (!result?.result?.data) return;
     const items = result.result.data;
     if (!Array.isArray(items) || items.length === 0) return;
-    const header = Object.keys(items[0]).join(',');
-    const rows = items.map((row) => Object.values(row).join(','));
-    const csvContent = [header, ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${result.query_name}_jkn_results.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const headers = Object.keys(items[0]);
+    const rows = items.map((row) => headers.map((k) => row[k] ?? ''));
+    exportCsvFile({
+      filename: `${result.query_name}_jkn_results.csv`,
+      headers,
+      rows,
+    });
   };
 
   return (
@@ -1062,6 +1058,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               </div>
               <button
                 type="button"
+                aria-label="Tutup modal rincian laporan analitik"
                 onClick={() => setSelectedReportModal(null)}
                 className={`p-1.5 rounded-lg shrink-0 ${
                   isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'
@@ -1244,7 +1241,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 value={reportSearchQuery}
                 onChange={(e) => setReportSearchQuery(e.target.value)}
                 placeholder="Cari judul, topik, atau kata kunci audit..."
-                className={`w-full pl-9 pr-4 py-2 rounded-xl text-xs border outline-none transition-colors ${
+                className={`w-full pl-9 pr-4 py-2 rounded-xl text-xs border outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors ${
                   isLight
                     ? 'bg-slate-50 border-slate-200 focus:border-emerald-600 text-slate-900 placeholder:text-slate-400'
                     : 'bg-white/5 border-white/10 focus:border-[#FFCA40] text-white placeholder:text-white/40'

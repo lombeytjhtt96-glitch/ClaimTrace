@@ -184,6 +184,7 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
   const [showActivitySidebar, setShowActivitySidebar] = useState(true);
   const [currentThinking, setCurrentThinking] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [activeAgents, setActiveAgents] = useState([]);
   const [activityLogs, setActivityLogs] = useState([
     {
@@ -370,21 +371,30 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
     }
   };
 
+  useEffect(() => {
+    if (!confirmReset) return undefined;
+    const t = setTimeout(() => setConfirmReset(false), 4000);
+    return () => clearTimeout(t);
+  }, [confirmReset]);
+
   const handleResetChat = () => {
-    if (confirm('Apakah Anda yakin ingin mengosongkan riwayat percakapan asisten audit?')) {
-      setMessages([
-        {
-          id: `msg-welcome-${Date.now()}`,
-          role: 'assistant',
-          senderName: 'Asisten Audit JKN (Meta-Agent)',
-          resolvedAgent: 'ClaimTrace',
-          content: 'Sesi obrolan telah dibersihkan. Silakan ajukan pertanyaan analisis audit klaim baru.',
-          timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-          riskLevel: 'safe',
-        }
-      ]);
-      logActivity('agent_start', 'ClaimTrace', 'Riwayat obrolan di-reset oleh verifikator.');
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
     }
+    setConfirmReset(false);
+    setMessages([
+      {
+        id: `msg-welcome-${Date.now()}`,
+        role: 'assistant',
+        senderName: 'Asisten Audit JKN (Meta-Agent)',
+        resolvedAgent: 'ClaimTrace',
+        content: 'Sesi obrolan telah dibersihkan. Silakan ajukan pertanyaan analisis audit klaim baru.',
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        riskLevel: 'safe',
+      }
+    ]);
+    logActivity('agent_start', 'ClaimTrace', 'Riwayat obrolan di-reset oleh verifikator.');
   };
 
   const handleExportChat = () => {
@@ -520,14 +530,20 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
           <button
             type="button"
             onClick={handleResetChat}
-            className={`p-2 rounded-xl border transition cursor-pointer ${
-              isLight
-                ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-                : 'bg-white/5 border-white/10 text-white/70 hover:text-white hover:bg-white/10'
+            aria-label={confirmReset ? 'Klik sekali lagi untuk mengosongkan riwayat obrolan' : 'Bersihkan riwayat obrolan'}
+            className={`px-2.5 py-2 rounded-xl border transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+              confirmReset
+                ? (isLight
+                    ? 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100'
+                    : 'bg-rose-500/20 border-rose-500/40 text-rose-200 hover:bg-rose-500/30')
+                : (isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:text-white hover:bg-white/10')
             }`}
-            title="Bersihkan Obrolan"
+            title={confirmReset ? 'Klik sekali lagi untuk konfirmasi hapus riwayat' : 'Bersihkan Obrolan'}
           >
             <RotateCcw className="w-4 h-4" />
+            {confirmReset && <span>Konfirmasi Hapus?</span>}
           </button>
 
           {/* Export JSON */}

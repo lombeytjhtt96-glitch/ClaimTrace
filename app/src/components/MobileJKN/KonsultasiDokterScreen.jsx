@@ -73,6 +73,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
         <button type="button" 
+          aria-label="Kembali"
           onClick={() => {
             if (selectedDoctor) {
               setSelectedDoctor(null);

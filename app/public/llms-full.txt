@@ -1,6 +1,6 @@
 # ClaimTrace DSS BPJS Kesehatan — Full Technical Documentation & Architecture Reference
 
-> Spesifikasi teknis komprehensif sistem ClaimTrace: Platform Deteksi Dini Anomali Klaim FKRTL BPJS Kesehatan Berbasis Tri-Layer Decision Support System (DSS), DuckDB SIMD In-Memory OLAP, Hugging Face Clinical Bi-Encoder NLP, dan Kepatuhan UU PDP No. 27/2022.
+> Spesifikasi teknis komprehensif sistem ClaimTrace: Platform Deteksi Dini Anomali Klaim FKRTL BPJS Kesehatan Berbasis Tri-Layer Decision Support System (DSS), OLAP In-Memory Kolumnar SIMD, Clinical Bi-Encoder NLP On-Premise, dan Kepatuhan UU PDP No. 27/2022.
 
 ## Ringkasan Eksekutif & Domain Operasional
 
@@ -34,7 +34,7 @@ ClaimTrace hadir sebagai instrumen pra-pembayaran (pre-payment audit) yang secar
 
 ## Metrik Kinerja Sistem
 
-- Waktu komputasi DuckDB SIMD Vectorized: 28,4 milidetik per batch 1.000.000 transaksi.
+- Waktu komputasi Mesin Analitik OLAP SIMD Vectorized: 28,4 milidetik per batch 1.000.000 transaksi.
 - Throughput audit klaim harian: 3,4 juta berkas per detik pada cluster terdistribusi.
 - Rasio persetujuan klaim jalur hijau otomatis: 82,4% klaim risiko rendah dapat diproses instant approval.
 - Presisi deteksi anomali fraud: 96,8% dengan rasio false positive di bawah 1,8%.

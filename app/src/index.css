@@ -294,6 +294,8 @@
 #cockpit-root.theme-light [class*="bg-red-500"] *,
 #cockpit-root.theme-light [class*="bg-red-600"] *,
 #cockpit-root.theme-light [class*="bg-blue-600"] *,
+#cockpit-root.theme-light [class*="bg-cyan-700"] *,
+#cockpit-root.theme-light [class*="bg-cyan-800"] *,
 #cockpit-root.theme-light button[class*="bg-emerald-600"] *,
 #cockpit-root.theme-light button[class*="bg-emerald-700"] *,
 #cockpit-root.theme-light .keep-white,
@@ -351,6 +353,10 @@
 }
 #cockpit-root.theme-light .text-slate-500 {
   color: #334155 !important;
+}
+/* WCAG 2.1 AA contrast lift for secondary muted labels on Obsidian Dark (#090B0E / #11141A) */
+#cockpit-root:not(.theme-light) .text-slate-500 {
+  color: #94a3b8 !important;
 }
 
 /* Amber / Gold Accents adjusted for light mode: crisp slate borders, emerald accents */

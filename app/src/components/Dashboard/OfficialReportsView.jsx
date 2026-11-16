@@ -6,6 +6,7 @@ import {
   Calendar, FileSpreadsheet, Send, Search, UserCheck
 } from 'lucide-react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 
 export default function OfficialReportsView({ 
   initialReportType = 'bahv-kolektif',
@@ -257,7 +258,7 @@ export default function OfficialReportsView({
   };
 
   const handleExportCsv = () => {
-    const header = ['No. SEP', 'Peserta', 'Diagnosis', 'ICD-9', 'Tarif Diajukan (Rp)', 'Tarif Disetujui (Rp)', 'Status', 'Catatan'];
+    const headers = ['No. SEP', 'Peserta', 'Diagnosis', 'ICD-9', 'Tarif Diajukan (Rp)', 'Tarif Disetujui (Rp)', 'Status', 'Catatan'];
     const rows = activeClaims.map((c) => [
       c.sep,
       c.patient,
@@ -268,18 +269,11 @@ export default function OfficialReportsView({
       statusBadgeLabels[c.status] || c.status,
       c.note,
     ]);
-    const csvContent = [header, ...rows]
-      .map((r) => r.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Laporan_${activeTab}_${selectedBatch || 'Kolektif'}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportCsvFile({
+      filename: `Laporan_${activeTab}_${selectedBatch || 'Kolektif'}.csv`,
+      headers,
+      rows,
+    });
     setReportNotice('Lampiran CSV berhasil diunduh.');
   };
 

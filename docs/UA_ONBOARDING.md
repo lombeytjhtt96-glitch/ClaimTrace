@@ -69,7 +69,7 @@ Graf pengetahuan memetakan seluruh modul ke dalam 6 lapisan arsitektur independe
   - `file:backend/tests/test_ai_anomaly_detector.py` - Pengujian akurasi deteksi anomali Isolation Forest.
   - `file:backend/tests/test_geovelocity.py` - Pengujian kalkulasi batas ambang kecepatan fisik dokter.
   - `file:backend/tests/test_audit_chain.py` - Verifikasi integritas hash SHA-256 pada rantai blok audit.
-  - `file:app/tests/verify_all_frameworks.js` - Pengujian headless browser otomatis untuk 9 tampilan dashboard utama.
+  - `file:app/tests/e2e_smoke.mjs` - Suite verifikasi browser E2E terotomasi (`npm run test:e2e`) meliputi autentikasi, chunk recovery, dan seluruh alur kerja 5 pilar utama.
 
 ### Lapisan 6: Tata Kelola, Arsitektur & Regulasi (`layer:architecture-and-governance`)
 - **Deskripsi**: Dokumentasi hukum, glosarium domain ubiquitous, keputusan desain arsitektur (ADR), dan catatan rilis resmi.

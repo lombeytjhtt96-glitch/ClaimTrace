@@ -264,6 +264,15 @@ def organize_claim_dossiers(claims_map: Dict[str, Any]) -> ClaimDossierManifest:
     )
 
 
+def _escape_csv_cell(val: Any) -> Any:
+    """Neutralize spreadsheet formula injection payloads on exported dossier text fields."""
+    if not isinstance(val, str) or not val or val == "-":
+        return val
+    if val[0] in ("=", "+", "@", "\t", "\r") or (val[0] == "-" and len(val) > 1):
+        return "'" + val
+    return val
+
+
 def generate_dossier_csv_report(manifest: ClaimDossierManifest) -> str:
     """
     Exports dossier items into a structured CSV audit report containing Excel formulas.
@@ -274,10 +283,10 @@ def generate_dossier_csv_report(manifest: ClaimDossierManifest) -> str:
     # Header metadata
     writer.writerow(["# CLAIMTRACE JKN - DOSSIER REKONSILIASI KLAIM DAN TUNTUTAN GANTI RUGI (TGR)"])
     writer.writerow(["# DASAR HUKUM: PERMENKES NO. 26 TAHUN 2021 PASAL 74 & PERPRES NO. 82 TAHUN 2018"])
-    writer.writerow([f"# BATCH MANIFEST ID: {manifest.manifest_id}"])
-    writer.writerow([f"# TANGGAL AUDIT: {manifest.created_at}"])
+    writer.writerow([_escape_csv_cell(f"# BATCH MANIFEST ID: {manifest.manifest_id}")])
+    writer.writerow([_escape_csv_cell(f"# TANGGAL AUDIT: {manifest.created_at}")])
     writer.writerow([f"# TOTAL BERKAS: {manifest.total_berkas_diorganisir}"])
-    writer.writerow([f"# INTEGRITY HASH: {manifest.batch_integrity_sha256}"])
+    writer.writerow([_escape_csv_cell(f"# INTEGRITY HASH: {manifest.batch_integrity_sha256}")])
     writer.writerow([])
 
     # Table Header
@@ -305,7 +314,7 @@ def generate_dossier_csv_report(manifest: ClaimDossierManifest) -> str:
     writer.writerow(headers)
 
     for idx, c in enumerate(manifest.claims, start=1):
-        writer.writerow([
+        row_values = [
             idx,
             c.standardized_filename,
             c.claim_id,
@@ -325,7 +334,8 @@ def generate_dossier_csv_report(manifest: ClaimDossierManifest) -> str:
             int(c.denda_administratif_rp),
             int(c.total_tuntutan_ganti_rugi_rp),
             c.sha256_checksum
-        ])
+        ]
+        writer.writerow([_escape_csv_cell(cell) for cell in row_values])
 
     # Summary Row with Spreadsheet Formulas
     start_row = 9

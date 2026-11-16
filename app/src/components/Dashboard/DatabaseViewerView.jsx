@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile, triggerBlobDownload } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Database,
@@ -683,33 +684,15 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
     if (!tableRows.length) return;
     if (format === 'json') {
       const jsonStr = JSON.stringify(tableRows, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${selectedTable}_page_${page}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      triggerBlobDownload(`${selectedTable}_page_${page}.json`, new Blob([jsonStr], { type: 'application/json' }));
     } else {
-      // CSV format
       const cols = columnsSchema.map(c => c.column_name);
-      const csvHeader = cols.join(',');
-      const csvRows = tableRows.map(row =>
-        cols.map(c => {
-          const val = row[c];
-          if (val === null || val === undefined) return '';
-          const str = String(val).replace(/"/g, '""');
-          return str.includes(',') ? `"${str}"` : str;
-        }).join(',')
-      );
-      const csvContent = [csvHeader, ...csvRows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${selectedTable}_page_${page}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const rows = tableRows.map(row => cols.map(c => row[c] ?? ''));
+      exportCsvFile({
+        filename: `${selectedTable}_page_${page}.csv`,
+        headers: cols,
+        rows,
+      });
     }
   };
 
@@ -889,7 +872,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                           placeholder="Cari tabel..."
                           value={searchTableQuery}
                           onChange={(e) => setSearchTableQuery(e.target.value)}
-                          className={`w-full text-xs bg-transparent border-none outline-none ${
+                          className={`w-full text-xs bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-emerald-600 rounded ${
                             isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/40'
                           }`}
                           autoFocus
@@ -1332,7 +1315,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               <textarea
                 id="db-sql-query-input"
                 name="db_sql_query"
-                aria-label="Editor kueri SQL DuckDB"
+                aria-label="Editor kueri SQL Analitik"
                 value={sqlInput}
                 onChange={(e) => setSqlInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -1343,7 +1326,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 }}
                 rows={4}
                 placeholder="Tulis kueri SQL di sini (contoh: SELECT * FROM bpjs_fkrtl_all LIMIT 10;)..."
-                className={`w-full bg-transparent font-mono text-xs outline-none resize-y ${
+                className={`w-full bg-transparent font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded resize-y ${
                   isLight ? 'text-emerald-800 placeholder-slate-400' : 'text-emerald-400 placeholder-slate-500'
                 }`}
                 spellCheck={false}

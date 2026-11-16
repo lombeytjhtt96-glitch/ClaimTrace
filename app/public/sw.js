@@ -1,4 +1,4 @@
-const CACHE_NAME = 'claimtrace-v1.3.0';
+const CACHE_NAME = 'claimtrace-v1.4.0';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/assets/images/bpjs_icon.png'
@@ -79,19 +79,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests: Network-first with cache fallback for offline field audits
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(req)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const resClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(req))
-    );
+  // API & FHIR endpoints contain protected audit/session data: NEVER cache to browser CacheStorage
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/fhir')) {
+    event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
   }
 

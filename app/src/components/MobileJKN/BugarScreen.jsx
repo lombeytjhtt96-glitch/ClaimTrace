@@ -11,7 +11,7 @@ export default function BugarScreen({ onNavigate }) {
     <div className="flex-1 flex flex-col bg-[#F5F7FA] overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
-        <button type="button" onClick={() => onNavigate('home')} className="p-1 text-slate-700 hover:text-black rounded-lg">
+        <button type="button" aria-label="Kembali ke beranda Mobile JKN" onClick={() => onNavigate('home')} className="p-1 text-slate-700 hover:text-black rounded-lg">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>

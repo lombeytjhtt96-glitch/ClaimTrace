@@ -830,6 +830,7 @@ function SettingItemRow({ setting, value, onChange, isChanged, isLight }) {
               id={setting.key}
               type="button"
               role="switch"
+              aria-label={setting.label}
               aria-checked={Boolean(currentValue)}
               onClick={() => onChange(!currentValue)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
@@ -1220,7 +1221,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
               prev.map((cat) => ({
                 ...cat,
                 settings: cat.settings.map((s) => {
-                  if (!(s.key in serverSettings)) return s;
+                  if (s.key === 'ui_theme_mode' || !(s.key in serverSettings)) return s;
                   const rawVal = serverSettings[s.key];
                   const normalizedVal =
                     s.key === 'ai_temperature' && Number.isFinite(Number(rawVal))
@@ -1241,6 +1242,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
   }, []);
 
   const handleSaveCategory = async (catId, editedValues, catTitle) => {
+    const prevSnapshot = categories;
     setCategories((prev) =>
       prev.map((cat) => {
         if (cat.id !== catId) return cat;
@@ -1271,17 +1273,21 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
       if (res.ok) {
         setToast({ message: `${catTitle} tersimpan ke server & disegel audit SHA-256!`, type: 'success' });
       } else {
+        setCategories(prevSnapshot);
         const errBody = await res.json().catch(() => ({}));
+        const detailMsg = typeof errBody.detail === 'string'
+          ? errBody.detail
+          : errBody.detail?.message;
         setToast({
-          message: errBody.detail || `${catTitle} gagal divalidasi server (HTTP ${res.status}).`,
+          message: detailMsg || `${catTitle} gagal divalidasi server (HTTP ${res.status}).`,
           type: 'error',
         });
       }
     } catch (err) {
+      setCategories(prevSnapshot);
       console.error('Gagal menyimpan konfigurasi ke server:', err);
       setToast({ message: `Gagal menyimpan ${catTitle}: ${err.message}`, type: 'error' });
     }
-    setTimeout(() => setToast(null), 3500);
   };
 
   const filteredCategories = activeFilter === 'all'
@@ -1300,18 +1306,29 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             className={`fixed top-20 right-6 z-50 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-xs font-semibold shadow-xl backdrop-blur-md overflow-hidden ${
-              isLight 
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              toast.type === 'error'
+                ? (isLight
+                    ? 'bg-rose-50 text-rose-800 border-rose-300'
+                    : 'bg-rose-950/90 text-rose-200 border-rose-500/40')
+                : (isLight
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
             }`}
           >
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            {toast.type === 'error' ? (
+              <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            )}
             <span>{toast.message}</span>
             <button
+              type="button"
               onClick={() => setToast(null)}
               aria-label="Tutup notifikasi"
               className={`ml-2 p-0.5 rounded cursor-pointer ${
-                isLight ? 'hover:bg-emerald-100 text-emerald-600' : 'hover:bg-emerald-500/30 text-emerald-300'
+                toast.type === 'error'
+                  ? (isLight ? 'hover:bg-rose-100 text-rose-600' : 'hover:bg-rose-500/30 text-rose-300')
+                  : (isLight ? 'hover:bg-emerald-100 text-emerald-600' : 'hover:bg-emerald-500/30 text-emerald-300')
               }`}
             >
               <X className="w-3.5 h-3.5" />
@@ -1322,7 +1339,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{ duration: 3.5, ease: "linear" }}
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
+              className={`absolute bottom-0 left-0 right-0 h-0.5 ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`}
             />
           </motion.div>
         )}

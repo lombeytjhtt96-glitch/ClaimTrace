@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { downloadTextFile } from '../../utils/exportCsv';
 import { motion } from 'motion/react';
 import { 
   AlertOctagon, CheckCircle2, Clock, ChevronRight, 
@@ -560,15 +561,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         return;
       }
       const csvText = await res.text();
-      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ClaimTrace_Rekap_FPK_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadTextFile({
+        filename: `ClaimTrace_Rekap_FPK_${new Date().toISOString().slice(0, 10)}.csv`,
+        content: csvText,
+      });
       setQueueToast({ tone: 'green', message: 'Berkas CSV rekap FPK berhasil diunduh.' });
     } catch {
       setQueueToast({ tone: 'red', message: 'Terjadi gangguan jaringan saat ekspor CSV.' });

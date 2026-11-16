@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
@@ -111,17 +112,25 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
   const sipIssueCount = doctors.filter(d => d.sipStatus === 'EXPIRED' || d.sipStatus === 'EXPIRED_WARN' || d.sipStatus === 'PENDING_SYNC').length;
 
   const handleExportSdmk = () => {
-    const csvHeader = "ID,Nama,Token_SDMK,STR,Spesialisasi,Faskes Utama,Beban Pasien Harian,Batas Permenkes,Skor Risiko,Status Anomali,Potensi Eksposur\n";
-    const csvRows = doctors.map(d => 
-      `"${d.id}","${d.name}","${d.nip || d.nip_hash || ''}","${d.str}","${d.specialty}","${d.primaryHospital}",${d.dailyWorkload},${d.workloadLimit},${d.riskScore},"${d.flagType}",${d.estimatedExposure}`
-    ).join("\n");
-    const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `berita_acara_sdmk_dpjp_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const headers = ['ID', 'Nama', 'Token_SDMK', 'STR', 'Spesialisasi', 'Faskes Utama', 'Beban Pasien Harian', 'Batas Permenkes', 'Skor Risiko', 'Status Anomali', 'Potensi Eksposur'];
+    const rows = doctors.map((d) => [
+      d.id,
+      d.name,
+      d.nip || d.nip_hash || '',
+      d.str,
+      d.specialty,
+      d.primaryHospital,
+      d.dailyWorkload,
+      d.workloadLimit,
+      d.riskScore,
+      d.flagType,
+      d.estimatedExposure,
+    ]);
+    exportCsvFile({
+      filename: `berita_acara_sdmk_dpjp_${Date.now()}.csv`,
+      headers,
+      rows,
+    });
   };
 
   const filteredDoctors = doctors.filter(doc => {
@@ -270,7 +279,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
               <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {sipIssueCount} Dokter Bermasalah
               </span>
-              <span className={`text-[9.5px] ${isLight ? 'text-slate-500 font-medium' : 'text-slate-500'}`}>
+              <span className={`text-[9.5px] ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>
                 Klaim diajukan saat izin non-aktif
               </span>
             </div>

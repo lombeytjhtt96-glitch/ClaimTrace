@@ -5,7 +5,7 @@
       "displayName": "ClaimTrace DSS Portal Verifikator FKRTL",
       "type": "application/vnd.claimtrace.web-portal+json",
       "url": "https://claimtrace.bpjs-kesehatan.go.id/llms-full.txt",
-      "description": "Sistem Pendukung Keputusan Deteksi Dini Anomali Klaim FKRTL BPJS Kesehatan pra-pembayaran berbasis Tri-Layer AI, DuckDB SIMD OLAP, interoperabilitas HL7 FHIR R4, dan kepatuhan Zero-PHI UU PDP No. 27/2022.",
+      "description": "Sistem Pendukung Keputusan Deteksi Dini Anomali Klaim FKRTL BPJS Kesehatan pra-pembayaran berbasis Tri-Layer AI, Analitik OLAP SIMD, interoperabilitas HL7 FHIR R4, dan kepatuhan Zero-PHI UU PDP No. 27/2022.",
       "version": "1.0.0",
       "tags": [
         "bpjs-kesehatan",

@@ -714,7 +714,7 @@ export default function CaseInvestigation({
                         ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
                         : (isLight ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/35')
                     }`}>
-                      {effectiveLane === 'HIJAU' ? 'BEA C03.04 -> Siap S06 In-Monica' : 'BEA C03.04 -> Tahan Pencairan S06 In-Monica'}
+                      {effectiveLane === 'HIJAU' ? 'BEA C03.04 → Siap S06 In-Monica' : 'BEA C03.04 → Tahan Pencairan S06 In-Monica'}
                     </span>
                     {(isHardNegDiag || sipStatus === 'UNSYNCED') && (
                       <span className={`text-[10.5px] font-mono font-bold px-2.5 py-1 rounded-xl border ${
@@ -923,7 +923,7 @@ export default function CaseInvestigation({
 
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-                    <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold">
+                    <span className={`inline-flex items-center gap-1 font-semibold ${isLight ? 'text-sky-700' : 'text-sky-300'}`}>
                       Baseline: {baselineVol} berkas
                     </span>
                     <span className="text-slate-300 dark:text-white/20">·</span>

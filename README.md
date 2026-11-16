@@ -145,7 +145,7 @@ python3 scripts/verify_claimtrace_stack.py
 Pengujian Otomatis End-to-End Browser:
 ```bash
 cd app
-node tests/playwright_e2e_full_verification.js
+npm run test:e2e
 ```
 Hasil: Seluruh skenario operasional (Executive Hub, Triase 3 Jalur, Cek Dokumen RS, Peringkat Risiko Faskes, Database Viewer SQL, DPJP Intelligence & Geovelocity, Audit Ledger SHA-256, dan Mobile JKN Telemetry) lulus 100% tanpa kesalahan (*0 critical page errors*).
 

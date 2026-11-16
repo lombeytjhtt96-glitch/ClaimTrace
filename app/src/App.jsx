@@ -1917,7 +1917,9 @@ export default function App() {
                         </div>
 
                         {/* Notification Bell */}
-                        <button 
+                        <button
+                          type="button"
+                          aria-label="Buka pusat notifikasi Mobile JKN"
                           onClick={() => navigateTo('notifikasi')}
                           className="relative p-1.5 text-white/90 hover:text-white transition"
                         >
@@ -1961,6 +1963,8 @@ export default function App() {
                                 <div className="flex items-center space-x-1">
                                   <span className="text-[9px] text-slate-400">10:00</span>
                                   <button
+                                    type="button"
+                                    aria-label="Tutup notifikasi konfirmasi presensi"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setNotificationToast(false);
@@ -2023,7 +2027,8 @@ export default function App() {
                               <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-0.5">
                                 Untuk kunjungan lebih efisien tanpa harus menunggu lama.
                               </p>
-                              <button 
+                              <button
+                                type="button"
                                 onClick={() => navigateTo('antrean')}
                                 className="mt-2 bg-[#0288D1] hover:bg-[#0277bd] text-white text-[11px] font-bold px-4 py-1.5 rounded-full shadow-sm active:scale-95 transition"
                               >
@@ -2116,7 +2121,7 @@ export default function App() {
                       {currentScreen === 'kartu' && (
                         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                           <div className="flex items-center space-x-2">
-                            <button onClick={() => navigateTo('home')} className="p-1 text-slate-600 hover:text-black">
+                            <button type="button" aria-label="Kembali ke beranda Mobile JKN" onClick={() => navigateTo('home')} className="p-1 text-slate-600 hover:text-black">
                               <ChevronLeft className="w-5 h-5" />
                             </button>
                             <h2 className="text-sm font-bold text-slate-900">Kartu Peserta KIS Digital</h2>
@@ -2208,25 +2213,25 @@ export default function App() {
 
                     {/* BOTTOM NAV BAR */}
                     <div className="relative bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-between select-none z-20 shrink-0">
-                      <button onClick={() => navigateTo('home')} className={`flex flex-col items-center w-12 ${activeTab === 'home' && currentScreen === 'home' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
+                      <button type="button" onClick={() => navigateTo('home')} className={`flex flex-col items-center w-12 ${activeTab === 'home' && currentScreen === 'home' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
                         <Home className="w-5 h-5" />
                         <span className="text-[10px] font-bold mt-0.5">Home</span>
                       </button>
-                      <button onClick={() => navigateTo('berita')} className={`flex flex-col items-center w-12 ${activeTab === 'berita' || currentScreen === 'berita' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
+                      <button type="button" onClick={() => navigateTo('berita')} className={`flex flex-col items-center w-12 ${activeTab === 'berita' || currentScreen === 'berita' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
                         <FileText className="w-5 h-5" />
                         <span className="text-[10px] font-medium mt-0.5">Berita</span>
                       </button>
                       <div className="relative -top-5 flex flex-col items-center">
-                        <button onClick={() => navigateTo('kartu')} className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0288D1] to-[#00A65A] text-white flex items-center justify-center shadow-md border-4 border-white active:scale-95 transition">
+                        <button type="button" aria-label="Buka Kartu KIS Digital" onClick={() => navigateTo('kartu')} className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#0288D1] to-[#00A65A] text-white flex items-center justify-center shadow-md border-4 border-white active:scale-95 transition">
                           <CreditCard className="w-6 h-6" />
                         </button>
                         <span className="text-[10px] font-bold mt-0.5 text-slate-600">Kartu</span>
                       </div>
-                      <button onClick={() => navigateTo('faq')} className={`flex flex-col items-center w-12 ${activeTab === 'faq' || currentScreen === 'faq' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
+                      <button type="button" onClick={() => navigateTo('faq')} className={`flex flex-col items-center w-12 ${activeTab === 'faq' || currentScreen === 'faq' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
                         <HelpCircle className="w-5 h-5" />
                         <span className="text-[10px] font-medium mt-0.5">FAQ</span>
                       </button>
-                      <button onClick={() => navigateTo('profil')} className={`flex flex-col items-center w-12 ${activeTab === 'profil' || currentScreen === 'profil' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
+                      <button type="button" onClick={() => navigateTo('profil')} className={`flex flex-col items-center w-12 ${activeTab === 'profil' || currentScreen === 'profil' ? 'text-[#0288D1]' : 'text-slate-400'}`}>
                         <User className="w-5 h-5" />
                         <span className="text-[10px] font-medium mt-0.5">Profil</span>
                       </button>
@@ -2486,7 +2491,16 @@ export default function App() {
                       moduleLabel={activeNavItem?.label}
                       onGoHome={() => setDashboardTab('executive')}
                     >
-                    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Memuat modul analitik...</div>}>
+                    <Suspense
+                      fallback={
+                        <div className={`rounded-2xl border p-8 flex flex-col items-center justify-center gap-3 ${
+                          isLight ? 'bg-white border-slate-200 text-slate-600 shadow-sm' : 'bg-[#00153A]/70 border-white/10 text-slate-300'
+                        }`}>
+                          <div className="w-7 h-7 rounded-full border-2 border-emerald-500/25 border-t-emerald-600 animate-spin" />
+                          <span className="text-xs font-medium tracking-wide">Memuat modul analitik...</span>
+                        </div>
+                      }
+                    >
                     {dashboardTab === 'executive' && (
                       <ExecutiveHub 
                         isLight={isLight}

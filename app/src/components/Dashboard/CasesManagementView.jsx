@@ -661,6 +661,8 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                       <td className="py-3 px-3 text-right whitespace-nowrap relative">
                         <button
                           type="button"
+                          aria-label={`Opsi aksi berkas ${item.id || ''}`.trim()}
+                          aria-expanded={openActionKebabId === item.id}
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenActionKebabId(openActionKebabId === item.id ? null : item.id);
@@ -787,6 +789,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
               </div>
               <button
                 type="button"
+                aria-label="Tutup detail berkas klaim"
                 onClick={() => setSelectedCase(null)}
                 className={`p-1.5 rounded-xl transition cursor-pointer ${
                   isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/60 hover:text-white hover:bg-white/10'

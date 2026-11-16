@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   MessageSquare,
@@ -263,38 +264,31 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
   };
 
   const handleExport = () => {
-    const csvRows = [
-      ['Session ID', 'Judul Sesi', 'Pengguna', 'Peran', 'Faskes', 'Berkas Klaim', 'Tingkat Risiko', 'Skor Risiko', 'Total Pesan', 'Waktu Mulai', 'Waktu Selesai'],
-    ];
-
+    const headers = ['Session ID', 'Judul Sesi', 'Pengguna', 'Peran', 'Faskes', 'Berkas Klaim', 'Tingkat Risiko', 'Skor Risiko', 'Total Pesan', 'Waktu Mulai', 'Waktu Selesai'];
+    const rows = [];
     groups.forEach((g) => {
       g.sessions.forEach((s) => {
-        csvRows.push([
-          `"${s.session_id}"`,
-          `"${(s.title || '').replace(/"/g, '""')}"`,
-          `"${g.userName}"`,
-          `"${ROLE_DISPLAY_LABELS[g.userRole] || g.userRole}"`,
-          `"${g.faskesName}"`,
-          `"${s.claim_id || '-'}"`,
-          `"${RISK_LEVEL_LABELS[s.risk_level] || s.risk_level}"`,
+        rows.push([
+          s.session_id,
+          s.title || '',
+          g.userName,
+          ROLE_DISPLAY_LABELS[g.userRole] || g.userRole,
+          g.faskesName,
+          s.claim_id || '-',
+          RISK_LEVEL_LABELS[s.risk_level] || s.risk_level,
           s.risk_score || 0,
           s.message_count || 0,
-          `"${s.first_time || ''}"`,
-          `"${s.last_time || ''}"`,
+          s.first_time || '',
+          s.last_time || '',
         ]);
       });
     });
 
-    const csvContent = '\uFEFF' + csvRows.map((r) => r.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Transkrip_Dialog_AI_Forensik_JKN_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    exportCsvFile({
+      filename: `Transkrip_Dialog_AI_Forensik_JKN_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers,
+      rows,
+    });
   };
 
   return (
@@ -697,6 +691,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                   </p>
                 </div>
                 <button type="button"
+                  aria-label="Tutup modal transkrip sesi"
                   onClick={() => setSelectedSession(null)}
                   className={`p-1.5 rounded-lg transition-colors ${
                     isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'

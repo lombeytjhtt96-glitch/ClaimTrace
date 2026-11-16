@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -327,21 +328,14 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
       apt.appointment_type?.name || 'N/A',
       apt.appointment_type?.duration_minutes || 'N/A',
       apt.status,
-      (apt.notes || '').replace(/"/g, '""')
+      apt.notes || ''
     ]);
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `jadwal_klarifikasi_jkn_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+    exportCsvFile({
+      filename: `jadwal_klarifikasi_jkn_${new Date().toISOString().split('T')[0]}.csv`,
+      headers,
+      rows,
+    });
   };
 
   const resetFilters = () => {
@@ -1018,6 +1012,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
               </div>
               <button
                 type="button"
+                aria-label="Tutup detail jadwal klarifikasi"
                 onClick={() => setSelectedAppointment(null)}
                 className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
                   isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'

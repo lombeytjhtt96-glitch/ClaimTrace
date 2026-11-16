@@ -189,6 +189,7 @@ export default function MoreMenuScreen({ onNavigate, onOpenClaimTrace }) {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center space-x-3 shadow-sm shrink-0">
         <button type="button" 
+          aria-label="Kembali ke beranda Mobile JKN"
           onClick={() => onNavigate('home')} 
           className="p-1 text-slate-700 hover:text-black rounded-lg active:scale-95"
         >

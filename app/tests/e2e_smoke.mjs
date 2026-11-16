@@ -295,8 +295,12 @@ async function run() {
       }
     });
     page.on('request', (req) => {
-      if (/[?&]token=/.test(req.url())) {
-        tokenUrlLeaks.push(req.url());
+      const reqUrl = req.url();
+      if (/[?&]token=/.test(reqUrl)) {
+        tokenUrlLeaks.push(reqUrl);
+      }
+      if (reqUrl.includes('generativelanguage.googleapis.com') || reqUrl.includes('/api/v1/gemini/generate')) {
+        tokenUrlLeaks.push(`EXTERNAL_VENDOR_ENDPOINT:${reqUrl}`);
       }
     });
     page.on('response', (res) => {
@@ -565,6 +569,26 @@ async function run() {
       });
       if (formAudit.length > 0) {
         throw new Error(`[${label}] Accessible label issues: ${formAudit.join(', ')}`);
+      }
+      const vendorAndBtnAudit = await page.evaluate(() => {
+        const text = document.body.innerText || '';
+        const leaks = [];
+        if (/\bduckdb\b/i.test(text)) leaks.push('DuckDB');
+        if (/\bgemini\b/i.test(text)) leaks.push('Gemini');
+        const unlabeledBtns = [];
+        for (const b of document.querySelectorAll('button')) {
+          if (b.offsetParent === null) continue;
+          const t = (b.innerText || '').trim();
+          const a = (b.getAttribute('aria-label') || b.getAttribute('title') || '').trim();
+          if (!t && !a) unlabeledBtns.push((b.className || 'btn').toString().slice(0, 40));
+        }
+        return { leaks, unlabeledBtns };
+      });
+      if (vendorAndBtnAudit.leaks.length > 0) {
+        throw new Error(`[${label}] Vendor terminology leak in visible UI: ${vendorAndBtnAudit.leaks.join(', ')}`);
+      }
+      if (vendorAndBtnAudit.unlabeledBtns.length > 0) {
+        throw new Error(`[${label}] Unlabeled icon buttons: ${vendorAndBtnAudit.unlabeledBtns.join(', ')}`);
       }
     };
 

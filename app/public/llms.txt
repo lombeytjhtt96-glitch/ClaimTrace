@@ -1,6 +1,6 @@
 # ClaimTrace DSS BPJS Kesehatan
 
-> Platform deteksi dini anomali klaim FKRTL BPJS Kesehatan berbasis Tri-Layer DSS, DuckDB SIMD, Hugging Face Bi-Encoder NLP, dan kepatuhan Zero-PHI UU PDP No. 27/2022.
+> Platform deteksi dini anomali klaim FKRTL BPJS Kesehatan berbasis Tri-Layer DSS, OLAP Kolumnar SIMD, Clinical Bi-Encoder NLP On-Premise, dan kepatuhan Zero-PHI UU PDP No. 27/2022.
 
 ## Platform Core
 
@@ -19,7 +19,7 @@
 
 ## Spesifikasi Algoritma DSS
 
-- [Engine DuckDB OLAP SIMD](https://claimtrace.bpjs-kesehatan.go.id/docs/duckdb-engine): Audit vektor paralel atas 1.000.000 transaksi berkas klaim selesai dalam 28,4 milidetik tanpa mengekspos data mentah pasien ke memori eksternal.
+- [Engine Analitik OLAP SIMD](https://claimtrace.bpjs-kesehatan.go.id/docs/olap-engine): Audit vektor paralel atas 1.000.000 transaksi berkas klaim selesai dalam 28,4 milidetik tanpa mengekspos data mentah pasien ke memori eksternal.
 - [Bi-Encoder Hugging Face Clinical NLP](https://claimtrace.bpjs-kesehatan.go.id/docs/huggingface-stack): Komputasi cosine similarity semantik teks resume medis dengan ambang batas kesamaan mutlak (90-100%) untuk membuktikan klaim fiktif (phantom billing).
 
 ## Optional

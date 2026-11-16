@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { exportCsvFile } from '../../utils/exportCsv';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -1666,30 +1667,24 @@ export default function ExecutiveHub({
     const trendRows = (activeTrends?.sentiment_trend || []).map((pt) => [
       pt.date || pt.labelDate || '-',
       String(pt.value ?? ''),
-      `"${String(pt.note || '').replace(/"/g, '""')}"`,
+      String(pt.note || ''),
     ]);
-    const lines = [
-      ['Metrik Eksekutif', 'Nilai', 'Keterangan'].join(','),
-      ['Periode', periodLabel, 'Ekspor Ringkasan Eksekutif ClaimTrace JKN'].join(','),
-      ['Total Berkas Klaim', String(kpis.total_active_cases ?? 0), 'FKRTL Terpantau'].join(','),
-      ['Kasus Prioritas Kritis', String(kpis.critical_Waiting_cases ?? 0), 'Memerlukan Tindak Lanjut'].join(','),
-      ['FKRTL Terpantau Aktif', String(kpis.active_sessions ?? 0), 'Fasilitas Kesehatan Rujukan'].join(','),
-      ['Rata-rata Waktu Resolusi (Jam)', String(kpis.avg_resolution_time_hours ?? 0), 'SLA Verifikasi'].join(','),
-      ['Pelanggaran SLA 10 HK', String(kpis.sla_breach_count ?? 0), 'Status Kepatuhan'].join(','),
-      ['Konkordansi Tarif', `${((Number(kpis.avg_sentiment_score ?? 0.999)) * 100).toFixed(2)}%`, 'Tarif Diajukan vs Disetujui'].join(','),
-      '',
-      ['Tanggal / Kohort', 'Konkordansi / Indeks', 'Catatan'].join(','),
-      ...trendRows.map((cols) => cols.join(',')),
-    ];
-    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `claimtrace_ringkasan_eksekutif_${timeRange}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    exportCsvFile({
+      filename: `claimtrace_ringkasan_eksekutif_${timeRange}.csv`,
+      headers: ['Metrik Eksekutif', 'Nilai', 'Keterangan'],
+      rows: [
+        ['Periode', periodLabel, 'Ekspor Ringkasan Eksekutif ClaimTrace JKN'],
+        ['Total Berkas Klaim', String(kpis.total_active_cases ?? 0), 'FKRTL Terpantau'],
+        ['Kasus Prioritas Kritis', String(kpis.critical_Waiting_cases ?? 0), 'Memerlukan Tindak Lanjut'],
+        ['FKRTL Terpantau Aktif', String(kpis.active_sessions ?? 0), 'Fasilitas Kesehatan Rujukan'],
+        ['Rata-rata Waktu Resolusi (Jam)', String(kpis.avg_resolution_time_hours ?? 0), 'SLA Verifikasi'],
+        ['Pelanggaran SLA 10 HK', String(kpis.sla_breach_count ?? 0), 'Status Kepatuhan'],
+        ['Konkordansi Tarif', `${((Number(kpis.avg_sentiment_score ?? 0.999)) * 100).toFixed(2)}%`, 'Tarif Diajukan vs Disetujui'],
+        [],
+        ['Tanggal / Kohort', 'Konkordansi / Indeks', 'Catatan'],
+        ...trendRows,
+      ],
+    });
   };
 
   // Keyboard accessibility: dismiss modals with Escape key

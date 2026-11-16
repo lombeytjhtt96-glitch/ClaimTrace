@@ -619,7 +619,7 @@ export default function DecisionConsole({
               Keputusan verifikator berhasil dieksekusi dan dicatat ke dalam <strong className={isLight ? 'text-emerald-950 font-bold' : 'text-white'}>Audit Trail Kriptografis (SHA-256)</strong>.
             </span>
           </div>
-          <button type="button" onClick={() => setSuccessToast(false)} className={`cursor-pointer ml-1 ${isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-emerald-400 hover:text-white'}`}>
+          <button type="button" aria-label="Tutup notifikasi sukses" onClick={() => setSuccessToast(false)} className={`cursor-pointer ml-1 ${isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-emerald-400 hover:text-white'}`}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -1552,10 +1552,10 @@ export default function DecisionConsole({
               type="button"
               onClick={handleSubmitFhirClaim}
               disabled={fhirSubmitState.busy}
-              className={`w-full font-bold text-xs py-2 px-3 rounded-xl border transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
+              className={`keep-white w-full font-bold text-xs py-2 px-3 rounded-xl border transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 ${
                 isLight
-                  ? 'bg-cyan-700 hover:bg-cyan-800 text-white border-cyan-800'
-                  : 'bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-400/40'
+                  ? 'bg-cyan-800 hover:bg-cyan-900 text-white border-cyan-900'
+                  : 'bg-cyan-700 hover:bg-cyan-600 text-white border-cyan-400/40'
               }`}
             >
               <span>{fhirSubmitState.busy ? 'Mengirim ke Gateway FHIR R4...' : 'Validasi & Kirim FHIR Claim/$submit'}</span>
@@ -1636,6 +1636,7 @@ export default function DecisionConsole({
                   </span>
                 </div>
                 <button type="button" 
+                  aria-label="Tutup pratinjau PDF"
                   onClick={() => setShowPdfModal(false)}
                   className={`p-1 rounded-lg cursor-pointer transition ${
                     isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'text-white/60 hover:text-white hover:bg-white/10'
