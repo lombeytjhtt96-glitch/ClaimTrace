@@ -1109,3 +1109,47 @@ def test_sendcorex_webhook_hmac_verification_and_audit_ledger(monkeypatch):
     assert ev_json["webhook_secret_configured"] is True
     assert ev_json["total_events"] == 2
     assert ev_json["counts_by_event"] == {"delivered": 1, "bounced": 1}
+
+
+def test_jury_demo_admin_login_feature_gate(monkeypatch):
+    # 1. Fail-closed by default in pytest when CLAIMTRACE_ALLOW_JURY_DEMO is not enabled
+    monkeypatch.delenv("CLAIMTRACE_ALLOW_JURY_DEMO", raising=False)
+    monkeypatch.setenv("CLAIMTRACE_STRICT_API_AUTH", "0")
+    st_off = client.get("/api/v1/auth/jury-demo-status")
+    assert st_off.status_code == 200
+    assert st_off.json()["enabled"] is False
+    deny_res = client.post("/api/v1/auth/jury-demo-login", json={"device_fingerprint": "JURY-TEST-FP"})
+    assert deny_res.status_code == 403
+
+    # 2. Never allowed when CLAIMTRACE_STRICT_API_AUTH=1 even if jury flag is set
+    monkeypatch.setenv("CLAIMTRACE_STRICT_API_AUTH", "1")
+    monkeypatch.setenv("CLAIMTRACE_ALLOW_JURY_DEMO", "1")
+    assert client.get("/api/v1/auth/jury-demo-status").json()["enabled"] is False
+    assert client.post("/api/v1/auth/jury-demo-login", json={"device_fingerprint": "JURY-TEST-FP"}).status_code == 403
+
+    # 3. Issues real signed ADMIN SESSION JWT when enabled under non-strict demo mode
+    monkeypatch.setenv("CLAIMTRACE_STRICT_API_AUTH", "0")
+    monkeypatch.setenv("CLAIMTRACE_ALLOW_JURY_DEMO", "1")
+    assert client.get("/api/v1/auth/jury-demo-status").json()["enabled"] is True
+
+    ok_res = client.post(
+        "/api/v1/auth/jury-demo-login",
+        json={"device_fingerprint": "JURY-EVAL-FP01"},
+        headers={"User-Agent": "JuryEvalBrowser/1.0"},
+    )
+    assert ok_res.status_code == 200
+    body = ok_res.json()
+    assert body["token"].startswith("ct.")
+    assert body["user"]["isMfaVerified"] is True
+    assert "ADMIN" in (body["user"].get("allowedRoles") or [])
+
+    verify_res = client.get(
+        "/api/v1/auth/verify-session",
+        headers={
+            "Authorization": f"Bearer {body['token']}",
+            "X-Device-Fingerprint": "JURY-EVAL-FP01",
+            "User-Agent": "JuryEvalBrowser/1.0",
+        },
+    )
+    assert verify_res.status_code == 200
+    assert main_mod.audit_logger.chain[-1]["event_type"] == "JURY_DEMO_ADMIN_LOGIN"

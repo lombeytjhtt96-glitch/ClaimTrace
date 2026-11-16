@@ -267,8 +267,20 @@ async function run() {
     await authPage.setViewportSize({ width: 390, height: 844 });
     await assertNoDarkThemeToggle(authPage, 'Forgot Password Mobile');
     await assertNoHorizontalOverflow(authPage, 'Forgot Password Mobile');
+
+    // Verify temporary one-click Jury Administrator sign-in works without verification when enabled
+    await authPage.setViewportSize({ width: 1440, height: 900 });
+    await authPage.getByRole('button', { name: /Kembali ke Masuk/i }).click();
+    const juryBtn = authPage.getByRole('button', { name: /Masuk Langsung Administrator \(Mode Juri\)/i });
+    await juryBtn.waitFor({ state: 'visible', timeout: 8000 });
+    const [juryRes] = await Promise.all([
+      authPage.waitForResponse((res) => res.url().includes('/api/v1/auth/jury-demo-login') && res.request().method() === 'POST'),
+      juryBtn.click(),
+    ]);
+    assert(juryRes.status() === 200, `Expected /api/v1/auth/jury-demo-login 200, got ${juryRes.status()}`);
+    await authPage.getByText('Total Klaim FKRTL').waitFor({ state: 'visible', timeout: 15000 });
     await authCtx.close();
-    console.log('[PASS] Auth SignIn & Lupa Password Light-First lock + responsive checks');
+    console.log('[PASS] Auth SignIn, Lupa Password & Jury Quick Admin Login checks');
 
     // 1b. Stale dynamic-import chunk recovery (lazyWithRetry auto-reloads once on 404 chunk)
     const chunkCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });

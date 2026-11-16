@@ -308,6 +308,8 @@ def _extract_client_ip(request: Request) -> str:
 STRICT_AUTH_EXEMPT_PATHS = {
     "/api/v1/health",
     "/api/v1/auth/login",
+    "/api/v1/auth/jury-demo-status",
+    "/api/v1/auth/jury-demo-login",
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password/validate",
     "/api/v1/auth/reset-password",
@@ -2650,6 +2652,97 @@ def authorize_device_session(
         "status": "success",
         "message": "Otorisasi Sesi Perangkat & Verifikasi Berlapis selesai.",
         "token": mfa_token,
+        "expires_in_seconds": bounded_ttl * 60,
+        "idle_timeout_seconds": bounded_idle * 60,
+        "user": safe_user,
+    }
+
+
+def _jury_demo_login_enabled() -> bool:
+    """Allow temporary one-click Administrator demo sign-in only when strict auth is off and feature flag permits."""
+    if os.getenv("CLAIMTRACE_STRICT_API_AUTH") == "1":
+        return False
+    raw = os.getenv("CLAIMTRACE_ALLOW_JURY_DEMO")
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return str(raw or "").strip() == "1"
+    return str(raw if raw is not None else "1").strip().lower() not in {"0", "false", "no", "off"}
+
+
+class JuryDemoLoginRequest(BaseModel):
+    device_fingerprint: Optional[str] = None
+
+
+@app.get("/api/v1/auth/jury-demo-status")
+def jury_demo_login_status(response: Response):
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return {
+        "enabled": _jury_demo_login_enabled(),
+        "role": "ADMIN",
+        "label": "Administrator Sistem Utama",
+    }
+
+
+@app.post("/api/v1/auth/jury-demo-login")
+def jury_demo_admin_login(
+    request: Request,
+    response: Response,
+    payload: Optional[JuryDemoLoginRequest] = None,
+    x_device_fingerprint: Optional[str] = Header(None, alias="X-Device-Fingerprint"),
+):
+    """Temporary one-click evaluation sign-in directly into Administrator when explicitly enabled."""
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    if not _jury_demo_login_enabled():
+        raise HTTPException(
+            status_code=403,
+            detail="Masuk cepat mode juri dinonaktifkan pada konfigurasi keamanan saat ini.",
+        )
+
+    account = VERIFICATOR_DIRECTORY.get("198801012026011001") or VERIFICATOR_DIRECTORY.get("198501012010011001")
+    if not account:
+        raise HTTPException(status_code=404, detail="Akun Administrator evaluasi tidak tersedia di direktori.")
+
+    raw_dfp = (payload.device_fingerprint if payload else None) or x_device_fingerprint or "jury-demo-workstation"
+    clean_dfp = raw_dfp.strip() if len(raw_dfp.strip()) >= 6 else "jury-demo-workstation"
+    client_ip = _extract_client_ip(request)
+    actual_ua = request.headers.get("user-agent") or "ClaimTrace Web Client"
+    bounded_ttl = 60
+    bounded_idle = 30
+
+    admin_token = create_access_token(
+        {**account, "isMfaVerified": True},
+        ttl_minutes=bounded_ttl,
+        token_type="SESSION",
+        stage="AUTHENTICATED",
+        mfa_verified=True,
+        device_fingerprint=clean_dfp,
+        user_agent=actual_ua,
+        ip_address=client_ip,
+        strict_ip_lock=False,
+        idle_timeout_minutes=bounded_idle,
+    )
+
+    audit_logger.record_event(
+        event_type="JURY_DEMO_ADMIN_LOGIN",
+        claim_id="SEC-AUTH",
+        actor=account["nip"],
+        payload={
+            "device_fingerprint": clean_dfp,
+            "ip_address": client_ip,
+            "notes": f"Masuk cepat mode juri langsung ke Administrator ({account['name']}).",
+        },
+    )
+
+    safe_user = _safe_verificator_profile(account)
+    safe_user["isMfaVerified"] = True
+    safe_user["mfa_verified"] = True
+    safe_user["sessionDurationMinutes"] = bounded_ttl
+    safe_user["idleTimeoutMinutes"] = bounded_idle
+    safe_user["deviceFingerprint"] = clean_dfp
+
+    return {
+        "status": "success",
+        "message": "Berhasil masuk langsung sebagai Administrator (Mode Juri).",
+        "token": admin_token,
         "expires_in_seconds": bounded_ttl * 60,
         "idle_timeout_seconds": bounded_idle * 60,
         "user": safe_user,

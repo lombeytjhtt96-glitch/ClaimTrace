@@ -6,10 +6,11 @@ import {
   CheckCircle2,
   ArrowLeft,
   RefreshCw,
+  ShieldCheck,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
-import { API_BASE_URL, getDeviceFingerprint, clearSessionStorage } from '../../services/apiConfig';
+import { API_BASE_URL, getDeviceFingerprint, clearSessionStorage, saveAuthenticatedSession } from '../../services/apiConfig';
 
 const GOOGLE_RECAPTCHA_V2_SITE_KEY =
   (import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim() ||
@@ -90,6 +91,8 @@ export default function SignInPage({
   // Feedback & submit state
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isJurySubmitting, setIsJurySubmitting] = useState(false);
+  const [juryDemoEnabled, setJuryDemoEnabled] = useState(true);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
   const [forgotMessage, setForgotMessage] = useState('');
 
@@ -120,6 +123,20 @@ export default function SignInPage({
       setErrorMsg(sessionNotice);
     }
   }, [sessionNotice, mode]);
+
+  useEffect(() => {
+    if (mode !== 'login') return undefined;
+    let active = true;
+    fetch(`${API_BASE_URL}/api/v1/auth/jury-demo-status`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data && typeof data.enabled === 'boolean') {
+          setJuryDemoEnabled(data.enabled);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [mode]);
 
   const resetRecaptchaWidget = useCallback(() => {
     setRecaptchaToken('');
@@ -474,6 +491,39 @@ export default function SignInPage({
     }
   };
 
+  const handleJuryAdminQuickLogin = async () => {
+    if (isSubmitting || isJurySubmitting) return;
+    setErrorMsg('');
+    setIsJurySubmitting(true);
+    const deviceFingerprint = getDeviceFingerprint();
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/jury-demo-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Device-Fingerprint': deviceFingerprint,
+        },
+        body: JSON.stringify({ device_fingerprint: deviceFingerprint }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.token || !data.user) {
+        setErrorMsg(data.detail || 'Gagal memulai sesi Administrator mode juri.');
+        return;
+      }
+      saveAuthenticatedSession(data.token, data.user);
+      if (onLoginSuccess) {
+        onLoginSuccess(data.user, {
+          expiresInSeconds: data.expires_in_seconds,
+          idleTimeoutSeconds: data.idle_timeout_seconds,
+        });
+      }
+    } catch {
+      setErrorMsg('Tidak dapat terhubung ke server autentikasi.');
+    } finally {
+      setIsJurySubmitting(false);
+    }
+  };
+
   const handleForgotSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -751,7 +801,7 @@ export default function SignInPage({
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isJurySubmitting}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting && (
@@ -759,6 +809,29 @@ export default function SignInPage({
                 )}
                 <span>{isSubmitting ? 'Memverifikasi...' : 'Masuk'}</span>
               </button>
+
+              {juryDemoEnabled && (
+                <div className="pt-2 space-y-2.5 border-t border-slate-200/80">
+                  <div className="text-center text-[11px] font-medium text-slate-500">
+                    Akses evaluasi juri (sementara tanpa verifikasi)
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isSubmitting || isJurySubmitting}
+                    onClick={handleJuryAdminQuickLogin}
+                    className="w-full py-2.5 px-4 rounded-xl border border-emerald-600/35 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {isJurySubmitting ? (
+                      <div className="w-4 h-4 border-2 border-emerald-700/30 border-t-emerald-700 rounded-full animate-spin" />
+                    ) : (
+                      <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    )}
+                    <span>
+                      {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Langsung Administrator (Mode Juri)'}
+                    </span>
+                  </button>
+                </div>
+              )}
             </form>
           )}
 
