@@ -367,72 +367,67 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
         </div>
       </div>
 
-      {/* 4 COLORFUL TICKET SUMMARY CARDS */}
+      {/* 4 CLEAN SUMMARY CARDS (POLICYPILOT MINIMALIST ELEVATION) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: TOTAL TICKETS (Vibrant Indigo) */}
-        <div className="bg-[#6c5ce7] text-white p-5 rounded-2xl shadow-md relative overflow-hidden flex items-center justify-between">
-          <div className="space-y-0.5">
-            <div className="text-3xl font-extrabold font-inter tabular-nums tracking-tight">
-              {cases.length ? (cases.length * 128 + 1245).toLocaleString('id-ID') : '25.563'}
+        {[
+          {
+            label: 'Total Berkas Klaim',
+            value: cases.length ? (cases.length * 128 + 1245).toLocaleString('id-ID') : '25.563',
+            sub: 'Portofolio aktif regional',
+            Icon: Briefcase,
+            iconBg: isLight ? 'bg-indigo-50 text-indigo-600 border-indigo-200/80' : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',
+          },
+          {
+            label: 'Perlu Klarifikasi',
+            value: pageCritical + pageHigh ? ((pageCritical + pageHigh) * 42 + 284).toLocaleString('id-ID') : '6.952',
+            sub: 'Menunggu tanggapan RS',
+            Icon: Clock,
+            iconBg: isLight ? 'bg-amber-50 text-amber-600 border-amber-200/80' : 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+          },
+          {
+            label: 'Layak Bayar / Selesai',
+            value: cases.filter((c) => c.status === 'resolved').length
+              ? (cases.filter((c) => c.status === 'resolved').length * 95 + 1200).toLocaleString('id-ID')
+              : '18.361',
+            sub: 'Terverifikasi patuh',
+            Icon: CheckCircle2,
+            iconBg: isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+          },
+          {
+            label: 'Tahan / Audit Lanjut',
+            value: pageSlaBreached ? (pageSlaBreached * 10 + 15).toLocaleString('id-ID') : '250',
+            sub: 'Prioritas investigasi SLA',
+            Icon: AlertOctagon,
+            iconBg: isLight ? 'bg-rose-50 text-rose-600 border-rose-200/80' : 'bg-rose-500/15 text-rose-300 border-rose-500/25',
+          },
+        ].map(({ label, value, sub, Icon, iconBg }) => (
+          <div
+            key={label}
+            className={`rounded-2xl border p-4 sm:p-5 transition-colors duration-200 flex items-start justify-between gap-3 ${
+              isLight
+                ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
+                : 'bg-[#131822] border-white/[0.08] text-white shadow-lg'
+            }`}
+          >
+            <div className="min-w-0 space-y-1">
+              <div className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                {label}
+              </div>
+              <div className={`text-2xl sm:text-3xl font-display font-bold tabular-nums tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                {value}
+              </div>
+              <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{sub}</p>
             </div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TOTAL BERKAS KLAIM
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <Briefcase className="w-6 h-6 text-white" />
-          </div>
-        </div>
-
-        {/* Card 2: PENDING TICKETS (Vibrant Emerald) */}
-        <div className="bg-[#00733B] text-white p-5 rounded-2xl shadow-md relative overflow-hidden flex items-center justify-between">
-          <div className="space-y-0.5">
-            <div className="text-3xl font-extrabold font-inter tabular-nums tracking-tight">
-              {pageCritical + pageHigh ? (pageCritical + pageHigh) * 42 + 284 : '6.952'}
-            </div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              PERLU KLARIFIKASI
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6 text-white" />
-          </div>
-        </div>
-
-        {/* Card 3: CLOSED TICKETS (Vibrant Cyan) */}
-        <div className="bg-[#00cec9] text-white p-5 rounded-2xl shadow-md relative overflow-hidden flex items-center justify-between">
-          <div className="space-y-0.5">
-            <div className="text-3xl font-extrabold font-inter tabular-nums tracking-tight">
-              {cases.filter(c => c.status === 'resolved').length ? (cases.filter(c => c.status === 'resolved').length * 95 + 1200).toLocaleString('id-ID') : '18.361'}
-            </div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              LAYAK BAYAR / SELESAI
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6 text-white" />
-          </div>
-        </div>
-
-        {/* Card 4: DELETED / HOLD TICKETS (Vibrant Rose) */}
-        <div className="bg-[#ff7675] text-white p-5 rounded-2xl shadow-md relative overflow-hidden flex items-center justify-between">
-          <div className="space-y-0.5">
-            <div className="text-3xl font-extrabold font-inter tabular-nums tracking-tight">
-              {pageSlaBreached ? pageSlaBreached * 10 + 15 : '250'}
-            </div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TAHAN / AUDIT LANJUT
+            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${iconBg}`}>
+              <Icon className="w-5 h-5" />
             </div>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <AlertOctagon className="w-6 h-6 text-white" />
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* MANAGE TICKETS CARD & DATA TABLE CONTAINER */}
       <div className={`rounded-2xl p-6 border shadow-sm transition-colors ${
-        isLight ? 'bg-white border-slate-200/90' : 'bg-[#222b38] border-[#2d3748]'
+        isLight ? 'bg-white border-slate-200/90' : 'bg-[#131822] border-white/[0.08]'
       }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-[#2d3748]">
           <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>

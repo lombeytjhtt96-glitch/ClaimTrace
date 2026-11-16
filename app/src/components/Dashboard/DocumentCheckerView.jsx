@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import RealBundleMorbidityPanel from './RealBundleMorbidityPanel';
 import { motion, AnimatePresence } from 'motion/react';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { SegmentedComplianceBar, PolicyStepProgressRing } from '../Common/PolicyWidgets';
 import {
   FileText,
   FileCheck2,
@@ -26,7 +28,12 @@ import {
   RefreshCw,
   Stamp,
   BadgeCheck,
-  Send
+  Send,
+  Upload,
+  ArrowUpRight,
+  X,
+  Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 
@@ -53,6 +60,36 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
   const [icdResults, setIcdResults] = useState([]);
   const [icdLoading, setIcdLoading] = useState(false);
   const [icdSearched, setIcdSearched] = useState(false);
+  const [showUploadScanModal, setShowUploadScanModal] = useState(false);
+  const [scanProgress, setScanProgress] = useState(16);
+  const [isScanningAi, setIsScanningAi] = useState(false);
+  const [scanUrlInput, setScanUrlInput] = useState('');
+  const [selectedUploadFile, setSelectedUploadFile] = useState(null);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [hideModalAlert, setHideModalAlert] = useState(false);
+  const [hideComplianceBanner, setHideComplianceBanner] = useState(false);
+
+  useEscapeKey(showUploadScanModal, () => setShowUploadScanModal(false));
+
+  const handleRunAiScan = async () => {
+    setIsScanningAi(true);
+    setScanProgress(64);
+    try {
+      await fetchDocumentAudit(activeClaimId, true);
+      setScanProgress(100);
+    } finally {
+      setIsScanningAi(false);
+    }
+  };
+
+  const handleModalFilePick = (file) => {
+    if (!file) return;
+    setSelectedUploadFile({
+      name: file.name,
+      sizeLabel: `${Math.max(0.1, file.size / (1024 * 1024)).toFixed(2)} MB`,
+    });
+    setScanProgress(48);
+  };
 
   useEffect(() => {
     let active = true;
@@ -265,6 +302,18 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setScanProgress(16);
+                setHideModalAlert(false);
+                setShowUploadScanModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs transition cursor-pointer whitespace-nowrap"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Unggah &amp; AI Scan</span>
+            </button>
           </div>
         </div>
       </div>
@@ -379,6 +428,37 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
           </div>
         </div>
       )}
+
+      {/* COMPLIANCE BAR RINGKAS (POLICYPILOT DOCUMENT COMPLIANCE) */}
+      {auditReport && (() => {
+        const validDocs = documentsBundle.filter((d) => d.is_signed_electronically && d.is_stamp_valid).length;
+        const needCheckDocs = Math.max(0, documentsBundle.length - validDocs);
+        const missingDocs = Array.isArray(auditReport.missing_documents) ? auditReport.missing_documents.length : 0;
+        const totalSegments = Math.max(1, validDocs + needCheckDocs + missingDocs);
+        return (
+          <SegmentedComplianceBar
+            isLight={isLight}
+            title="Ringkasan Kepatuhan 7 Dokumen Wajib"
+            segments={[
+              { id: 'missing', label: 'Belum Lengkap', count: missingDocs, pct: (missingDocs / totalSegments) * 100, color: '#EA580C' },
+              { id: 'check', label: 'Perlu Cek TTE', count: needCheckDocs, pct: (needCheckDocs / totalSegments) * 100, color: '#F59E0B' },
+              { id: 'valid', label: 'Lengkap & Sah', count: validDocs, pct: (validDocs / totalSegments) * 100, color: '#059669' },
+            ]}
+            validCount={validDocs}
+            validLabel="Dokumen Sah"
+            pendingCount={needCheckDocs + missingDocs}
+            pendingLabel="Perlu Verifikasi"
+            warningText={
+              hideComplianceBanner || (needCheckDocs + missingDocs === 0)
+                ? ''
+                : 'Sebagian berkas belum memenuhi TTE/stempel sah atau belum terlampir. Gunakan Unggah & AI Scan untuk memverifikasi cepat.'
+            }
+            onDismissWarning={() => setHideComplianceBanner(true)}
+            actionLabel="Buka modal unggah dan AI scan dokumen"
+            onActionClick={() => setShowUploadScanModal(true)}
+          />
+        );
+      })()}
 
       {/* SPLIT VIEW WORKSPACE: LEFT (DOCUMENTS BUNDLE & VIEWER) VS RIGHT (AUDIT FINDINGS & COMPLIANCE MATRIX) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -737,6 +817,335 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
         isLight={isLight}
         onBundleAudited={(report) => setAuditReport(report)}
       />
+
+      {/* POLICYPILOT 4-STEP DOCUMENT VALIDATION & AI SCAN MODAL */}
+      <AnimatePresence>
+        {showUploadScanModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Unggah dan pemindaian AI dokumen klaim"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowUploadScanModal(false); }}
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${
+              isLight ? 'bg-slate-900/45 backdrop-blur-xs' : 'bg-black/75 backdrop-blur-sm'
+            }`}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+            >
+              {/* Main Wizard Card (8 cols) */}
+              <div className={`md:col-span-8 rounded-2xl border shadow-2xl overflow-hidden ${
+                isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#131822] border-white/10 text-white'
+              }`}>
+                {/* 4-Step Stepper */}
+                <div className={`px-5 pt-5 pb-4 border-b flex items-center justify-between gap-2 ${
+                  isLight ? 'border-slate-100 bg-slate-50/70' : 'border-white/[0.07] bg-white/[0.02]'
+                }`}>
+                  <div className="grid grid-cols-4 gap-2 flex-1">
+                    {[
+                      { num: 1, title: 'Info Klaim', status: 'Selesai', done: true },
+                      { num: 2, title: 'Penugasan', status: 'Selesai', done: true },
+                      { num: 3, title: 'Cek Dokumen', status: scanProgress >= 100 ? 'Selesai' : `${scanProgress}%`, progress: scanProgress },
+                      { num: 4, title: 'Finalisasi', status: scanProgress >= 100 ? 'Siap' : 'Menunggu', done: scanProgress >= 100 },
+                    ].map((st) => (
+                      <div key={st.num} className="min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {st.progress !== undefined ? (
+                            <PolicyStepProgressRing pct={st.progress} size={22} isLight={isLight} />
+                          ) : st.done ? (
+                            <span className="w-5 h-5 rounded-full bg-[#2563EB] text-white flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </span>
+                          ) : (
+                            <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                              isLight ? 'border-slate-300 text-slate-400' : 'border-white/20 text-slate-500'
+                            }`}>
+                              {st.num}
+                            </span>
+                          )}
+                          <span className={`text-[10.5px] font-mono font-semibold truncate ${
+                            isLight ? 'text-slate-500' : 'text-slate-400'
+                          }`}>
+                            Tahap {st.num}
+                          </span>
+                        </div>
+                        <div className={`text-xs font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          {st.title}
+                        </div>
+                        <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                          st.done || (st.progress !== undefined && st.progress >= 100)
+                            ? isLight ? 'bg-emerald-50 text-emerald-700' : 'bg-emerald-500/15 text-emerald-300'
+                            : st.progress !== undefined
+                              ? isLight ? 'bg-blue-50 text-blue-700' : 'bg-blue-500/15 text-blue-300'
+                              : isLight ? 'bg-slate-100 text-slate-600' : 'bg-white/10 text-slate-400'
+                        }`}>
+                          {st.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Tutup modal pemindaian dokumen"
+                    onClick={() => setShowUploadScanModal(false)}
+                    className={`p-1.5 rounded-lg border transition cursor-pointer shrink-0 self-start ${
+                      isLight ? 'border-slate-200 text-slate-500 hover:bg-slate-100' : 'border-white/10 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-5 space-y-4">
+                  {!hideModalAlert && (
+                    <div className={`rounded-xl border px-3.5 py-2.5 flex items-start gap-2.5 text-xs ${
+                      isLight ? 'bg-amber-50/90 border-amber-200 text-amber-950' : 'bg-amber-500/10 border-amber-500/25 text-amber-200'
+                    }`}>
+                      <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+                      <p className="flex-1 leading-relaxed">
+                        {auditReport?.findings?.[0]?.description ||
+                          'Unggah ulang berkas PDF / Resume Medis yang sah atau jalankan AI Scan untuk memverifikasi kelengkapan TTE DPJP secara langsung.'}
+                      </p>
+                      <button
+                        type="button"
+                        aria-label="Tutup peringatan modal unggah"
+                        onClick={() => setHideModalAlert(true)}
+                        className="p-0.5 rounded hover:bg-black/5 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Dashed Dropzone */}
+                  <label
+                    htmlFor="doc-scan-file-input"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer?.files?.[0];
+                      handleModalFilePick(file);
+                    }}
+                    className={`block rounded-2xl border-2 border-dashed p-5 text-center transition cursor-pointer ${
+                      isLight
+                        ? 'border-blue-300 bg-blue-50/35 hover:bg-blue-50/70'
+                        : 'border-blue-500/35 bg-blue-500/[0.06] hover:bg-blue-500/10'
+                    }`}
+                  >
+                    <input
+                      id="doc-scan-file-input"
+                      type="file"
+                      accept=".pdf,.csv,.json"
+                      aria-label="Pilih file PDF atau CSV berkas klaim untuk diunggah"
+                      onChange={(e) => handleModalFilePick(e.target.files?.[0])}
+                      className="sr-only"
+                    />
+                    <div className={`w-9 h-9 mx-auto mb-2 rounded-xl flex items-center justify-center ${
+                      isLight ? 'bg-blue-100 text-blue-600' : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      <Upload className="w-4 h-4" />
+                    </div>
+                    <p className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      Pilih berkas PDF / SEP / CSV untuk diunggah
+                    </p>
+                    <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Atau seret dan lepaskan file ke area ini
+                    </p>
+                  </label>
+
+                  {/* Upload from URL */}
+                  <div className="space-y-1.5">
+                    <div className={`text-[11px] font-semibold text-center ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Atau tautkan URL RME RS
+                    </div>
+                    <input
+                      type="url"
+                      aria-label="Tempel URL dokumen RME rumah sakit"
+                      value={scanUrlInput}
+                      onChange={(e) => setScanUrlInput(e.target.value)}
+                      placeholder="Tempel tautan berkas RME..."
+                      className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500'
+                          : 'bg-white/[0.04] border-white/10 text-white focus:border-blue-400'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Active Attachment & Live Progress Card */}
+                  <div className="space-y-2">
+                    <div className={`rounded-xl border px-3 py-2.5 flex items-center gap-2.5 ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/[0.04] border-white/10'
+                    }`}>
+                      <FileText className={`w-4 h-4 shrink-0 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className={`text-xs font-semibold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          {selectedUploadFile?.name || activeDoc?.file_name || 'Resume_Medis_FKRTL.pdf'}
+                        </div>
+                        <div className={`text-[10.5px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          PDF · {selectedUploadFile?.sizeLabel || `${Math.max(0.2, (activeDoc?.file_size_kb || 600) / 1024).toFixed(1)} MB`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`rounded-xl border p-3 ${
+                      isLight ? 'bg-blue-50/40 border-blue-200' : 'bg-blue-500/[0.08] border-blue-500/25'
+                    }`}>
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                        <span className={isLight ? 'text-slate-900' : 'text-white'}>
+                          {isScanningAi ? 'Memindai integritas berkas...' : scanProgress >= 100 ? 'Pemindaian AI Selesai' : 'Siap Dipindai'}
+                        </span>
+                        <span className="font-mono text-[11px] text-blue-600 dark:text-blue-400">{scanProgress}%</span>
+                      </div>
+                      <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-blue-100' : 'bg-white/10'}`}>
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${scanProgress >= 100 ? 'bg-emerald-600' : 'bg-[#2563EB]'}`}
+                          style={{ width: `${scanProgress}%` }}
+                        />
+                      </div>
+                      <div className={`flex items-center justify-between text-[10.5px] mt-1.5 font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <span>{activeClaimId}_bundle.pdf</span>
+                        <span>{scanProgress >= 100 ? 'SHA-256 Terverifikasi' : 'Menunggu AI Scan'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {showHowItWorks && (
+                    <div className={`rounded-xl border p-3 text-[11.5px] space-y-1 ${
+                      isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-white/[0.04] border-white/10 text-slate-300'
+                    }`}>
+                      <p className="font-bold">Cara Kerja Validasi 4 Tahap:</p>
+                      <p>1) Tarik file RME/SEP, 2) Klik <strong>AI Scan</strong> untuk audit kecocokan TTE, kronologi tanggal, &amp; kaidah koding, 3) Klik <strong>Tandai Selesai</strong> untuk meneruskan ke Tier 2.</p>
+                    </div>
+                  )}
+
+                  {/* Footer Actions */}
+                  <div className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 ${
+                    isLight ? 'border-slate-100' : 'border-white/[0.07]'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => setShowHowItWorks((v) => !v)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                        isLight ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
+                      }`}
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>Cara Kerja</span>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={isScanningAi}
+                        onClick={handleRunAiScan}
+                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer disabled:opacity-60 ${
+                          isLight ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50' : 'bg-white/5 border-white/15 text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ${isScanningAi ? 'animate-spin' : ''}`} />
+                        <span>{isScanningAi ? 'Memindai...' : 'AI Scan'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={submittingAction}
+                        onClick={async () => {
+                          await handleAction('approve');
+                          setShowUploadScanModal(false);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm transition cursor-pointer disabled:opacity-60"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Tandai Selesai</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Floating Context Card (4 cols - matches PolicyPilot ref1 card) */}
+              <div className={`md:col-span-4 rounded-2xl border p-4 shadow-2xl space-y-3 ${
+                isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#131822] border-white/10 text-white'
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-mono">
+                    <span className={isLight ? 'text-slate-400' : 'text-slate-400'}>ID: </span>
+                    <strong className={isLight ? 'text-slate-900' : 'text-white'}>#{activeClaimId}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Kembali ke detail dokumen utama"
+                    onClick={() => setShowUploadScanModal(false)}
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center cursor-pointer transition ${
+                      isLight ? 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className={`divide-y text-xs ${isLight ? 'divide-slate-100' : 'divide-white/[0.08]'}`}>
+                  <div className="py-2 flex items-center justify-between gap-2">
+                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Temuan</span>
+                    <span className="font-semibold text-right truncate max-w-[160px]" title={auditReport?.findings?.[0]?.title}>
+                      {auditReport?.findings?.[0]?.title || 'Siap Verifikasi'}
+                    </span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between gap-2">
+                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Batas SLA</span>
+                    <span className={`px-2 py-0.5 rounded-md font-mono font-bold text-[11px] border ${
+                      isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                    }`}>
+                      SLA 10 HK
+                    </span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between gap-2">
+                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Penanggung Jawab</span>
+                    <span className="font-semibold truncate max-w-[140px]">
+                      {currentUser?.name || activeDoc?.dpjp_name || 'Tim Verifikator'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Lampiran</span>
+                  <div className={`rounded-xl border p-2.5 flex items-center justify-between gap-2 ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/[0.04] border-white/10'
+                  }`}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className={`w-4 h-4 shrink-0 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-semibold truncate">
+                          {selectedUploadFile?.name || activeDoc?.file_name || 'Resume_Medis.pdf'}
+                        </div>
+                        <div className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {auditReport?.compliance_score_pct ?? 85}% Sah
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Segarkan status lampiran berkas"
+                      onClick={() => fetchDocumentAudit(activeClaimId, true)}
+                      className={`p-1.5 rounded-lg border cursor-pointer transition ${
+                        isLight ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                      }`}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

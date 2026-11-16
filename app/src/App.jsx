@@ -1255,17 +1255,17 @@ export default function App() {
           transition={{ duration: 0.2 }}
           className={`h-dvh max-h-dvh flex flex-col font-sans antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
             isLight
-              ? 'bg-[#f4f7f7] text-slate-900 theme-light'
-              : 'dark bg-[#18202c] text-[#f1f5f9] theme-dark'
+              ? 'bg-[#F7F8FA] text-slate-900 theme-light'
+              : 'dark bg-[#0B0F17] text-[#F3F5F8] theme-dark'
           }`}
         >
           {/* ======================================================== */}
-          {/* UNIFIED HEADER (CLINICAL PRECISION)                    */}
+          {/* UNIFIED HEADER (POLICYPILOT-INSPIRED CLEAN PRECISION)    */}
           {/* ======================================================== */}
-          <header className={`backdrop-blur-xl border-b px-4 py-2.5 shrink-0 z-40 transition-colors duration-200 ${
+          <header className={`backdrop-blur-xl border-b px-4 py-2.5 shrink-0 z-40 transition-colors duration-300 ${
             isLight
-              ? 'bg-white/95 border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.03)]'
-              : 'bg-[#0E1116]/95 border-white/[0.08] text-[#F3F5F8]'
+              ? 'bg-white/95 border-slate-200/80 text-slate-900 shadow-[0_1px_2px_rgba(6,27,49,0.03)]'
+              : 'bg-[#0E131B]/95 border-white/[0.08] text-[#F3F5F8]'
           }`}>
             <div className="w-full flex items-center justify-between gap-3">
               
@@ -1358,7 +1358,7 @@ export default function App() {
                       setDashboardTab('queue');
                     }
                   }}
-                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-64 xl:w-72 2xl:w-80 relative ml-2 transition-colors focus-within:ring-2 ${
+                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-48 2xl:w-64 relative ml-2 transition-colors focus-within:ring-2 ${
                     isLight
                       ? 'bg-slate-50 border-slate-200 text-slate-900 focus-within:bg-white focus-within:border-emerald-500/60 focus-within:ring-emerald-500/20'
                       : 'bg-white/10 border-white/15 text-white focus-within:border-emerald-400/60 focus-within:ring-emerald-400/20'
@@ -1368,10 +1368,10 @@ export default function App() {
                   <input
                     type="text"
                     aria-label="Cari modul, No. SEP, atau faskes"
-                    placeholder="Cari modul, SEP, Faskes..."
+                    placeholder="Cari SEP / Faskes..."
                     value={headerSearch}
                     onChange={(e) => setHeaderSearch(e.target.value)}
-                    className={`bg-transparent border-none outline-none text-xs w-full pr-24 pl-0.5 focus:ring-0 ${
+                    className={`bg-transparent border-none outline-none text-xs w-full pr-20 pl-0.5 focus:ring-0 ${
                       isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-white/50'
                     }`}
                   />
@@ -1382,7 +1382,7 @@ export default function App() {
                       setCommandPaletteOpen(true);
                     }}
                     title="Buka Navigasi Cepat Portal (Ctrl+K)"
-                    className={`absolute right-14 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-mono border transition cursor-pointer ${
+                    className={`absolute right-12 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-mono border transition cursor-pointer ${
                       isLight
                         ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                         : 'bg-white/5 text-white/70 border-white/15 hover:bg-white/10'
@@ -1402,6 +1402,38 @@ export default function App() {
                   </button>
                 </form>
               </div>
+
+              {/* Center: PolicyPilot-style Horizontal Hub Pills */}
+              <nav aria-label="Navigasi cepat portal" className="hidden xl:flex items-center gap-1 min-w-0">
+                {[
+                  { id: 'executive', label: 'Ringkasan' },
+                  { id: 'queue', label: 'Antrean' },
+                  { id: 'investigation', label: 'Dokumen' },
+                  { id: 'decision', label: 'Putusan' },
+                  { id: 'faskes', label: 'Faskes' },
+                  { id: 'official_reports', label: 'Laporan' },
+                ].map((navItem) => {
+                  const active = dashboardTab === navItem.id;
+                  return (
+                    <button
+                      key={navItem.id}
+                      type="button"
+                      onClick={() => setDashboardTab(navItem.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                        active
+                          ? isLight
+                            ? 'bg-slate-100 text-slate-950 font-semibold'
+                            : 'bg-white/10 text-white font-semibold'
+                          : isLight
+                            ? 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
+                            : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {navItem.label}
+                    </button>
+                  );
+                })}
+              </nav>
 
               {/* Center/Right: Clean Navigation Actions */}
               <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
@@ -1819,8 +1851,8 @@ export default function App() {
             sidebarCollapsed && isMobileViewport ? 'border-r-0 overflow-hidden pointer-events-none' : sidebarCollapsed ? 'border-r overflow-visible' : 'border-r overflow-hidden'
           } ${
             isLight
-              ? 'bg-white border-[#061B31]/[0.08] text-[#061B31]'
-              : 'bg-[#0E1116] border-white/[0.08] text-[#F3F5F8]'
+              ? 'bg-white border-slate-200/80 text-slate-900'
+              : 'bg-[#0E131B] border-white/[0.08] text-[#F3F5F8]'
           }`}
         >
           {/* Navigation Links Grouped & Organized */}
@@ -1929,8 +1961,8 @@ export default function App() {
         </motion.aside>
 
         {/* WORKSPACE AREA (COCKPIT LAYOUT) */}
-        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto p-3 lg:p-4 pb-24 min-h-0 transition-colors duration-200 ${
-          isLight ? 'bg-[#f4f7f7] text-slate-900' : 'bg-[#18202c] text-slate-100'
+        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto p-3 lg:p-5 pb-24 min-h-0 transition-colors duration-300 ${
+          isLight ? 'bg-[#F7F8FA] text-slate-900' : 'bg-[#0B0F17] text-slate-100'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${
             viewMode === 'split' ? 'flex flex-col xl:flex-row gap-5 items-start' : 'space-y-4'

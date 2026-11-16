@@ -30,21 +30,21 @@
 
 html.dark,
 .theme-dark {
-  --ct-canvas: #090B0E;
-  --ct-surface: #11141A;
-  --ct-inset: #161A22;
+  --ct-canvas: #0B0F17;
+  --ct-surface: #131822;
+  --ct-inset: #19202D;
   --ct-ink: #F3F5F8;
   --ct-ink-secondary: #9CA3AF;
   --ct-ink-muted: #8B95A5;
   --ct-border: rgba(255, 255, 255, 0.08);
   --ct-accent: #10B981;
 
-  --ct-ui-canvas: #090B0E;
-  --ct-ui-sidebar: #0E1116;
-  --ct-ui-surface: #11141A;
+  --ct-ui-canvas: #0B0F17;
+  --ct-ui-sidebar: #0E131B;
+  --ct-ui-surface: #131822;
   --ct-ui-border: rgba(255, 255, 255, 0.08);
-  --scrollbar-thumb: #94A3B8;
-  --scrollbar-track: #090B0E;
+  --scrollbar-thumb: #64748B;
+  --scrollbar-track: #0B0F17;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
@@ -76,6 +76,10 @@ table td,
 }
 
 /* Hairline & layered surface elevation in Light Mode */
+#cockpit-root {
+  transition: background-color 280ms ease, color 280ms ease;
+}
+
 #cockpit-root.theme-light {
   background-color: var(--ct-canvas);
   color: var(--ct-ink);
@@ -98,14 +102,14 @@ table td,
 
 #cockpit-root.theme-dark [class*="bg-[#000c24]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark [class*="bg-[#00081c]"]:not(.hero-navy-banner):not(.keep-dark-surface) {
-  background-color: #090B0E !important;
+  background-color: #0B0F17 !important;
 }
 
 #cockpit-root.theme-dark [class*="bg-[#00153A]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark [class*="bg-[#1e2530]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark [class*="bg-[#222b38]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark .bg-slate-900:not(.hero-navy-banner):not(.keep-dark-surface) {
-  background-color: #11141A !important;
+  background-color: #131822 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
@@ -114,7 +118,7 @@ table td,
 #cockpit-root.theme-dark [class*="bg-[#001030]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark [class*="bg-[#001435]"]:not(.hero-navy-banner):not(.keep-dark-surface),
 #cockpit-root.theme-dark [class*="bg-[#001945]"]:not(.hero-navy-banner):not(.keep-dark-surface) {
-  background-color: #161A22 !important;
+  background-color: #19202D !important;
   border-color: rgba(255, 255, 255, 0.07) !important;
 }
 

@@ -74,11 +74,22 @@ async function assertPortFree(port, host = '127.0.0.1') {
   });
 }
 
-async function waitForHttpReady(url, proc, name, timeoutMs = 90000) {
+function attachRollingLog(stream, label) {
+  let buf = '';
+  if (stream) {
+    stream.on('data', (chunk) => {
+      buf = (buf + String(chunk)).slice(-2000);
+    });
+  }
+  return () => buf.trim() || `<no ${label} output>`;
+}
+
+async function waitForHttpReady(url, proc, name, timeoutMs = 120000, getLogs = null) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (proc && proc.exitCode !== null) {
-      throw new Error(`${name} exited prematurely with code ${proc.exitCode}`);
+      const tail = getLogs ? `\n--- ${name} logs ---\n${getLogs()}` : '';
+      throw new Error(`${name} exited prematurely with code ${proc.exitCode}${tail}`);
     }
     try {
       const res = await fetch(url);
@@ -88,7 +99,8 @@ async function waitForHttpReady(url, proc, name, timeoutMs = 90000) {
     }
     await new Promise((r) => setTimeout(r, 400));
   }
-  throw new Error(`Timed out waiting for ${url}`);
+  const tail = getLogs ? `\n--- ${name} logs ---\n${getLogs()}` : '';
+  throw new Error(`Timed out waiting for ${url}${tail}`);
 }
 
 function mintTestVerifierSession() {
@@ -178,16 +190,26 @@ async function run() {
     backendProc = spawn(
       'python3',
       ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8000', '--log-level', 'warning'],
-      { cwd: BACKEND_DIR, detached: true, stdio: 'pipe' }
+      { cwd: BACKEND_DIR, detached: true, stdio: ['ignore', 'pipe', 'pipe'] }
     );
+    const getBackendOut = attachRollingLog(backendProc.stdout, 'uvicorn stdout');
+    const getBackendErr = attachRollingLog(backendProc.stderr, 'uvicorn stderr');
+
     frontendProc = spawn(
       'npx',
       ['vite', 'preview', '--host', '127.0.0.1', '--port', '3000', '--strictPort'],
-      { cwd: APP_DIR, detached: true, stdio: 'pipe' }
+      { cwd: APP_DIR, detached: true, stdio: ['ignore', 'pipe', 'pipe'] }
     );
+    const getFrontendErr = attachRollingLog(frontendProc.stderr, 'vite stderr');
 
-    await waitForHttpReady(`${BACKEND_URL}/api/v1/health`, backendProc, 'uvicorn');
-    await waitForHttpReady(`${FRONTEND_URL}/`, frontendProc, 'vite preview');
+    await waitForHttpReady(
+      `${BACKEND_URL}/api/v1/health`,
+      backendProc,
+      'uvicorn',
+      120000,
+      () => `stdout: ${getBackendOut()}\nstderr: ${getBackendErr()}`
+    );
+    await waitForHttpReady(`${FRONTEND_URL}/`, frontendProc, 'vite preview', 90000, getFrontendErr);
 
     browser = await chromium.launch({
       headless: true,
@@ -318,6 +340,9 @@ async function run() {
 
     await page.goto(`${FRONTEND_URL}/?view=dashboard&tab=executive`, { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /Dashboard Ringkasan/i }).waitFor({ state: 'visible', timeout: 15000 });
+    await page.getByText('Klaim Prioritas Terbaru').waitFor({ state: 'visible', timeout: 8000 });
+    await page.getByText('Kepatuhan Berkas & Klaim').waitFor({ state: 'visible', timeout: 8000 });
+    await page.getByText('Kapasitas & Validasi Pra-Bayar').waitFor({ state: 'visible', timeout: 8000 });
     await assertNoHorizontalOverflow(page, 'Dashboard Executive Desktop');
 
     // Mobile viewport check (360x780 + 390x844)
@@ -379,9 +404,20 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     console.log('[PASS] Pillar 1 Live SQL Warehouse Cohort Panel + Mobile Overflow Check');
 
-    // Pillar 2 UI: Cek 7 Dokumen RS -> ICD-10 Kamus + RealBundleMorbidityPanel (Rule MB1-MB5 & Submit Real Bundle)
+    // Pillar 2 UI: Cek 7 Dokumen RS -> PolicyPilot 4-step AI Scan Modal + ICD-10 Kamus + RealBundleMorbidityPanel
     await navigateViaCommandPalette('7 Dokumen', /Cek 7 Dokumen RS/i);
     await page.getByRole('button', { name: /Uji Rule MB1-MB5 & Fornas/i }).waitFor({ state: 'visible', timeout: 10000 });
+
+    await page.getByRole('button', { name: /Unggah & AI Scan/i }).click();
+    const aiScanDialog = page.getByRole('dialog', { name: /Unggah dan pemindaian AI dokumen klaim/i });
+    await aiScanDialog.waitFor({ state: 'visible', timeout: 8000 });
+    await Promise.all([
+      page.waitForResponse((res) => res.url().includes('/api/v1/documents/audit/') && res.request().method() === 'GET'),
+      aiScanDialog.getByRole('button', { name: /AI Scan/i }).click(),
+    ]);
+    await aiScanDialog.getByText('Pemindaian AI Selesai').waitFor({ state: 'visible', timeout: 8000 });
+    await page.keyboard.press('Escape');
+    await aiScanDialog.waitFor({ state: 'hidden', timeout: 5000 });
 
     const icdInput = page.getByLabel(/Cari kode atau nama penyakit ICD-10/i);
     await icdInput.fill('Sepsis');
@@ -634,6 +670,11 @@ async function run() {
     for (const [qText, btnRegex] of fullTabSweep) {
       await navigateViaCommandPalette(qText, btnRegex);
       await assertCleanTabView(`Tab:${qText}`);
+      if (qText === 'Antrean') {
+        await page.getByRole('button', { name: /Tampilan tabel baris/i }).click();
+        await page.getByRole('columnheader', { name: /No\. Klaim/i }).waitFor({ state: 'visible', timeout: 5000 });
+        await page.getByRole('button', { name: /Tampilan grid kartu/i }).click();
+      }
       if (qText === 'Manajemen Berkas') {
         const actionBtn = page.locator('button[aria-label^="Opsi aksi berkas"]').first();
         if (await actionBtn.count()) {

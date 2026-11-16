@@ -46,7 +46,14 @@ import {
   CreditCard,
   Building2,
   Download,
+  ArrowUpRight,
+  Search,
+  FileCheck2,
 } from 'lucide-react';
+import {
+  SegmentedComplianceBar,
+  SegmentedRadialHighlightCard,
+} from '../Common/PolicyWidgets';
 import {
   generateClaimTraceExecutiveReport,
   generateClaimTraceInterventionCampaign,
@@ -325,11 +332,11 @@ function MiniTooltip({ active, payload, isLight, unit = '' }) {
   );
 }
 
-// ─── KPICard ─────────
-function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 'info', isLight, sparkValues = [] }) {
-  const cardStyleClass = isLight 
-    ? 'border-[#061B31]/[0.08] bg-white shadow-[0_1px_2px_rgba(6,27,49,0.04)] hover:border-[#061B31]/20 hover:shadow-[0_4px_12px_rgba(6,27,49,0.06)] text-[#061B31]' 
-    : 'border-white/[0.08] bg-[#11141A] hover:border-white/[0.16] text-[#F3F5F8]';
+// ─── KPICard (PolicyPilot Minimalist Card) ─────────
+function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 'info', isLight, sparkValues = [], onActionClick, actionLabel }) {
+  const cardStyleClass = isLight
+    ? 'border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(6,27,49,0.04)] hover:border-slate-300 hover:shadow-[0_6px_18px_rgba(6,27,49,0.07)] text-[#061B31]'
+    : 'border-white/[0.08] bg-[#131822] hover:border-white/[0.16] text-[#F3F5F8]';
 
   const topAccentClass = {
     critical: 'from-rose-500 via-rose-400 to-amber-400',
@@ -377,31 +384,48 @@ function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 
     >
       {/* Minimal hairline container without rainbow stripe */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`text-[11px] font-display font-bold uppercase tracking-wider ${
-              isLight ? 'text-slate-600' : 'text-slate-300'
-            }`}>
-              {title}
-            </span>
-            {periodBadge && (
-              <span className={`text-[10px] font-mono font-medium uppercase tracking-wider leading-none ${
-                isLight ? 'text-slate-400' : 'text-slate-500'
+        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+          {icon && (
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${iconBadgeClass}`}>
+              {icon}
+            </div>
+          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={`text-[11px] font-display font-bold uppercase tracking-wider ${
+                isLight ? 'text-slate-600' : 'text-slate-300'
               }`}>
-                {periodBadge}
+                {title}
               </span>
-            )}
-          </div>
-          <div className={`text-2xl sm:text-[26px] xl:text-[28px] font-display font-semibold tabular-nums tracking-tight leading-tight ${
-            isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'
-          }`}>
-            {value}
+              {periodBadge && (
+                <span className={`text-[10px] font-mono font-medium uppercase tracking-wider leading-none ${
+                  isLight ? 'text-slate-400' : 'text-slate-500'
+                }`}>
+                  {periodBadge}
+                </span>
+              )}
+            </div>
+            <div className={`text-2xl sm:text-[26px] xl:text-[28px] font-display font-semibold tabular-nums tracking-tight leading-tight ${
+              isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'
+            }`}>
+              {value}
+            </div>
           </div>
         </div>
-        {icon && (
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${iconBadgeClass}`}>
-            {icon}
-          </div>
+        {onActionClick && (
+          <button
+            type="button"
+            onClick={onActionClick}
+            aria-label={actionLabel || `Buka detail ${title}`}
+            title={actionLabel || `Buka detail ${title}`}
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer ${
+              isLight
+                ? 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'
+                : 'border-white/10 bg-white/[0.04] text-slate-400 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         )}
       </div>
 
@@ -1649,6 +1673,291 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
 }
 
 
+// ─── PolicyPilot-Style Live Claims Bento Table & Performance Card ───────────────────────
+const FALLBACK_RECENT_CLAIMS = [
+  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, score: 87.0, lane: 'red', slaDays: 3, source: 'Simulasi FKRTL' },
+  { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Maya Kusuma, Sp.PD', code: 'K-4-17-I', tariffRp: 9850000, score: 74.5, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
+  { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Farhan Malik, Sp.B', code: 'B-1-10-I', tariffRp: 42000000, score: 91.2, lane: 'red', slaDays: 2, source: 'Audit SDMK' },
+  { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', tariffRp: 4200000, score: 12.4, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },
+  { id: 'CLM-2026-8806', hospital: 'RS Medika Prima', dpjp: 'dr. Ratna Wulandari, Sp.A', code: 'I-4-10-III', tariffRp: 27400000, score: 83.8, lane: 'red', slaDays: 2, source: 'Deteksi Upcoding' },
+];
+
+function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
+  const [rows, setRows] = useState(FALLBACK_RECENT_CLAIMS);
+  const [laneFilter, setLaneFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('score');
+
+  useEffect(() => {
+    let active = true;
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims?limit=15`)
+      .then((payload) => {
+        if (!active || !payload) return;
+        const list = Array.isArray(payload) ? payload : (payload.claims || payload.data || []);
+        if (!Array.isArray(list) || list.length === 0) return;
+        const mapped = list.slice(0, 12).map((item) => {
+          const rawLane = String(item.triage_lane || item.lane || 'GREEN').toUpperCase();
+          const lane = rawLane.includes('RED') || rawLane.includes('MERAH') ? 'red' : rawLane.includes('YELLOW') || rawLane.includes('KUNING') ? 'yellow' : 'green';
+          return {
+            id: item.claim_id || item.id,
+            hospital: item.faskes_name || item.hospital || item.nama_faskes || 'FKRTL Mitra JKN',
+            dpjp: item.dpjp_name || item.dpjp || 'DPJP Terdaftar',
+            code: item.ina_cbg_code || item.code || 'J-4-10-II',
+            tariffRp: Number(item.nilai_klaim_rp ?? item.claimed_tariff_rp ?? 0),
+            score: Number(item.total_risk_score ?? item.totalScore ?? 0),
+            lane,
+            slaDays: Number(item.sla_remaining_days ?? item.slaDays ?? 5),
+            source: item.modus_label || item.jenis_pengajuan || 'Reguler FPK',
+          };
+        });
+        if (mapped.length > 0) setRows(mapped);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const visibleRows = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return [...rows]
+      .filter((r) => (laneFilter === 'all' ? true : r.lane === laneFilter))
+      .filter((r) => !q || r.id.toLowerCase().includes(q) || r.hospital.toLowerCase().includes(q) || r.dpjp.toLowerCase().includes(q) || r.code.toLowerCase().includes(q))
+      .sort((a, b) => (sortBy === 'tariff' ? b.tariffRp - a.tariffRp : sortBy === 'sla' ? a.slaDays - b.slaDays : b.score - a.score))
+      .slice(0, 6);
+  }, [rows, laneFilter, searchQuery, sortBy]);
+
+  return (
+    <section
+      aria-label="Daftar klaim prioritas terbaru"
+      className={`rounded-2xl border p-5 transition-colors duration-300 ${
+        isLight
+          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
+          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      }`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className={`text-base font-display font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            Klaim Prioritas Terbaru
+          </h3>
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            Klik baris klaim untuk langsung menelaah berkas medis &amp; bukti 4 lapis.
+          </p>
+        </div>
+        {onNavigateToQueue && (
+          <button
+            type="button"
+            onClick={onNavigateToQueue}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer shrink-0 ${
+              isLight
+                ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                : 'bg-white/[0.05] hover:bg-white/10 text-slate-200 border-white/10'
+            }`}
+          >
+            <span>Semua Antrean</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Filter & Search Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { id: 'all', label: 'Semua' },
+            { id: 'red', label: 'Merah' },
+            { id: 'yellow', label: 'Kuning' },
+            { id: 'green', label: 'Hijau' },
+          ].map((pill) => {
+            const active = laneFilter === pill.id;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setLaneFilter(pill.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  active
+                    ? isLight ? 'bg-slate-900 text-white' : 'bg-emerald-600 text-white'
+                    : isLight ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-white/[0.06] text-slate-300 hover:bg-white/10'
+                }`}
+              >
+                {pill.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${
+            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/[0.04] border-white/10'
+          }`}>
+            <Search className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+            <input
+              type="text"
+              aria-label="Cari klaim prioritas terbaru"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari klaim / RS..."
+              className={`bg-transparent text-xs outline-none w-28 sm:w-36 ${isLight ? 'text-slate-900 placeholder:text-slate-400' : 'text-white placeholder:text-slate-500'}`}
+            />
+          </div>
+          <select
+            aria-label="Urutkan klaim prioritas"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className={`px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer outline-none ${
+              isLight ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#19202D] border-white/10 text-slate-200'
+            }`}
+          >
+            <option value="score">Skor Tertinggi</option>
+            <option value="tariff">Nominal Tertinggi</option>
+            <option value="sla">SLA Terdekat</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs min-w-[540px]">
+          <thead>
+            <tr className={`border-b text-[11px] font-semibold ${
+              isLight ? 'border-slate-100 text-slate-500' : 'border-white/[0.07] text-slate-400'
+            }`}>
+              <th scope="col" className="py-2.5 pr-3">Faskes &amp; Klaim</th>
+              <th scope="col" className="py-2.5 px-2">INA-CBG</th>
+              <th scope="col" className="py-2.5 px-2">Nilai Klaim</th>
+              <th scope="col" className="py-2.5 px-2">DPJP</th>
+              <th scope="col" className="py-2.5 pl-2 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/[0.06]'}`}>
+            {visibleRows.map((row) => (
+              <tr
+                key={row.id}
+                onClick={() => onInspectCase?.(row.id)}
+                className={`cursor-pointer transition-colors ${
+                  isLight ? 'hover:bg-slate-50/90' : 'hover:bg-white/[0.04]'
+                }`}
+              >
+                <td className="py-3 pr-3">
+                  <div className={`font-semibold truncate max-w-[200px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    {row.hospital}
+                  </div>
+                  <div className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {row.id} · SLA {row.slaDays} HK
+                  </div>
+                </td>
+                <td className="py-3 px-2 font-mono font-semibold text-xs">
+                  {row.code}
+                </td>
+                <td className="py-3 px-2 font-mono font-semibold tabular-nums">
+                  {row.tariffRp > 0 ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt` : '-'}
+                </td>
+                <td className="py-3 px-2 truncate max-w-[140px]">
+                  <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
+                </td>
+                <td className="py-3 pl-2 text-right">
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                    row.lane === 'red'
+                      ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                      : row.lane === 'yellow'
+                        ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${row.lane === 'red' ? 'bg-rose-500' : row.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                    <span>{row.lane === 'red' ? 'Audit' : row.lane === 'yellow' ? 'Klarifikasi' : 'Sah'}</span>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function FaskesPerformanceCard({ isLight, onInspectCase, onNavigateTab }) {
+  const reviewers = [
+    { id: 'CLM-2026-8801', initials: 'MH', name: 'RS Mitra Husada', sub: '85 klaim klaster Z-3', role: 'Audit', tone: 'rose' },
+    { id: 'CLM-2026-8805', initials: 'DK', name: 'RSUD Kartini', sub: '42 klaim anomali SDMK', role: 'Audit', tone: 'rose' },
+    { id: 'CLM-2026-8802', initials: 'AS', name: 'RS As-Syifa', sub: '19 klaim readmisi <30h', role: 'Pantau', tone: 'amber' },
+    { id: 'CLM-2026-8803', initials: 'MN', name: 'RS Mata Nusantara', sub: '64 klaim baksos valid', role: 'Sah', tone: 'emerald' },
+  ];
+
+  return (
+    <section
+      aria-label="Prioritas pemantauan faskes"
+      className={`rounded-2xl border p-5 transition-colors duration-300 ${
+        isLight
+          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
+          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className={`text-sm font-display font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          Pemantauan Faskes Utama
+        </h3>
+        {onNavigateTab && (
+          <button
+            type="button"
+            onClick={() => onNavigateTab('faskes')}
+            aria-label="Buka profil Faskes dan DPJP"
+            title="Buka Faskes & DPJP"
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+              isLight
+                ? 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'
+                : 'border-white/10 bg-white/[0.04] text-slate-400 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2.5">
+        {reviewers.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onInspectCase?.(item.id)}
+            className={`w-full flex items-center justify-between gap-2.5 p-2 rounded-xl border text-left transition cursor-pointer ${
+              isLight
+                ? 'border-slate-100 hover:bg-slate-50 hover:border-slate-200'
+                : 'border-white/[0.06] hover:bg-white/[0.04]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                isLight ? 'bg-slate-100 text-slate-700' : 'bg-white/10 text-slate-200'
+              }`}>
+                {item.initials}
+              </div>
+              <div className="min-w-0">
+                <div className={`text-xs font-semibold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  {item.name}
+                </div>
+                <div className={`text-[11px] truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {item.sub}
+                </div>
+              </div>
+            </div>
+            <span className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold border shrink-0 ${
+              item.tone === 'rose'
+                ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                : item.tone === 'amber'
+                  ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                  : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+            }`}>
+              {item.role}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+
 // ─── Main ExecutiveHub Component ─────────────
 export default function ExecutiveHub({
   onNavigateTab,
@@ -1670,6 +1979,7 @@ export default function ExecutiveHub({
   const [campaignGenerated, setCampaignGenerated] = useState(null);
   const [timeRange, setTimeRange] = useState('all'); // 'all' (Seluruh Data) | 90 | 30 | 7
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [complianceAlertDismissed, setComplianceAlertDismissed] = useState(false);
 
   const handleExportExecutiveCsv = () => {
     const periodLabel = timeRange === 'all' ? 'seluruh_data' : `${timeRange}_hari`;
@@ -2111,6 +2421,8 @@ export default function ExecutiveHub({
             icon={<FileText className="w-5 h-5" />}
             severity="info"
             sparkValues={(activeTrends.cases_opened_trend || []).map((d) => d.value)}
+            onActionClick={onNavigateToQueue}
+            actionLabel="Buka antrean lengkap klaim"
           />
 
           <KPICard
@@ -2123,6 +2435,8 @@ export default function ExecutiveHub({
             icon={<CreditCard className="w-5 h-5" />}
             severity="success"
             sparkValues={(activeTrends.cases_closed_trend || []).map((d) => d.value)}
+            onActionClick={onNavigateToEmpirical}
+            actionLabel="Buka analitik nilai dan statistik"
           />
 
           <KPICard
@@ -2135,6 +2449,8 @@ export default function ExecutiveHub({
             icon={<Building2 className="w-5 h-5" />}
             severity="warning"
             sparkValues={(activeTrends.auditor_trend || []).map((d) => d.value)}
+            onActionClick={() => onNavigateTab?.('faskes')}
+            actionLabel="Buka pemantauan Faskes dan DPJP"
           />
 
           <KPICard
@@ -2147,9 +2463,77 @@ export default function ExecutiveHub({
             icon={<ShieldCheck className="w-5 h-5" />}
             severity="info"
             sparkValues={(activeTrends.sentiment_trend || []).map((d) => d.value)}
+            onActionClick={() => onNavigateTab?.('decision')}
+            actionLabel="Buka konsol putusan SLA"
           />
         </div>
       </section>
+
+      {/* PolicyPilot Asymmetric Bento Overview: Live Queue + Segmented Compliance + Radial Queue */}
+      {(() => {
+        const sev = activeOverview?.insights?.severity_distribution || {};
+        const lowCount = Number(sev.Rendah || 0);
+        const medCount = Number(sev.Sedang || 0);
+        const highCritCount = Number(sev.Tinggi || 0) + Number(sev.Kritis || 0);
+        const denom = Math.max(1, lowCount + medCount + highCritCount);
+        const approvalPct = ((lowCount + medCount) / denom) * 100;
+        return (
+          <section aria-label="Ringkasan antrean dan kepatuhan visual" className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            <div className="xl:col-span-8 space-y-5 min-w-0">
+              <RecentClaimsBentoCard
+                isLight={isLight}
+                onInspectCase={onInspectCase}
+                onNavigateToQueue={onNavigateToQueue}
+              />
+            </div>
+
+            <div className="xl:col-span-4 space-y-5 min-w-0">
+              <SegmentedComplianceBar
+                isLight={isLight}
+                title="Kepatuhan Berkas & Klaim"
+                segments={[
+                  { id: 'high', label: 'Anomali Berat', count: highCritCount, pct: (highCritCount / denom) * 100, color: '#E11D48' },
+                  { id: 'med', label: 'Klarifikasi', count: medCount, pct: (medCount / denom) * 100, color: '#F59E0B' },
+                  { id: 'low', label: 'Sah & Layak', count: lowCount, pct: (lowCount / denom) * 100, color: '#059669' },
+                ]}
+                validCount={activeOverview.kpis.cases_closed_7d}
+                validLabel="Berkas Sah"
+                pendingCount={activeOverview.kpis.critical_Waiting_cases}
+                pendingLabel="Prioritas Audit"
+                warningText={
+                  complianceAlertDismissed
+                    ? ''
+                    : `${Number(activeOverview.kpis.critical_Waiting_cases || 0).toLocaleString('id-ID')} berkas berada di Jalur Merah & membutuhkan verifikasi klinis sebelum batas SLA 10 HK.`
+                }
+                onDismissWarning={() => setComplianceAlertDismissed(true)}
+                actionLabel="Buka verifikasi 7 dokumen RS"
+                onActionClick={() => onNavigateTab?.('document_checker')}
+              />
+
+              <SegmentedRadialHighlightCard
+                title="Kapasitas & Validasi Pra-Bayar"
+                percentage={approvalPct}
+                centerPrimary={`${approvalPct.toFixed(1).replace('.', ',')}%`}
+                centerSub="Bebas Blokir"
+                tone="emerald-blue"
+                ctaLabel="Buka antrean penapisan"
+                onCtaClick={onNavigateToQueue}
+                breakdownRows={[
+                  { id: 'dup', metric: '4.876 Pasang', label: 'Klaim Ganda Tercegah' },
+                  { id: 'corr', metric: '1.631 Berkas', label: 'Koreksi Tarif Langsung' },
+                  { id: 'z3', metric: '148.890 Klaim', label: 'Pantau Rehabilitasi Z-3' },
+                ]}
+              />
+
+              <FaskesPerformanceCard
+                isLight={isLight}
+                onInspectCase={onInspectCase}
+                onNavigateTab={onNavigateTab}
+              />
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Charts & Analisis Tren */}
       <section aria-label="Analisis tren klaim" className="space-y-4">
