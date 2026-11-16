@@ -417,18 +417,11 @@ dialog:modal,
   color: #004A26 !important;
 }
 
-/* Monospace Case IDs, SEP Identifiers, and Audit Codes: Clean dark slate */
-#cockpit-root.theme-light .font-mono.text-\[\#FFCA40\],
-#cockpit-root.theme-light .font-mono[class*="text-[#FFCA40]"],
-#cockpit-root.theme-light [class*="font-mono"][class*="text-[#FFCA40]"],
-#cockpit-root.theme-light td div.font-mono,
-#cockpit-root.theme-light td span.font-mono,
-#cockpit-root.theme-light span.font-mono[class*="text-[#FFCA40]"],
-#cockpit-root.theme-light div.font-mono[class*="text-[#FFCA40]"],
-#cockpit-root.theme-light span[class*="font-mono"][class*="text-[#FFCA40]"] {
-  color: #0f172a !important;
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
+/* Monospace Case IDs, SEP Identifiers, and Audit Codes inside tables remain transparent on row tints */
+#cockpit-root.theme-light td div.font-mono:not([class*="bg-"]),
+#cockpit-root.theme-light td span.font-mono:not([class*="bg-"]),
+#cockpit-root.theme-light td p.font-mono:not([class*="bg-"]) {
+  background-color: transparent !important;
 }
 
 #cockpit-root.theme-light .bg-\[\#FFCA40\]\/5,
@@ -922,9 +915,9 @@ dialog:modal,
 
 /* Light Mode Pastel Badges & Category Tags: Deep High-Contrast Colors on Soft Tinted Backgrounds */
 
-/* Blue / Sky Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis */
-#cockpit-root.theme-light span[class*="bg-blue-50"]:not([class*="hover:"]),
-#cockpit-root.theme-light span[class*="bg-sky-50"]:not([class*="hover:"]),
+/* Blue / Sky Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis (exclude solid 500 dots/badges) */
+#cockpit-root.theme-light span[class*="bg-blue-50"]:not([class*="hover:"]):not([class*="bg-blue-500"]),
+#cockpit-root.theme-light span[class*="bg-sky-50"]:not([class*="hover:"]):not([class*="bg-sky-500"]),
 #cockpit-root.theme-light span[class*="bg-blue-100"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-sky-100"]:not([class*="hover:"]) {
   background-color: #ECF7F1 !important;
@@ -933,7 +926,7 @@ dialog:modal,
 }
 
 /* Cyan Pastel Badges & Tints in Light Mode: mapped to Hijau Zamrud Medis */
-#cockpit-root.theme-light span[class*="bg-cyan-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-cyan-50"]:not([class*="hover:"]):not([class*="bg-cyan-500"]),
 #cockpit-root.theme-light span[class*="bg-cyan-100"]:not([class*="hover:"]) {
   background-color: #ECF7F1 !important;
   color: #004A26 !important;
@@ -941,59 +934,59 @@ dialog:modal,
 }
 
 /* Emerald Pastel Badges & Tints in Light Mode */
-#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]):not([class*="bg-emerald-500"]),
 #cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) {
   background-color: #ECF7F1 !important;
   color: #004A26 !important;
   border-color: #A9D9C1 !important;
 }
-#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-emerald-50"]:not([class*="hover:"]):not([class*="bg-emerald-500"]) *,
 #cockpit-root.theme-light span[class*="bg-emerald-100"]:not([class*="hover:"]) * {
   color: #004A26 !important;
 }
 
 /* Rose / Red Pastel Badges & Tints in Light Mode */
-#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]),
-#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]):not([class*="bg-rose-500"]),
+#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]):not([class*="bg-red-500"]),
 #cockpit-root.theme-light span[class*="bg-rose-100"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-red-100"]:not([class*="hover:"]) {
   background-color: #fef2f2 !important;
   color: #991b1b !important;
   border-color: #fecaca !important;
 }
-#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]) *,
-#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-rose-50"]:not([class*="hover:"]):not([class*="bg-rose-500"]) *,
+#cockpit-root.theme-light span[class*="bg-red-50"]:not([class*="hover:"]):not([class*="bg-red-500"]) *,
 #cockpit-root.theme-light span[class*="bg-rose-100"]:not([class*="hover:"]) *,
 #cockpit-root.theme-light span[class*="bg-red-100"]:not([class*="hover:"]) * {
   color: #991b1b !important;
 }
 
 /* Amber / Orange Pastel Badges & Tints in Light Mode */
-#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]),
-#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]):not([class*="bg-amber-500"]),
+#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]):not([class*="bg-orange-500"]),
 #cockpit-root.theme-light span[class*="bg-amber-100"]:not([class*="hover:"]),
 #cockpit-root.theme-light span[class*="bg-orange-100"]:not([class*="hover:"]) {
   background-color: #fffbeb !important;
   color: #92400e !important;
   border-color: #fde68a !important;
 }
-#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]) *,
-#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-amber-50"]:not([class*="hover:"]):not([class*="bg-amber-500"]) *,
+#cockpit-root.theme-light span[class*="bg-orange-50"]:not([class*="hover:"]):not([class*="bg-orange-500"]) *,
 #cockpit-root.theme-light span[class*="bg-amber-100"]:not([class*="hover:"]) *,
 #cockpit-root.theme-light span[class*="bg-orange-100"]:not([class*="hover:"]) * {
   color: #92400e !important;
 }
 
 /* Purple Pastel Badges & Tints in Light Mode */
-#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]),
-#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]),
+#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]):not([class*="bg-purple-500"]),
+#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]):not([class*="bg-indigo-500"]),
 #cockpit-root.theme-light span[class*="bg-purple-100"]:not([class*="hover:"]) {
   background-color: #faf5ff !important;
   color: #6b21a8 !important;
   border-color: #e9d5ff !important;
 }
-#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]) *,
-#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]) *,
+#cockpit-root.theme-light span[class*="bg-purple-50"]:not([class*="hover:"]):not([class*="bg-purple-500"]) *,
+#cockpit-root.theme-light span[class*="bg-indigo-50"]:not([class*="hover:"]):not([class*="bg-indigo-500"]) *,
 #cockpit-root.theme-light span[class*="bg-purple-100"]:not([class*="hover:"]) * {
   color: #6b21a8 !important;
 }
