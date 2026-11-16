@@ -478,10 +478,13 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
             {/* Row 1: Identity Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <label htmlFor="quick-triage-faskes" className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Kode Faskes / ID Pengaju <span className="text-rose-500">*</span>
                 </label>
-                <input aria-label="Bidang input data"
+                <input
+                  id="quick-triage-faskes"
+                  name="user_id"
+                  aria-label="Kode Faskes atau ID Pengaju"
                   type="text"
                   required
                   value={formData.user_id}
@@ -493,10 +496,13 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
               </div>
 
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <label htmlFor="quick-triage-sep" className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Nomor SEP / ID Sesi Klaim <span className="text-rose-500">*</span>
                 </label>
-                <input aria-label="Bidang input data"
+                <input
+                  id="quick-triage-sep"
+                  name="session_id"
+                  aria-label="Nomor SEP atau ID Sesi Klaim"
                   type="text"
                   required
                   value={formData.session_id}
@@ -508,10 +514,13 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
               </div>
 
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <label htmlFor="quick-triage-hash" className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Hash Peserta (Zero-PHI) <span className="text-rose-500">*</span>
                 </label>
-                <input aria-label="Bidang input data"
+                <input
+                  id="quick-triage-hash"
+                  name="user_hash"
+                  aria-label="Hash Peserta Zero-PHI"
                   type="text"
                   required
                   value={formData.user_hash}
@@ -525,9 +534,9 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
 
             {/* Row 2: Severity Card Selector */}
             <div>
-              <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+              <span className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                 Tingkat Keparahan (Severity) <span className="text-rose-500">*</span>
-              </label>
+              </span>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {SEVERITY_OPTIONS.map((opt) => {
                   const isSelected = formData.severity === opt.value;
@@ -571,9 +580,9 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
             {/* Row 3: Verification Layer Segmented Control + Intent Dropdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <span className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Jalur Verifikasi Utama (Verification Layer)
-                </label>
+                </span>
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-1.5 rounded-xl border p-1.5 ${
                   isLight ? 'bg-slate-100 border-slate-200' : 'border-white/10 bg-white/5'
                 }`}>
@@ -612,10 +621,12 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
               </div>
 
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <label htmlFor="quick-triage-intent" className={`block text-xs font-bold uppercase tracking-wider mb-3 ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Kategori Temuan Audit (Intent)
                 </label>
                 <select
+                  id="quick-triage-intent"
+                  name="intent"
                   value={formData.intent}
                   onChange={(e) => setFormData({ ...formData, intent: e.target.value })}
                   className={`w-full px-4 py-2.5 rounded-xl border text-sm focus:outline-none transition-all ${
@@ -637,7 +648,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
             {/* Row 4: Expandable Case Message */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
+                <label htmlFor="quick-triage-notes" className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>
                   Rincian Temuan &amp; Catatan Klinis <span className="text-rose-500">*</span>
                 </label>
                 <button
@@ -661,6 +672,8 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
                 </button>
               </div>
               <textarea
+                id="quick-triage-notes"
+                name="message"
                 required
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
@@ -742,7 +755,10 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="relative flex-1 min-w-0 w-full sm:max-w-xs">
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
-              <input aria-label="Cari ID Berkas atau SEP..."
+              <input
+                id="quick-triage-search"
+                name="quick_triage_search"
+                aria-label="Cari ID Berkas atau Nomor SEP dalam antrean prioritas"
                 type="text"
                 placeholder="Cari ID Berkas atau SEP..."
                 value={searchQuery}

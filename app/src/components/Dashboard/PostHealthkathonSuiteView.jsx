@@ -23,9 +23,33 @@ import {
   Stethoscope,
   BookOpen,
   DollarSign,
-  Sliders
+  Sliders,
+  FileCheck
 } from 'lucide-react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+
+const computeQuadScore = (qt = {}) => {
+  const l1 = Number(qt.lapis_1_spatiotemporal_ai || 0);
+  const l2 = Number(qt.lapis_2_satusehat_sdmk || 0);
+  const l3 = Number(qt.lapis_3_mobile_jkn || 0);
+  const l4 = Number(qt.lapis_4_frista_biometric || 0);
+  return Math.round((0.30 * l1 + 0.25 * l2 + 0.20 * l3 + 0.25 * l4) * 10) / 10;
+};
+
+const formatCleanDecimal = (val, digits = 1) => {
+  const num = Number(val);
+  if (!Number.isFinite(num)) return String(val ?? '');
+  return (Math.round(num * 10 ** digits) / 10 ** digits).toFixed(digits).replace(/\.0+$/, '');
+};
+
+const normalizeStepDecimal = (raw) => {
+  if (typeof raw !== 'string') return raw;
+  if (/\.\d{4,}$/.test(raw)) {
+    const num = Number(raw);
+    if (Number.isFinite(num)) return String(Math.round(num * 10) / 10);
+  }
+  return raw;
+};
 import {
   callClaimTraceGenerateContent,
   getHFSemanticStats,
@@ -208,7 +232,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_2_satusehat_sdmk: 95.0,
       lapis_3_mobile_jkn: 92.0,
       lapis_4_frista_biometric: 96.0,
-      fused_quad_score: 91.8,
+      fused_quad_score: 91.7,
       verdict: 'Jalur Merah Kritis - Terkonfirmasi 4 Lapis Bukti'
     }
   },
@@ -234,7 +258,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_2_satusehat_sdmk: 40.0,
       lapis_3_mobile_jkn: 35.0,
       lapis_4_frista_biometric: 15.0,
-      fused_quad_score: 89.5,
+      fused_quad_score: 48.1,
       verdict: 'Jalur Merah - Ketidaksesuaian Koding Severity Level'
     }
   },
@@ -260,7 +284,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_2_satusehat_sdmk: 55.0,
       lapis_3_mobile_jkn: 60.0,
       lapis_4_frista_biometric: 68.0,
-      fused_quad_score: 81.4,
+      fused_quad_score: 68.0,
       verdict: 'Jalur Merah - Indikasi Pemecahan Episode Rawat Jalan'
     }
   },
@@ -286,7 +310,7 @@ const INITIAL_FRISTA_MAP = {
       lapis_2_satusehat_sdmk: 72.0,
       lapis_3_mobile_jkn: 89.0,
       lapis_4_frista_biometric: 94.5,
-      fused_quad_score: 86.4,
+      fused_quad_score: 85.8,
       verdict: 'Jalur Merah Kritis - Penagihan Berulang & Spoofing Biometrik'
     }
   }
@@ -384,26 +408,42 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
   const [hfClusterMatrix, setHfClusterMatrix] = useState(null);
   const [selectedHfClusterId, setSelectedHfClusterId] = useState('CLS-PHANTOM-85');
 
+  const resolveFristaForCase = (cid, activeCaseObj) => {
+    if (INITIAL_FRISTA_MAP[cid]) return INITIAL_FRISTA_MAP[cid];
+    const targetCase = activeCaseObj || cases.find((c) => c.claim_id === cid) || cases[0];
+    return {
+      ...INITIAL_FRISTA_MAP['CLM-2026-10-085'],
+      claim_id: targetCase.claim_id,
+      sep_number: targetCase.sep_number,
+      hospital: targetCase.hospital,
+      batch_anomaly_detail: targetCase.clinical_discrepancy
+    };
+  };
+
   const selectedCase = cases.find((c) => c.claim_id === selectedClaimId) || cases[0];
-  const selectedFrista = INITIAL_FRISTA_MAP[selectedClaimId] || INITIAL_FRISTA_MAP['CLM-2026-10-085'];
+  const selectedFrista = resolveFristaForCase(selectedClaimId, selectedCase);
 
   useEffect(() => {
+    let active = true;
     // Attempt to fetch live from local backend if running
-    authFetch(`${API_BASE_URL}/api/v1/expansion/typologies`)
-      .then((r) => (r.ok ? r.json() : null))
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/expansion/typologies`)
       .then((data) => {
-        if (data?.cases?.length) {
+        if (active && data?.cases?.length) {
           setCases(data.cases);
         }
       })
       .catch(() => {});
 
-    getHFSemanticStats().then(setHfStats).catch(() => {});
+    getHFSemanticStats().then((res) => { if (active) setHfStats(res); }).catch(() => {});
     getHFClinicalResumes().then((res) => {
-      if (res?.resumes) setHfResumes(res.resumes);
+      if (active && res?.resumes) setHfResumes(res.resumes);
     }).catch(() => {});
-    verifyClaimPlagiarismHF('CLM-2026-8801').then(setHfAuditResult).catch(() => {});
-    getClusterSemanticMatrixHF('CLS-PHANTOM-85').then(setHfClusterMatrix).catch(() => {});
+    verifyClaimPlagiarismHF('CLM-2026-8801').then((res) => { if (active) setHfAuditResult(res); }).catch(() => {});
+    getClusterSemanticMatrixHF('CLS-PHANTOM-85').then((res) => { if (active) setHfClusterMatrix(res); }).catch(() => {});
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleRunHfAudit = async (cid) => {
@@ -480,7 +520,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
           code: 'A41.9',
           type: 'Upcoding Severity Level III',
           severity_impact: 'Menaikkan klaim dari Severity Level I ke Severity Level III secara tidak sah',
-          clinical_finding: `Leukosit ${Number(simLeukocytes).toLocaleString('id-ID')}/uL (Normal), Suhu ${simTemp} C, Skor SOFA = ${simSofa}. Tidak ada bukti disfungsi organ akut.`,
+          clinical_finding: `Leukosit ${Number(simLeukocytes).toLocaleString('id-ID')}/uL (Normal), Suhu ${formatCleanDecimal(simTemp)} C, Skor SOFA = ${simSofa}. Tidak ada bukti disfungsi organ akut.`,
           regulation_citation: 'Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Sepsis',
           recommendation: 'Gugurkan kode sekunder A41.9 dan turunkan grouper ke Severity Level I.'
         });
@@ -494,7 +534,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
           code: 'K92.2',
           type: 'Upcoding Komorbid Perdarahan GI',
           severity_impact: 'Penambahan komorbid perdarahan saluran cerna tanpa bukti klinis',
-          clinical_finding: `Kadar Hemoglobin ${simHb} g/dL berada dalam batas normal tanpa bukti hematemesis/melena.`,
+          clinical_finding: `Kadar Hemoglobin ${formatCleanDecimal(simHb)} g/dL berada dalam batas normal tanpa bukti hematemesis/melena.`,
           regulation_citation: 'Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Penyakit Pencernaan',
           recommendation: 'Hapus kode K92.2 dan gunakan kode dasar sesuai diagnosis primer.'
         });
@@ -521,7 +561,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     let aiModel = 'ClaimTrace AI Core';
     if (withAi) {
       const llmRes = await callClaimTraceGenerateContent({
-        prompt: `Evaluasi kepatuhan koding INA-CBG untuk klaim ${selectedClaimId}: ICD-10 Primer=${simPrimaryIcd}, Sekunder=${secList.join(', ')}, Hb=${simHb} g/dL, Leukosit=${simLeukocytes}/uL, SOFA=${simSofa}, SEP 7 hari=${simVisits7d}x, Tagihan=Rp ${Number(simClaimedRp).toLocaleString('id-ID')}. Berikan kesimpulan audit klinis dan regulasi Permenkes 26/2021 & 3/2023 tanpa emoji.`,
+        prompt: `Evaluasi kepatuhan koding INA-CBG untuk klaim ${selectedClaimId}: ICD-10 Primer=${simPrimaryIcd}, Sekunder=${secList.join(', ')}, Hb=${formatCleanDecimal(simHb)} g/dL, Leukosit=${simLeukocytes}/uL, SOFA=${simSofa}, SEP 7 hari=${simVisits7d}x, Tagihan=Rp ${Number(simClaimedRp).toLocaleString('id-ID')}. Berikan kesimpulan audit klinis dan regulasi Permenkes 26/2021 & 3/2023 tanpa emoji.`,
         systemInstruction: 'Anda adalah Dokter Auditor Koding Klinis INA-CBG BPJS Kesehatan. Jawab ringkas dan tajam tanpa emoji.'
       });
       aiReasoning = llmRes.text;
@@ -567,9 +607,11 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     } catch {
       // Fallback to direct callClaimTraceGenerateContent
     }
-    const f = INITIAL_FRISTA_MAP[cid] || INITIAL_FRISTA_MAP['CLM-2026-10-085'];
+    const caseForClaim = cases.find((c) => c.claim_id === cid) || selectedCase;
+    const f = resolveFristaForCase(cid, caseForClaim);
+    const quadScore = computeQuadScore(f.quad_triangulation);
     const llmRes = await callClaimTraceGenerateContent({
-      prompt: `Analisis forensik biometrik FRISTA Lapis 4 & Quad-Triangulation untuk klaim ${cid} (${f.hospital}): Status=${f.frista_status}, Face Match=${(f.face_similarity_score * 100).toFixed(1)}%, Liveness=${f.liveness_check}, Detail=${f.batch_anomaly_detail}, Skor Fusi 4 Lapis=${f.quad_triangulation.fused_quad_score}/100. ${focusQ ? `Pertanyaan: ${focusQ}` : ''}`,
+      prompt: `Analisis forensik biometrik FRISTA Lapis 4 & Quad-Triangulation untuk klaim ${cid} (${f.hospital}): Status=${f.frista_status}, Face Match=${(f.face_similarity_score * 100).toFixed(1)}%, Liveness=${f.liveness_check}, Detail=${f.batch_anomaly_detail}, Skor Fusi 4 Lapis=${quadScore}/100. ${focusQ ? `Pertanyaan: ${focusQ}` : ''}`,
       systemInstruction: 'Anda adalah Analis Forensik Biometrik FRISTA BPJS Kesehatan. Jawab tanpa emoji.'
     });
     setFristaAiAnalysis({
@@ -682,7 +724,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
     const seed = `${selectedClaimId}-${baVerifierNip}-${baActionType}-${nowIso}`;
     const digestHex =
       'a8f4c291e7b038d561294fa71c80b3e5921d47c60983ab12e5f4890c1a2b3d4e'.slice(0, 56) +
-      selectedClaimId.slice(-8).replace(/[^a-zA-Z0-9]/g, 'f');
+      selectedClaimId.slice(-8).replace(/[^a-f0-9]/gi, 'a').toLowerCase().padStart(8, '0');
     const actionLabel = ACTION_LABELS[baActionType] || baActionType;
 
     setBaDossier({
@@ -1193,8 +1235,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">ICD-10 Primer</label>
+                <label htmlFor="bea-sim-primary-icd" className="block text-[10px] font-bold uppercase opacity-75 mb-1">ICD-10 Primer</label>
                 <input
+                  id="bea-sim-primary-icd"
+                  name="bea_sim_primary_icd"
                   type="text"
                   value={simPrimaryIcd}
                   onChange={(e) => setSimPrimaryIcd(e.target.value)}
@@ -1204,8 +1248,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">ICD-10 Sekunder (Koma)</label>
+                <label htmlFor="bea-sim-secondary-icd" className="block text-[10px] font-bold uppercase opacity-75 mb-1">ICD-10 Sekunder (Koma)</label>
                 <input
+                  id="bea-sim-secondary-icd"
+                  name="bea_sim_secondary_icd"
                   type="text"
                   value={simSecondaryIcd}
                   onChange={(e) => setSimSecondaryIcd(e.target.value)}
@@ -1215,20 +1261,24 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Hemoglobin (g/dL)</label>
+                <label htmlFor="bea-sim-hb" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Hemoglobin (g/dL)</label>
                 <input
+                  id="bea-sim-hb"
+                  name="bea_sim_hb"
                   type="number"
                   step="0.1"
                   value={simHb}
-                  onChange={(e) => setSimHb(e.target.value)}
+                  onChange={(e) => setSimHb(normalizeStepDecimal(e.target.value))}
                   className={`w-full px-2.5 py-1.5 rounded-lg border font-mono text-xs ${
                     isLight ? 'bg-slate-50 border-slate-300' : 'bg-[#000d24] border-white/15 text-white'
                   }`}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Leukosit (/uL)</label>
+                <label htmlFor="bea-sim-leukocytes" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Leukosit (/uL)</label>
                 <input
+                  id="bea-sim-leukocytes"
+                  name="bea_sim_leukocytes"
                   type="number"
                   step="100"
                   value={simLeukocytes}
@@ -1239,8 +1289,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Skor SOFA (0 - 24)</label>
+                <label htmlFor="bea-sim-sofa" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Skor SOFA (0 - 24)</label>
                 <input
+                  id="bea-sim-sofa"
+                  name="bea_sim_sofa"
                   type="number"
                   min="0"
                   max="24"
@@ -1252,8 +1304,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Kunjungan SEP (7 Hari)</label>
+                <label htmlFor="bea-sim-sep-count" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Kunjungan SEP (7 Hari)</label>
                 <input
+                  id="bea-sim-sep-count"
+                  name="bea_sim_sep_count"
                   type="number"
                   min="1"
                   max="10"
@@ -1437,8 +1491,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
 
               <div className="flex gap-2">
+                <label htmlFor="bea-frista-focus-input" className="sr-only">
+                  Pertanyaan Audit Biometrik FRISTA &amp; Triangulasi 4 Lapis
+                </label>
                 <input
+                  id="bea-frista-focus-input"
+                  name="frista_ai_focus"
                   type="text"
+                  aria-label="Pertanyaan tentang log biometrik dan 4 lapis bukti kasus ini"
                   placeholder="Tanyakan tentang log biometrik / 4 lapis bukti kasus ini..."
                   value={fristaAiFocus}
                   onChange={(e) => setFristaAiFocus(e.target.value)}
@@ -1487,7 +1547,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               <div className="text-right">
                 <span className="text-[10px] uppercase block opacity-70">Skor Fusi 4 Lapis</span>
                 <span className="text-2xl font-mono font-extrabold text-rose-500">
-                  {selectedFrista.quad_triangulation.fused_quad_score}
+                  {formatCleanDecimal(computeQuadScore(selectedFrista.quad_triangulation), 1)}
                 </span>
               </div>
             </div>
@@ -1577,8 +1637,12 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold block">Pertanyaan Audit Regulasi / Kaidah Koding:</label>
+              <label htmlFor="bea-rag-query-input" className="text-xs font-bold block">
+                Pertanyaan Audit Regulasi / Kaidah Koding:
+              </label>
               <textarea
+                id="bea-rag-query-input"
+                name="bea_rag_query"
                 rows={3}
                 value={ragQuery}
                 onChange={(e) => setRagQuery(e.target.value)}
@@ -1717,8 +1781,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Nama Pejabat Verifikator</label>
+                <label htmlFor="bea-ba-verifier-name" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Nama Pejabat Verifikator</label>
                 <input
+                  id="bea-ba-verifier-name"
+                  name="bea_ba_verifier_name"
                   type="text"
                   value={baVerifierName}
                   onChange={(e) => setBaVerifierName(e.target.value)}
@@ -1729,8 +1795,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">NIP Verifikator BPJS</label>
+                <label htmlFor="bea-ba-verifier-nip" className="block text-[10px] font-bold uppercase opacity-75 mb-1">NIP Verifikator BPJS</label>
                 <input
+                  id="bea-ba-verifier-nip"
+                  name="bea_ba_verifier_nip"
                   type="text"
                   value={baVerifierNip}
                   onChange={(e) => setBaVerifierNip(e.target.value)}
@@ -1741,8 +1809,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase opacity-75 mb-1">Ketetapan Putusan Verifikasi</label>
+                <label htmlFor="bea-ba-action-type" className="block text-[10px] font-bold uppercase opacity-75 mb-1">Ketetapan Putusan Verifikasi</label>
                 <select
+                  id="bea-ba-action-type"
+                  name="bea_ba_action_type"
                   value={baActionType}
                   onChange={(e) => setBaActionType(e.target.value)}
                   className={`w-full px-3 py-2 rounded-xl border text-xs font-bold ${
@@ -1758,7 +1828,7 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-[10px] font-bold uppercase opacity-75">Catatan Putusan Verifikator</label>
+                  <label htmlFor="bea-ba-notes" className="block text-[10px] font-bold uppercase opacity-75">Catatan Putusan Verifikator</label>
                   <button
                     type="button"
                     onClick={() => generateBeritaAcara(true)}
@@ -1770,6 +1840,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   </button>
                 </div>
                 <textarea
+                  id="bea-ba-notes"
+                  name="bea_ba_notes"
                   rows={3}
                   placeholder="Klik 'Muat Draf Pertimbangan Yuridis (On-Premise)' atau ketik catatan putusan verifikator..."
                   value={baNotes}
@@ -2098,14 +2170,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             </div>
 
             {/* Right: Live Hugging Face Vector Plagiarism Analysis */}
-            <div className={`lg:col-span-8 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/90 border-white/10 shadow-xl'} space-y-4`}>
+            <div className={`lg:col-span-8 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-[#00153A]/90 border-white/10 shadow-xl text-white'} space-y-4`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 border-slate-200/20">
                 <div>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider block">
+                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                     Hasil Analisis Bi-Encoder Hugging Face
                   </span>
-                  <h3 className="text-sm font-bold text-white mt-0.5">
-                    Target Audit: <span className="font-mono text-cyan-300">{selectedHfClaimId}</span>
+                  <h3 className={`text-sm font-bold mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Target Audit: <span className={`font-mono ${isLight ? 'text-cyan-700' : 'text-cyan-300'}`}>{selectedHfClaimId}</span>
                   </h3>
                 </div>
 
@@ -2114,21 +2186,23 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                   onClick={() => handleRunHfAudit(selectedHfClaimId)}
                   disabled={isAuditingHf}
                   aria-label="Jalankan Audit Vektor Bi-Encoder Hugging Face"
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 shadow-sm"
+                  className="keep-white px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all duration-150 ease-out active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 shadow-sm"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isAuditingHf ? 'animate-spin' : ''}`} />
-                  <span>{isAuditingHf ? 'Mengomputasi Vektor...' : 'Jalankan Audit Vektor'}</span>
+                  <RefreshCw className={`keep-white w-3.5 h-3.5 ${isAuditingHf ? 'animate-spin' : ''}`} />
+                  <span className="keep-white">{isAuditingHf ? 'Mengomputasi Vektor...' : 'Jalankan Audit Vektor'}</span>
                 </button>
               </div>
 
               {/* Target Resume Excerpt */}
               {hfAuditResult?.target_resume_text && (
                 <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                  <div className="flex items-center justify-between font-mono text-[10px] text-slate-400">
+                  <div className={`flex items-center justify-between font-mono text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     <span className="font-bold uppercase">Narasi Resume Medis DPJP (Target Berkas):</span>
                     <span>Panjang: {hfAuditResult.target_resume_text.length} Karakter</span>
                   </div>
-                  <p className="italic text-slate-300 leading-relaxed font-serif text-[11px] bg-black/20 p-2.5 rounded-lg border border-white/5">
+                  <p className={`italic leading-relaxed font-serif text-[11px] p-2.5 rounded-lg border ${
+                    isLight ? 'bg-white text-slate-800 border-slate-200' : 'bg-black/20 text-slate-300 border-white/5'
+                  }`}>
                     "{hfAuditResult.target_resume_text}"
                   </p>
                 </div>
@@ -2139,10 +2213,10 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className={`sm:col-span-5 p-4 rounded-xl border flex flex-col justify-between ${
                     hfAuditResult.is_plagiarized
-                      ? 'bg-rose-500/15 border-rose-500/40 text-rose-200'
+                      ? isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/15 border-rose-500/40 text-rose-200'
                       : hfAuditResult.max_similarity_pct >= 75
-                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-200'
-                        : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+                        ? isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/15 border-amber-500/40 text-amber-200'
+                        : isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
                   }`}>
                     <div>
                       <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">
@@ -2160,12 +2234,12 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
                   <div className={`sm:col-span-7 p-4 rounded-xl border flex flex-col justify-between ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                     <div className="space-y-1">
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Rekomendasi Forensik Hugging Face:</div>
-                      <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                      <div className={`text-[10px] uppercase font-bold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Rekomendasi Forensik Hugging Face:</div>
+                      <p className={`text-xs leading-relaxed font-medium ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                         {hfAuditResult.recommendation}
                       </p>
                     </div>
-                    <div className="text-[10px] font-mono text-cyan-400 mt-2">
+                    <div className={`text-[10px] font-mono mt-2 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`}>
                       Model: sentence-transformers/all-MiniLM-L6-v2 · Embedding Dim: 384
                     </div>
                   </div>
@@ -2174,14 +2248,14 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
 
               {/* Nearest Neighbors Matches Table */}
               <div className="space-y-2">
-                <div className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                <div className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                  <Layers className={`w-3.5 h-3.5 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`} />
                   <span>Klaim Terdekat Berdasarkan Ruang Vektor (HNSW Top Matches)</span>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-200/20">
+                <div className={`overflow-x-auto rounded-xl border ${isLight ? 'border-slate-200' : 'border-slate-200/20'}`}>
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-white/5 text-[10px] uppercase font-mono text-slate-400">
+                    <thead className={`text-[10px] uppercase font-mono ${isLight ? 'bg-slate-100 text-slate-600' : 'bg-white/5 text-slate-400'}`}>
                       <tr>
                         <th className="p-2.5">ID Berkas Terkait</th>
                         <th className="p-2.5">Pasien &amp; Faskes</th>
@@ -2190,34 +2264,34 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                         <th className="p-2.5">Klasifikasi Forensik</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/10 font-mono text-[11px]">
+                    <tbody className={`divide-y font-mono text-[11px] ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
                       {hfAuditResult?.matches?.map((m, idx) => (
-                        <tr key={idx} className="hover:bg-white/5 transition-colors">
-                          <td className="p-2.5 font-bold text-cyan-300">{m.matched_claim_id || m.claim_id}</td>
+                        <tr key={idx} className={`transition-colors ${isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'}`}>
+                          <td className={`p-2.5 font-bold ${isLight ? 'text-cyan-700' : 'text-cyan-300'}`}>{m.matched_claim_id || m.claim_id}</td>
                           <td className="p-2.5 font-sans">
-                            <div className="font-semibold text-slate-200">{m.patient_name}</div>
-                            <div className="text-[10px] text-slate-400">{m.nama_faskes}</div>
+                            <div className={`font-semibold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>{m.patient_name}</div>
+                            <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{m.nama_faskes}</div>
                           </td>
                           <td className="p-2.5 text-center font-bold">
-                            <span className={`px-2 py-0.5 rounded ${
+                            <span className={`px-2 py-0.5 rounded border ${
                               m.cosine_similarity_pct >= 90
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                                 : m.cosine_similarity_pct >= 75
-                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                  ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                             }`}>
                               {m.cosine_similarity_pct}%
                             </span>
                           </td>
-                          <td className="p-2.5 text-center text-slate-300">{m.diff_ratio_pct}%</td>
+                          <td className={`p-2.5 text-center ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{m.diff_ratio_pct}%</td>
                           <td className="p-2.5 font-sans">
                             {m.is_plagiarized_clone ? (
-                              <span className="text-[10px] font-bold text-rose-400 flex items-center gap-1">
+                              <span className={`text-[10px] font-bold flex items-center gap-1 ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
                                 <span>Kloning Baksos Fiktif</span>
                               </span>
                             ) : (
-                              <span className="text-[10px] text-slate-400">Dokumentasi Mandiri</span>
+                              <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Dokumentasi Mandiri</span>
                             )}
                           </td>
                         </tr>
@@ -2232,22 +2306,28 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
           {/* Section 2: Live Custom Clinical Resume Tester & Cluster Heatmap */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Live Text Tester */}
-            <div className={`lg:col-span-7 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/90 border-white/10 shadow-xl'} space-y-3`}>
+            <div className={`lg:col-span-7 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-[#00153A]/90 border-white/10 shadow-xl text-white'} space-y-3`}>
               <div className="flex items-center justify-between border-b pb-2.5 border-slate-200/20">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-amber-400" />
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  <FileText className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Uji Kemiripan Teks Resume Klinis (Zero-PHI)
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono text-slate-400">Zero-PHI Local Embedding</span>
+                <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Zero-PHI Local Embedding</span>
               </div>
 
               <p className="text-xs text-slate-300">
                 Masukkan kutipan narasi resume medis DPJP untuk memeriksa secara instan apakah klaim ini merupakan hasil plagiarisme/daur ulang dari seluruh arsip klaim JKN nasional:
               </p>
 
+              <label htmlFor="bea-hf-custom-resume" className="sr-only">
+                Teks Resume Klinis Kustom untuk Uji Kemiripan Vektor
+              </label>
               <textarea
+                id="bea-hf-custom-resume"
+                name="hf_custom_resume"
+                aria-label="Teks resume klinis kustom untuk uji kemiripan vektor"
                 rows={4}
                 value={hfCustomText}
                 onChange={(e) => setHfCustomText(e.target.value)}
@@ -2332,31 +2412,35 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
             </div>
 
             {/* Cluster Similarity Heatmap Matrix */}
-            <div className={`lg:col-span-5 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/90 border-white/10 shadow-xl'} space-y-3`}>
+            <div className={`lg:col-span-5 p-5 rounded-2xl border ${isLight ? 'bg-white border-slate-200 shadow-sm text-slate-900' : 'bg-[#00153A]/90 border-white/10 shadow-xl text-white'} space-y-3`}>
               <div className="flex items-center justify-between border-b pb-2.5 border-slate-200/20">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  <Layers className={`w-4 h-4 ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`} />
+                  <h3 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Matriks Kemiripan Klaster Sindikat
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                }`}>
                   {selectedHfClusterId}
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300">
+              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                 Visualisasi matriks NxN antar-berkas dalam klaster membuktikan secara matematis pola fabrikasi massal baksos fiktif (Modus #6 Phantom Billing):
               </p>
 
               {hfClusterMatrix?.matrix ? (
-                <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/20 p-2">
+                <div className={`overflow-x-auto rounded-xl border p-2 ${
+                  isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-black/20'
+                }`}>
                   <table className="w-full text-center text-[10px] font-mono">
                     <thead>
                       <tr>
-                        <th className="p-1.5 text-left text-slate-400">Berkas</th>
+                        <th className={`p-1.5 text-left ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Berkas</th>
                         {hfClusterMatrix.claim_ids.map((cid, i) => (
-                          <th key={i} className="p-1.5 text-slate-300 font-bold" title={cid}>
+                          <th key={i} className={`p-1.5 font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`} title={cid}>
                             #{i + 1}
                           </th>
                         ))}
@@ -2364,8 +2448,8 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                     </thead>
                     <tbody>
                       {hfClusterMatrix.matrix.map((row, rIdx) => (
-                        <tr key={rIdx} className="border-t border-white/5">
-                          <td className="p-1.5 text-left font-bold text-cyan-300 truncate max-w-[100px]" title={hfClusterMatrix.claim_ids[rIdx]}>
+                        <tr key={rIdx} className={`border-t ${isLight ? 'border-slate-200' : 'border-white/5'}`}>
+                          <td className={`p-1.5 text-left font-bold truncate max-w-[100px] ${isLight ? 'text-cyan-700' : 'text-cyan-300'}`} title={hfClusterMatrix.claim_ids[rIdx]}>
                             #{rIdx + 1} {hfClusterMatrix.claim_ids[rIdx].replace('CLM-2026-', '')}
                           </td>
                           {row.map((cell, cIdx) => (
@@ -2374,13 +2458,13 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                               className={`p-1.5 font-bold rounded ${
                                 cell === 100
                                   ? rIdx === cIdx
-                                    ? 'bg-slate-700/40 text-slate-400'
-                                    : 'bg-rose-600/40 text-rose-200 font-extrabold'
+                                    ? isLight ? 'bg-slate-200 text-slate-600' : 'bg-slate-700/40 text-slate-400'
+                                    : isLight ? 'bg-rose-100 text-rose-800 font-extrabold' : 'bg-rose-600/40 text-rose-200 font-extrabold'
                                   : cell >= 90
-                                    ? 'bg-rose-500/30 text-rose-300'
+                                    ? isLight ? 'bg-rose-50 text-rose-700' : 'bg-rose-500/30 text-rose-300'
                                     : cell >= 50
-                                      ? 'bg-amber-500/20 text-amber-300'
-                                      : 'bg-white/5 text-slate-400'
+                                      ? isLight ? 'bg-amber-50 text-amber-800' : 'bg-amber-500/20 text-amber-300'
+                                      : isLight ? 'bg-white text-slate-600' : 'bg-white/5 text-slate-400'
                               }`}
                             >
                               {cell}%
@@ -2390,18 +2474,20 @@ export default function PostHealthkathonSuiteView({ isLight = false }) {
                       ))}
                     </tbody>
                   </table>
-                  <div className="text-[9.5px] text-slate-400 mt-2 text-right">
+                  <div className={`text-[9.5px] mt-2 text-right ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     Keterangan: #1 CLM-8801, #2 CLM-8801-CLONE-02, #3 CLM-8801-CLONE-03
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-xs text-slate-400 font-mono">
+                <div className={`text-center py-8 text-xs font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                   Memuat data matriks klaster...
                 </div>
               )}
 
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-[10.5px] text-rose-200 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className={`p-3 rounded-xl border text-[10.5px] flex items-start gap-2 ${
+                isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/10 border-rose-500/30 text-rose-200'
+              }`}>
+                <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${isLight ? 'text-rose-600' : 'text-rose-400'}`} />
                 <span>
                   <strong>Temuan Bukti:</strong> Nilai kemiripan antar-klaim mencapai 100% dan 94.6% mengonfirmasi pelanggaran Pasal 34 Permenkes 26/2021 tentang manipulasi dan klaim palsu berulang.
                 </span>

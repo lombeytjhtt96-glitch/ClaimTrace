@@ -64,8 +64,8 @@ export default function SecurityVerificationModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    if (step === 'pin') setTimeout(() => pinRefs.current[0]?.focus(), 60);
-    if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 60);
+    if (step === 'pin') setTimeout(() => pinRefs.current[0]?.focus(), 240);
+    if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 240);
   }, [isOpen, step]);
 
   useEffect(() => {
@@ -397,7 +397,8 @@ export default function SecurityVerificationModal({
                 <div className="flex items-start gap-2.5 text-xs">
                   <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <p className={effectiveIsLight ? 'text-slate-600' : 'text-slate-300'}>
-                    Masukkan 6 digit PIN otorisasi rahasia verifikator Anda (maksimum 3 kali percobaan).
+                    Masukkan 6 digit PIN otorisasi rahasia Anda
+                    (maksimum 3 kali percobaan).
                   </p>
                 </div>
                 <button
@@ -415,6 +416,8 @@ export default function SecurityVerificationModal({
                 {pin.map((digit, i) => (
                   <input
                     key={i}
+                    id={`mfa-pin-digit-${i + 1}`}
+                    name={`mfa_pin_${i + 1}`}
                     ref={(el) => (pinRefs.current[i] = el)}
                     type={showPinDigits ? 'text' : 'password'}
                     inputMode="numeric"
@@ -438,7 +441,7 @@ export default function SecurityVerificationModal({
                     effectiveIsLight ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Batalkan & Keluar
+                  Batalkan Login
                 </button>
                 <button
                   type="button"
@@ -454,8 +457,12 @@ export default function SecurityVerificationModal({
           )}
 
           {step === 'otp' && (
-            <motion.div
+            <motion.form
               key="step-otp"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleVerifyOtp();
+              }}
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
@@ -478,6 +485,8 @@ export default function SecurityVerificationModal({
                 {otp.map((digit, i) => (
                   <input
                     key={i}
+                    id={`mfa-otp-digit-${i + 1}`}
+                    name={`mfa_otp_${i + 1}`}
                     ref={(el) => (otpRefs.current[i] = el)}
                     type="text"
                     inputMode="numeric"
@@ -511,11 +520,10 @@ export default function SecurityVerificationModal({
                     onClick={handleHardAbort}
                     className="min-h-[32px] px-2 inline-flex items-center rounded-lg text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                   >
-                    Batal
+                    Batalkan Login
                   </button>
                   <button
-                    type="button"
-                    onClick={handleVerifyOtp}
+                    type="submit"
                     disabled={isVerifying || stageLockedOut || otp.join('').length < 6}
                     className="px-5 py-2.5 rounded-xl bg-[#00733B] hover:bg-[#005E30] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
                   >
@@ -524,7 +532,7 @@ export default function SecurityVerificationModal({
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </motion.form>
           )}
 
           {step === 'device' && (
@@ -548,11 +556,13 @@ export default function SecurityVerificationModal({
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <label className="space-y-1.5 block">
+                <label htmlFor="mfa-session-duration" className="space-y-1.5 block">
                   <span className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     Batas Maksimal Sesi
                   </span>
                   <select
+                    id="mfa-session-duration"
+                    name="mfa_session_duration"
                     value={sessionDurationMinutes}
                     onChange={(e) => setSessionDurationMinutes(Number(e.target.value))}
                     className={`w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none ${inputCls}`}
@@ -564,11 +574,13 @@ export default function SecurityVerificationModal({
                   </select>
                 </label>
 
-                <label className="space-y-1.5 block">
+                <label htmlFor="mfa-idle-timeout" className="space-y-1.5 block">
                   <span className={`text-[11px] font-semibold block ${effectiveIsLight ? 'text-slate-700' : 'text-slate-300'}`}>
                     Auto-Lock Idle Timeout
                   </span>
                   <select
+                    id="mfa-idle-timeout"
+                    name="mfa_idle_timeout"
                     value={idleTimeoutMinutes}
                     onChange={(e) => setIdleTimeoutMinutes(Number(e.target.value))}
                     className={`w-full px-3 py-2 rounded-xl border text-xs font-medium focus:outline-none ${inputCls}`}
@@ -582,8 +594,10 @@ export default function SecurityVerificationModal({
               </div>
 
               <div className="space-y-2.5 text-xs">
-                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
+                <label htmlFor="mfa-revoke-others" className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
                   <input
+                    id="mfa-revoke-others"
+                    name="mfa_revoke_others"
                     type="checkbox"
                     checked={revokeOtherSessions}
                     onChange={(e) => setRevokeOtherSessions(e.target.checked)}
@@ -597,8 +611,10 @@ export default function SecurityVerificationModal({
                   </div>
                 </label>
 
-                <label className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
+                <label htmlFor="mfa-strict-ip" className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer ${subSurfaceCls}`}>
                   <input
+                    id="mfa-strict-ip"
+                    name="mfa_strict_ip"
                     type="checkbox"
                     checked={strictIpLock}
                     onChange={(e) => setStrictIpLock(e.target.checked)}
@@ -638,7 +654,7 @@ export default function SecurityVerificationModal({
         <div className={`mt-5 pt-3 border-t flex items-center justify-between text-[10.5px] ${effectiveIsLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
           <span className="flex items-center gap-1.5">
             <Lock className="w-3 h-3 text-emerald-600" />
-            <span>Sesi terenkripsi terikat perangkat</span>
+            <span>Sesi terenkripsi</span>
           </span>
           <span className="font-mono">AAL2</span>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   MessageSquare,
@@ -79,15 +79,15 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
   const [flagReason, setFlagReason] = useState('Indikasi kuat Phantom Billing & Sangkalan Pasien');
   const [toastMsg, setToastMsg] = useState(null);
 
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/conversations`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.groups)) {
-          setUserGroups(data.groups);
-        }
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/operations/conversations`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (Array.isArray(data?.groups)) {
+        setUserGroups(data.groups);
       }
     } catch (err) {
       console.error('Gagal memuat log audit percakapan:', err);
@@ -440,7 +440,10 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div className="relative flex-1 w-full">
             <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
-            <input aria-label="Cari percakapan berdasarkan pengguna, topik, ID sesi, atau berkas klaim..."
+            <input
+              id="conv-search-input"
+              name="conv_search"
+              aria-label="Cari percakapan berdasarkan pengguna, topik, ID sesi, atau berkas klaim..."
               type="text"
               placeholder="Cari percakapan berdasarkan pengguna, topik, ID sesi, atau berkas klaim..."
               value={searchQuery}
@@ -454,6 +457,9 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <select
+              id="conv-role-filter"
+              name="conv_role_filter"
+              aria-label="Filter peran pengguna"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               className={`border rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none cursor-pointer ${
@@ -837,6 +843,9 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                   className="flex items-center gap-2"
                 >
                   <input
+                    id="conv-followup-input"
+                    name="conv_followup"
+                    aria-label="Kirim tindak lanjut pertanyaan audit forensik"
                     type="text"
                     value={followUpInput}
                     onChange={(e) => setFollowUpInput(e.target.value)}
@@ -931,10 +940,12 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
               Sesi <strong className={isLight ? 'text-slate-900' : 'text-white'}>{selectedSession.session_id}</strong> akan ditambahkan ke antrean Sesi Ditandai (Flags) untuk penelaahan mendalam oleh tim Pengawasan &amp; Pemeriksaan.
             </p>
             <div>
-              <label className={`block text-[11px] font-bold uppercase mb-1 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+              <label htmlFor="conv-flag-reason" className={`block text-[11px] font-bold uppercase mb-1 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                 Alasan Penandaan
               </label>
               <textarea
+                id="conv-flag-reason"
+                name="conv_flag_reason"
                 rows={3}
                 value={flagReason}
                 onChange={(e) => setFlagReason(e.target.value)}

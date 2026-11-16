@@ -449,6 +449,7 @@ export default function SignInPage({
       setPendingUser(data.user);
       setPreAuthToken(data.token);
       setPassword('');
+      setShowPassword(false);
       setShowVerificationModal(true);
     } catch {
       setErrorMsg('Tidak dapat terhubung ke server autentikasi.');

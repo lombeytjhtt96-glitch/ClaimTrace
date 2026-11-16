@@ -604,6 +604,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 </label>
                 <select
                   id="query-select"
+                  name="query_type"
                   value={selectedQuery}
                   onChange={(e) => handleQueryChange(e.target.value)}
                   className={`block w-full rounded-xl text-sm py-3 px-4 transition-all cursor-pointer border ${
@@ -611,7 +612,6 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                       ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500'
                       : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
                   }`}
-                  disabled={loading}
                 >
                   <option value="" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>-- Pilih kueri analitik terotorisasi --</option>
                   {ALLOW_LISTED_QUERIES.map((query) => (
@@ -630,14 +630,17 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               </div>
 
               <div>
-                <label className={`block text-xs font-semibold mb-2 ${
+                <span className={`block text-xs font-semibold mb-2 ${
                   isLight ? 'text-slate-700' : 'text-white/70'
                 }`}>
                   Rentang Tanggal Pengajuan SEP (Opsional)
-                </label>
+                </span>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <input aria-label="Tanggal Awal SEP"
+                    <input
+                      id="insights-start-date"
+                      name="start_date"
+                      aria-label="Tanggal Awal SEP"
                       type="date"
                       value={startDate}
                       min={status.dataset_date_min || undefined}
@@ -648,11 +651,13 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                           ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
                           : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
                       }`}
-                      disabled={loading}
                     />
                   </div>
                   <div>
-                    <input aria-label="Tanggal Akhir SEP"
+                    <input
+                      id="insights-end-date"
+                      name="end_date"
+                      aria-label="Tanggal Akhir SEP"
                       type="date"
                       value={endDate}
                       min={status.dataset_date_min || undefined}
@@ -663,7 +668,6 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                           ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
                           : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
                       }`}
-                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -687,6 +691,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 </label>
                 <select
                   id="severity-filter"
+                  name="severity"
                   value={severity}
                   onChange={(e) => {
                     const nextSev = e.target.value;
@@ -698,7 +703,6 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                       ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
                       : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
                   }`}
-                  disabled={loading}
                 >
                   <option value="" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Semua Tingkat Risiko (All Severities)</option>
                   <option value="low" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Rendah (Jalur Hijau / RJTL)</option>
@@ -1214,6 +1218,7 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               </div>
               <button
                 type="button"
+                aria-label="Tutup daftar semua laporan analitik"
                 onClick={() => {
                   setShowAllReportsModal(false);
                   setReportSearchQuery('');
@@ -1232,6 +1237,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
                 isLight ? 'text-slate-400' : 'text-white/40'
               }`} />
               <input
+                id="insights-report-search"
+                name="insights_report_search"
+                aria-label="Cari judul, topik, atau kata kunci audit"
                 type="text"
                 value={reportSearchQuery}
                 onChange={(e) => setReportSearchQuery(e.target.value)}

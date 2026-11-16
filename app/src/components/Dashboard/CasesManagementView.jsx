@@ -467,8 +467,11 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
           <div className="flex flex-wrap items-center gap-3">
             {/* Show entries */}
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <span>Tampilkan</span>
+              <label htmlFor="cases-page-size">Tampilkan</label>
               <select
+                id="cases-page-size"
+                name="cases_page_size"
+                aria-label="Jumlah baris berkas klaim per halaman"
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 className={`px-2 py-1 rounded-lg border text-xs cursor-pointer ${
@@ -485,6 +488,9 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
             {/* Search Input */}
             <div className="relative">
               <input
+                id="cases-search-input"
+                name="cases_search"
+                aria-label="Cari tiket, faskes, atau ID klaim"
                 type="text"
                 placeholder="Cari tiket / faskes / klaim..."
                 value={searchInput}
@@ -806,10 +812,12 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={`block text-xs font-bold mb-1 ${isLight ? 'text-slate-700' : 'text-white/60'}`}>
+                  <label htmlFor="cases-detail-status" className={`block text-xs font-bold mb-1 ${isLight ? 'text-slate-700' : 'text-white/60'}`}>
                     Ubah Status Audit
                   </label>
                   <select
+                    id="cases-detail-status"
+                    name="case_status"
                     value={selectedCase.status}
                     onChange={async (e) => {
                       const nextStatus = e.target.value;
@@ -843,10 +851,12 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-bold mb-1 ${isLight ? 'text-slate-700' : 'text-white/60'}`}>
+                  <label htmlFor="cases-detail-assignee" className={`block text-xs font-bold mb-1 ${isLight ? 'text-slate-700' : 'text-white/60'}`}>
                     Tugaskan Verifikator Medis
                   </label>
                   <select
+                    id="cases-detail-assignee"
+                    name="case_assignee"
                     value={selectedCase.assigned_to || ''}
                     onChange={async (e) => {
                       const nextAssignee = e.target.value || null;

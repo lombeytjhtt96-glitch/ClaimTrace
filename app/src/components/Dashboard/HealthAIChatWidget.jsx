@@ -531,7 +531,10 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
             }`}
           >
             <div className="relative flex items-center gap-2">
-              <input aria-label="Bidang input data"
+              <input
+                id="health-ai-widget-input"
+                name="health_ai_widget_message"
+                aria-label="Tanyakan ke Asisten Audit JKN"
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

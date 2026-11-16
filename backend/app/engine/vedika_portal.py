@@ -953,7 +953,7 @@ def render_collective_fpk_bahv_html(
       <tr>
         <th>Kasus</th><th>Lbr</th><th>Biaya Tagih</th>
         <th>Kasus</th><th>Hari</th><th>Biaya Tagih</th>
-        <th>Kasus</th><th>Biaya Tagih</th><th>Disetujui (FKL48)</th><th>Selisih / Tahan</th>
+        <th>Kasus</th><th>Biaya Tagih</th><th>Biaya Disetujui</th><th>Selisih / Tahan</th>
       </tr>
     </thead>
     <tbody>

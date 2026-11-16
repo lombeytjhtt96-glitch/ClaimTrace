@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { 
   Settings, Check, X, RefreshCw, Eye, EyeOff, CheckCircle2,
   Sun, Moon, Monitor, Palette, Layers, Bot, Smartphone, 
@@ -847,9 +847,28 @@ function SettingItemRow({ setting, value, onChange, isChanged, isLight }) {
           ) : setting.type === 'number' ? (
             <input
               id={setting.key}
+              name={setting.key}
               type="number"
-              value={String(currentValue ?? '')}
-              onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+              step={setting.key === 'ai_temperature' ? '0.05' : undefined}
+              min={setting.key === 'ai_temperature' ? '0' : undefined}
+              max={setting.key === 'ai_temperature' ? '1' : undefined}
+              value={
+                setting.key === 'ai_temperature' && currentValue !== '' && Number.isFinite(Number(currentValue))
+                  ? String(Number(Number(currentValue).toFixed(2)))
+                  : String(currentValue ?? '')
+              }
+              onChange={(e) => {
+                if (e.target.value === '') {
+                  onChange('');
+                  return;
+                }
+                const parsed = Number(e.target.value);
+                onChange(
+                  setting.key === 'ai_temperature' && Number.isFinite(parsed)
+                    ? Number(parsed.toFixed(2))
+                    : parsed
+                );
+              }}
               className={`w-full sm:w-36 rounded-lg border px-3.5 py-2 text-sm transition-colors focus:outline-none focus:ring-2 font-mono font-bold ${
                 isLight 
                   ? 'border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:ring-amber-500/20' 
@@ -1151,9 +1170,9 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
   useEffect(() => {
     let active = true;
     Promise.all([
-      authFetch(`${API_BASE_URL}/api/v1/auth/verificators`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      authFetch(`${API_BASE_URL}/api/v1/auth/my-privileges`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      authFetch(`${API_BASE_URL}/api/v1/operations/directory`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/auth/verificators`),
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/auth/my-privileges`),
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/operations/directory`),
     ]).then(([verData, privData, dirData]) => {
       if (!active) return;
       const actorList = Array.isArray(verData) ? verData : verData?.verificators;
@@ -1193,17 +1212,22 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
     let active = true;
     const loadServerSettings = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/settings`);
-        if (res.ok && active) {
-          const data = await res.json();
+        const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/settings`);
+        if (data && active) {
           const serverSettings = data?.settings;
           if (serverSettings && typeof serverSettings === 'object') {
             setCategories((prev) =>
               prev.map((cat) => ({
                 ...cat,
-                settings: cat.settings.map((s) =>
-                  s.key in serverSettings ? { ...s, value: serverSettings[s.key] } : s
-                ),
+                settings: cat.settings.map((s) => {
+                  if (!(s.key in serverSettings)) return s;
+                  const rawVal = serverSettings[s.key];
+                  const normalizedVal =
+                    s.key === 'ai_temperature' && Number.isFinite(Number(rawVal))
+                      ? Number(Number(rawVal).toFixed(2))
+                      : rawVal;
+                  return { ...s, value: normalizedVal };
+                }),
               }))
             );
           }
@@ -1323,7 +1347,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
                 <span className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full border font-bold ${
                   isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-[#FFCA40]/20 text-[#FFCA40] border-[#FFCA40]/30'
                 }`}>
-                  8 Kategori Lengkap
+                  {categories.length} Kategori Lengkap
                 </span>
               </h1>
               <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
@@ -1393,7 +1417,7 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
                 FairGuard Z49.1: {verifyProbeState.result.hard_negative_protected ? 'AKTIF' : 'REGULER'}
               </span>
               <span className={`px-2 py-0.5 rounded border font-semibold ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-white/5 border-white/10 text-white/85'}`}>
-                Fallback: {verifyProbeState.result.stage_5_and_6_llm_and_fallback?.fallback_source || 'deterministik'}
+                Fallback: {verifyProbeState.result.stage_5_and_6_llm_and_fallback?.fallback_source === 'LOCAL_DETERMINISTIC_RULE_ENGINE' ? 'Engine Deterministik Lokal' : (verifyProbeState.result.stage_5_and_6_llm_and_fallback?.fallback_source || 'Engine Deterministik Lokal')}
               </span>
             </div>
           ) : verifyProbeState.error ? (

@@ -612,7 +612,10 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
               <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${
                 isLight ? 'text-slate-400' : 'text-white/40'
               }`} />
-              <input aria-label="Cari FKRTL, DPJP, verifikator..."
+              <input
+                id="clar-search-input"
+                name="clar_search"
+                aria-label="Cari FKRTL, DPJP, verifikator..."
                 type="text"
                 placeholder="Cari FKRTL, DPJP, verif..."
                 value={searchQuery}
@@ -628,10 +631,12 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
 
           {/* Status Filter */}
           <div>
-            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <label htmlFor="clar-status-filter" className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               Status Jadwal
-            </span>
+            </label>
             <select
+              id="clar-status-filter"
+              name="clar_status_filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               aria-label="Filter berdasarkan status jadwal"
@@ -651,10 +656,12 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
 
           {/* Appointment Type Filter */}
           <div>
-            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <label htmlFor="clar-type-filter" className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               Jenis Klarifikasi
-            </span>
+            </label>
             <select
+              id="clar-type-filter"
+              name="clar_type_filter"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter berdasarkan jenis klarifikasi"
@@ -675,10 +682,13 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
 
           {/* Date From */}
           <div className="relative">
-            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <label htmlFor="clar-date-from" className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               Dari Tanggal
-            </span>
-            <input aria-label="Dari tanggal"
+            </label>
+            <input
+              id="clar-date-from"
+              name="clar_date_from"
+              aria-label="Dari tanggal"
               type="date"
               value={selectedDateFrom}
               onChange={(e) => setSelectedDateFrom(e.target.value)}
@@ -693,10 +703,13 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
 
           {/* Date To */}
           <div className="relative">
-            <span className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <label htmlFor="clar-date-to" className={`block text-[10px] font-bold uppercase mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               Sampai Tanggal
-            </span>
-            <input aria-label="Sampai tanggal"
+            </label>
+            <input
+              id="clar-date-to"
+              name="clar_date_to"
+              aria-label="Sampai tanggal"
               type="date"
               value={selectedDateTo}
               onChange={(e) => setSelectedDateTo(e.target.value)}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -72,15 +72,15 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     note: '',
   });
 
-  const fetchInterventions = useCallback(async () => {
+  const fetchInterventions = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/interventions`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.interventions)) {
-          setPlans(data.interventions);
-        }
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/operations/interventions`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (Array.isArray(data?.interventions)) {
+        setPlans(data.interventions);
       }
     } catch (err) {
       console.error('Gagal memuat rencana intervensi:', err);
@@ -891,7 +891,10 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
           }`}>
             <div className="relative flex-1 w-full">
               <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
-              <input aria-label="Cari rencana intervensi berdasarkan faskes, klaim, atau topik..."
+              <input
+                id="interv-search-input"
+                name="interv_search"
+                aria-label="Cari rencana intervensi berdasarkan faskes, klaim, atau topik..."
                 type="text"
                 placeholder="Cari rencana intervensi berdasarkan faskes, klaim, atau topik..."
                 value={searchQuery}
@@ -905,6 +908,9 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <select
+                id="interv-risk-filter"
+                name="interv_risk_filter"
+                aria-label="Filter tingkat risiko intervensi"
                 value={riskFilter}
                 onChange={(e) => setRiskFilter(e.target.value)}
                 className={`flex-1 sm:flex-none border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer ${
@@ -920,6 +926,9 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
               </select>
 
               <select
+                id="interv-status-filter"
+                name="interv_status_filter"
+                aria-label="Filter status intervensi"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={`flex-1 sm:flex-none border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer ${
@@ -1250,12 +1259,14 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                 : 'Tuliskan alasan penolakan draf rencana intervensi.'}
             </p>
             <div>
-              <label className={`block text-[11px] font-bold uppercase mb-1 ${
+              <label htmlFor="interv-review-note" className={`block text-[11px] font-bold uppercase mb-1 ${
                 isLight ? 'text-slate-700' : 'text-white/70'
               }`}>
                 Catatan Verifikator Medis (Opsional)
               </label>
               <textarea
+                id="interv-review-note"
+                name="interv_review_note"
                 rows={3}
                 value={reviewNoteModal.note}
                 onChange={(e) =>

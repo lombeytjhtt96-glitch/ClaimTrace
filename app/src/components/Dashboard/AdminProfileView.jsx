@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import {
   Shield,
   Edit3,
@@ -104,15 +104,17 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
   const [sessionsError, setSessionsError] = useState('');
   const [revokingJti, setRevokingJti] = useState('');
 
-  const loadActiveSessions = useCallback(async () => {
+  const loadActiveSessions = useCallback(async (forceRefresh = false) => {
     setSessionsLoading(true);
     setSessionsError('');
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/auth/sessions`);
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/auth/sessions`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (!data) {
+        throw new Error('gagal terhubung ke layanan sesi');
       }
-      const data = await res.json();
       setSessions(Array.isArray(data?.sessions) ? data.sessions : []);
     } catch (err) {
       setSessionsError(`Gagal memuat daftar sesi aktif (${err?.message || 'error'}).`);
@@ -193,21 +195,18 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
     let active = true;
     const loadLiveProfile = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/profile`);
-        if (res.ok && active) {
-          const data = await res.json();
-          if (data?.profile) {
-            const p = data.profile;
-            const parts = (p.name || '').split(' ');
-            const hydrated = {
-              ...profile,
-              ...p,
-              firstName: p.firstName || parts[0] || '',
-              lastName: p.lastName || parts.slice(1).join(' ') || '',
-            };
-            setProfile(hydrated);
-            setOriginalProfile(hydrated);
-          }
+        const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/profile`);
+        if (data?.profile && active) {
+          const p = data.profile;
+          const parts = (p.name || '').split(' ');
+          const hydrated = {
+            ...profile,
+            ...p,
+            firstName: p.firstName || parts[0] || '',
+            lastName: p.lastName || parts.slice(1).join(' ') || '',
+          };
+          setProfile(hydrated);
+          setOriginalProfile(hydrated);
         }
       } catch (err) {
         console.error('Gagal memuat profil verifikator live:', err);
@@ -457,7 +456,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
             
             {/* NIP (Nomor Induk Pegawai) */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center justify-between ${
+              <label htmlFor="admin-profile-nip" className={`text-xs font-bold flex items-center justify-between ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <span className="flex items-center gap-1.5">
@@ -473,6 +472,8 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
                 </span>
               </label>
               <input
+                id="admin-profile-nip"
+                name="nip"
                 type="text"
                 value={profile.nip}
                 disabled
@@ -487,13 +488,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Email Kedinasan */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-email" className={`text-xs font-bold flex items-center gap-1.5 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <Mail className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                 Alamat Email Kedinasan
               </label>
               <input
+                id="admin-profile-email"
+                name="email"
                 type="email"
                 value={profile.email}
                 disabled
@@ -508,13 +511,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Peran / Jabatan Otorisasi */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-role" className={`text-xs font-bold flex items-center gap-1.5 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <Award className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                 Peran &amp; Wewenang Audit
               </label>
               <input
+                id="admin-profile-role"
+                name="role"
                 type="text"
                 value={profile.role}
                 disabled
@@ -529,13 +534,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Nama Lengkap & Gelar */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-name" className={`text-xs font-bold flex items-center gap-1.5 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <User className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                 Nama Lengkap &amp; Gelar
               </label>
               <input
+                id="admin-profile-name"
+                name="name"
                 type="text"
                 value={profile.name}
                 onChange={(e) => handleProfileChange('name', e.target.value)}
@@ -551,8 +558,10 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Nama Depan */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Nama Depan</label>
+              <label htmlFor="admin-profile-first-name" className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Nama Depan</label>
               <input
+                id="admin-profile-first-name"
+                name="firstName"
                 type="text"
                 value={profile.firstName}
                 onChange={(e) => handleProfileChange('firstName', e.target.value)}
@@ -568,8 +577,10 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Nama Belakang */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Nama Belakang</label>
+              <label htmlFor="admin-profile-last-name" className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Nama Belakang</label>
               <input
+                id="admin-profile-last-name"
+                name="lastName"
                 type="text"
                 value={profile.lastName}
                 onChange={(e) => handleProfileChange('lastName', e.target.value)}
@@ -585,13 +596,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Nomor Telepon Dinas */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-phone" className={`text-xs font-bold flex items-center gap-1.5 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <Phone className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                 Nomor Telepon / WhatsApp Dinas
               </label>
               <input
+                id="admin-profile-phone"
+                name="phone"
                 type="tel"
                 value={profile.phone}
                 onChange={(e) => handleProfileChange('phone', e.target.value)}
@@ -607,13 +620,15 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Unit Kerja */}
             <div className="space-y-1.5">
-              <label className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-unit" className={`text-xs font-bold flex items-center gap-1.5 ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
                 <Building2 className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
                 Unit Kerja &amp; Kedeputian Wilayah
               </label>
               <input
+                id="admin-profile-unit"
+                name="unit"
                 type="text"
                 value={profile.unit}
                 onChange={(e) => handleProfileChange('unit', e.target.value)}
@@ -640,8 +655,10 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
                 Terima peringatan batas waktu SLA 10 Hari Kerja, laporan anomali IA, dan kode OTP verifikasi melalui email dinas.
               </p>
             </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-xs">
+            <label htmlFor="admin-profile-email-alerts" className="inline-flex cursor-pointer items-center gap-2 text-xs">
               <input
+                id="admin-profile-email-alerts"
+                name="allowEmailCheckins"
                 type="checkbox"
                 checked={profile.allowEmailCheckins}
                 onChange={(e) => handleProfileChange('allowEmailCheckins', e.target.checked)}

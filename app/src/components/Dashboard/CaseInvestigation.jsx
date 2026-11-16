@@ -291,11 +291,8 @@ export default function CaseInvestigation({
 
   const loadClaimDossier = React.useCallback(async () => {
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/dossier`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json?.dossier) setClaimDossier(json.dossier);
-      }
+      const json = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims/${currentCase.id}/dossier`);
+      if (json?.dossier) setClaimDossier(json.dossier);
     } catch {
       // keep fallback UI clean
     }
@@ -701,7 +698,7 @@ export default function CaseInvestigation({
                   <>
                     <span className={`font-semibold px-2.5 py-1 rounded-xl border ${isLight ? 'text-slate-800 bg-slate-50 border-slate-200' : 'text-white/90 bg-white/5 border-white/10'}`}>
                       INA-CBG <strong className={`tabular-nums font-mono ${isLight ? 'text-amber-800' : 'text-[#FFCA40]'}`}>{currentCase.code}</strong>: <span className={isLight ? 'text-slate-600 font-normal' : 'text-white/70 font-normal'}>{currentCase.description}</span>
-                      <span className={`ml-1.5 font-mono text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>(FKL20:{fkl20} · FKL21:{fkl21} · FKL22:{fkl22} · Sev FKL23:{fkl23})</span>
+                      <span className={`ml-1.5 font-mono text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>(CMG {fkl20} · {fkl21 === '4' ? 'Rawat Inap' : 'Rawat Jalan/Khusus'} · Level {fkl23})</span>
                     </span>
                     <span className={`font-bold px-2.5 py-1 rounded-xl font-mono tabular-nums shadow-xs border ${isLight ? 'text-emerald-800 bg-emerald-50 border-emerald-300' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'}`}>
                       {currentCase.tariff}
@@ -1140,8 +1137,8 @@ export default function CaseInvestigation({
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
+            <div className="text-right shrink-0">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded border whitespace-nowrap inline-block ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
                 Kaidah 2
               </span>
             </div>
@@ -1224,8 +1221,8 @@ export default function CaseInvestigation({
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
+            <div className="text-right shrink-0">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded border whitespace-nowrap inline-block ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
                 Kaidah 3
               </span>
             </div>
@@ -1460,8 +1457,7 @@ export default function CaseInvestigation({
                       {currentCase.deniedCount === 0 ? 'HADIR SAH' : 'KONFIRMATIF'}
                     </span>
                   </td>
-                  <td className={`py-2.5 px-3 font-medium text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Presensi Faktual</td>
-                  <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-purple-900' : 'text-purple-300'}`}>Kaidah Presensi Peserta</td>
+                  <td className={`py-2.5 px-3 font-medium text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Presensi Peserta</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>UU PDP No. 27/2022</td>
                 </tr>
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
@@ -1715,6 +1711,9 @@ export default function CaseInvestigation({
                   </div>
                 )}
                 <textarea
+                  id="ci-resubmit-notes"
+                  name="catatan_faskes"
+                  aria-label="Catatan klarifikasi Tim Casemix RS dan lampiran bukti klinis susulan"
                   required
                   rows={2}
                   value={resubmitForm.catatan_faskes}
@@ -1726,6 +1725,9 @@ export default function CaseInvestigation({
                 />
                 <div className="grid grid-cols-3 gap-2">
                   <input
+                    id="ci-resubmit-icd10"
+                    name="perbaikan_icd10"
+                    aria-label="Revisi kode ICD-10"
                     type="text"
                     value={resubmitForm.perbaikan_icd10}
                     onChange={(e) => setResubmitForm({ ...resubmitForm, perbaikan_icd10: e.target.value })}
@@ -1733,6 +1735,9 @@ export default function CaseInvestigation({
                     className={`px-2 py-1.5 rounded-lg border text-[11px] font-mono ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15 text-white'}`}
                   />
                   <input
+                    id="ci-resubmit-cbg"
+                    name="perbaikan_cbg"
+                    aria-label="Revisi kode INA-CBG"
                     type="text"
                     value={resubmitForm.perbaikan_cbg}
                     onChange={(e) => setResubmitForm({ ...resubmitForm, perbaikan_cbg: e.target.value })}
@@ -1740,6 +1745,9 @@ export default function CaseInvestigation({
                     className={`px-2 py-1.5 rounded-lg border text-[11px] font-mono ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15 text-white'}`}
                   />
                   <input
+                    id="ci-resubmit-tarif"
+                    name="tarif_revisi_rp"
+                    aria-label="Tarif klaim revisi (Rp)"
                     type="number"
                     min="0"
                     value={resubmitForm.tarif_revisi_rp}
@@ -1750,12 +1758,12 @@ export default function CaseInvestigation({
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                   <div className="flex items-center gap-3">
-                    <label className="inline-flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={resubmitForm.dok_frista} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_frista: e.target.checked })} />
+                    <label htmlFor="ci-resubmit-frista" className="inline-flex items-center gap-1 cursor-pointer">
+                      <input id="ci-resubmit-frista" name="dok_frista" type="checkbox" checked={resubmitForm.dok_frista} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_frista: e.target.checked })} />
                       <span>Unggah FRISTA</span>
                     </label>
-                    <label className="inline-flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" checked={resubmitForm.dok_tte} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_tte: e.target.checked })} />
+                    <label htmlFor="ci-resubmit-tte" className="inline-flex items-center gap-1 cursor-pointer">
+                      <input id="ci-resubmit-tte" name="dok_tte" type="checkbox" checked={resubmitForm.dok_tte} onChange={(e) => setResubmitForm({ ...resubmitForm, dok_tte: e.target.checked })} />
                       <span>TTE BSrE DPJP</span>
                     </label>
                   </div>
@@ -1877,8 +1885,10 @@ export default function CaseInvestigation({
                     <form onSubmit={handleTier1Submit} className="space-y-2.5">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10.5px] font-semibold block mb-0.5">Nama Verifikator</label>
+                          <label htmlFor="ci-tier1-verifikator-name" className="text-[10.5px] font-semibold block mb-0.5">Nama Verifikator</label>
                           <input
+                            id="ci-tier1-verifikator-name"
+                            name="verifikator_name"
                             type="text"
                             required
                             value={tier1Form.verifikator_name}
@@ -1887,8 +1897,10 @@ export default function CaseInvestigation({
                           />
                         </div>
                         <div>
-                          <label className="text-[10.5px] font-semibold block mb-0.5">NIP Verifikator</label>
+                          <label htmlFor="ci-tier1-verifikator-nip" className="text-[10.5px] font-semibold block mb-0.5">NIP Verifikator</label>
                           <input
+                            id="ci-tier1-verifikator-nip"
+                            name="verifikator_nip"
                             type="text"
                             required
                             value={tier1Form.verifikator_nip}
@@ -1898,8 +1910,10 @@ export default function CaseInvestigation({
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10.5px] font-semibold block mb-0.5">Putusan Awal Tier 1</label>
+                        <label htmlFor="ci-tier1-verdict" className="text-[10.5px] font-semibold block mb-0.5">Putusan Awal Tier 1</label>
                         <select
+                          id="ci-tier1-verdict"
+                          name="verdict"
                           value={tier1Form.verdict}
                           onChange={(e) => setTier1Form({ ...tier1Form, verdict: e.target.value })}
                           className={`w-full px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${isLight ? 'bg-white border-slate-300' : 'bg-[#00153A] border-white/15'}`}
@@ -1911,8 +1925,10 @@ export default function CaseInvestigation({
                         </select>
                       </div>
                       <div>
-                        <label className="text-[10.5px] font-semibold block mb-0.5">Catatan Klinis &amp; Hasil Uji Berkas</label>
+                        <label htmlFor="ci-tier1-notes" className="text-[10.5px] font-semibold block mb-0.5">Catatan Klinis &amp; Hasil Uji Berkas</label>
                         <textarea
+                          id="ci-tier1-notes"
+                          name="clinical_notes"
                           rows={2}
                           required
                           value={tier1Form.clinical_notes}
@@ -1996,8 +2012,10 @@ export default function CaseInvestigation({
                     <form onSubmit={handleTier2Submit} className="space-y-2.5">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[10.5px] font-semibold block mb-0.5">Nama Dokter Penelaah</label>
+                          <label htmlFor="ci-tier2-reviewer-name" className="text-[10.5px] font-semibold block mb-0.5">Nama Dokter Penelaah</label>
                           <input
+                            id="ci-tier2-reviewer-name"
+                            name="reviewer_name"
                             type="text"
                             required
                             value={tier2Form.reviewer_name}
@@ -2006,8 +2024,10 @@ export default function CaseInvestigation({
                           />
                         </div>
                         <div>
-                          <label className="text-[10.5px] font-semibold block mb-0.5">NIP Penelaah Senior</label>
+                          <label htmlFor="ci-tier2-reviewer-nip" className="text-[10.5px] font-semibold block mb-0.5">NIP Penelaah Senior</label>
                           <input
+                            id="ci-tier2-reviewer-nip"
+                            name="reviewer_nip"
                             type="text"
                             required
                             value={tier2Form.reviewer_nip}
@@ -2017,8 +2037,10 @@ export default function CaseInvestigation({
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10.5px] font-semibold block mb-0.5">Putusan Akhir Dokter Penelaah</label>
+                        <label htmlFor="ci-tier2-final-verdict" className="text-[10.5px] font-semibold block mb-0.5">Putusan Akhir Dokter Penelaah</label>
                         <select
+                          id="ci-tier2-final-verdict"
+                          name="final_verdict"
                           value={tier2Form.final_verdict}
                           onChange={(e) => setTier2Form({ ...tier2Form, final_verdict: e.target.value })}
                           className={`w-full px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${isLight ? 'bg-white border-slate-300' : 'bg-[#00153A] border-white/15'}`}
@@ -2030,8 +2052,10 @@ export default function CaseInvestigation({
                         </select>
                       </div>
                       <div className={`p-2 rounded-lg border space-y-1.5 ${isLight ? 'bg-indigo-50/40 border-indigo-200' : 'bg-indigo-500/10 border-indigo-500/25'}`}>
-                        <label className="inline-flex items-center gap-1.5 cursor-pointer text-[11px] font-bold">
+                        <label htmlFor="ci-tier2-override-check" className="inline-flex items-center gap-1.5 cursor-pointer text-[11px] font-bold">
                           <input
+                            id="ci-tier2-override-check"
+                            name="is_overridden"
                             type="checkbox"
                             checked={tier2Form.is_overridden}
                             onChange={(e) => setTier2Form({ ...tier2Form, is_overridden: e.target.checked })}
@@ -2041,6 +2065,9 @@ export default function CaseInvestigation({
                         {tier2Form.is_overridden && (
                           <>
                             <textarea
+                              id="ci-tier2-override-justification"
+                              name="override_justification"
+                              aria-label="Alasan klinis atau kasuistis menganulir rekomendasi awal sistem"
                               rows={2}
                               required
                               value={tier2Form.override_justification}
@@ -2049,6 +2076,9 @@ export default function CaseInvestigation({
                               className={`w-full px-2 py-1.5 rounded border text-[10.5px] ${isLight ? 'bg-white border-slate-300' : 'bg-white/5 border-white/15'}`}
                             />
                             <input
+                              id="ci-tier2-regulatory-justification"
+                              name="regulatory_justification"
+                              aria-label="Dasar regulasi override sistem"
                               type="text"
                               value={tier2Form.regulatory_justification}
                               onChange={(e) => setTier2Form({ ...tier2Form, regulatory_justification: e.target.value })}
@@ -2059,8 +2089,10 @@ export default function CaseInvestigation({
                         )}
                       </div>
                       <div>
-                        <label className="text-[10.5px] font-semibold block mb-0.5">Catatan Second Opinion Penelaah Senior</label>
+                        <label htmlFor="ci-tier2-second-opinion" className="text-[10.5px] font-semibold block mb-0.5">Catatan Second Opinion Penelaah Senior</label>
                         <textarea
+                          id="ci-tier2-second-opinion"
+                          name="second_opinion_notes"
                           rows={2}
                           required
                           value={tier2Form.second_opinion_notes}
@@ -2178,7 +2210,11 @@ export default function CaseInvestigation({
               </div>
               <div className={`p-2 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'}`}>
                 <span className={`block ${isLight ? 'text-slate-600' : 'text-white/55'}`}>Lama Rawat (LOS)</span>
-                <strong className="font-mono tabular-nums">{clinicalAudit.upcoding?.length_of_stay_days ?? 1} hari</strong>
+                <strong className="font-mono tabular-nums">
+                  {clinicalAudit.upcoding?.length_of_stay_days === 0
+                    ? '0 hari (Rawat Jalan RJTL)'
+                    : `${clinicalAudit.upcoding?.length_of_stay_days ?? 1} hari`}
+                </strong>
               </div>
             </div>
             <p className={`text-[10.5px] leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/75'}`}>

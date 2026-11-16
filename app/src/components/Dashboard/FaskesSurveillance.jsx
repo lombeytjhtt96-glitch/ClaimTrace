@@ -269,7 +269,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
-            <input aria-label="Bidang input data"
+            <input
+              id="faskes-search-input"
+              name="faskes_search"
+              aria-label="Cari rumah sakit, kode FKRTL, atau wilayah"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

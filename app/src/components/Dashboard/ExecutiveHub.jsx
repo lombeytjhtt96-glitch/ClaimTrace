@@ -56,6 +56,7 @@ import {
   Globe,
   CreditCard,
   Building2,
+  Download,
 } from 'lucide-react';
 import {
   generateClaimTraceExecutiveReport,
@@ -111,7 +112,7 @@ const INITIAL_OVERVIEW = {
         severity: 'tinggi',
       },
       {
-        title: 'Koreksi Verifikasi Tarif Langsung FKL47 vs FKL48 (1.631 Berkas)',
+        title: 'Koreksi Verifikasi Tarif Diajukan vs Disetujui (1.631 Berkas)',
         description:
           'Dari 1.699.219 berkas klaim FKRTL yang masuk, 1.697.588 berkas (99,90%) disetujui penuh sedangkan 1.631 berkas mengalami koreksi verifikasi tarif langsung senilai Rp 2.074.014.656.',
         trend: 'decreasing',
@@ -136,7 +137,7 @@ const INITIAL_OVERVIEW = {
       {
         title: 'Audit Bukti Klinis pada 42.193 Berkas Severity Level II & III',
         description:
-          'Wajibkan pencocokan 1.967.670 baris diagnosis sekunder (202405_diagnosissekunder.dta) dengan hasil penunjang laboratorium untuk mencegah upcoding komorbiditas.',
+          'Wajibkan pencocokan 1.967.670 baris diagnosis sekunder (repositori diagnosis sekunder terintegrasi) dengan hasil penunjang laboratorium untuk mencegah upcoding komorbiditas.',
         priority: 'tinggi',
         category: 'protokol audit',
       },
@@ -175,7 +176,7 @@ const INITIAL_OVERVIEW = {
     {
       id: 'alt-2',
       claim_id: 'FKL-KOR-01631',
-      faskes_name: 'Selisih Tarif Diajukan (FKL47) vs Disetujui (FKL48)',
+      faskes_name: 'Selisih Tarif Diajukan vs Disetujui',
       severity: 'critical',
       message:
         '1.631 berkas klaim FKRTL dikoreksi verifikator dengan selisih biaya Rp 2,07 Miliar dari total tagihan Rp 1,536 Triliun.',
@@ -223,13 +224,13 @@ const INITIAL_TRENDS = {
     { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 5853, note: '5 Berkas Dikoreksi Tarif' },
   ],
   sentiment_trend: [
-    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 99.83, note: 'Konkordansi FKL47 vs FKL48: 99,83%' },
-    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 99.91, note: 'Konkordansi FKL47 vs FKL48: 99,91%' },
-    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 99.87, note: 'Konkordansi FKL47 vs FKL48: 99,87%' },
-    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 99.91, note: 'Konkordansi FKL47 vs FKL48: 99,91%' },
-    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 99.87, note: 'Konkordansi FKL47 vs FKL48: 99,87%' },
-    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 99.88, note: 'Konkordansi FKL47 vs FKL48: 99,88%' },
-    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 99.91, note: 'Konkordansi FKL47 vs FKL48: 99,91%' },
+    { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 99.83, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,83%' },
+    { date: '2026-10-19', day: 'Sab', shortLabel: '19 Okt', labelDate: 'Sabtu, 19 Okt', value: 99.91, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,91%' },
+    { date: '2026-10-20', day: 'Min', shortLabel: '20 Okt', labelDate: 'Minggu, 20 Okt', value: 99.87, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,87%' },
+    { date: '2026-10-21', day: 'Sen', shortLabel: '21 Okt', labelDate: 'Senin, 21 Okt', value: 99.91, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,91%' },
+    { date: '2026-10-22', day: 'Sel', shortLabel: '22 Okt', labelDate: 'Selasa, 22 Okt', value: 99.87, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,87%' },
+    { date: '2026-10-23', day: 'Rab', shortLabel: '23 Okt', labelDate: 'Rabu, 23 Okt', value: 99.88, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,88%' },
+    { date: '2026-10-24', day: 'Kam', shortLabel: '24 Okt', labelDate: 'Kamis, 24 Okt', value: 99.91, note: 'Konkordansi Tarif Diajukan vs Disetujui: 99,91%' },
   ],
   auditor_trend: [
     { date: '2026-10-18', day: 'Jum', shortLabel: '18 Okt', labelDate: 'Jumat, 18 Okt', value: 1250, note: '1.250 FKRTL Aktif di 409 Kab/Kota' },
@@ -434,7 +435,7 @@ function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 
               </div>
             )}
             {subtitle && (
-              <span className={`truncate text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-medium leading-snug line-clamp-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                 {subtitle}
               </span>
             )}
@@ -601,7 +602,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
 
   const complianceLabel = timeRange === 7 ? '99,89%' : '99,90%';
   const complianceSub = timeRange === 'all'
-    ? '1.697.588 disetujui penuh · 1.631 dikoreksi tarif (FKL48)'
+    ? '1.697.588 disetujui penuh · 1.631 dikoreksi tarif'
     : timeRange === 90
     ? '432.262 disetujui penuh · 428 dikoreksi tarif (90H)'
     : timeRange === 30
@@ -632,7 +633,7 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
           data={sentimentPoints}
           unit="%"
           customDomain={[99.5, 100]}
-          statSummary={`Konkordansi FKL47/FKL48: ${complianceLabel}`}
+          statSummary={`Konkordansi Tarif: ${complianceLabel}`}
           color="blue"
         />
         <MicroTrendCard
@@ -911,7 +912,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
         </div>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={lifecycleData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+            <ComposedChart data={lifecycleData} margin={{ top: 8, right: 28, left: 4, bottom: 4 }}>
               <defs>
                 <linearGradient id="execLifecycleBlue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#2563eb" stopOpacity={isLight ? 0.35 : 0.45} />
@@ -923,7 +924,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 </linearGradient>
               </defs>
               <CartesianGrid stroke={gridStroke} strokeDasharray="2 4" strokeOpacity={0.6} vertical={false} />
-              <XAxis dataKey="date" stroke={axisStroke} tickLine={false} tick={{ fontSize: 11, fontFamily: 'var(--ct-font-mono)' }} />
+              <XAxis dataKey="date" stroke={axisStroke} tickLine={false} interval="preserveStartEnd" minTickGap={24} padding={{ left: 14, right: 22 }} tick={{ fontSize: 11, fontFamily: 'var(--ct-font-mono)' }} />
               <YAxis 
                 scale={useLogScale ? 'log' : 'auto'}
                 domain={useLogScale ? ['auto', 'auto'] : [0, 'auto']}
@@ -1659,6 +1660,38 @@ export default function ExecutiveHub({
   const [timeRange, setTimeRange] = useState('all'); // 'all' (Seluruh Data) | 90 | 30 | 7
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const handleExportExecutiveCsv = () => {
+    const periodLabel = timeRange === 'all' ? 'seluruh_data' : `${timeRange}_hari`;
+    const kpis = activeOverview?.kpis || {};
+    const trendRows = (activeTrends?.sentiment_trend || []).map((pt) => [
+      pt.date || pt.labelDate || '-',
+      String(pt.value ?? ''),
+      `"${String(pt.note || '').replace(/"/g, '""')}"`,
+    ]);
+    const lines = [
+      ['Metrik Eksekutif', 'Nilai', 'Keterangan'].join(','),
+      ['Periode', periodLabel, 'Ekspor Ringkasan Eksekutif ClaimTrace JKN'].join(','),
+      ['Total Berkas Klaim', String(kpis.total_active_cases ?? 0), 'FKRTL Terpantau'].join(','),
+      ['Kasus Prioritas Kritis', String(kpis.critical_Waiting_cases ?? 0), 'Memerlukan Tindak Lanjut'].join(','),
+      ['FKRTL Terpantau Aktif', String(kpis.active_sessions ?? 0), 'Fasilitas Kesehatan Rujukan'].join(','),
+      ['Rata-rata Waktu Resolusi (Jam)', String(kpis.avg_resolution_time_hours ?? 0), 'SLA Verifikasi'].join(','),
+      ['Pelanggaran SLA 10 HK', String(kpis.sla_breach_count ?? 0), 'Status Kepatuhan'].join(','),
+      ['Konkordansi Tarif', `${((Number(kpis.avg_sentiment_score ?? 0.999)) * 100).toFixed(2)}%`, 'Tarif Diajukan vs Disetujui'].join(','),
+      '',
+      ['Tanggal / Kohort', 'Konkordansi / Indeks', 'Catatan'].join(','),
+      ...trendRows.map((cols) => cols.join(',')),
+    ];
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `claimtrace_ringkasan_eksekutif_${timeRange}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Keyboard accessibility: dismiss modals with Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1752,7 +1785,7 @@ export default function ExecutiveHub({
     const liveTopics = [
       { topic: 'Klaim Rehabilitasi Medik & Fisioterapi Berulang (Z-3)', count: z3Count },
       { topic: 'Klaim Rawat Inap Severity Level II & III (Komorbid)', count: sev23Count },
-      { topic: 'Koreksi Verifikasi Tarif Langsung (FKL47 vs FKL48)', count: corrCount },
+      { topic: 'Koreksi Verifikasi Tarif Langsung (Tarif Diajukan vs Disetujui)', count: corrCount },
       { topic: 'Klaim Ganda Pasien pada Hari yang Sama (Lintas/Intra RS)', count: rangeKey === 'all' ? 9555 : Math.max(12, Math.round(vol * 0.0056)) },
     ];
 
@@ -2046,14 +2079,15 @@ export default function ExecutiveHub({
 
           <button
             type="button"
-            onClick={() => setIsReportModalOpen(true)}
+            onClick={handleExportExecutiveCsv}
+            aria-label="Ekspor data ringkasan eksekutif ke CSV"
             className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-md cursor-pointer transition-all ${
               isLight
                 ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20'
                 : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5" />
             Ekspor Laporan
           </button>
         </div>
@@ -2171,6 +2205,7 @@ export default function ExecutiveHub({
                 </div>
                 <button
                   type="button"
+                  aria-label="Tutup modal generator laporan"
                   onClick={() => setIsReportModalOpen(false)}
                   className={`p-1.5 rounded-xl transition cursor-pointer ${
                     isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -2209,9 +2244,12 @@ export default function ExecutiveHub({
                   </div>
                 </div>
 
-                <div className={`p-4 rounded-xl border flex items-center justify-between ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-                }`}>
+                <label
+                  htmlFor="exec-report-use-llm"
+                  className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+                  }`}
+                >
                   <div className="flex items-center gap-3">
                     <Cpu className={`w-5 h-5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
                     <div>
@@ -2223,13 +2261,16 @@ export default function ExecutiveHub({
                       </p>
                     </div>
                   </div>
-                  <input aria-label="Kotak centang opsi"
+                  <input
+                    id="exec-report-use-llm"
+                    name="exec-report-use-llm"
+                    aria-label="Aktifkan analisis forensik deterministik terpadu"
                     type="checkbox"
                     checked={useLLM}
                     onChange={(e) => setUseLLM(e.target.checked)}
                     className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
-                </div>
+                </label>
 
                 <div className="flex items-center gap-3 pt-2">
                   <button
@@ -2296,6 +2337,7 @@ export default function ExecutiveHub({
                 </div>
                 <button
                   type="button"
+                  aria-label="Tutup modal generator draf surat"
                   onClick={() => {
                     setCampaignGenerated(null);
                     setIsCampaignModalOpen(false);

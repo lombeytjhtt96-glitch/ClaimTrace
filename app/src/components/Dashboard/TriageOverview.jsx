@@ -352,8 +352,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     let active = true;
     const safeV = Math.max(1, Math.min(50, Number(capVerifiers) || 1));
     const safeC = Math.max(1, Math.min(50, Number(capPerDay) || 5));
-    authFetch(`${API_BASE_URL}/api/v1/healthkathon/credible-evidence?verifiers=${safeV}&cases_per_day=${safeC}&working_days=10`)
-      .then((res) => (res.ok ? res.json() : null))
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/healthkathon/credible-evidence?verifiers=${safeV}&cases_per_day=${safeC}&working_days=10`)
       .then((data) => {
         if (active && data) setCapacityReport(data);
       })
@@ -380,7 +379,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const redPct = totalQueueCount ? ((redCount / totalQueueCount) * 100).toFixed(1) : '0.0';
   const yellowPct = totalQueueCount ? ((yellowCount / totalQueueCount) * 100).toFixed(1) : '0.0';
   const greenPct = totalQueueCount ? ((greenCount / totalQueueCount) * 100).toFixed(1) : '0.0';
-  const uniqueFaskesOptions = Array.from(new Set(liveClaims.map(c => c.hospital).filter(Boolean)));
+  const uniqueFaskesOptions = Array.from(
+    new Set(
+      liveClaims
+        .map((c) => String(c.hospital || '').replace(/\s*\(Kelas\s+[A-D]\)\s*$/i, '').trim())
+        .filter(Boolean)
+    )
+  );
   const uniqueFpkOptions = Array.from(new Set(liveClaims.map(c => c.noFpk).filter(Boolean))).sort();
 
   const filteredClaims = liveClaims.filter(c => {
@@ -668,7 +673,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         {
           stage: 2,
           name: 'Tahap 2 · Pola Lonjakan & Klaim Ganda (#6/#11)',
-          rule: 'Deteksi lonjakan klaster >= 3,0x baseline, koreksi tarif FKL47 vs FKL48, dan klaim ganda hari sama.',
+          rule: 'Deteksi lonjakan klaster >= 3,0x baseline, koreksi tarif biaya klaim vs verifikasi, dan klaim ganda hari sama.',
           metric_label: '4.876 pasang klaim ganda (9.555 berkas) + 1.631 koreksi tarif',
         },
         {
@@ -920,12 +925,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
         </div>
 
         {/* Clean, Focused Filter Controls */}
-        <div className="flex items-center space-x-2 flex-wrap gap-y-1.5">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <select
+            id="triage-service-filter"
+            name="service_level"
             aria-label="Filter jenis pelayanan klaim"
             value={activeServiceLevel}
             onChange={(e) => setActiveServiceLevel(e.target.value)}
-            className={`text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+            className={`w-full sm:w-auto text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
               isLight
                 ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
@@ -937,10 +944,12 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </select>
 
           <select 
+            id="triage-faskes-filter"
+            name="faskes_filter"
             aria-label="Filter Fasilitas Kesehatan"
             value={selectedFaskes}
             onChange={(e) => setSelectedFaskes(e.target.value)}
-            className={`text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
+            className={`w-full sm:w-auto text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
               isLight
                 ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
                 : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
@@ -952,11 +961,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             ))}
           </select>
 
-          <div className="relative min-w-[240px]">
+          <div className="relative w-full sm:w-auto sm:min-w-[240px]">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
-            <input aria-label="Bidang input data"
+            <input
+              id="triage-search-input"
+              name="search_query"
+              aria-label="Cari klaim, nomor SEP, atau nama DPJP"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -981,9 +993,11 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
             Alokasi Kapasitas SLA 10 HK:
           </span>
-          <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+          <label htmlFor="triage-cap-verifiers" className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
             <span>Verifikator</span>
             <input
+              id="triage-cap-verifiers"
+              name="cap_verifiers"
               aria-label="Jumlah Verifikator"
               type="number"
               min="1"
@@ -995,9 +1009,11 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               }`}
             />
           </label>
-          <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
+          <label htmlFor="triage-cap-per-day" className="inline-flex items-center gap-1.5 text-[11px] font-semibold">
             <span>Berkas/Hari</span>
             <input
+              id="triage-cap-per-day"
+              name="cap_per_day"
               aria-label="Berkas per Hari per Verifikator"
               type="number"
               min="1"
@@ -1422,8 +1438,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Nama Faskes Rujukan</label>
+                  <label htmlFor="triage-ingest-faskes" className="block text-[11px] font-bold mb-1">Nama Faskes Rujukan</label>
                   <input
+                    id="triage-ingest-faskes"
+                    name="nama_faskes"
                     type="text"
                     required
                     value={ingestForm.nama_faskes}
@@ -1435,8 +1453,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold mb-1">Kode INA-CBG (FKL19)</label>
+                    <label htmlFor="triage-ingest-cbg" className="block text-[11px] font-bold mb-1">Kode INA-CBG (FKL19)</label>
                     <input
+                      id="triage-ingest-cbg"
+                      name="ina_cbg_code"
                       type="text"
                       required
                       value={ingestForm.ina_cbg_code}
@@ -1447,8 +1467,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold mb-1">Tarif Klaim (Rp)</label>
+                    <label htmlFor="triage-ingest-tarif" className="block text-[11px] font-bold mb-1">Tarif Klaim (Rp)</label>
                     <input
+                      id="triage-ingest-tarif"
+                      name="nilai_klaim_rp"
                       type="number"
                       min="100000"
                       required
@@ -1461,8 +1483,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Diagnosis Primer ICD-10 (FKL17)</label>
+                  <label htmlFor="triage-ingest-icd10" className="block text-[11px] font-bold mb-1">Diagnosis Primer ICD-10 (FKL17)</label>
                   <input
+                    id="triage-ingest-icd10"
+                    name="icd10_primary"
                     type="text"
                     required
                     value={ingestForm.icd10_primary || ''}
@@ -1473,8 +1497,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Kelas RS (FKL09)</label>
+                  <label htmlFor="triage-ingest-kelas-rs" className="block text-[11px] font-bold mb-1">Kelas RS (FKL09)</label>
                   <select
+                    id="triage-ingest-kelas-rs"
+                    name="kelas_rs"
                     aria-label="Kelas Rumah Sakit"
                     value={ingestForm.kelas_rs || 'B'}
                     onChange={(e) => setIngestForm({ ...ingestForm, kelas_rs: e.target.value })}
@@ -1489,9 +1515,11 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">DPJP &amp; Status SIP SDMK</label>
+                  <label htmlFor="triage-ingest-dpjp" className="block text-[11px] font-bold mb-1">DPJP &amp; Status SIP SDMK</label>
                   <div className="flex gap-2">
                     <input
+                      id="triage-ingest-dpjp"
+                      name="dpjp_name"
                       type="text"
                       required
                       value={ingestForm.dpjp_name}
@@ -1501,6 +1529,8 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       }`}
                     />
                     <select
+                      id="triage-ingest-sip"
+                      name="sip_status"
                       aria-label="Status SIP Dokter"
                       value={ingestForm.sip_status}
                       onChange={(e) => setIngestForm({ ...ingestForm, sip_status: e.target.value })}
@@ -1516,8 +1546,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[11px] font-bold mb-1">Lonjakan (x Baseline)</label>
+                    <label htmlFor="triage-ingest-lonjakan" className="block text-[11px] font-bold mb-1">Lonjakan (x Baseline)</label>
                     <input
+                      id="triage-ingest-lonjakan"
+                      name="rasio_lonjakan_baseline"
                       type="number"
                       step="0.1"
                       min="0.1"
@@ -1529,8 +1561,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold mb-1">Bantah Mobile JKN</label>
+                    <label htmlFor="triage-ingest-bantah" className="block text-[11px] font-bold mb-1">Bantah Mobile JKN</label>
                     <input
+                      id="triage-ingest-bantah"
+                      name="mobile_respon_tidak_hadir"
                       type="number"
                       min="0"
                       value={ingestForm.mobile_respon_tidak_hadir}
@@ -1544,32 +1578,40 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-[11px]">
-                <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
+                <label htmlFor="triage-ingest-baksos" className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
                   <input
+                    id="triage-ingest-baksos"
+                    name="terdaftar_baksos_resmi"
                     type="checkbox"
                     checked={Boolean(ingestForm.terdaftar_baksos_resmi)}
                     onChange={(e) => setIngestForm({ ...ingestForm, terdaftar_baksos_resmi: e.target.checked })}
                   />
                   <span>Terdaftar Baksos / Skrining Resmi Dinas Kesehatan</span>
                 </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
+                <label htmlFor="triage-ingest-repeat" className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
                   <input
+                    id="triage-ingest-repeat"
+                    name="indikasi_repeat_billing"
                     type="checkbox"
                     checked={Boolean(ingestForm.indikasi_repeat_billing)}
                     onChange={(e) => setIngestForm({ ...ingestForm, indikasi_repeat_billing: e.target.checked })}
                   />
                   <span>Indikasi Repeat / Split Billing (#11)</span>
                 </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
+                <label htmlFor="triage-ingest-fallback" className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
                   <input
+                    id="triage-ingest-fallback"
+                    name="simulate_llm_timeout"
                     type="checkbox"
                     checked={Boolean(ingestForm.simulate_llm_timeout)}
                     onChange={(e) => setIngestForm({ ...ingestForm, simulate_llm_timeout: e.target.checked })}
                   />
                   <span>Mode Cadangan Lokal (Fallback Deterministik)</span>
                 </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
+                <label htmlFor="triage-ingest-queue" className="inline-flex items-center gap-1.5 cursor-pointer font-semibold">
                   <input
+                    id="triage-ingest-queue"
+                    name="add_to_queue"
                     type="checkbox"
                     checked={Boolean(ingestForm.add_to_queue)}
                     onChange={(e) => setIngestForm({ ...ingestForm, add_to_queue: e.target.checked })}
@@ -1695,8 +1737,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
             <form onSubmit={handleRunFpkPull} className="p-5 space-y-4 overflow-y-auto text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Nomor FPK (Opsional / Otomatis)</label>
+                  <label htmlFor="triage-fpk-no" className="block text-[11px] font-bold mb-1">Nomor FPK (Opsional / Otomatis)</label>
                   <input
+                    id="triage-fpk-no"
+                    name="no_fpk"
                     type="text"
                     value={fpkPullForm.no_fpk}
                     onChange={(e) => setFpkPullForm({ ...fpkPullForm, no_fpk: e.target.value })}
@@ -1707,8 +1751,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Bulan Pelayanan</label>
+                  <label htmlFor="triage-fpk-bulan" className="block text-[11px] font-bold mb-1">Bulan Pelayanan</label>
                   <input
+                    id="triage-fpk-bulan"
+                    name="bulan_pelayanan"
                     type="text"
                     value={fpkPullForm.bulan_pelayanan}
                     onChange={(e) => setFpkPullForm({ ...fpkPullForm, bulan_pelayanan: e.target.value })}
@@ -1718,8 +1764,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Jenis Pelayanan (FKL10)</label>
+                  <label htmlFor="triage-fpk-jenis-pelayanan" className="block text-[11px] font-bold mb-1">Jenis Pelayanan (FKL10)</label>
                   <select
+                    id="triage-fpk-jenis-pelayanan"
+                    name="jenis_pelayanan"
                     value={fpkPullForm.jenis_pelayanan}
                     onChange={(e) => setFpkPullForm({ ...fpkPullForm, jenis_pelayanan: e.target.value })}
                     className={`w-full px-3 py-2 rounded-xl border text-xs ${
@@ -1732,8 +1780,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Jenis Pengajuan Klaim</label>
+                  <label htmlFor="triage-fpk-jenis-pengajuan" className="block text-[11px] font-bold mb-1">Jenis Pengajuan Klaim</label>
                   <select
+                    id="triage-fpk-jenis-pengajuan"
+                    name="jenis_pengajuan"
                     value={fpkPullForm.jenis_pengajuan}
                     onChange={(e) => setFpkPullForm({ ...fpkPullForm, jenis_pengajuan: e.target.value })}
                     className={`w-full px-3 py-2 rounded-xl border text-xs ${
@@ -1746,8 +1796,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Filter FKRTL (Opsional)</label>
+                  <label htmlFor="triage-fpk-filter-faskes" className="block text-[11px] font-bold mb-1">Filter FKRTL (Opsional)</label>
                   <input
+                    id="triage-fpk-filter-faskes"
+                    name="nama_faskes"
                     type="text"
                     value={fpkPullForm.nama_faskes}
                     onChange={(e) => setFpkPullForm({ ...fpkPullForm, nama_faskes: e.target.value })}
@@ -1758,8 +1810,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold mb-1">Jumlah Berkas Ditarik (1 - 5)</label>
+                  <label htmlFor="triage-fpk-jumlah" className="block text-[11px] font-bold mb-1">Jumlah Berkas Ditarik (1 - 5)</label>
                   <input
+                    id="triage-fpk-jumlah"
+                    name="jumlah_klaim"
                     type="number"
                     min="1"
                     max="5"
@@ -1772,8 +1826,10 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 </div>
               </div>
 
-              <label className="inline-flex items-center gap-2 cursor-pointer font-semibold">
+              <label htmlFor="triage-fpk-auto-plot" className="inline-flex items-center gap-2 cursor-pointer font-semibold">
                 <input
+                  id="triage-fpk-auto-plot"
+                  name="auto_plot"
                   type="checkbox"
                   checked={Boolean(fpkPullForm.auto_plot)}
                   onChange={(e) => setFpkPullForm({ ...fpkPullForm, auto_plot: e.target.checked })}

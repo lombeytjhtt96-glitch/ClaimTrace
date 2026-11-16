@@ -58,9 +58,11 @@ export default function UbahDataScreen({ onNavigate }) {
           <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
             <div className="flex items-center space-x-2 text-[#0288D1]">
               <Hospital className="w-4 h-4" />
-              <label className="text-xs font-bold text-slate-900">Fasilitas Kesehatan Tk. I (FKTP)</label>
+              <label htmlFor="mobile-ubah-faskes" className="text-xs font-bold text-slate-900">Fasilitas Kesehatan Tk. I (FKTP)</label>
             </div>
             <select
+              id="mobile-ubah-faskes"
+              name="mobile_ubah_faskes"
               value={faskes}
               onChange={(e) => setFaskes(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none"
@@ -76,7 +78,7 @@ export default function UbahDataScreen({ onNavigate }) {
 
           {/* Kelas Rawat */}
           <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
-            <label className="text-xs font-bold text-slate-900 block">Kelas Rawat</label>
+            <span className="text-xs font-bold text-slate-900 block">Kelas Rawat</span>
             <div className="grid grid-cols-3 gap-2">
               {['Kelas 1', 'Kelas 2', 'Kelas 3'].map((k) => (
                 <button
@@ -100,10 +102,13 @@ export default function UbahDataScreen({ onNavigate }) {
             <span className="text-xs font-bold text-slate-900 block">Kontak & Verifikasi OTP</span>
             
             <div>
-              <label className="text-[10.5px] text-slate-500 font-medium block mb-1">Nomor Handphone (Aktif)</label>
+              <label htmlFor="mobile-ubah-phone" className="text-[10.5px] text-slate-500 font-medium block mb-1">Nomor Handphone (Aktif)</label>
               <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <input aria-label="Bidang input data"
+                <input
+                  id="mobile-ubah-phone"
+                  name="mobile_ubah_phone"
+                  aria-label="Nomor Handphone Aktif"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -113,10 +118,13 @@ export default function UbahDataScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="text-[10.5px] text-slate-500 font-medium block mb-1">Alamat Email</label>
+              <label htmlFor="mobile-ubah-email" className="text-[10.5px] text-slate-500 font-medium block mb-1">Alamat Email</label>
               <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <input aria-label="Bidang input data"
+                <input
+                  id="mobile-ubah-email"
+                  name="mobile_ubah_email"
+                  aria-label="Alamat Email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -130,9 +138,11 @@ export default function UbahDataScreen({ onNavigate }) {
           <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
             <div className="flex items-center space-x-2 text-[#0288D1]">
               <MapPin className="w-4 h-4" />
-              <label className="text-xs font-bold text-slate-900">Alamat Surat Domisili</label>
+              <label htmlFor="mobile-ubah-address" className="text-xs font-bold text-slate-900">Alamat Surat Domisili</label>
             </div>
             <textarea
+              id="mobile-ubah-address"
+              name="mobile_ubah_address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               rows={2}

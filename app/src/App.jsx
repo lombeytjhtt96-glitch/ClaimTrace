@@ -49,6 +49,8 @@ const PembayaranScreen = lazy(() => import('./components/MobileJKN/PembayaranScr
 const PengaduanScreen = lazy(() => import('./components/MobileJKN/PengaduanScreen'));
 const BugarScreen = lazy(() => import('./components/MobileJKN/BugarScreen'));
 const ObatScreen = lazy(() => import('./components/MobileJKN/ObatScreen'));
+import TabErrorBoundary from './components/Common/TabErrorBoundary';
+import { verifySessionRequest } from './services/apiConfig';
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
 const EmpiricalForensics = lazy(() => import('./components/Dashboard/EmpiricalForensics'));
@@ -148,9 +150,13 @@ export default function App() {
   useEffect(() => {
     const onResize = () => {
       const mobile = window.innerWidth < 1024;
+      const wasMobile = prevMobileRef.current;
+      prevMobileRef.current = mobile;
       setIsMobileViewport(mobile);
-      if (mobile) {
+      if (mobile && !wasMobile) {
         setSidebarCollapsed(true);
+      } else if (!mobile && wasMobile) {
+        setSidebarCollapsed(false);
       }
     };
     window.addEventListener('resize', onResize);
@@ -159,6 +165,14 @@ export default function App() {
 
   // Sync state to URL while enforcing fail-closed login/dashboard boundaries
   useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.authView = authView;
+      const shouldHideBadge = authView !== 'login' && authView !== 'reset_password';
+      document.querySelectorAll('.grecaptcha-badge').forEach((el) => {
+        el.style.display = shouldHideBadge ? 'none' : '';
+        el.style.visibility = shouldHideBadge ? 'hidden' : '';
+      });
+    }
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       const canShowDashboardUrl =
@@ -314,7 +328,7 @@ export default function App() {
       group: 'Alur Kerja Utama',
       items: [
         { id: 'executive', label: 'Dashboard Ringkasan', keywords: 'ringkasan eksekutif home beranda kpi', icon: LayoutDashboard },
-        { id: 'queue', label: 'Antrean Klaim', keywords: 'antrean daftar sep prioritas top-k triase', icon: ListFilter, badge: sidebarBadges.pending_cases !== null ? String(sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
+        { id: 'queue', label: 'Antrean Klaim', keywords: 'antrean daftar sep prioritas top-k triase', icon: ListFilter, badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
         { id: 'investigation', label: 'Telaah Kasus', keywords: 'investigasi 4 lapis charlson upcoding koherensi klinis', icon: FileText },
         { id: 'decision', label: 'Konsol Putusan', keywords: 'putusan bakb bahv sanggahan fhir claim submit', icon: ShieldAlert },
       ],
@@ -430,6 +444,9 @@ export default function App() {
   const lastServerTouchRef = useRef(0);
   const lastUiResetRef = useRef(Date.now());
   const idleLimitSecRef = useRef(900);
+  const prevMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  const headerPopoversRef = useRef(null);
+  const opsGroupButtonRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && currentUser?.isMfaVerified) {
@@ -445,7 +462,7 @@ export default function App() {
     try {
       if (token) {
         await fetch(
-          `${API_BASE_URL}/api/v1/auth/logout?token=${encodeURIComponent(token)}${revokeAll ? '&revoke_all=true' : ''}`,
+          `${API_BASE_URL}/api/v1/auth/logout${revokeAll ? '?revoke_all=true' : ''}`,
           {
             method: 'POST',
             headers: {
@@ -494,16 +511,7 @@ export default function App() {
 
     try {
       if (touch) lastServerTouchRef.current = Date.now();
-      const res = await fetch(
-        `${API_BASE_URL}/api/v1/auth/verify-session?touch=${touch ? 1 : 0}&token=${encodeURIComponent(token)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-BPJS-Token': token,
-            'X-Device-Fingerprint': getDeviceFingerprint(),
-          },
-        }
-      );
+      const res = await verifySessionRequest(token, touch);
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.status !== 'valid' || !data?.user) {
         const errMsg =
@@ -617,7 +625,7 @@ export default function App() {
     if (authView === 'dashboard' && authStatusVerified && sessionIdleSeconds === 0) {
       const token = getStoredAuthToken();
       if (token) {
-        fetch(`${API_BASE_URL}/api/v1/auth/logout?token=${encodeURIComponent(token)}`, {
+        fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'X-BPJS-Token': token, 'X-Device-Fingerprint': getDeviceFingerprint() },
         }).catch(() => {});
@@ -754,6 +762,34 @@ export default function App() {
     }, 3200);
     return () => clearTimeout(timer);
   }, [toastMessage]);
+
+  // Tutup popover header otomatis saat navigasi, Escape, atau klik di luar menu
+  useEffect(() => {
+    setAlertsMenuOpen(false);
+    setProfileMenuOpen(false);
+  }, [dashboardTab, viewMode, commandPaletteOpen]);
+
+  useEffect(() => {
+    if (!alertsMenuOpen && !profileMenuOpen) return;
+    const handleOutside = (e) => {
+      if (headerPopoversRef.current && !headerPopoversRef.current.contains(e.target)) {
+        setAlertsMenuOpen(false);
+        setProfileMenuOpen(false);
+      }
+    };
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        setAlertsMenuOpen(false);
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [alertsMenuOpen, profileMenuOpen]);
 
   // Handle HTTP 401 Unauthorized Session Expiration Interceptor (Fail-Closed)
   useEffect(() => {
@@ -1221,7 +1257,7 @@ export default function App() {
               </div>
 
               {/* Center/Right: Clean Navigation Actions */}
-              <div className="flex items-center space-x-2 shrink-0">
+              <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
                 {/* Dual View Toggle (Mobile Simulation) */}
                 <button
                   type="button"
@@ -1413,10 +1449,11 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      setDashboardTab('settings');
+                      setDashboardTab('profile');
+                      setAlertsMenuOpen(false);
                       setProfileMenuOpen(false);
                     }}
-                    title="Sisa waktu batas inaktivitas (Idle Timeout) sesi terverifikasi"
+                    title="Buka Profil & Keamanan Sesi (Sisa waktu idle timeout)"
                     className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-mono font-semibold transition cursor-pointer ${
                       sessionIdleSeconds <= 120
                         ? (isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-500/15 border-amber-500/30 text-amber-300')
@@ -1629,8 +1666,8 @@ export default function App() {
         <motion.aside 
           animate={{ width: sidebarCollapsed ? (isMobileViewport ? 0 : 68) : 244 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className={`flex flex-col justify-between shrink-0 h-full z-40 select-none transition-colors duration-200 ${
-            isMobileViewport && !sidebarCollapsed ? 'fixed left-0 top-[54px] bottom-0 shadow-2xl border-r' : ''
+          className={`flex flex-col justify-between shrink-0 z-40 select-none transition-colors duration-200 ${
+            isMobileViewport && !sidebarCollapsed ? 'fixed left-0 top-[54px] bottom-0 shadow-2xl border-r' : 'h-full'
           } ${
             sidebarCollapsed && isMobileViewport ? 'border-r-0 overflow-hidden pointer-events-none' : sidebarCollapsed ? 'border-r overflow-visible' : 'border-r overflow-hidden'
           } ${
@@ -1652,8 +1689,19 @@ export default function App() {
                 {!sidebarCollapsed ? (
                   group.collapsible ? (
                     <button
+                      ref={opsGroupButtonRef}
                       type="button"
-                      onClick={() => setOpsGroupExpanded((prev) => !prev)}
+                      onClick={() => {
+                        setOpsGroupExpanded((prev) => {
+                          const next = !prev;
+                          if (next) {
+                            requestAnimationFrame(() => {
+                              opsGroupButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            });
+                          }
+                          return next;
+                        });
+                      }}
                       aria-expanded={opsGroupExpanded}
                       className={`w-full px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none rounded-lg transition cursor-pointer ${
                         isLight ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 hover:bg-white/5'
@@ -1780,22 +1828,23 @@ export default function App() {
                 viewMode === 'split' ? 'w-full xl:w-[370px] shrink-0 sticky top-1 self-start' : 'max-w-md mx-auto w-full'
               }`}>
                 {/* MOBILE JKN TOP ACTION BAR (CLOSE / DISMISS) */}
-                <div className="w-full max-w-[365px] flex items-center justify-between mb-2 px-1">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className={`text-[11px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full border ${
+                <div className="w-full max-w-[365px] flex items-center justify-between gap-2 mb-2 px-1">
+                  <div className="flex items-center space-x-1.5 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className={`text-[11px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap ${
                       isLight 
-                        ? 'bg-amber-100 text-amber-800 border-amber-300' 
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                         : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                     }`}>
                       Aplikasi Mobile JKN
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1.5 shrink-0">
                     <button
+                      type="button"
                       onClick={resetDemo}
-                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md transition-all cursor-pointer border ${
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs transition-all cursor-pointer border whitespace-nowrap ${
                         isLight 
                           ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' 
                           : 'border-white/15 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
@@ -1807,11 +1856,16 @@ export default function App() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={closeSimulator}
-                      className="text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-300 hover:border-rose-600 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md transition-all cursor-pointer group"
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs transition-all cursor-pointer border whitespace-nowrap ${
+                        isLight
+                          ? 'text-rose-800 bg-rose-50 hover:bg-rose-100 border-rose-300'
+                          : 'text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40'
+                      }`}
                       title="Tutup layar Mobile JKN dan kembalikan ke Layar Penuh"
                     >
-                      <X className="w-3.5 h-3.5 text-rose-500 group-hover:text-white transition-colors" />
+                      <X className="w-3.5 h-3.5" />
                       <span>Tutup Layar</span>
                     </button>
                   </div>
@@ -1921,7 +1975,7 @@ export default function App() {
                                 Konfirmasi Kehadiran Pelayanan Medis
                               </p>
                               <p className="text-[11px] text-slate-600 line-clamp-2 mt-0.5">
-                                Mohon konfirmasi apakah Anda benar menerima tindakan Fisioterapi di RS Khusus Mitra Husada.
+                                Mohon konfirmasi apakah Anda benar menerima layanan {selectedCase?.description || 'Rawat Jalan / Tindakan Medis'} di {selectedCase?.hospital || 'RS Khusus Mitra Husada'}.
                               </p>
                             </div>
                           </div>
@@ -1978,54 +2032,54 @@ export default function App() {
                           </div>
 
                           {/* 12 Grid Menus */}
-                          <div className="grid grid-cols-4 gap-y-3 gap-x-2 bg-white rounded-2xl p-3 shadow-sm border border-slate-200">
-                            <div onClick={() => navigateTo('more_menu')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_program_jkn.png" alt="Info Program JKN" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Info Program JKN</span>
+                          <div className="grid grid-cols-4 gap-y-2.5 gap-x-1.5 bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200">
+                            <div onClick={() => navigateTo('more_menu')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_program_jkn.png" alt="Info Program JKN" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Program JKN</span>
                             </div>
-                            <div onClick={() => navigateTo('chat_dokter')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_telehealth.png" alt="Telehealth" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">TELEHEALTH</span>
+                            <div onClick={() => navigateTo('chat_dokter')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_telehealth.png" alt="Telehealth" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">TELEHEALTH</span>
                             </div>
-                            <div onClick={() => navigateTo('riwayat')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_icare.png" alt="Info Riwayat" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Riwayat Pelayanan</span>
+                            <div onClick={() => navigateTo('riwayat')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_icare.png" alt="Info Riwayat" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Riwayat</span>
                             </div>
-                            <div onClick={() => navigateTo('bugar')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_bugar.png" alt="Bugar" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Bugar</span>
+                            <div onClick={() => navigateTo('bugar')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_bugar.png" alt="Bugar" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Bugar</span>
                             </div>
-                            <div onClick={() => navigateTo('pembayaran')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_rehab.png" alt="NEW Rehab" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">NEW Rehab</span>
+                            <div onClick={() => navigateTo('pembayaran')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_rehab.png" alt="NEW Rehab" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">NEW Rehab</span>
                             </div>
-                            <div onClick={() => navigateTo('ubah_data')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_penambahan_peserta.png" alt="Penambahan" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Penambahan</span>
+                            <div onClick={() => navigateTo('ubah_data')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_penambahan_peserta.png" alt="Penambahan" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Penambahan</span>
                             </div>
-                            <div onClick={() => navigateTo('kartu')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_info_peserta.png" alt="Info Peserta" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Info Peserta</span>
+                            <div onClick={() => navigateTo('kartu')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_info_peserta.png" alt="Info Peserta" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Info Peserta</span>
                             </div>
-                            <div onClick={() => setToastMessage('Panggilan Darurat BPJS Care Center 165 terhubung (Bebas Pulsa 24 Jam).')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_sos.png" alt="SOS" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">SOS 165</span>
+                            <div onClick={() => setToastMessage('Panggilan Darurat BPJS Care Center 165 terhubung (Bebas Pulsa 24 Jam).')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_sos.png" alt="SOS" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">SOS 165</span>
                             </div>
-                            <div onClick={() => navigateTo('tempat_tidur')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_lokasi_faskes.png" alt="Lokasi Faskes" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Info Faskes</span>
+                            <div onClick={() => navigateTo('tempat_tidur')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_lokasi_faskes.png" alt="Lokasi Faskes" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Info Faskes</span>
                             </div>
-                            <div onClick={() => navigateTo('ubah_data')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_perubahan_data.png" alt="Ubah Data" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Ubah Data</span>
+                            <div onClick={() => navigateTo('ubah_data')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_perubahan_data.png" alt="Ubah Data" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Ubah Data</span>
                             </div>
-                            <div onClick={() => navigateTo('pengaduan')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_pengaduan.png" alt="Pengaduan" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Pengaduan</span>
+                            <div onClick={() => navigateTo('pengaduan')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_pengaduan.png" alt="Pengaduan" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Pengaduan</span>
                             </div>
-                            <div onClick={() => navigateTo('more_menu')} className="flex flex-col items-center text-center group cursor-pointer">
-                              <img src="/assets/images/icon_menu_lainnya.png" alt="Lainnya" className="w-12 h-12 object-contain" />
-                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 line-clamp-2">Menu Lainnya</span>
+                            <div onClick={() => navigateTo('more_menu')} className="flex flex-col items-center text-center group cursor-pointer min-w-0 px-0.5">
+                              <img src="/assets/images/icon_menu_lainnya.png" alt="Lainnya" className="w-10 h-10 object-contain shrink-0" />
+                              <span className="text-[9.5px] font-medium text-slate-700 leading-tight mt-1 break-words w-full line-clamp-2">Lainnya</span>
                             </div>
                           </div>
 
@@ -2275,16 +2329,6 @@ export default function App() {
 
                   </div>
                 </div>
-
-                {/* FOOTER ACTION TO RETURN TO FULL COCKPIT */}
-                <button
-                  onClick={closeSimulator}
-                  className="mt-2 text-xs font-bold text-white/80 hover:text-rose-300 bg-white/10 hover:bg-rose-500/20 border border-white/15 hover:border-rose-500/40 flex items-center gap-1.5 py-1.5 px-3.5 rounded-full shadow-lg transition cursor-pointer backdrop-blur-md"
-                  title="Tutup layar Mobile JKN dan kembalikan cockpit ke layar penuh"
-                >
-                  <EyeOff className="w-3.5 h-3.5 text-white/60 hover:text-rose-300" />
-                  <span>Tutup Layar Mobile JKN &bull; Kembali ke Cockpit Penuh</span>
-                </button>
               </div>
             )}
 
@@ -2404,9 +2448,14 @@ export default function App() {
 
                     <button
                       type="button"
-                      onClick={() => setCommandPaletteOpen(true)}
+                      onClick={() => {
+                        if (isMobileViewport) {
+                          setSidebarCollapsed(true);
+                        }
+                        setCommandPaletteOpen(true);
+                      }}
                       aria-label="Buka navigasi cepat semua modul portal"
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer shrink-0 ${
                         isLight
                           ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                           : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
@@ -2414,7 +2463,8 @@ export default function App() {
                     >
                       <Search className="w-3 h-3" />
                       <span className="hidden sm:inline">Semua Modul ({sidebarNavItems.length})</span>
-                      <span className={`font-mono text-[10px] px-1 rounded ${isLight ? 'bg-slate-200/80 text-slate-700' : 'bg-white/10 text-slate-300'}`}>Ctrl+K</span>
+                      <span className="sm:hidden">Modul ({sidebarNavItems.length})</span>
+                      <span className={`hidden sm:inline font-mono text-[10px] px-1 rounded ${isLight ? 'bg-slate-200/80 text-slate-700' : 'bg-white/10 text-slate-300'}`}>Ctrl+K</span>
                     </button>
                   </div>
                 </div>
@@ -2429,6 +2479,12 @@ export default function App() {
                     transition={{ duration: 0.16, ease: "easeOut" }}
                     className="w-full space-y-4"
                   >
+                    <TabErrorBoundary
+                      resetKey={dashboardTab}
+                      isLight={isLight}
+                      moduleLabel={activeNavItem?.label}
+                      onGoHome={() => setDashboardTab('executive')}
+                    >
                     <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Memuat modul analitik...</div>}>
                     {dashboardTab === 'executive' && (
                       <ExecutiveHub 
@@ -2915,6 +2971,7 @@ export default function App() {
                       />
                     )}
                     </Suspense>
+                    </TabErrorBoundary>
                   </motion.div>
                 </AnimatePresence>
 

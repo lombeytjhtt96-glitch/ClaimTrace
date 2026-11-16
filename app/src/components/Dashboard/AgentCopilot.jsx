@@ -1157,6 +1157,8 @@ export default function AgentCopilot({
 
                   <div className="flex items-center gap-2 text-xs font-mono">
                     <select
+                      id="copilot-trace-status"
+                      name="trace_status_filter"
                       value={traceStatusFilter}
                       onChange={(e) => setTraceStatusFilter(e.target.value)}
                       aria-label="Filter status eksekusi"
@@ -1166,12 +1168,14 @@ export default function AgentCopilot({
                           : 'bg-[#00134A] border-white/10 text-white focus:outline-none focus:border-[#FFCA40]/50'
                       }`}
                     >
-                      <option value="">STATUS: SEMUA</option>
-                      <option value="completed">COMPLETED</option>
-                      <option value="failed">FAILED</option>
+                      <option value="">Status: Semua</option>
+                      <option value="completed">Selesai</option>
+                      <option value="failed">Gagal</option>
                     </select>
 
                     <select
+                      id="copilot-trace-agent"
+                      name="trace_agent_filter"
                       value={traceAgentFilter}
                       onChange={(e) => setTraceAgentFilter(e.target.value)}
                       aria-label="Filter agen"
@@ -1181,12 +1185,12 @@ export default function AgentCopilot({
                           : 'bg-[#00134A] border-white/10 text-white focus:outline-none focus:border-[#FFCA40]/50'
                       }`}
                     >
-                      <option value="">AGEN: SEMUA</option>
-                      <option value="claimtrace_ai">CLAIMTRACE_AI</option>
+                      <option value="">Agen: Semua</option>
+                      <option value="claimtrace_ai">ClaimTrace AI</option>
                       <option value="tca">TCA (PNPK)</option>
                       <option value="cma">CMA (SLA)</option>
-                      <option value="ia">IA (WAWASAN)</option>
-                      <option value="sta">STA (LAPIS 3)</option>
+                      <option value="ia">IA (Wawasan)</option>
+                      <option value="sta">STA (Lapis 3)</option>
                     </select>
                   </div>
                 </div>
@@ -1828,13 +1832,16 @@ export default function AgentCopilot({
                 <div className={`rounded-xl border p-4 space-y-1.5 transition-all ${
                   isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-white/5'
                 }`}>
-                  <label className={`block text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <label htmlFor="copilot-worker-interval" className={`block text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     Interval Polling Pemrosesan (Detik)
                   </label>
                   <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                     Frekuensi pemeriksaan berkas klaim baru yang masuk ke antrean penapisan otonom.
                   </p>
-                  <input aria-label="Bidang input data"
+                  <input
+                    id="copilot-worker-interval"
+                    name="worker_interval_seconds"
+                    aria-label="Interval polling pemrosesan dalam detik"
                     type="number"
                     min="1"
                     max="120"
@@ -2297,6 +2304,9 @@ export default function AgentCopilot({
             {approvalStatus === 'pending' ? (
               <div className="space-y-3">
                 <textarea
+                  id="copilot-verifier-notes"
+                  name="verifier_notes"
+                  aria-label="Catatan verifikator medis sebelum otorisasi"
                   rows={2}
                   value={verifierNotes}
                   onChange={(e) => setVerifierNotes(e.target.value)}
@@ -2510,10 +2520,12 @@ export default function AgentCopilot({
             </AnimatePresence>
 
             <div>
-              <label className={`block text-xs font-bold uppercase mb-1 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+              <label htmlFor="copilot-note-dialog-textarea" className={`block text-xs font-bold uppercase mb-1 ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                 {noteDialog.inputLabel}
               </label>
               <textarea
+                id="copilot-note-dialog-textarea"
+                name="note_dialog_reason"
                 rows={3}
                 value={noteDialog.note}
                 onChange={(e) => setNoteDialog((prev) => ({ ...prev, note: e.target.value, errorMessage: '' }))}

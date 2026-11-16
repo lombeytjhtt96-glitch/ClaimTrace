@@ -107,8 +107,10 @@ export default function PengaduanScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Kategori Pengaduan</label>
+              <label htmlFor="mobile-pengaduan-kategori" className="block text-slate-700 font-bold mb-1">Kategori Pengaduan</label>
               <select
+                id="mobile-pengaduan-kategori"
+                name="mobile_pengaduan_kategori"
                 value={kategori}
                 onChange={(e) => setKategori(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none"
@@ -121,8 +123,11 @@ export default function PengaduanScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Nama Fasilitas Kesehatan</label>
-              <input aria-label="Nama Fasilitas Kesehatan"
+              <label htmlFor="mobile-pengaduan-faskes" className="block text-slate-700 font-bold mb-1">Nama Fasilitas Kesehatan</label>
+              <input
+                id="mobile-pengaduan-faskes"
+                name="mobile_pengaduan_faskes"
+                aria-label="Nama Fasilitas Kesehatan"
                 type="text"
                 value={faskes}
                 onChange={(e) => setFaskes(e.target.value)}
@@ -133,8 +138,10 @@ export default function PengaduanScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Uraian / Kronologi Keluhan</label>
+              <label htmlFor="mobile-pengaduan-kronologi" className="block text-slate-700 font-bold mb-1">Uraian / Kronologi Keluhan</label>
               <textarea
+                id="mobile-pengaduan-kronologi"
+                name="mobile_pengaduan_kronologi"
                 value={kronologi}
                 onChange={(e) => setKronologi(e.target.value)}
                 placeholder="Jelaskan secara rinci tanggal kejadian, nama petugas/dokter, dan kronologi keluhan..."
@@ -145,8 +152,10 @@ export default function PengaduanScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Lampiran Bukti (Kuitansi / Foto)</label>
+              <label htmlFor="mobile-pengaduan-file" className="block text-slate-700 font-bold mb-1">Lampiran Bukti (Kuitansi / Foto)</label>
               <input
+                id="mobile-pengaduan-file"
+                name="mobile_pengaduan_file"
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf"

@@ -28,13 +28,15 @@ import {
   BadgeCheck,
   Send
 } from 'lucide-react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 
 const BASELINE_CLAIM_OPTIONS = [
-  { id: 'CLM-2026-8801', label: 'RS Medika Prima (Upcoding Severity III / Inversi Temporal)', badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800' },
-  { id: 'CLM-2026-8802', label: 'RS Khusus Mitra Husada (Phantom Billing Baksos)', badge: 'Fiktif', badgeColor: 'bg-rose-100 text-rose-800' },
-  { id: 'CLM-2026-8803', label: 'RS Jantung Harapan Sehat (Unbundling Kateterisasi)', badge: 'Fragmentasi', badgeColor: 'bg-amber-100 text-amber-800' },
-  { id: 'CLM-2026-8804', label: 'RS Daerah Kartini (Repeat Billing Dialisis)', badge: 'Ganda', badgeColor: 'bg-amber-100 text-amber-800' },
+  { id: 'CLM-2026-8801', label: 'RS Khusus Mitra Husada (Fisioterapi Cluster / Inversi Temporal)', badge: 'Kritis', badgeColor: 'bg-rose-100 text-rose-800' },
+  { id: 'CLM-2026-8802', label: 'RS Swasta As-Syifa (Repeat Billing Gastroenteritis)', badge: 'Ganda', badgeColor: 'bg-amber-100 text-amber-800' },
+  { id: 'CLM-2026-8803', label: 'RS Khusus Mata Nusantara (Baksos Katarak Terdaftar)', badge: 'Valid', badgeColor: 'bg-emerald-100 text-emerald-800' },
+  { id: 'CLM-2026-8804', label: 'Klinik Pratama Hemodialisis (Hemodialisis Berkala)', badge: 'Rutin', badgeColor: 'bg-sky-100 text-sky-800' },
+  { id: 'CLM-2026-8805', label: 'RS Daerah Kartini (Anomali Geovelocity SDMK)', badge: 'Anomali', badgeColor: 'bg-rose-100 text-rose-800' },
+  { id: 'CLM-2026-8806', label: 'RS Medika Prima (Upcoding Severity III)', badge: 'Upcoding', badgeColor: 'bg-rose-100 text-rose-800' },
 ];
 
 export default function DocumentCheckerView({ isLight = true, currentUser, initialClaimId, onSelectClaim }) {
@@ -56,9 +58,8 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
     let active = true;
     const loadClaimsList = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`);
-        if (!res.ok || !active) return;
-        const payload = await res.json();
+        const payload = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims?limit=40`);
+        if (!payload || !active) return;
         const rawList = Array.isArray(payload) ? payload : (payload?.claims || payload?.data || []);
         if (!Array.isArray(rawList) || rawList.length === 0) return;
 
@@ -99,16 +100,23 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
     fetchDocumentAudit(activeClaimId);
   }, [activeClaimId]);
 
-  const fetchDocumentAudit = async (claimId) => {
+  const fetchDocumentAudit = async (claimId, forceRefresh = false) => {
     setLoading(true);
     setActionErrorMessage('');
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/documents/audit/${encodeURIComponent(claimId)}`);
-      if (!res.ok) {
-        const errPayload = await res.json().catch(() => ({}));
-        throw new Error(errPayload?.detail || `Gagal memuat audit berkas (${res.status}).`);
+      let data = null;
+      const url = `${API_BASE_URL}/api/v1/documents/audit/${encodeURIComponent(claimId)}`;
+      if (!forceRefresh) {
+        data = await cachedAuthGetJson(url);
       }
-      const data = await res.json();
+      if (!data) {
+        const res = await authFetch(url);
+        if (!res.ok) {
+          const errPayload = await res.json().catch(() => ({}));
+          throw new Error(errPayload?.detail || `Gagal memuat audit berkas (${res.status}).`);
+        }
+        data = await res.json();
+      }
       setAuditReport(data);
       setDocumentsBundle(data.documents || []);
       if (data.documents && data.documents.length > 0) {
@@ -248,7 +256,7 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
             </select>
             <button
               type="button"
-              onClick={() => fetchDocumentAudit(activeClaimId)}
+              onClick={() => fetchDocumentAudit(activeClaimId, true)}
               aria-label="Muat ulang audit kelengkapan berkas"
               title="Muat Ulang Audit"
               className={`p-1.5 rounded-lg border transition cursor-pointer ${
@@ -271,7 +279,7 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{actionSuccessMessage}</span>
           </div>
-          <button onClick={() => setActionSuccessMessage('')} className="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
+          <button type="button" aria-label="Tutup pesan sukses" onClick={() => setActionSuccessMessage('')} className="text-emerald-700 hover:text-emerald-900 font-bold ml-2">×</button>
         </motion.div>
       )}
 
@@ -285,7 +293,7 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{actionErrorMessage}</span>
           </div>
-          <button onClick={() => setActionErrorMessage('')} className="text-rose-700 hover:text-rose-900 font-bold ml-2">×</button>
+          <button type="button" aria-label="Tutup pesan galat" onClick={() => setActionErrorMessage('')} className="text-rose-700 hover:text-rose-900 font-bold ml-2">×</button>
         </motion.div>
       )}
 
@@ -349,7 +357,11 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
               <span className="text-xs text-slate-400">dari {auditReport.mandatory_documents_required} berkas wajib</span>
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
-              {auditReport.missing_documents.length === 0 ? 'Semua berkas inti terlampir' : `Kekurangan: ${auditReport.missing_documents.join(', ')}`}
+              {auditReport.missing_documents.length === 0
+                ? (auditReport.compliance_score_pct < 85
+                    ? 'Berkas inti ada, cek validasi TTE/kronologi'
+                    : 'Semua berkas inti terlampir')
+                : `Kekurangan: ${auditReport.missing_documents.join(', ')}`}
             </p>
           </div>
 
@@ -373,7 +385,7 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
         {/* LEFT COLUMN: DOCUMENT TABS & VIEWER (7 COLUMNS) */}
         <div className="lg:col-span-7 space-y-3">
           {/* DOCUMENT TABS */}
-          <div className={`p-2 rounded-xl border overflow-x-auto flex space-x-1.5 ${
+          <div className={`p-2 rounded-xl border flex flex-wrap gap-1.5 ${
             isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
           }`}>
             {documentsBundle.map((doc) => {
@@ -650,6 +662,8 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
             }`}>
               <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
               <input
+                id="doc-icd-search"
+                name="icd_query"
                 type="text"
                 aria-label="Cari kode atau nama penyakit ICD-10"
                 value={icdQuery}
@@ -708,6 +722,8 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
       {/* RULE MB1-MB5, FORNAS & REAL BUNDLE SUBMISSION */}
       <RealBundleMorbidityPanel
         activeClaimId={activeClaimId}
+        activeClaim={claimOptions.find((c) => c.id === activeClaimId) || null}
+        currentUser={currentUser}
         isLight={isLight}
         onBundleAudited={(report) => setAuditReport(report)}
       />

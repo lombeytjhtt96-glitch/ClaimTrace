@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { Gavel, Clock, CheckCircle2, AlertTriangle, RefreshCw, Send } from 'lucide-react';
 
 export default function SanggahanAppealsPanel({
@@ -21,15 +21,28 @@ export default function SanggahanAppealsPanel({
   const [docsList, setDocsList] = useState('Resume Medis Elektronik, Hasil Laboratorium Terverifikasi');
   const [submitting, setSubmitting] = useState(false);
 
-  const loadAppeals = async () => {
+  const loadAppeals = async (forceRefresh = false) => {
     setLoading(true);
     setErrorMsg('');
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/appeals`);
-      if (!res.ok) {
-        throw new Error(`Gagal memuat daftar sanggahan BAKB (${res.status}).`);
+      if (forceRefresh) {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/appeals`);
+        if (!res.ok) {
+          throw new Error(`Gagal memuat daftar sanggahan BAKB (${res.status}).`);
+        }
+        setData(await res.json());
+      } else {
+        const payload = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/appeals`);
+        if (payload) {
+          setData(payload);
+        } else {
+          const res = await authFetch(`${API_BASE_URL}/api/v1/appeals`);
+          if (!res.ok) {
+            throw new Error(`Gagal memuat daftar sanggahan BAKB (${res.status}).`);
+          }
+          setData(await res.json());
+        }
       }
-      setData(await res.json());
     } catch (err) {
       setErrorMsg(err?.message || 'Tidak dapat terhubung ke layanan Sanggahan BAKB.');
     } finally {
@@ -65,7 +78,7 @@ export default function SanggahanAppealsPanel({
       }
       const out = await res.json();
       setSuccessMsg(`Sanggahan ${out.appeal?.appeal_id} terdaftar dengan tenggat SLA ${out.appeal?.sla_deadline}.`);
-      await loadAppeals();
+      await loadAppeals(true);
     } catch (err) {
       setErrorMsg(err?.message || 'Gagal mengajukan sanggahan BAKB.');
     } finally {
@@ -91,7 +104,7 @@ export default function SanggahanAppealsPanel({
         throw new Error(err?.detail || `Gagal menetapkan keputusan sanggahan (${res.status}).`);
       }
       setSuccessMsg(`Keputusan sanggahan ${appeal.appeal_id} tersimpan ke audit ledger SHA-256.`);
-      await loadAppeals();
+      await loadAppeals(true);
     } catch (err) {
       setErrorMsg(err?.message || 'Gagal memproses keputusan sanggahan.');
     }
@@ -160,7 +173,7 @@ export default function SanggahanAppealsPanel({
           <label htmlFor="appeal-cat" className="block text-[11px] font-semibold text-slate-500 mb-1">
             Kategori Sanggahan ({activeClaimId})
           </label>
-          <select id="appeal-cat" value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+          <select id="appeal-cat" name="appeal_category" value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
             <option value="KODING_RULE_MB">Sekuens Diagnosis Rule MB1-MB5</option>
             <option value="FORNAS_RESTRICTION">Restriksi Obat Formularium Nasional</option>
             <option value="READMISSION_CLINICAL">Readmisi &lt; 30 Hari (Indikasi Baru)</option>
@@ -173,6 +186,7 @@ export default function SanggahanAppealsPanel({
           </label>
           <input
             id="appeal-amount"
+            name="disputed_amount_rp"
             type="number"
             min="1000"
             value={disputedRp}
@@ -186,6 +200,7 @@ export default function SanggahanAppealsPanel({
           </label>
           <input
             id="appeal-docs"
+            name="supporting_documents"
             type="text"
             value={docsList}
             onChange={(e) => setDocsList(e.target.value)}
@@ -198,6 +213,7 @@ export default function SanggahanAppealsPanel({
           </label>
           <input
             id="appeal-arg"
+            name="clinical_argument"
             type="text"
             value={argumentText}
             onChange={(e) => setArgumentText(e.target.value)}
@@ -218,7 +234,12 @@ export default function SanggahanAppealsPanel({
 
       {/* DAFTAR SANGGAHAN */}
       <div className="mt-4 space-y-2.5">
-        {appeals.slice(0, 5).map((ap) => (
+        {appeals.slice(0, 5).map((ap) => {
+          const remainingDays = Number(ap.remaining_calendar_days ?? 0);
+          const slaDaysLabel = remainingDays < 0
+            ? `Terlambat ${Math.abs(remainingDays)} hr`
+            : `Sisa ${remainingDays} hr`;
+          return (
           <div
             key={ap.appeal_id}
             className={`p-3 rounded-xl border text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 ${
@@ -239,7 +260,7 @@ export default function SanggahanAppealsPanel({
                   }`}
                 >
                   <Clock className="w-3 h-3 inline mr-1" aria-hidden="true" />
-                  {ap.status} · Sisa {ap.remaining_calendar_days} hr
+                  {ap.status} · {slaDaysLabel}
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">{ap.clinical_argument}</p>
@@ -259,7 +280,8 @@ export default function SanggahanAppealsPanel({
               </button>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

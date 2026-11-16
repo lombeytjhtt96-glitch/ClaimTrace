@@ -763,7 +763,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
           <div className="text-right">
             <div className={`text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-500' : 'text-white/40'}`}>Total Baris Transaksi Terindeks</div>
             <div className={`text-lg font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>6.264.346 Baris</div>
-            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>18 Tabel &amp; Views Database</div>
+            <div className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/50'}`}>{tablesList.length || 18} Tabel &amp; Views Database</div>
           </div>
           <div className={`h-10 w-[1px] ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
           <button
@@ -882,6 +882,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                       }`}>
                         <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
                         <input
+                          id="db-table-search"
+                          name="db_table_search"
+                          aria-label="Cari tabel database"
                           type="text"
                           placeholder="Cari tabel..."
                           value={searchTableQuery}
@@ -994,6 +997,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 isLight ? 'text-slate-400' : 'text-white/40'
               }`} />
               <input
+                id="db-row-search"
+                name="db_row_search"
+                aria-label="Cari baris pada halaman tabel saat ini"
                 type="text"
                 placeholder="Cari pada halaman ini..."
                 value={searchRowQuery}
@@ -1008,8 +1014,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <div className="flex items-center gap-1.5 mr-2">
-                <span className={`text-[11px] font-bold ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Baris:</span>
+                <label htmlFor="db-page-size" className={`text-[11px] font-bold ${isLight ? 'text-slate-600' : 'text-white/50'}`}>Baris:</label>
                 <select
+                  id="db-page-size"
+                  name="db_page_size"
+                  aria-label="Jumlah baris per halaman"
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
@@ -1319,8 +1328,11 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950">
+            <div className={`p-4 ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
               <textarea
+                id="db-sql-query-input"
+                name="db_sql_query"
+                aria-label="Editor kueri SQL DuckDB"
                 value={sqlInput}
                 onChange={(e) => setSqlInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -1331,7 +1343,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                 }}
                 rows={4}
                 placeholder="Tulis kueri SQL di sini (contoh: SELECT * FROM bpjs_fkrtl_all LIMIT 10;)..."
-                className="w-full bg-transparent font-mono text-xs text-emerald-400 placeholder-slate-500 outline-none resize-y"
+                className={`w-full bg-transparent font-mono text-xs outline-none resize-y ${
+                  isLight ? 'text-emerald-800 placeholder-slate-400' : 'text-emerald-400 placeholder-slate-500'
+                }`}
                 spellCheck={false}
               />
             </div>
@@ -1571,7 +1585,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                     isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-white/5 border-white/10 text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 font-mono">
+                  <div className="flex flex-wrap items-center gap-2 font-mono">
                     <span className={`px-2.5 py-1 rounded-lg font-bold border ${
                       isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                     }`}>
@@ -1619,6 +1633,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
               <div className="relative w-full sm:w-72">
                 <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
                 <input
+                  id="db-var-search"
+                  name="db_var_search"
+                  aria-label="Cari kode atau nama variabel BPJS"
                   type="text"
                   placeholder="Cari kode/nama variabel..."
                   value={searchVarQuery}

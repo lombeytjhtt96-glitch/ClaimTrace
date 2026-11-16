@@ -4230,12 +4230,12 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
 
     # Category 1B: Ringkasan Eksekutif Laporan Audit Wawasan IA (ExecutiveHub "Buat Laporan")
     elif any(k in prompt_clean for k in ["ringkasan eksekutif", "laporan audit wawasan", "konkordansi klinis"]):
-        periode_label = "Bulanan (30 Hari)" if "bulanan" in prompt_clean else "Kustom" if "kustom" in prompt_clean else "Mingguan (7 Hari)"
+        periode_label = "Bulanan - 30 Hari" if "bulanan" in prompt_clean else "Kustom" if "kustom" in prompt_clean else "Mingguan - 7 Hari"
         text = (
             f"**Ringkasan Eksekutif Audit Pra-Bayar ClaimTrace JKN ({periode_label}):**\n\n"
             "Sepanjang periode evaluasi berjalan terhadap portofolio **1.699.219 berkas klaim FKRTL** pada 2.091 rumah sakit mitra, "
-            "konkordansi koding klinis INA-CBG **Severity Level III** mencapai **94,2%** pasca-penerapan validasi resume medis dan penunjang objektif.\n\n"
-            "- **Triase Pra-Bayar 4-Lapis**: Sebanyak 92,4% berkas wajar lolos otomatis di Jalur Hijau, sementara klaster indikasi **Phantom Billing** (`Z-3-12-0`) dan **Upcoding** ditahan di Jalur Merah beserta bukti silang SATUSEHAT SDMK serta telemetri presensi Mobile JKN Lapis 3.\n"
+            "**99,90% berkas** (1.697.588 klaim) lolos tanpa koreksi tarif langsung pasca-validasi resume medis dan penunjang objektif.\n\n"
+            "- **Triase Pra-Bayar 4-Lapis**: Sebanyak **88,5%** portofolio berada pada kategori Risiko Rendah / Jalur Hijau (1.503.675 berkas), sementara 1.631 berkas dikoreksi tarif langsung (Rp 2,07 Miliar) serta klaster indikasi **Phantom Billing** (`Z-3-12-0`) dan **Upcoding** ditahan di Jalur Merah beserta bukti silang SATUSEHAT SDMK serta telemetri presensi Mobile JKN Lapis 3.\n"
             "- **Kepatuhan Regulasi**: Seluruh telaah diselesaikan di bawah ambang SLA 10 Hari Kerja Berita Acara (Perpres No. 82/2018 Pasal 76) dengan otoritas putusan akhir tetap pada Verifikator Medis BPJS Kesehatan."
         )
         resolved_agent = "IA"
@@ -4304,8 +4304,11 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
         risk_score = 91.0
         intent = "geovelocity_audit"
 
-    # Category 4: Telemetri Mobile JKN / Siti Aisyah / Katarak
-    elif any(k in prompt_clean for k in ["mobile jkn", "lapis 3", "siti aisyah", "katarak", "telemetri", "presensi", "sangkalan"]):
+    # Category 4: Telemetri Mobile JKN / Siti Aisyah / Katarak (exclude FRISTA / Coding Audit / non-cataract BEA claim IDs)
+    elif (
+        not any(excl in prompt_clean for excl in ["quad-triangulation", "frista", "audit koding klinis", "evaluasi kepatuhan koding", "clm-2026-8806", "clm-2026-8802", "clm-2026-10-085", "clm-2026-8809"])
+        and any(k in prompt_clean for k in ["mobile jkn", "lapis 3", "siti aisyah", "katarak", "telemetri", "presensi", "sangkalan"])
+    ):
         text = (
             "**[Telemetri Presensi Out-of-Band Mobile JKN (Lapis 3)]**\n\n"
             "**1. Mekanisme Kerja Lapis 3:**\n"
@@ -4916,10 +4919,20 @@ async def run_clinical_coding_audit(req: ClinicalCodingAuditRequest):
                     temperature=0.25
                 )
             )
-            if ai_res and ai_res.get("text"):
+            if ai_res and ai_res.get("text") and not ai_res.get("fallback_local"):
                 result["ai_clinical_reasoning"] = ai_res["text"]
                 result["ai_model_used"] = "ClaimTrace AI Core"
                 result["ai_total_tokens"] = ai_res.get("total_tokens", 0)
+            else:
+                hb_fmt = f"{round(float(req.hemoglobin), 1):g}"
+                temp_fmt = f"{round(float(req.temperature), 1):g}"
+                result["ai_clinical_reasoning"] = (
+                    f"**Audit Koding Klinis {result['claim_id']} ({result['primary_diagnosis']}):**\n"
+                    f"- **Parameter Klinis Terukur:** Hb {hb_fmt} g/dL, Leukosit {req.leukocytes:,.0f}/uL, Suhu {temp_fmt} C, Skor SOFA {req.sofa_score}, SEP 7 Hari {req.visit_count_7d}x.\n"
+                    f"- **Temuan Rule & IsolationForest (Skor {result['anomaly_score']}/100):** {flags_summary}\n"
+                    f"- **Penyesuaian Tarif:** Tagihan Rp {req.claimed_tariff_rp:,.0f} -> Terverifikasi Rp {result['financial_impact']['verified_tariff_rp']:,.0f} (Cost Recovery Rp {result['financial_impact']['cost_recovery_rp']:,.0f})."
+                )
+                result["ai_model_used"] = "ClaimTrace Clinical Rule & ML Engine"
         except Exception as e:
             print(f"[AuditCoding AI] Warning: {e}")
     return result
@@ -4970,11 +4983,32 @@ async def run_frista_quad_ai_audit(req: FristaAiAuditRequest):
             temperature=0.3
         )
     )
+    if ai_res and ai_res.get("text") and not ai_res.get("fallback_local"):
+        forensic_text = ai_res["text"]
+    else:
+        focus_section = (
+            f"\n\n**Fokus Investigasi Verifikator ({req.custom_focus.strip()}):**\n"
+            f"- Mengacu pada kasus **{case_ctx['claim_id']} ({case_ctx['hospital']})**, korelasi FRISTA ({log['frista_status']}, Face Match {log['face_similarity_score']*100:.1f}%) "
+            f"dengan Lapis 1-3 menghasilkan skor fusi **{qt['fused_quad_score']}/100**. {log['batch_anomaly_detail']}"
+            if req.custom_focus and req.custom_focus.strip()
+            else ""
+        )
+        forensic_text = (
+            f"**[Analisis Forensik Biometrik FRISTA & Quad-Triangulation: {log['claim_id']}]**\n\n"
+            f"- **Faskes & Tipologi:** {log['hospital']} (SEP `{log['sep_number']}`) — {case_ctx['typology_name']}.\n"
+            f"- **Validasi Biometrik Lapis 4:** Status **{log['frista_status']}** | Metode: {log['authentication_method']} | "
+            f"Face Match **{log['face_similarity_score']*100:.1f}%** (Ambang 85%) | 3D Liveness: **{log['liveness_check']}** | Terminal `{log['device_id']}`.\n"
+            f"- **Rekonsiliasi 4 Lapis (Quad-Triangulation):** Lapis 1 AI Spatiotemporal (`{qt['lapis_1_spatiotemporal_ai']}`), "
+            f"Lapis 2 SATUSEHAT SDMK (`{qt['lapis_2_satusehat_sdmk']}`), Lapis 3 Mobile JKN (`{qt['lapis_3_mobile_jkn']}`), "
+            f"Lapis 4 FRISTA Biometrik (`{qt['lapis_4_frista_biometric']}`) -> **Skor Fusi {qt['fused_quad_score']}/100** ({qt['verdict']}).\n"
+            f"- **Temuan Log Loket & Tindak Lanjut:** {log['batch_anomaly_detail']} Rekomendasi: **{case_ctx['recommended_action']}** sesuai **{case_ctx['regulation_ref']}**."
+            f"{focus_section}"
+        )
     return {
         "status": "success",
         "claim_id": req.claim_id,
         "biometric_telemetry": log,
-        "ai_forensic_analysis": ai_res.get("text", log["batch_anomaly_detail"]),
+        "ai_forensic_analysis": forensic_text,
         "model_used": ai_res.get("model_used", "ClaimTrace AI Core"),
         "total_tokens": ai_res.get("total_tokens", 0)
     }
@@ -5104,9 +5138,19 @@ async def generate_official_berita_acara(
                     temperature=0.25
                 )
             )
-            if ai_res and ai_res.get("text"):
+            if ai_res and ai_res.get("text") and not ai_res.get("fallback_local"):
                 custom_notes = ai_res["text"].strip()
                 ai_model_used = "ClaimTrace AI Core"
+            else:
+                custom_notes = (
+                    f"Berdasarkan triangulasi 4 lapis bukti (Analitik AI Spatiotemporal, Registry SATUSEHAT SDMK, "
+                    f"Konfirmasi Mobile JKN Peserta, serta Log Biometrik FRISTA {frista_ctx['frista_status']} dengan "
+                    f"Skor Fusi {frista_ctx['quad_triangulation']['fused_quad_score']}/100), berkas klaim {case_ctx['claim_id']} "
+                    f"pada {case_ctx['hospital']} ({case_ctx['typology_name']}) ditetapkan dengan putusan {req.action_type.replace('_', ' ')} "
+                    f"sesuai {case_ctx['regulation_ref']} serta Perpres No. 82 Tahun 2018 Pasal 74 dengan koreksi biaya "
+                    f"sebesar Rp {case_ctx['potential_recovery_rp']:,.0f}."
+                )
+                ai_model_used = "ClaimTrace Legal Rule Synthesizer"
         except Exception as e:
             print(f"[BeritaAcara AI] Warning: {e}")
 
@@ -5538,6 +5582,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Angina Pektoris & Perawatan Kardiovaskular Berat (Severity II)",
             "icd10": "I20.0 (Unstable angina)",
             "icd9": "88.56 (Coronary arteriography)",
+            "dpjp": "dr. Hendra Wijaya, Sp.JP(K)",
             "rp": 21400000,
             "los": 5,
             "s1": 78.0,
@@ -5555,6 +5600,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Prosedur Rawat Jalan Mata & Evaluasi Pasca-Operasi",
             "icd10": "H25.9 (Senile cataract)",
             "icd9": "13.41 (Phacoemulsification)",
+            "dpjp": "dr. Ratna Sari Dewi, Sp.M",
             "rp": 9200000,
             "los": 0,
             "s1": 18.0,
@@ -5572,6 +5618,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Infeksi Saluran Cerna Akut & Syok Hipovolemik",
             "icd10": "A09.0 (Gastroenteritis of infectious origin)",
             "icd9": "99.18 (Infusion of electrolytes)",
+            "dpjp": "dr. Bambang Haryanto, Sp.PD",
             "rp": 18750000,
             "los": 6,
             "s1": 86.0,
@@ -5589,6 +5636,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Hemodialisa Rawat Jalan Terjadwal",
             "icd10": "N18.5 (Chronic kidney disease stage 5)",
             "icd9": "39.95 (Hemodialysis)",
+            "dpjp": "dr. Lestari Ningrum, Sp.PD-KGH",
             "rp": 4100000,
             "los": 0,
             "s1": 24.0,
@@ -5606,6 +5654,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Prosedur Ortopedi & Pemasangan Implant Khusus",
             "icd10": "S72.0 (Fracture of neck of femur)",
             "icd9": "79.35 (Open reduction of fracture with internal fixation)",
+            "dpjp": "dr. Aditya Pratama, Sp.OT",
             "rp": 26500000,
             "los": 7,
             "s1": 62.0,
@@ -5656,7 +5705,7 @@ def pull_fpk_batch_and_prapurifikasi(
             ),
             dpjp_meta=DPJPValidation(
                 dpjp_id_hash=f"SDMK-FPK-{100 + i}",
-                nama_dpjp_alias="dr. DPJP Casemix, Sp.PD",
+                nama_dpjp_alias=tpl.get("dpjp") or "dr. Hendra Wijaya, Sp.JP(K)",
                 sip_status=tpl["sip"],
                 sip_expiry_date=date(2028, 12, 31),
                 jam_praktik_valid=(tpl["sip"] == "ACTIVE"),
@@ -5822,11 +5871,14 @@ def get_collective_fpk_bahv_printable(
     signer_nip: str = Query("198704202011012001"),
 ):
     """Menghasilkan dokumen cetak BAHV & Rekapitulasi FPK Kolektif (RJTL vs RITL) bertanda segel SHA-256."""
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
     filtered_map = (
         {cid: c for cid, c in SYNTHETIC_CLAIMS_DATABASE.items() if getattr(c, "no_fpk", None) == no_fpk}
         if no_fpk and no_fpk.upper() != "ALL"
         else SYNTHETIC_CLAIMS_DATABASE
     )
+    if no_fpk and no_fpk.upper() != "ALL" and not filtered_map:
+        filtered_map = SYNTHETIC_CLAIMS_DATABASE
     recap = build_bahv_recap_payload(
         filtered_map,
         evaluate_claim_triage,
@@ -5861,6 +5913,7 @@ def get_dynamic_sidebar_badges():
     pending_cases = sum(1 for c in cases if c.get("status") != "resolved")
     return {
         "queue_count": total_cluster_claims,
+        "total_claims": len(SYNTHETIC_CLAIMS_DATABASE),
         "pending_cases": pending_cases,
         "flagged_count": open_flags,
         "audit_chain_length": len(audit_logger.chain)
@@ -6232,15 +6285,35 @@ def get_temporal_coherence_audit(claim_id: str):
 # DOKUMEN MEDIS & PENGECEKAN BERKAS RS (BPJS STANDAR KEDINASAN)
 # =========================================================================
 
+def _build_document_claim_context(c: Optional[ClaimInput]) -> Optional[Dict[str, Any]]:
+    if not c:
+        return None
+    svc = resolve_service_type(c)
+    return {
+        "nama_faskes": c.nama_faskes,
+        "faskes_id": c.faskes_id,
+        "dpjp_name": c.dpjp_meta.nama_dpjp_alias,
+        "dpjp_sip": c.dpjp_meta.catatan_sdmk[:48] if c.dpjp_meta.catatan_sdmk else "SIP-TERDAFTAR",
+        "jenis_pelayanan": svc,
+        "tanggal_layanan": str(c.tanggal_layanan),
+        "los_hari": c.los_hari if c.los_hari is not None else (0 if svc == "RJTL" else 1),
+        "icd10_primary": c.icd10_primary,
+        "no_sep": c.fkl02_id_kunjungan,
+        "kelas_rawat": c.fkl17_kelas_rawat,
+    }
+
+
 @app.get("/api/v1/documents/audit/{claim_id}")
 def get_document_bundle_audit(claim_id: str):
     """
     Audit Forensik Dokumen Medis & Berkas Klaim RS BPJS Kesehatan.
-    Mendeteksi kelengkapan 7 berkas wajib (SEP, Resume Medis, Laporan Operasi, Lab, Rujukan, SPRI, Billing),
+    Mendeteksi kelengkapan berkas wajib (SEP, Resume Medis, Laporan Operasi, Lab, Rujukan, SPRI, Billing),
     ketidaksesuaian tanggal antar-dokumen, dan diagnosis tanpa bukti penunjang objektif.
     """
     from app.engine.document_auditor import document_auditor
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
     c = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    claim_ctx = _build_document_claim_context(c)
     ina_cbg = c.ina_cbg_code if c else "Z-3-12-0"
     icd10 = c.icd10_primary if c else "M54.5"
     proc = c.icd9cm_procedure if c else None
@@ -6251,16 +6324,20 @@ def get_document_bundle_audit(claim_id: str):
         ina_cbg_code=ina_cbg,
         primary_icd10=icd10,
         procedure_icd9cm=proc,
-        claimed_tariff_rp=tariff
+        claimed_tariff_rp=tariff,
+        claim_data=claim_ctx,
     )
     return {
         "status": "success",
         "claim_id": report.claim_id,
+        "nama_faskes": c.nama_faskes if c else "RS Medika Prima",
+        "jenis_pelayanan": claim_ctx["jenis_pelayanan"] if claim_ctx else "RITL",
         "audit_timestamp": report.audit_timestamp,
         "compliance_score_pct": report.compliance_score_pct,
         "audit_status": report.audit_status,
         "recommendation": report.recommendation,
         "total_documents_submitted": report.total_documents_submitted,
+        "mandatory_documents_required": report.mandatory_documents_required,
         "missing_documents": report.missing_documents,
         "findings": [f.__dict__ for f in report.findings],
         "cross_document_checks": report.cross_document_checks,
@@ -6275,7 +6352,9 @@ def get_claim_documents_bundle(claim_id: str):
     Mengambil daftar berkas digital untuk penampil dokumen (Split-View Document Viewer).
     """
     from app.engine.document_auditor import document_auditor
-    docs = document_auditor.generate_synthetic_document_bundle(claim_id)
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
+    c = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    docs = document_auditor.generate_synthetic_document_bundle(claim_id, claim_data=_build_document_claim_context(c))
     return {
         "claim_id": claim_id,
         "total_documents": len(docs),

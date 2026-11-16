@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SanggahanAppealsPanel from './SanggahanAppealsPanel';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
@@ -178,8 +178,7 @@ export default function DecisionConsole({
 
   useEffect(() => {
     let active = true;
-    authFetch(`${API_BASE_URL}/api/v1/portal/pending-codes`)
-      .then((r) => (r.ok ? r.json() : null))
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/portal/pending-codes`)
       .then((data) => {
         if (!active || !data) return;
         if (Array.isArray(data.codes)) setPendingCodeCatalog(data.codes);
@@ -198,12 +197,14 @@ export default function DecisionConsole({
     }
   }, [currentUser?.name, currentUser?.nip]);
 
-  const loadBahvRecap = async () => {
+  const loadBahvRecap = async (forceRefresh = false) => {
     setLoadingRecap(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/screening/bahv-recap`);
-      if (res.ok) {
-        const data = await res.json();
+      const url = `${API_BASE_URL}/api/v1/screening/bahv-recap`;
+      const data = forceRefresh
+        ? await authFetch(url).then((r) => (r.ok ? r.json() : null))
+        : await cachedAuthGetJson(url);
+      if (data) {
         setBahvRecap(data);
       }
     } catch (err) {
@@ -223,15 +224,27 @@ export default function DecisionConsole({
     let active = true;
     const loadSeal = async () => {
       try {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`);
-        if (res.ok && active) {
-          const data = await res.json();
+        const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`);
+        if (data && active) {
           const seal = data?.dossier?.cryptographic_seal;
           const ver = data?.dossier?.verifier;
+          const hasRecordedDecision = Boolean(
+            data?.dossier?.adjudication_recorded ||
+            (verificatorAction && verificatorAction !== 'MENUNGGU_DISPOSISI') ||
+            (rawClaim?.status_verifikasi && !String(rawClaim.status_verifikasi).toUpperCase().includes('MENUNGGU'))
+          );
           if (data?.html_printable) setOfficialBakbHtml(data.html_printable);
           if (data?.dossier) setOfficialBakbDossier(data.dossier);
-          if (seal?.document_hash) setAuditSealHash(seal.document_hash);
-          if (data?.dossier?.issued_at) setSealTimestamp(data.dossier.issued_at);
+          if (hasRecordedDecision && seal?.document_hash) {
+            setAuditSealHash(seal.document_hash);
+          } else if (!hasRecordedDecision) {
+            setAuditSealHash('');
+          }
+          if (hasRecordedDecision && data?.dossier?.issued_at) {
+            setSealTimestamp(data.dossier.issued_at);
+          } else if (!hasRecordedDecision) {
+            setSealTimestamp('');
+          }
           if (!currentUser?.name && (ver?.name || ver?.nip)) {
             setVerifierInfo({
               name: ver.name || 'dr. Siti Rahma, Sp.PK',
@@ -352,28 +365,39 @@ export default function DecisionConsole({
     }
   };
 
-  // GSAP 60fps animation on action change
+  // GSAP 60fps animation on action change (guard against conditionally unmounted sub-tab elements)
   useGSAP(() => {
-    if (!consoleRef.current) return;
+    const root = consoleRef.current;
+    if (!root) return;
+    const badgeEl = root.querySelector('.verdict-status-badge');
+    const sealEl = root.querySelector('.verdict-crypto-seal');
+    const activeEl = root.querySelector('.action-active-indicator');
+    if (!badgeEl && !sealEl && !activeEl) return;
     const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-    tl.fromTo(
-      '.verdict-status-badge',
-      { scale: 0.92, autoAlpha: 0.5 },
-      { scale: 1, autoAlpha: 1, duration: 0.3 }
-    )
-    .fromTo(
-      '.verdict-crypto-seal',
-      { x: -6, autoAlpha: 0.6 },
-      { x: 0, autoAlpha: 1, duration: 0.25 },
-      '-=0.15'
-    )
-    .fromTo(
-      '.action-active-indicator',
-      { scale: 0.8, autoAlpha: 0 },
-      { scale: 1, autoAlpha: 1, duration: 0.25, ease: 'back.out(2)' },
-      '-=0.2'
-    );
-  }, { scope: consoleRef, dependencies: [verificatorAction] });
+    if (badgeEl) {
+      tl.fromTo(
+        badgeEl,
+        { scale: 0.92, autoAlpha: 0.5 },
+        { scale: 1, autoAlpha: 1, duration: 0.3 }
+      );
+    }
+    if (sealEl) {
+      tl.fromTo(
+        sealEl,
+        { x: -6, autoAlpha: 0.6 },
+        { x: 0, autoAlpha: 1, duration: 0.25 },
+        badgeEl ? '-=0.15' : 0
+      );
+    }
+    if (activeEl) {
+      tl.fromTo(
+        activeEl,
+        { scale: 0.8, autoAlpha: 0 },
+        { scale: 1, autoAlpha: 1, duration: 0.25, ease: 'back.out(2)' },
+        badgeEl || sealEl ? '-=0.2' : 0
+      );
+    }
+  }, { scope: consoleRef, dependencies: [verificatorAction, activeSubTab] });
 
   // Animate inner verdict badge slightly without fighting Motion modal entrance
   useGSAP(() => {
@@ -487,8 +511,13 @@ export default function DecisionConsole({
       onSetVerificatorAction(backendDecision);
       setSuccessToast(true);
       if (bahvRecap) {
-        loadBahvRecap();
+        loadBahvRecap(true);
       }
+      window.dispatchEvent(
+        new CustomEvent('claimtrace:operations-updated', {
+          detail: { claimId: resolvedApiClaimId, source: 'DecisionConsole' },
+        })
+      );
       // Refresh BAHV preview HTML to reflect new decision status immediately
       authFetch(`${API_BASE_URL}/api/v1/claims/${resolvedApiClaimId}/official-bakb`)
         .then((r) => (r.ok ? r.json() : null))
@@ -1033,13 +1062,15 @@ export default function DecisionConsole({
               isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/25 border-white/10'
             }`}>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
-                  Tarif Disetujui FKL48 (Rp)
+                <label htmlFor="dc-tarif-verifikasi" className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                  Tarif Disetujui (Rp)
                 </label>
                 <input
+                  id="dc-tarif-verifikasi"
+                  name="tarif_verifikasi_rp"
                   type="number"
                   min="0"
-                  aria-label="Koreksi Tarif Disetujui FKL48"
+                  aria-label="Koreksi Tarif Disetujui"
                   value={tarifVerifikasiRp}
                   onChange={(e) => setTarifVerifikasiRp(e.target.value)}
                   className={`w-full px-2.5 py-1.5 rounded-lg border text-xs font-mono ${
@@ -1048,10 +1079,12 @@ export default function DecisionConsole({
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                <label htmlFor="dc-ina-cbg" className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
                   Kode INA-CBG Terverifikasi
                 </label>
                 <input
+                  id="dc-ina-cbg"
+                  name="ina_cbg_verified"
                   type="text"
                   aria-label="Kode INA-CBG Terverifikasi"
                   value={inaCbgVerified}
@@ -1062,10 +1095,12 @@ export default function DecisionConsole({
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
+                <label htmlFor="dc-dispute-level" className="block text-[10px] font-bold uppercase tracking-wider mb-1 opacity-80">
                   Tier Dispute SLA (SE Diryan 51/2016)
                 </label>
                 <select
+                  id="dc-dispute-level"
+                  name="dispute_level"
                   aria-label="Tier Dispute SLA"
                   value={disputeLevel}
                   onChange={(e) => setDisputeLevel(e.target.value)}
@@ -1154,12 +1189,15 @@ export default function DecisionConsole({
                     <FileCheck className="w-3 h-3" />
                     <span>{isDraftingAiNotes ? 'Menyusun Matriks...' : 'Muat Draf Matriks Bukti'}</span>
                   </button>
-                  <span className={`text-[9.5px] font-mono font-bold ${
+                  <label htmlFor="dc-notes-textarea" className={`text-[9.5px] font-mono font-bold ${
                     isLight ? 'text-emerald-700' : 'text-cyan-300'
-                  }`}>TERENKRIPSI STANDAR UU PDP</span>
+                  }`}>CATATAN VERIFIKATOR · STANDAR UU PDP</label>
                 </div>
               </div>
               <textarea
+                id="dc-notes-textarea"
+                name="notes"
+                aria-label="Pertimbangan Klinis dan Regulasi Verifikator"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
@@ -1226,8 +1264,10 @@ export default function DecisionConsole({
                   ? (isLight ? 'bg-amber-50/70 border-amber-300' : 'bg-amber-950/20 border-amber-800')
                   : (isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-800/40 border-slate-700')
               }`}>
-                <label className="flex items-center space-x-2 cursor-pointer select-none">
+                <label htmlFor="dc-override-check" className="flex items-center space-x-2 cursor-pointer select-none">
                   <input
+                    id="dc-override-check"
+                    name="is_override_active"
                     type="checkbox"
                     checked={isOverrideActive}
                     onChange={(e) => setIsOverrideActive(e.target.checked)}
@@ -1244,10 +1284,12 @@ export default function DecisionConsole({
                 {isOverrideActive && (
                   <div className="mt-2.5 space-y-2 pt-2 border-t border-amber-200 dark:border-amber-800/60">
                     <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
+                      <label htmlFor="dc-override-verdict" className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
                         Putusan Telaah Klinis Dokter Spesialis:
-                      </span>
+                      </label>
                       <select
+                        id="dc-override-verdict"
+                        name="override_verdict"
                         value={overrideVerdict}
                         onChange={(e) => setOverrideVerdict(e.target.value)}
                         className={`w-full p-1.5 text-xs rounded-lg border font-semibold ${
@@ -1262,10 +1304,12 @@ export default function DecisionConsole({
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
+                      <label htmlFor="dc-override-justification" className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 block mb-1">
                         Justifikasi Medis &amp; Regulasi Koreksi (Wajib Diisi):
-                      </span>
+                      </label>
                       <textarea
+                        id="dc-override-justification"
+                        name="override_justification"
                         rows={2}
                         value={overrideJustification}
                         onChange={(e) => setOverrideJustification(e.target.value)}
@@ -1346,13 +1390,22 @@ export default function DecisionConsole({
                 <ShieldCheck className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                 <span>Segel Verifikasi &amp; Tanda Tangan Elektronik</span>
               </span>
-              <span className={`text-[9.5px] font-mono px-2 py-0.5 rounded font-bold border ${
-                isLight
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-              }`}>
-                TTE Sah (BSrE)
-              </span>
+              {(() => {
+                const hasFinalDisposition = Boolean(
+                  officialBakbDossier?.adjudication_recorded ||
+                  (verificatorAction && verificatorAction !== 'MENUNGGU_DISPOSISI') ||
+                  (rawClaim?.status_verifikasi && !String(rawClaim.status_verifikasi).toUpperCase().includes('MENUNGGU'))
+                );
+                return (
+                  <span className={`text-[9.5px] font-mono px-2 py-0.5 rounded font-bold border ${
+                    hasFinalDisposition
+                      ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
+                      : (isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/30')
+                  }`}>
+                    {hasFinalDisposition ? 'TTE Sah (BSrE)' : 'Draft BAKB (Menunggu TTE)'}
+                  </span>
+                );
+              })()}
             </div>
 
             <div className={`rounded-xl p-3 border font-mono text-[10px] space-y-2 ${
@@ -1706,11 +1759,11 @@ export default function DecisionConsole({
                 <div className="pt-4 flex justify-between items-end text-[10px]">
                   <div>
                     <p className={`font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Digital Seal: SHA-256 {auditSealHash ? `${auditSealHash.slice(0, 12)}...${auditSealHash.slice(-8)}` : 'menunggu disposisi'}</p>
-                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Waktu Segel: {sealTimestamp ? sealTimestamp : new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    <p className={isLight ? 'text-slate-500' : 'text-white/50'}>Waktu Segel: {sealTimestamp ? sealTimestamp : 'Draft (Menunggu Pengesahan TTE BSrE)'}</p>
                   </div>
                   <div className="text-center w-52 relative pt-6">
-                    <div className="verdict-stamp-print will-change-transform absolute top-0 right-3 pointer-events-none px-2.5 py-0.5 rounded border-2 border-emerald-600 text-emerald-700 font-mono font-black text-[9.5px] uppercase tracking-wider bg-emerald-50">
-                      [SEALED · SAH]
+                    <div className={`verdict-stamp-print will-change-transform absolute top-0 right-3 pointer-events-none px-2.5 py-0.5 rounded border-2 font-mono font-black text-[9.5px] uppercase tracking-wider ${(sealTimestamp || auditSealHash) ? 'border-emerald-600 text-emerald-700 bg-emerald-50' : 'border-amber-600 text-amber-700 bg-amber-50'}`}>
+                      {(sealTimestamp || auditSealHash) ? '[SEALED · SAH]' : '[DRAFT · BELUM TTE]'}
                     </div>
                     <p className={`mb-7 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Verifikator Klaim BPJS,</p>
                     <p className={`font-bold underline ${isLight ? 'text-slate-900' : 'text-white'}`}>{verifierInfo.name}</p>

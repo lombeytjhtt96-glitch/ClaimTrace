@@ -5,7 +5,7 @@ import {
   ShieldCheck, ArrowLeft, RefreshCw, QrCode, Building2, 
   Calendar, FileSpreadsheet, Send, Search, UserCheck
 } from 'lucide-react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 
 export default function OfficialReportsView({ 
   initialReportType = 'bahv-kolektif',
@@ -16,7 +16,13 @@ export default function OfficialReportsView({
 }) {
   const [activeTab, setActiveTab] = useState(initialReportType);
   const [selectedHospital, setSelectedHospital] = useState(selectedCase?.hospital || 'RS Khusus Mitra Husada');
-  const [selectedBatch, setSelectedBatch] = useState('FPK-2026-03-A');
+  const [selectedBatch, setSelectedBatch] = useState('');
+  const [fpkBatches, setFpkBatches] = useState([
+    { id: '', label: 'Semua Batch FPK Aktif (Rekapitulasi Kolektif)' },
+    { id: 'FPK-0114-202611-001', label: 'FPK-0114-202611-001 · Batch Reguler & Klaster Aktif' },
+    { id: 'FPK-0114-202611-002', label: 'FPK-0114-202611-002 · Batch Rawat Inap & Dispute' },
+    { id: 'FPK-0114-202611-003', label: 'FPK-0114-202611-003 · Batch Susulan & Katarak' },
+  ]);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [serverPrintBusy, setServerPrintBusy] = useState(false);
   const [reportNotice, setReportNotice] = useState('');
@@ -42,48 +48,62 @@ export default function OfficialReportsView({
     const map = new Map(defaultHospitals.map((h) => [h.id, h]));
     claimsList.forEach((item) => {
       const c = item?.claim || item;
-      if (c?.nama_faskes && !map.has(c.nama_faskes)) {
-        map.set(c.nama_faskes, {
-          id: c.nama_faskes,
-          name: `${c.nama_faskes} (Kelas ${c.kelas_rs || 'B'})`,
-          code: c.faskes_id || '0112R001',
-        });
+      if (c?.nama_faskes) {
+        const cleanFaskesName = String(c.nama_faskes).replace(/\s*\(Kelas\s+[A-D]\)\s*$/i, '').trim();
+        if (!map.has(c.nama_faskes) && !map.has(cleanFaskesName)) {
+          const hasRegionOrClass = /\(Kelas\s+[A-D]/i.test(String(c.nama_faskes));
+          map.set(cleanFaskesName, {
+            id: cleanFaskesName,
+            name: hasRegionOrClass ? String(c.nama_faskes) : `${cleanFaskesName} (Kelas ${c.kelas_rs || 'B'})`,
+            code: c.faskes_id || '0112R001',
+          });
+        }
       }
     });
     return Array.from(map.values());
   })();
   const selectedHospitalMeta = hospitals.find((h) => h.id === selectedHospital) || hospitals[0];
 
-  const batches = [
-    { id: 'FPK-2026-03-A', label: 'Batch Maret 2026 - Periode 1 (Rawat Inap & Jalan)' },
-    { id: 'FPK-2026-02-B', label: 'Batch Februari 2026 - Periode 2 (Rawat Inap)' },
-    { id: 'FPK-2026-01-A', label: 'Batch Januari 2026 - Periode 1 (Rawat Jalan)' },
-  ];
+  const batches = fpkBatches;
 
-  // Fetch real claim data & ledger head hash from backend FastAPI
+  // Fetch real claim data, real FPK batches & ledger head hash from backend FastAPI
   useEffect(() => {
     let active = true;
     const fetchClaims = async () => {
       setLoading(true);
       try {
-        const [claimsRes, ledgerRes] = await Promise.all([
-          authFetch(`${API_BASE_URL}/api/v1/claims?limit=40`),
-          authFetch(`${API_BASE_URL}/api/v1/audit-logs`).catch(() => null),
+        const [claimsJson, ledgerJson, recapJson] = await Promise.all([
+          cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims?limit=40`),
+          cachedAuthGetJson(`${API_BASE_URL}/api/v1/audit-logs`).catch(() => null),
+          cachedAuthGetJson(`${API_BASE_URL}/api/v1/screening/bahv-recap`).catch(() => null),
         ]);
-        if (claimsRes.ok) {
-          const json = await claimsRes.json();
-          const items = Array.isArray(json) ? json : (json?.claims || []);
+        if (claimsJson) {
+          const items = Array.isArray(claimsJson) ? claimsJson : (claimsJson?.claims || []);
           if (active && items.length > 0) {
             setClaimsList(items);
           }
         }
-        if (ledgerRes && ledgerRes.ok) {
-          const ledgerJson = await ledgerRes.json();
+        if (ledgerJson) {
           const latestEntry = Array.isArray(ledgerJson?.chain)
             ? ledgerJson.chain[0]
             : (Array.isArray(ledgerJson?.entries) ? ledgerJson.entries[0] : (Array.isArray(ledgerJson) ? ledgerJson[0] : null));
           if (active && latestEntry?.current_hash) {
             setLedgerHeadHash(latestEntry.current_hash);
+          }
+        }
+        if (active && Array.isArray(recapJson?.fpk_batches) && recapJson.fpk_batches.length > 0) {
+          const dynamicBatches = recapJson.fpk_batches.map((b) => {
+            const batchId = b.no_fpk || b.batch_id || '';
+            const count = b.total_claims ?? b.claim_count ?? 0;
+            return batchId
+              ? { id: batchId, label: `${batchId} · ${count} Kasus (${b.jenis_pengajuan || 'Reguler'})` }
+              : null;
+          }).filter(Boolean);
+          if (dynamicBatches.length > 0) {
+            setFpkBatches([
+              { id: '', label: 'Semua Batch FPK Aktif (Rekapitulasi Kolektif)' },
+              ...dynamicBatches,
+            ]);
           }
         }
       } catch (e) {
@@ -165,6 +185,8 @@ export default function OfficialReportsView({
   const formattedDayName = reportNow.toLocaleDateString('id-ID', { weekday: 'long' });
   const formattedDateLong = reportNow.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   const verifiedTimestampIso = reportNow.toISOString();
+  const docPeriodCode = `${String(reportNow.getMonth() + 1).padStart(2, '0')}${String(reportNow.getFullYear()).slice(-2)}`;
+  const docRomanMonth = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][reportNow.getMonth()] || 'XI';
 
   useEffect(() => {
     let alive = true;
@@ -197,10 +219,12 @@ export default function OfficialReportsView({
     setReportNotice('');
     try {
       const params = new URLSearchParams({
-        no_fpk: selectedBatch,
         signer_name: currentUser?.name || 'dr. Siti Rahma, Sp.PK',
         signer_nip: currentUser?.nip || '19870420 201101 2 001',
       });
+      if (selectedBatch) {
+        params.set('no_fpk', selectedBatch);
+      }
       const res = await authFetch(`${API_BASE_URL}${endpointPath}?${params.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -218,7 +242,7 @@ export default function OfficialReportsView({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = fallbackName;
+        a.download = fallbackName || `Dokumen_BAHV_${selectedBatch || 'Kolektif'}.html`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -251,7 +275,7 @@ export default function OfficialReportsView({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Laporan_${activeTab}_${selectedBatch}.csv`;
+    a.download = `Laporan_${activeTab}_${selectedBatch || 'Kolektif'}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -320,7 +344,7 @@ export default function OfficialReportsView({
             disabled={serverPrintBusy}
             onClick={() => handleOpenServerPrintable(
               activeTab === 'ba-pending' ? '/api/v1/vedika/ba-pending-printable' : '/api/v1/vedika/fpk-bahv-printable',
-              activeTab === 'ba-pending' ? `BA_Pending_${selectedBatch}.html` : `BAHV_${selectedBatch}.html`
+              activeTab === 'ba-pending' ? `BA_Pending_${selectedBatch || 'Kolektif'}.html` : `BAHV_${selectedBatch || 'Kolektif'}.html`
             )}
             className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 transition cursor-pointer disabled:opacity-60"
           >
@@ -342,11 +366,12 @@ export default function OfficialReportsView({
       <div className="no-print grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm">
         {/* TABS SELECTOR */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+          <span className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Jenis Dokumen Kedinasan:
-          </label>
+          </span>
           <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <button
+              type="button"
               onClick={() => setActiveTab('bahv-kolektif')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
                 activeTab === 'bahv-kolektif'
@@ -357,6 +382,7 @@ export default function OfficialReportsView({
               BAHV Kolektif
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('ba-pending')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
                 activeTab === 'ba-pending'
@@ -367,6 +393,7 @@ export default function OfficialReportsView({
               BA Pending
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('sp1-audit')}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${
                 activeTab === 'sp1-audit'
@@ -381,10 +408,12 @@ export default function OfficialReportsView({
 
         {/* HOSPITAL SELECTOR */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+          <label htmlFor="official-report-hospital" className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Fasilitas Kesehatan Rujukan (FKRTL):
           </label>
           <select
+            id="official-report-hospital"
+            name="official_report_hospital"
             value={selectedHospital}
             onChange={(e) => setSelectedHospital(e.target.value)}
             className="w-full text-xs py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -397,10 +426,12 @@ export default function OfficialReportsView({
 
         {/* BATCH SELECTOR */}
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+          <label htmlFor="official-report-batch" className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Nomor Batch Formulir Pengajuan Klaim (FPK):
           </label>
           <select
+            id="official-report-batch"
+            name="official_report_batch"
             value={selectedBatch}
             onChange={(e) => setSelectedBatch(e.target.value)}
             className="w-full text-xs py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -419,7 +450,7 @@ export default function OfficialReportsView({
         
         {/* KOP SURAT RESMI BPJS KESEHATAN */}
         <div className="border-b-4 border-double border-slate-900 pb-5 mb-6 text-center">
-          <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 mb-2">
             <div className="w-20 h-20 shrink-0 flex items-center justify-center p-1 border border-slate-200 rounded-lg">
               <img 
                 src="/assets/images/bpjs_icon.png" 
@@ -459,7 +490,7 @@ export default function OfficialReportsView({
                 BERITA ACARA HASIL VERIFIKASI KLAIM (BAHV) KOLEKTIF
               </h3>
               <p className="text-xs font-mono text-slate-700">
-                Nomor: 0428/BAHV/WASRIK/0326 · Kode FPK: {selectedBatch}
+                Nomor: 0428/BAHV/WASRIK/{docPeriodCode} · Kode FPK: {selectedBatch || 'Kolektif Seluruh FPK'}
               </p>
             </div>
 
@@ -467,15 +498,15 @@ export default function OfficialReportsView({
               Pada hari ini, <strong>{formattedDayName}</strong> tanggal <strong>{formattedDateLong} ({formattedDateShort})</strong>, bertempat di Kantor Cabang BPJS Kesehatan, telah dilakukan audit dan penapisan anomali pra-pembayaran klaim JKN terhadap berkas pengajuan klaim Formulir Pengajuan Klaim (FPK) dari:
             </p>
 
-            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
               <div>
                 <p><span className="text-slate-500 w-32 inline-block">Nama Faskes / RS:</span> <strong>{selectedHospitalMeta?.id || selectedHospital}</strong></p>
                 <p><span className="text-slate-500 w-32 inline-block">Kode PPK Faskes:</span> <span className="font-mono font-bold">{selectedHospitalMeta?.code || 'FSK-RSX-01'}</span></p>
                 <p><span className="text-slate-500 w-32 inline-block">Jenis Pelayanan:</span> RITL (Rawat Inap Tingkat Lanjutan)</p>
               </div>
               <div>
-                <p><span className="text-slate-500 w-32 inline-block">Periode Pelayanan:</span> {batches.find((b) => b.id === selectedBatch)?.label || selectedBatch}</p>
-                <p><span className="text-slate-500 w-32 inline-block">Nomor Batch FPK:</span> {selectedBatch}</p>
+                <p><span className="text-slate-500 w-32 inline-block">Periode Pelayanan:</span> {batches.find((b) => b.id === selectedBatch)?.label || (selectedBatch || 'Semua Batch Aktif')}</p>
+                <p><span className="text-slate-500 w-32 inline-block">Nomor Batch FPK:</span> {selectedBatch || 'Kolektif Seluruh FPK'}</p>
                 <p><span className="text-slate-500 w-32 inline-block">Tanggal Selesai Verif:</span> {formattedDateLong}</p>
               </div>
             </div>
@@ -630,7 +661,7 @@ export default function OfficialReportsView({
                 BERITA ACARA PENUNDAAN KLAIM (BA PENDING)
               </h3>
               <p className="text-xs font-mono text-slate-700">
-                Nomor: 0118/BA-PENDING/WASRIK/0326 · Ref FPK: {selectedBatch}
+                Nomor: 0118/BA-PENDING/WASRIK/{docPeriodCode} · Ref FPK: {selectedBatch || 'Kolektif Seluruh FPK'}
               </p>
             </div>
 
@@ -640,7 +671,7 @@ export default function OfficialReportsView({
 
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Daftar Klaim Pending & Bukti Kelengkapan yang Wajib Dipenuhi:
+                Daftar Klaim Pending &amp; Bukti Kelengkapan yang Wajib Dipenuhi:
               </h4>
               <table className="w-full text-[11px] border-collapse border border-slate-300">
                 <thead>
@@ -662,7 +693,7 @@ export default function OfficialReportsView({
                       <td className="p-2 border-r border-slate-200">{pc.diagnosis}</td>
                       <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-amber-800">{formatIDR(pc.tariff_submitted)}</td>
                       <td className="p-2 border-r border-slate-200 text-slate-700">{pc.note}</td>
-                      <td className="p-2 text-center font-bold text-rose-700">10 Hari Kerja</td>
+                      <td className="p-2 text-center font-bold text-rose-700">14 Hari Kerja</td>
                     </tr>
                   ))}
                 </tbody>
@@ -673,7 +704,7 @@ export default function OfficialReportsView({
               Sesuai dengan ketentuan regulasi JKN, pihak FKRTL diberikan batas waktu maksimal <strong>14 (empat belas) hari kerja</strong> sejak Berita Acara ini diterbitkan untuk melengkapi dan mengunggah kembali dokumen perbaikan melalui portal pengajuan klaim resmi BPJS Kesehatan. Apabila sampai batas waktu tersebut berkas tidak dilengkapi, klaim akan diputuskan <strong>TIDAK LAYAK BAYAR</strong>.
             </p>
 
-            <div className="pt-8 grid grid-cols-2 gap-8 text-xs text-center">
+            <div className="pt-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-xs text-center">
               <div className="space-y-16">
                 <p className="font-bold">Menerima dan Mengetahui,<br />Pihak RS {selectedHospital}</p>
                 <p className="font-bold underline">Manager Pelayanan Pasien (MPP)</p>
@@ -697,7 +728,7 @@ export default function OfficialReportsView({
                 SURAT PERINGATAN TINGKAT I (SP-1) PENGAWASAN KLAIM JKN
               </h3>
               <p className="text-xs font-mono text-slate-700">
-                Nomor: 0092/SP1-VPK/IV/0326 · Klasifikasi: RAHASIA / PERINGATAN FORMAL
+                Nomor: 0092/SP1-VPK/{docRomanMonth}/{docPeriodCode} · Klasifikasi: RAHASIA / PERINGATAN FORMAL
               </p>
             </div>
 

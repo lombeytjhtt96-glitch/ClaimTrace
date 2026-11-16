@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Flag,
@@ -111,12 +111,14 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
   const [bulkTagsToAdd, setBulkTagsToAdd] = useState([]);
   const [bulkActionMessage, setBulkActionMessage] = useState(null);
 
-  const fetchFlags = useCallback(async () => {
+  const fetchFlags = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/flags`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/operations/flags`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (data) {
         const mapped = (Array.isArray(data.flags) ? data.flags : []).map((f) => ({
           ...f,
           peserta_name: f.peserta_name || (f.participant_token ? `Peserta Terproteksi (${f.participant_token})` : 'Peserta Terproteksi (Zero-PHI)'),
@@ -495,7 +497,10 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
-            <input aria-label="Cari berdasarkan ID SEP/sesi, FKRTL, alasan penandaan, atau catatan klinis..."
+            <input
+              id="flagged-search-input"
+              name="flagged_search"
+              aria-label="Cari berdasarkan ID SEP/sesi, FKRTL, alasan penandaan, atau catatan klinis"
               type="text"
               placeholder="Cari berdasarkan ID SEP/sesi, FKRTL, alasan penandaan, atau catatan klinis..."
               value={searchQuery}
@@ -510,6 +515,8 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
 
           {/* Status Filter */}
           <select
+            id="flagged-status-filter"
+            name="flagged_status_filter"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter berdasarkan status"
@@ -527,6 +534,8 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
 
           {/* Category Filter */}
           <select
+            id="flagged-category-filter"
+            name="flagged_category_filter"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             aria-label="Filter berdasarkan kategori"
@@ -551,10 +560,13 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             isLight ? 'border-slate-200' : 'border-white/10'
           }`}>
             <div className="flex items-center gap-3">
-              <label className={`flex items-center gap-2 text-xs font-bold cursor-pointer ${
+              <label htmlFor="flagged-select-all" className={`flex items-center gap-2 text-xs font-bold cursor-pointer ${
                 isLight ? 'text-slate-700' : 'text-white/70'
               }`}>
-                <input aria-label="Kotak centang opsi"
+                <input
+                  id="flagged-select-all"
+                  name="flagged_select_all"
+                  aria-label="Pilih semua sesi yang ditandai"
                   type="checkbox"
                   checked={selectedIds.size === filteredFlags.length && filteredFlags.length > 0}
                   onChange={toggleSelectAll}
@@ -827,12 +839,15 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                         : 'bg-[#00134A]/80 border-white/10 text-white'
                     }`}>
                       <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
+                        <label htmlFor="flagged-edit-reason" className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
                           isLight ? 'text-slate-700' : 'text-white/80'
                         }`}>
                           Alasan Penandaan Sesi / Klaim (Flag Reason)
                         </label>
-                        <input aria-label="Bidang input data"
+                        <input
+                          id="flagged-edit-reason"
+                          name="flagged_edit_reason"
+                          aria-label="Alasan Penandaan Sesi atau Klaim"
                           type="text"
                           value={editReason}
                           onChange={(e) => setEditReason(e.target.value)}
@@ -846,12 +861,14 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                       </div>
 
                       <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
+                        <label htmlFor="flagged-edit-notes" className={`block text-xs font-bold uppercase tracking-wider mb-1.5 ${
                           isLight ? 'text-slate-700' : 'text-white/80'
                         }`}>
                           Catatan Audit Verifikator (Clinical & Fraud Notes)
                         </label>
                         <textarea
+                          id="flagged-edit-notes"
+                          name="flagged_edit_notes"
                           rows={3}
                           value={editNotes}
                           onChange={(e) => setEditNotes(e.target.value)}
@@ -865,11 +882,11 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                       </div>
 
                       <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${
+                        <span className={`block text-xs font-bold uppercase tracking-wider mb-2 ${
                           isLight ? 'text-slate-700' : 'text-white/80'
                         }`}>
                           Kategori & Tag Temuan Audit
-                        </label>
+                        </span>
 
                         {/* Predefined Categories */}
                         <div className="flex flex-wrap gap-2 mb-3">
@@ -924,7 +941,10 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
 
                         {/* Add custom tag input */}
                         <div className="flex gap-2">
-                          <input aria-label="Bidang input data"
+                          <input
+                            id="flagged-custom-tag"
+                            name="flagged_custom_tag"
+                            aria-label="Tambah tag temuan kustom"
                             type="text"
                             value={customTag}
                             onChange={(e) => setCustomTag(e.target.value)}

@@ -688,13 +688,15 @@
 #cockpit-root.theme-light button.bg-red-600,
 #cockpit-root.theme-light button.bg-slate-900,
 #cockpit-root.theme-light button.bg-slate-800,
-#cockpit-root.theme-light button[class*="bg-blue-600"],
-#cockpit-root.theme-light button[class*="bg-emerald-600"],
-#cockpit-root.theme-light button[class*="bg-emerald-600"]:hover,
+#cockpit-root.theme-light button[class^="bg-blue-600"],
+#cockpit-root.theme-light button[class*=" bg-blue-600"],
+#cockpit-root.theme-light button[class^="bg-emerald-600"],
+#cockpit-root.theme-light button[class*=" bg-emerald-600"],
 #cockpit-root.theme-light button[class*="!bg-emerald-600"],
-#cockpit-root.theme-light button[class*="!bg-emerald-600"]:hover,
-#cockpit-root.theme-light button[class*="bg-rose-600"],
-#cockpit-root.theme-light button[class*="bg-red-600"],
+#cockpit-root.theme-light button[class^="bg-rose-600"],
+#cockpit-root.theme-light button[class*=" bg-rose-600"],
+#cockpit-root.theme-light button[class^="bg-red-600"],
+#cockpit-root.theme-light button[class*=" bg-red-600"],
 #cockpit-root.theme-light button[class*="from-health-blue"],
 #cockpit-root.theme-light button[class*="from-blue-600"],
 #cockpit-root.theme-light button[class*="from-emerald-600"],
@@ -706,7 +708,8 @@
 #cockpit-root.theme-light button.bg-blue-700 *,
 #cockpit-root.theme-light button.bg-emerald-600 *,
 #cockpit-root.theme-light button.bg-emerald-600 *:hover,
-#cockpit-root.theme-light button[class*="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light button[class^="bg-emerald-600"]:hover *,
+#cockpit-root.theme-light button[class*=" bg-emerald-600"]:hover *,
 #cockpit-root.theme-light button[class*="!bg-emerald-600"] *,
 #cockpit-root.theme-light button[class*="!bg-emerald-600"]:hover *,
 #cockpit-root.theme-light button.bg-emerald-700 *,
@@ -714,10 +717,14 @@
 #cockpit-root.theme-light button.bg-rose-700 *,
 #cockpit-root.theme-light button.bg-red-600 *,
 #cockpit-root.theme-light button.bg-slate-900 *,
-#cockpit-root.theme-light button[class*="bg-blue-600"] *,
-#cockpit-root.theme-light button[class*="bg-emerald-600"] *,
-#cockpit-root.theme-light button[class*="bg-rose-600"] *,
-#cockpit-root.theme-light button[class*="bg-red-600"] *,
+#cockpit-root.theme-light button[class^="bg-blue-600"] *,
+#cockpit-root.theme-light button[class*=" bg-blue-600"] *,
+#cockpit-root.theme-light button[class^="bg-emerald-600"] *,
+#cockpit-root.theme-light button[class*=" bg-emerald-600"] *,
+#cockpit-root.theme-light button[class^="bg-rose-600"] *,
+#cockpit-root.theme-light button[class*=" bg-rose-600"] *,
+#cockpit-root.theme-light button[class^="bg-red-600"] *,
+#cockpit-root.theme-light button[class*=" bg-red-600"] *,
 #cockpit-root.theme-light button[class*="from-health-blue"] *,
 #cockpit-root.theme-light button[class*="from-blue-600"] *,
 #cockpit-root.theme-light button[class*="from-emerald-600"] *,
@@ -1397,6 +1404,15 @@
   border-color: rgba(255, 255, 255, 0.24) !important;
   color: #ffffff !important;
 }
+
+/* Hide reCAPTCHA floating badge outside authentication screens */
+body[data-auth-view="dashboard"] .grecaptcha-badge,
+body[data-auth-view="logout"] .grecaptcha-badge {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 
 
 

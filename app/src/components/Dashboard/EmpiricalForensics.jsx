@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Database, AlertOctagon, CheckCircle2, Clock, Search, Filter, 
@@ -303,18 +303,23 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
   const [benfordData, setBenfordData] = useState(null);
   const [giniData, setGiniData] = useState(null);
 
-  const loadForensicStatistics = useCallback(async () => {
+  const loadForensicStatistics = useCallback(async (forceRefresh = false) => {
     setStatsLoading(true);
     setStatsError('');
     try {
-      const [benfordRes, giniRes] = await Promise.all([
-        authFetch(`${API_BASE_URL}/api/v1/analytics/benford-audit?sample_limit=1000`),
-        authFetch(`${API_BASE_URL}/api/v1/analytics/gini-concentration?top_k=30`),
+      const fetchJson = async (url) => {
+        if (!forceRefresh) return cachedAuthGetJson(url);
+        const res = await authFetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      };
+      const [bJson, gJson] = await Promise.all([
+        fetchJson(`${API_BASE_URL}/api/v1/analytics/benford-audit?sample_limit=1000`),
+        fetchJson(`${API_BASE_URL}/api/v1/analytics/gini-concentration?top_k=30`),
       ]);
-      if (!benfordRes.ok || !giniRes.ok) {
-        throw new Error(`HTTP ${!benfordRes.ok ? benfordRes.status : giniRes.status}`);
+      if (!bJson || !gJson) {
+        throw new Error('Gagal memuat data statistika forensik');
       }
-      const [bJson, gJson] = await Promise.all([benfordRes.json(), giniRes.json()]);
       setBenfordData(bJson?.analysis || bJson);
       setGiniData(gJson?.concentration_analysis || gJson);
     } catch (err) {
@@ -595,6 +600,9 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                 }`}>
                   <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
                   <input
+                    id="empirical-anomaly-search"
+                    name="empirical_anomaly_search"
+                    aria-label="Cari peserta, klaim, modus, atau kode CBG"
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -920,7 +928,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Penyakit Akut Kecil</div>
               <div className={`mt-2 text-[10.5px] ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                 Vol: <strong className={isLight ? 'text-slate-900 font-bold' : 'text-white'}>440 (4,4%)</strong><br/>
-                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 93,9 Juta</strong><br/>
+                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 94,0 Juta</strong><br/>
                 Avg: <span className="font-mono text-[10px]">Rp 213.573</span>
               </div>
             </div>
@@ -933,7 +941,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Prosedur Dialisis</div>
               <div className={`mt-2 text-[10.5px] ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                 Vol: <strong className={isLight ? 'text-slate-900 font-bold' : 'text-white'}>397 (3,9%)</strong><br/>
-                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 364,1 Juta</strong><br/>
+                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 364,2 Juta</strong><br/>
                 Avg: <span className="font-mono text-[10px]">Rp 917.274</span>
               </div>
             </div>
@@ -946,7 +954,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
               <div className={`text-[11px] font-bold mt-0.5 line-clamp-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>Prosedur Gigi &amp; Mulut</div>
               <div className={`mt-2 text-[10.5px] ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                 Vol: <strong className={isLight ? 'text-slate-900 font-bold' : 'text-white'}>284 (2,8%)</strong><br/>
-                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 101,1 Juta</strong><br/>
+                Tot: <strong className={isLight ? 'text-amber-900 font-bold' : 'text-[#FFCA40]'}>Rp 101,2 Juta</strong><br/>
                 Avg: <span className="font-mono text-[10px]">Rp 356.175</span>
               </div>
             </div>
@@ -1337,6 +1345,9 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
 
           <div className="space-y-2">
             <textarea
+              id="empirical-sql-query"
+              name="empirical_sql_query"
+              aria-label="Editor query SQL forensik OLAP"
               value={sqlQuery}
               onChange={(e) => setSqlQuery(e.target.value)}
               rows={3}

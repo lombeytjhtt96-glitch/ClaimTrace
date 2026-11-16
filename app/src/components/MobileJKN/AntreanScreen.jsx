@@ -122,8 +122,10 @@ export default function AntreanScreen({ onNavigate }) {
             {/* Form Input */}
             <form onSubmit={handleSubmit} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3 text-xs">
               <div>
-                <label className="block text-slate-600 font-bold mb-1">Pilih Poli / Layanan</label>
+                <label htmlFor="mobile-antrean-poli" className="block text-slate-600 font-bold mb-1">Pilih Poli / Layanan</label>
                 <select
+                  id="mobile-antrean-poli"
+                  name="mobile_antrean_poli"
                   value={poli}
                   onChange={(e) => setPoli(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,9 +138,12 @@ export default function AntreanScreen({ onNavigate }) {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-bold mb-1">Tanggal Kunjungan</label>
+                <label htmlFor="mobile-antrean-date" className="block text-slate-600 font-bold mb-1">Tanggal Kunjungan</label>
                 <div className="relative">
-                  <input aria-label="Bidang input data"
+                  <input
+                    id="mobile-antrean-date"
+                    name="mobile_antrean_date"
+                    aria-label="Tanggal Kunjungan"
                     type="date"
                     defaultValue={new Date().toISOString().split('T')[0]}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -147,8 +152,10 @@ export default function AntreanScreen({ onNavigate }) {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-bold mb-1">Keluhan Singkat (Opsional)</label>
+                <label htmlFor="mobile-antrean-keluhan" className="block text-slate-600 font-bold mb-1">Keluhan Singkat (Opsional)</label>
                 <textarea
+                  id="mobile-antrean-keluhan"
+                  name="mobile_antrean_keluhan"
                   value={keluhan}
                   onChange={(e) => setKeluhan(e.target.value)}
                   placeholder="Tuliskan keluhan atau gejala sakit yang dirasakan..."

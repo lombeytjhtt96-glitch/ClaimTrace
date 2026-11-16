@@ -225,10 +225,22 @@ async function run() {
 
     const page = await appCtx.newPage();
     const pageErrors = [];
+    const consoleErrors = [];
     const httpFailures = [];
+    const tokenUrlLeaks = [];
 
     page.on('pageerror', (err) => {
       pageErrors.push(String(err?.message || err));
+    });
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    page.on('request', (req) => {
+      if (/[?&]token=/.test(req.url())) {
+        tokenUrlLeaks.push(req.url());
+      }
     });
     page.on('response', (res) => {
       const url = res.url();
@@ -241,10 +253,10 @@ async function run() {
     await page.getByRole('button', { name: /Dashboard Ringkasan/i }).waitFor({ state: 'visible', timeout: 15000 });
     await assertNoHorizontalOverflow(page, 'Dashboard Executive Desktop');
 
-    // Mobile viewport check
-    await page.setViewportSize({ width: 390, height: 844 });
+    // Mobile viewport check (360x780 + 390x844)
+    await page.setViewportSize({ width: 360, height: 780 });
     await page.waitForTimeout(300);
-    await assertNoHorizontalOverflow(page, 'Dashboard Executive Mobile');
+    await assertNoHorizontalOverflow(page, 'Dashboard Executive Mobile 360');
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(200);
     console.log('[PASS] Executive Dashboard boot + desktop/mobile zero horizontal overflow');
@@ -468,15 +480,109 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     console.log('[PASS] Dark <-> Light Theme Toggle + Mobile Zero Horizontal Overflow');
 
+    const assertCleanTabView = async (label) => {
+      await page.getByText('Memuat modul analitik...').waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(250);
+      const boundaryCount = await page.getByText(/Kendala Tampilan pada /i).count();
+      if (boundaryCount > 0) {
+        throw new Error(`[${label}] TabErrorBoundary fallback rendered`);
+      }
+      await assertNoHorizontalOverflow(page, label);
+      const formAudit = await page.evaluate(() => {
+        const issues = [];
+        for (const el of document.querySelectorAll('input, select, textarea')) {
+          if (el.type === 'hidden' || el.id?.startsWith('g-recaptcha-response')) continue;
+          const style = window.getComputedStyle(el);
+          if (style.display === 'none' || style.visibility === 'hidden' || el.offsetParent === null) continue;
+          const ariaLabel = (el.getAttribute('aria-label') || '').trim();
+          const ariaLabelledBy = (el.getAttribute('aria-labelledby') || '').trim();
+          const hasLabelFor = Boolean(el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`));
+          const inLabel = Boolean(el.closest('label'));
+          if (ariaLabel === 'Bidang input data') {
+            issues.push(`generic-aria:${el.tagName}#${el.id || ''}`);
+          } else if (!ariaLabel && !ariaLabelledBy && !hasLabelFor && !inLabel) {
+            issues.push(`unlabeled:${el.tagName}#${el.id || ''}.${el.className || ''}`);
+          }
+        }
+        return issues;
+      });
+      if (formAudit.length > 0) {
+        throw new Error(`[${label}] Accessible label issues: ${formAudit.join(', ')}`);
+      }
+    };
+
+    const fullTabSweep = [
+      ['Antrean Klaim', /Antrean Klaim/i],
+      ['Surveilans Faskes', /Surveilans Faskes \(FRI\)/i],
+      ['Intelijen DPJP', /Intelijen DPJP & SIP/i],
+      ['Gudang Data', /Gudang Data & SQL/i],
+      ['Jejak Audit', /Jejak Audit Sistem/i],
+      ['Kopilot Agen', /Kopilot Agen Audit/i],
+      ['Standar & Tata Kelola', /Standar & Tata Kelola BEA/i],
+      ['Pengaturan', /Pengaturan/i],
+      ['Pusat Komando', /Pusat Komando Cabang/i],
+      ['Manajemen Berkas', /Manajemen Berkas/i],
+      ['Triase Cepat', /Triase Cepat/i],
+      ['Berkas Ditandai', /Berkas Ditandai/i],
+      ['Telemetri Mobile', /Telemetri Mobile JKN/i],
+      ['Jadwal Klarifikasi', /Jadwal Klarifikasi RS/i],
+      ['Konfirmasi Peserta', /Konfirmasi Peserta/i],
+      ['Intervensi', /Intervensi & Tindak Lanjut/i],
+      ['Analitik Tren', /Analitik Tren Klaim/i],
+      ['Kepatuhan & Retensi', /Kepatuhan & Retensi RS/i],
+      ['Asisten Klinis', /Asisten Klinis JKN/i],
+    ];
+
+    for (const [qText, btnRegex] of fullTabSweep) {
+      await navigateViaCommandPalette(qText, btnRegex);
+      await assertCleanTabView(`Tab:${qText}`);
+      if (qText === 'Analitik Tren') {
+        await page.locator('#query-select').selectOption('case_distribution');
+        await page.getByText(/K-ANONYMITY PESERTA/i).first().waitFor({ state: 'visible', timeout: 8000 });
+        await page.getByText(/DIFFERENTIAL PRIVACY/i).first().waitFor({ state: 'visible', timeout: 8000 });
+        await page.getByText(/VALIDASI PERSETUJUAN & TOKENISASI/i).first().waitFor({ state: 'visible', timeout: 8000 });
+      }
+    }
+    console.log(`[PASS] Full ${fullTabSweep.length}-tab sweep (zero crashes, zero unlabeled fields, desktop clean)`);
+
+    // Mobile 360x780 sweep across dense modules in Light and Dark mode
+    const mobileDenseTabs = [
+      ['Gudang Data', /Gudang Data & SQL/i],
+      ['BAHV', /Laporan Resmi \(BAHV\)/i],
+      ['Pengaturan', /Pengaturan/i],
+      ['Manajemen Berkas', /Manajemen Berkas/i],
+      ['Telemetri Mobile', /Telemetri Mobile JKN/i],
+    ];
+    await page.setViewportSize({ width: 360, height: 780 });
+    for (const [qText, btnRegex] of mobileDenseTabs) {
+      await navigateViaCommandPalette(qText, btnRegex);
+      await assertCleanTabView(`Mobile360Light:${qText}`);
+    }
+    await themeToggleBtn.click();
+    await page.waitForTimeout(200);
+    for (const [qText, btnRegex] of mobileDenseTabs) {
+      await navigateViaCommandPalette(qText, btnRegex);
+      await assertCleanTabView(`Mobile360Dark:${qText}`);
+    }
+    await themeToggleBtn.click();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    console.log('[PASS] Mobile 360x780 Light & Dark dense-tab overflow & label audit');
+
     if (pageErrors.length > 0) {
       throw new Error(`Page errors observed: ${pageErrors.join(' | ')}`);
+    }
+    if (consoleErrors.length > 0) {
+      throw new Error(`Console errors observed: ${consoleErrors.join(' | ')}`);
     }
     if (httpFailures.length > 0) {
       throw new Error(`HTTP >= 400 errors observed: ${httpFailures.join(' | ')}`);
     }
+    if (tokenUrlLeaks.length > 0) {
+      throw new Error(`Token query-param leak observed: ${tokenUrlLeaks.join(' | ')}`);
+    }
 
     await appCtx.close();
-    console.log('[ALL PASS] ClaimTrace Playwright E2E smoke suite succeeded with zero console/page/HTTP errors.');
+    console.log('[ALL PASS] ClaimTrace Playwright E2E smoke suite succeeded with zero console/page/HTTP/token-leak/label errors.');
   } finally {
     if (browser) await browser.close().catch(() => {});
     cleanupSync();

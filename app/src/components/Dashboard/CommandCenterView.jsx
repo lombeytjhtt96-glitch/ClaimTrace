@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -73,12 +73,14 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
   const [crmNoteModal, setCrmNoteModal] = useState({ isOpen: false, user: null, note: '' });
   const [toastMsg, setToastMsg] = useState(null);
 
-  const fetchDirectoryUsers = useCallback(async () => {
+  const fetchDirectoryUsers = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/operations/directory`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/operations/directory`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (data) {
         const mapped = (Array.isArray(data.users) ? data.users : []).map((u) => ({
           ...u,
           phone: u.phone_masked || u.phone || '-',
@@ -378,7 +380,10 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
-            <input aria-label="Cari nama petugas, NIP, email, atau kode faskes..."
+            <input
+              id="cmd-search-input"
+              name="command_center_search"
+              aria-label="Cari nama petugas, NIP, email, atau kode faskes"
               type="text"
               placeholder="Cari nama petugas, NIP, email, atau kode faskes..."
               value={searchQuery}
@@ -419,12 +424,14 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <div>
-                  <label className={`block text-[11px] font-bold uppercase tracking-wider mb-1 ${
+                  <label htmlFor="cmd-role-filter" className={`block text-[11px] font-bold uppercase tracking-wider mb-1 ${
                     isLight ? 'text-slate-600' : 'text-white/60'
                   }`}>
                     Akses &amp; Peran JKN
                   </label>
                   <select
+                    id="cmd-role-filter"
+                    name="command_role_filter"
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
                     className={`w-full rounded-xl px-3 py-2 text-xs transition font-semibold ${
@@ -441,12 +448,14 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                   </select>
                 </div>
                 <div>
-                  <label className={`block text-[11px] font-bold uppercase tracking-wider mb-1 ${
+                  <label htmlFor="cmd-risk-filter" className={`block text-[11px] font-bold uppercase tracking-wider mb-1 ${
                     isLight ? 'text-slate-600' : 'text-white/60'
                   }`}>
                     Risiko Skrining Integritas
                   </label>
                   <select
+                    id="cmd-risk-filter"
+                    name="command_risk_filter"
                     value={riskFilter}
                     onChange={(e) => setRiskFilter(e.target.value)}
                     className={`w-full rounded-xl px-3 py-2 text-xs transition font-semibold ${
@@ -1183,6 +1192,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
               Menambahkan catatan kontak untuk <strong>{crmNoteModal.user?.name}</strong> ({crmNoteModal.user?.faskes}).
             </p>
             <textarea
+              id="cmd-crm-note"
+              name="crm_note"
+              aria-label="Ringkasan hasil klarifikasi faskes"
               rows={4}
               value={crmNoteModal.note}
               onChange={(e) => setCrmNoteModal((prev) => ({ ...prev, note: e.target.value }))}

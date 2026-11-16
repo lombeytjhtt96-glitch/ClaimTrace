@@ -861,6 +861,9 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
               }`}
             >
               <input
+                id="health-ai-chat-input"
+                name="health_ai_message"
+                aria-label="Tanyakan analisis klaim, audit SATUSEHAT, telemetri Mobile JKN, atau draf rekomendasi BAKB"
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Smartphone, Radio, Send, CheckCircle2, XCircle, Clock, 
@@ -84,11 +84,13 @@ export default function MobileTelemetry({
     response_rate_pct: 0,
   });
 
-  const fetchLiveTelemetry = useCallback(async () => {
+  const fetchLiveTelemetry = useCallback(async (forceRefresh = false) => {
     try {
-      const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/mobile-telemetry`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await cachedAuthGetJson(
+        `${API_BASE_URL}/api/v1/analytics/mobile-telemetry`,
+        forceRefresh ? { force: true } : undefined
+      );
+      if (data) {
         if (Array.isArray(data.logs)) {
           setTelemetryLogs(data.logs);
         }
@@ -363,7 +365,7 @@ export default function MobileTelemetry({
           <form onSubmit={handleSendTestPush} className="space-y-3 font-mono text-xs">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className={`text-[11px] font-sans block font-semibold ${
+                <label htmlFor="telemetry-claim-id" className={`text-[11px] font-sans block font-semibold ${
                   isLight ? 'text-slate-700' : 'text-white/60'
                 }`}>
                   ID Kasus Klaim:
@@ -416,8 +418,10 @@ export default function MobileTelemetry({
                   </button>
                 </div>
               </div>
-              <input 
-                aria-label="Bidang input data"
+              <input
+                id="telemetry-claim-id"
+                name="telemetry_claim_id"
+                aria-label="ID Kasus Klaim"
                 type="text"
                 value={testClaimId}
                 onChange={(e) => setTestClaimId(e.target.value)}
@@ -430,13 +434,15 @@ export default function MobileTelemetry({
             </div>
 
             <div>
-              <label className={`text-[11px] font-sans block mb-1 font-semibold ${
+              <label htmlFor="telemetry-nik-input" className={`text-[11px] font-sans block mb-1 font-semibold ${
                 isLight ? 'text-slate-700' : 'text-white/60'
               }`}>
                 NIK Peserta Terdaftar:
               </label>
-              <input 
-                aria-label="Bidang input data"
+              <input
+                id="telemetry-nik-input"
+                name="telemetry_nik"
+                aria-label="NIK Peserta Terdaftar"
                 type="text"
                 value={testNik}
                 onChange={(e) => setTestNik(e.target.value)}
@@ -643,8 +649,10 @@ export default function MobileTelemetry({
               <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
                 isLight ? 'text-slate-400' : 'text-white/40'
               }`} />
-              <input 
-                aria-label="Bidang input data"
+              <input
+                id="telemetry-log-search"
+                name="telemetry_log_search"
+                aria-label="Cari ID klaim, pasien, atau RS"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

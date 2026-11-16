@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
-  Search, Filter, Download, RefreshCw, Key, Hash, 
+  Search, Filter, Download, RefreshCw, Key, Hash, Database,
   Clock, User, ExternalLink, ChevronRight, FileText, Check, Sparkles, Layers,
   Copy, FileDown, Terminal, X, ShieldAlert
 } from 'lucide-react';
+
+const formatWibTimestamp = (ts) => {
+  if (!ts) return '-';
+  if (typeof ts === 'string' && ts.includes('WIB') && !ts.includes('T')) return ts;
+  const parsed = new Date(ts);
+  if (Number.isNaN(parsed.getTime())) return String(ts);
+  return (
+    parsed.toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).replace(/\./g, ':') + ' WIB'
+  );
+};
 
 const CLAIM_METADATA_MAP = {
   'CLM-2026-10-085': { nominal: 15300000, faskes: 'RS Khusus Mitra Husada (Kelas C)', actorRole: 'Verifikator Medis BPJS Kesehatan' },
@@ -17,9 +35,6 @@ const CLAIM_METADATA_MAP = {
   'CLM-2026-8805': { nominal: 18400000, faskes: 'RS Daerah Kartini (Kelas B)', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8806': { nominal: 38750000, faskes: 'RS Medika Prima (Kelas B)', actorRole: 'Mesin Penapisan Lapis 1-3' },
   'CLM-2026-8809': { nominal: 3000000, faskes: 'RS Umum Bhinneka Husada (Kelas B)', actorRole: 'Verifikator Medis BPJS Kesehatan' },
-  'KLAIM-2026-0881': { nominal: 12500000, faskes: 'RS Swasta Medika Kasih', actorRole: 'Verifikator Medis Senior' },
-  'KLAIM-2026-0882': { nominal: 3540000, faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta', actorRole: 'Pemeriksa Wasrik Pusat' },
-  'KLAIM-2026-0875': { nominal: 1850000, faskes: 'RS Hermina Kemayoran Jakarta', actorRole: 'Verifikator Medis Senior' },
 };
 
 const cleanIndicatorText = (rawText) => {
@@ -82,16 +97,16 @@ export default function AuditLedger({ isLight: propIsLight }) {
       actor: 'dr. Siti Rahma, Sp.PK',
       actorNip: '198704202011012001',
       actorRole: 'Verifikator Medis Senior',
-      claimId: 'KLAIM-2026-0881',
-      faskes: 'RS Swasta Medika Kasih',
-      nominal: 12500000,
+      claimId: 'CLM-2026-8801',
+      faskes: 'RS Khusus Mitra Husada',
+      nominal: 15300000,
       prevHash: '9a4c51b2e8f170d3810c9e6a54f0a2c3d8e7b912a3456789abcdef0123456789',
       currentHash: '3f7a18b9c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9',
       signature: 'SIG-BPJS-RSA4096-7a89b0c1',
       details: {
-        reason: 'Sangkalan Faktual Peserta Mobile JKN (Lapis 3) + Duplikasi Tindakan Bedah Katarak',
-        djsProtected: 12500000,
-        beritaAcaraNo: 'BAHP/BPJS/IX/2026/0881'
+        reason: 'Sangkalan Faktual Peserta Mobile JKN (Lapis 3) + Duplikasi Tindakan Terapi',
+        djsProtected: 15300000,
+        beritaAcaraNo: 'BAHP/BPJS/IX/2026/8801'
       }
     },
     {
@@ -101,9 +116,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       actor: 'Sistem DSS ClaimTrace (Automated)',
       actorNip: 'SYSTEM-BOT-01',
       actorRole: 'Autonomous Verifier Lapis 3',
-      claimId: 'KLAIM-2026-0881',
-      faskes: 'RS Swasta Medika Kasih',
-      nominal: 12500000,
+      claimId: 'CLM-2026-8801',
+      faskes: 'RS Khusus Mitra Husada',
+      nominal: 15300000,
       prevHash: '8b3d40a1e7f069c2709b8d5a43e9a1b2c7d6a80192345678abcdef0123456788',
       currentHash: '9a4c51b2e8f170d3810c9e6a54f0a2c3d8e7b912a3456789abcdef0123456789',
       signature: 'SIG-BPJS-GATEWAY-8812',
@@ -120,9 +135,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       actor: 'Dimas Darmawan, S.Kom, CFE',
       actorNip: '199208152016031002',
       actorRole: 'Pemeriksa Wasrik Pusat',
-      claimId: 'KLAIM-2026-0882',
-      faskes: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-      nominal: 3540000,
+      claimId: 'CLM-2026-8802',
+      faskes: 'RS Swasta As-Syifa (Kelas C)',
+      nominal: 1950000,
       prevHash: '7a2c39f0d6e958b1698a7c4932d890a1b6c5970081234567abcdef0123456787',
       currentHash: '8b3d40a1e7f069c2709b8d5a43e9a1b2c7d6a80192345678abcdef0123456788',
       signature: 'SIG-BPJS-WASRIK-4412',
@@ -139,9 +154,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       actor: 'dr. Siti Rahma, Sp.PK',
       actorNip: '198704202011012001',
       actorRole: 'Verifikator Medis Senior',
-      claimId: 'KLAIM-2026-0875',
-      faskes: 'RS Hermina Kemayoran Jakarta',
-      nominal: 1850000,
+      claimId: 'CLM-2026-8803',
+      faskes: 'RS Khusus Mata Nusantara (Kelas B)',
+      nominal: 4200000,
       prevHash: '6f1b28e9c5d847a058796b3821c78990a5b4869970123456abcdef0123456786',
       currentHash: '7a2c39f0d6e958b1698a7c4932d890a1b6c5970081234567abcdef0123456787',
       signature: 'SIG-BPJS-RSA4096-7a89b0c1',
@@ -333,7 +348,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
         const catData = await catRes.json();
         setFraudCatalog(catData);
       }
-      const targetClaimId = selectedBlock?.claimId || 'CLM-2026-08912';
+      const targetClaimId = selectedBlock?.claimId || 'CLM-2026-8801';
       const matRes = await authFetch(`${API_BASE_URL}/api/v1/threat-defense/claims/${targetClaimId}/matrix`);
       if (matRes.ok) {
         const matData = await matRes.json();
@@ -437,9 +452,10 @@ export default function AuditLedger({ isLight: propIsLight }) {
 
   // Fetch live logs from backend if available & chain seamlessly
   useEffect(() => {
-    authFetch(`${API_BASE_URL}/api/v1/audit-logs`)
-      .then(res => res.json())
-      .then(data => {
+    let active = true;
+    cachedAuthGetJson(`${API_BASE_URL}/api/v1/audit-logs`)
+      .then((data) => {
+        if (!active || !data) return;
         const rawChain = data?.chain || (Array.isArray(data) ? data : []);
         if (rawChain.length > 0) {
           // Deduplicate repeated AUTO_TRIAGE_SCORING events for the same claim_id (keep the most recent evaluation)
@@ -492,6 +508,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       .catch(() => {
         // Fallback to rich built-in demo blocks silently
       });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleVerifyLedger = async () => {
@@ -795,7 +814,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
         }`}>
           <div className="relative w-full sm:w-80">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
-            <input aria-label="Bidang input data"
+            <input
+              id="audit-ledger-search"
+              name="audit_ledger_search"
+              aria-label="Cari hash SHA-256, nomor klaim, atau nama aktor audit"
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -840,13 +862,13 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[460px]">
         
         {/* TABLE (7 COLS) */}
-        <div className="lg:col-span-7 flex flex-col min-h-0">
-          <div className={`overflow-x-auto backdrop-blur-xl border rounded-2xl shadow-xl overflow-hidden ${
+        <div className="lg:col-span-7 flex flex-col min-h-0 min-w-0">
+          <div className={`overflow-x-auto backdrop-blur-xl border rounded-2xl shadow-xl ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
               : 'bg-[#00153A]/85 border-white/10 text-white shadow-2xl'
           }`}>
-            <table className="w-full text-left text-xs font-sans">
+            <table className="w-full min-w-[660px] text-left text-xs font-sans">
               <thead className={`font-bold uppercase text-[9.5px] tracking-wider border-b ${
                 isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-black/40 text-white/70 border-white/10'
               }`}>
@@ -979,13 +1001,13 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                         )}
                       </div>
                       <span className={`text-[9.5px] block mt-0.5 font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                        {new Date(b.timestamp).toLocaleTimeString('id-ID')} WIB
+                        {formatWibTimestamp(b.timestamp)}
                       </span>
                     </td>
 
                     <td className="py-3 px-3.5 font-sans">
-                      <span className={`font-bold block truncate max-w-[200px] text-[11px] ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
-                      <span className={`text-[9.5px] block truncate max-w-[200px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
+                      <span className={`font-bold block truncate max-w-[160px] text-[11px] ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
+                      <span className={`text-[9.5px] block truncate max-w-[160px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
                     </td>
 
                     <td className="py-3 px-3.5">
@@ -1039,7 +1061,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     </span>
                     <h3 className={`text-xs font-bold mt-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>{formatActionTitle(selectedBlock.action)}</h3>
                     <span className={`text-[10px] font-medium block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{formatActionCategory(selectedBlock.action)}</span>
-                    <p className={`text-[10.5px] font-mono mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>{selectedBlock.timestamp}</p>
+                    <p className={`text-[10.5px] font-mono mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/50'}`}>{formatWibTimestamp(selectedBlock.timestamp)}</p>
                   </div>
                   <div className="text-right">
                     <span className={`text-[9.5px] border px-2.5 py-0.5 rounded-full font-mono font-bold flex items-center space-x-1 shadow-xs ${
@@ -1444,7 +1466,11 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                             <span className={`text-[10px] font-bold uppercase block mb-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                               Sintaks YARA-L 2.0:
                             </span>
-                            <pre className="font-mono text-[10px] p-3 rounded-xl bg-slate-950 text-emerald-300 border border-emerald-950 overflow-x-auto leading-relaxed max-h-[320px]">
+                            <pre className={`font-mono text-[11px] p-3 rounded-xl border overflow-x-auto leading-relaxed max-h-[320px] ${
+                              isLight
+                                ? 'bg-slate-100 text-slate-900 border-slate-300'
+                                : 'bg-slate-950 text-emerald-300 border-emerald-950'
+                            }`}>
                               {selectedSecopsRule.rule_text}
                             </pre>
                           </div>
@@ -1850,8 +1876,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
                         <div className="space-y-3">
                           <div>
-                            <label className="block text-xs font-semibold mb-1">NIP Verifikator BPJS Kesehatan (Wajib):</label>
+                            <label htmlFor="audit-gate-nip" className="block text-xs font-semibold mb-1">NIP Verifikator BPJS Kesehatan (Wajib):</label>
                             <input
+                              id="audit-gate-nip"
+                              name="gate_nip"
                               type="text"
                               value={gateNip}
                               onChange={(e) => setGateNip(e.target.value)}
@@ -1863,8 +1891,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold mb-1">Nama Lengkap Verifikator:</label>
+                            <label htmlFor="audit-gate-name" className="block text-xs font-semibold mb-1">Nama Lengkap Verifikator:</label>
                             <input
+                              id="audit-gate-name"
+                              name="gate_name"
                               type="text"
                               value={gateName}
                               onChange={(e) => setGateName(e.target.value)}
@@ -1876,8 +1906,10 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                           </div>
 
                           <div>
-                            <label className="block text-xs font-semibold mb-1">Catatan Verifikator / Blocker (Opsional):</label>
+                            <label htmlFor="audit-gate-notes" className="block text-xs font-semibold mb-1">Catatan Verifikator / Blocker (Opsional):</label>
                             <textarea
+                              id="audit-gate-notes"
+                              name="gate_notes"
                               rows={2}
                               value={gateNotes}
                               onChange={(e) => setGateNotes(e.target.value)}
@@ -2111,8 +2143,8 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     }`}>
                       <div>
                         <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">Klaim Terpilih</span>
-                        <span className="text-sm font-bold font-mono text-amber-400">{claimMatrix?.claim_id || selectedBlock?.claimId || 'CLM-2026-08912'}</span>
-                        <span className="text-xs text-slate-400 block mt-0.5">Faskes: {claimMatrix?.faskes_code || selectedBlock?.faskes || 'RSUD Dr. Soetomo'}</span>
+                        <span className="text-sm font-bold font-mono text-amber-400">{claimMatrix?.claim_id || selectedBlock?.claimId || 'CLM-2026-8801'}</span>
+                        <span className="text-xs text-slate-400 block mt-0.5">Faskes: {claimMatrix?.faskes_code || selectedBlock?.faskes || 'RS Khusus Mitra Husada'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${

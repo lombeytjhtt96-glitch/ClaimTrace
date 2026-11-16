@@ -90,6 +90,13 @@ class ClaimDocumentAuditor:
         "RUJUKAN_FKTP"
     ]
 
+    MANDATORY_DOCS_RJTL = [
+        "SEP",
+        "RESUME_MEDIS",
+        "BILLING_RS",
+        "RUJUKAN_FKTP"
+    ]
+
     MANDATORY_DOCS_SURGICAL = [
         "SEP",
         "SPRI",
@@ -133,7 +140,25 @@ class ClaimDocumentAuditor:
         """
         now_iso = datetime.datetime.now().isoformat()
         c_id = claim_id
-        
+        ctx = claim_data or {}
+        digits = "".join(ch for ch in c_id if ch.isdigit()) or "000001"
+        sep_suffix = digits[-6:].zfill(6)
+        rujukan_suffix = digits[-5:].zfill(5)
+        id_suffix4 = digits[-4:].zfill(4)
+        nama_faskes = str(ctx.get("nama_faskes") or ("RS Khusus Mitra Husada" if "8801" in c_id else "RS Medika Prima"))
+        faskes_code = str(ctx.get("faskes_id") or "RS001")
+        dpjp_name = str(ctx.get("dpjp_name") or "dr. Hendra Pratama, Sp.PD")
+        dpjp_sip = str(ctx.get("dpjp_sip") or "SIP-503/4421/DPMPTSP/2023")
+        svc_type = str(ctx.get("jenis_pelayanan") or "RITL").upper()
+        svc_label = "Rawat Jalan (RJTL)" if svc_type == "RJTL" else "Rawat Inap (RITL)"
+        tgl_layanan = str(ctx.get("tanggal_layanan") or "2026-10-14")[:10]
+        los_hari = int(ctx["los_hari"]) if ctx.get("los_hari") is not None else (0 if svc_type == "RJTL" else 1)
+        primary_icd10_text = str(ctx.get("icd10_primary") or "M54.5 Low Back Pain")
+        primary_icd10_code = primary_icd10_text.split(" (")[0].strip() or "M54.5"
+        no_sep_val = str(ctx.get("no_sep") or f"0112R0011026V{sep_suffix}")
+        kelas_rawat = str(ctx.get("kelas_rawat") or ("Non-Kelas (RJTL)" if svc_type == "RJTL" else "Kelas 1"))
+        poli_tujuan = str(ctx.get("poli_tujuan") or "Penyakit Dalam")
+
         # Default mock fields based on claim ID
         is_phantom = "8802" in c_id or "8805" in c_id
         is_upcoding = "8801" in c_id
@@ -150,27 +175,33 @@ class ClaimDocumentAuditor:
             file_name=f"SEP_{c_id}.pdf",
             file_size_kb=142,
             upload_timestamp=now_iso,
-            faskes_code="RS001",
-            dpjp_name="dr. Hendra Pratama, Sp.PD",
-            dpjp_sip="SIP-503/4421/DPMPTSP/2023",
-            patient_id_token=f"PST-HASH-{c_id[-4:]}",
+            faskes_code=faskes_code,
+            dpjp_name=dpjp_name,
+            dpjp_sip=dpjp_sip,
+            patient_id_token=f"PST-HASH-{id_suffix4}",
             is_signed_electronically=True,
             is_stamp_valid=True,
             ocr_confidence_pct=98.5,
-            extracted_text_snippet="BPJS KESEHATAN - SURAT ELIGIBILITAS PESERTA (SEP)\nNo. SEP: 0112R0011026V000881\nTgl. SEP: 2026-10-14 | Peserta: MANDIRI KELAS 1\nDiagnosa Awal: M54.5 Low Back Pain\nPoli Tujuan: Penyakit Dalam / Orthopedi",
+            extracted_text_snippet=(
+                f"BPJS KESEHATAN - SURAT ELIGIBILITAS PESERTA (SEP)\n"
+                f"No. SEP: {no_sep_val}\n"
+                f"Tgl. SEP: {tgl_layanan} | Faskes: {nama_faskes}\n"
+                f"Diagnosa Awal: {primary_icd10_text}\n"
+                f"Layanan: {svc_label} | Poli Tujuan: {poli_tujuan}"
+            ),
             extracted_fields={
-                "no_sep": f"0112R0011026V{c_id[-6:]}",
-                "tgl_sep": "2026-10-14",
-                "jenis_pelayanan": "Rawat Inap (RITL)",
-                "kelas_rawat": "Kelas 1",
-                "poli_tujuan": "Penyakit Dalam"
+                "no_sep": no_sep_val,
+                "tgl_sep": tgl_layanan,
+                "jenis_pelayanan": svc_label,
+                "kelas_rawat": kelas_rawat,
+                "poli_tujuan": poli_tujuan,
             }
         ))
 
         # 2. Resume Medis (Discharge Summary)
-        resume_dx = "M54.5"
+        resume_dx = primary_icd10_code
         if is_upcoding:
-            resume_dx = "M54.5 (Keluhan: Nyeri punggung ringan biasa, tidak ada defisit neurologis atau sepsis)"
+            resume_dx = f"{primary_icd10_code} (Keluhan: Nyeri punggung ringan biasa, tidak ada defisit neurologis atau sepsis)"
         elif is_phantom:
             resume_dx = "Z00.0 (Pemeriksaan Kesehatan Umum / Baksos Tanpa Keluhan Sakit)"
 
@@ -188,11 +219,15 @@ class ClaimDocumentAuditor:
             is_signed_electronically=True,
             is_stamp_valid=not is_phantom,
             ocr_confidence_pct=94.2,
-            extracted_text_snippet=f"RESUME MEDIS RAWAT INAP\nDiagnosa Utama: {resume_dx}\nDiagnosa Sekunder: -\nLama Rawat: 1 Hari\nKondisi Pulang: Membaik / KRS mandiri\nTerapi: Analgesik oral, fisioterapi ringan.",
+            extracted_text_snippet=(
+                f"RESUME MEDIS {'RAWAT JALAN' if svc_type == 'RJTL' else 'RAWAT INAP'}\n"
+                f"Diagnosa Utama: {resume_dx}\nDiagnosa Sekunder: -\nLama Rawat: {los_hari} Hari ({svc_type})\n"
+                f"Kondisi Pulang: Membaik / KRS mandiri\nTerapi: Analgesik oral, fisioterapi ringan."
+            ),
             extracted_fields={
-                "tgl_masuk": "2026-10-14",
-                "tgl_keluar": "2026-01-03" if is_upcoding else "2026-10-15",
-                "los_hari": 1,
+                "tgl_masuk": tgl_layanan,
+                "tgl_keluar": "2026-01-03" if is_upcoding else tgl_layanan,
+                "los_hari": los_hari,
                 "diagnosa_primer_teks": resume_dx,
                 "terapi_pulang": "Paracetamol 500mg, Meloxicam 15mg"
             }
@@ -238,41 +273,52 @@ class ClaimDocumentAuditor:
             faskes_code="PUSK-01",
             dpjp_name="dr. Wahyu Hidayat",
             dpjp_sip="SIP-021/PUSK/2021",
-            patient_id_token=f"PST-HASH-{c_id[-4:]}",
+            patient_id_token=f"PST-HASH-{id_suffix4}",
             is_signed_electronically=True,
             is_stamp_valid=True,
             ocr_confidence_pct=96.0,
-            extracted_text_snippet="SURAT RUJUKAN FKTP\nDari: Puskesmas Sukamaju (Kode: 0112B001)\nKepada: Poli Penyakit Dalam RS Medika Prima\nDiagnosa Rujukan: M54 Nyeri Punggung Bawah\nCatatan: Memerlukan penanganan spesialis lanjutan.",
+            extracted_text_snippet=(
+                f"SURAT RUJUKAN FKTP\nDari: Puskesmas Sukamaju (Kode: 0112B001)\n"
+                f"Kepada: Poli {poli_tujuan} {nama_faskes}\n"
+                f"Diagnosa Rujukan: {primary_icd10_text}\n"
+                f"Catatan: Memerlukan penanganan spesialis lanjutan."
+            ),
             extracted_fields={
-                "no_rujukan": f"0112B0011026P{c_id[-5:]}",
+                "no_rujukan": f"0112B0011026P{rujukan_suffix}",
                 "tgl_rujukan": "2026-10-10",
                 "masa_berlaku_hari": 90,
                 "is_expired": False
             }
         ))
 
-        # 5. SPRI (Surat Perintah Rawat Inap)
-        docs.append(DocumentMetadata(
-            doc_id=f"DOC-SPRI-{c_id}",
-            doc_type="SPRI",
-            doc_title="Surat Perintah Rawat Inap (SPRI)",
-            file_name=f"SPRI_{c_id}.pdf",
-            file_size_kb=95,
-            upload_timestamp=now_iso,
-            faskes_code="RS001",
-            dpjp_name="dr. Hendra Pratama, Sp.PD",
-            dpjp_sip="SIP-503/4421/DPMPTSP/2023",
-            patient_id_token=f"PST-HASH-{c_id[-4:]}",
-            is_signed_electronically=True,
-            is_stamp_valid=True,
-            ocr_confidence_pct=97.2,
-            extracted_text_snippet="SURAT PERINTAH RAWAT INAP (SPRI)\nIndikasi Rawat: Eksaserbasi akut nyeri radikular lumbal\nRencana Tindakan: Konservatif medikamentosa & fisioterapi rawat inap.\nTanggal Rencana Masuk: 2026-10-14",
-            extracted_fields={
-                "no_spri": f"SPRI-2026-{c_id[-4:]}",
-                "tgl_spri": "2026-10-14",
-                "indikasi_rawat": "Eksaserbasi nyeri radikular"
-            }
-        ))
+        # 5. SPRI (Surat Perintah Rawat Inap) - hanya untuk pelayanan Rawat Inap (RITL)
+        if svc_type != "RJTL":
+            docs.append(DocumentMetadata(
+                doc_id=f"DOC-SPRI-{c_id}",
+                doc_type="SPRI",
+                doc_title="Surat Perintah Rawat Inap (SPRI)",
+                file_name=f"SPRI_{c_id}.pdf",
+                file_size_kb=95,
+                upload_timestamp=now_iso,
+                faskes_code=faskes_code,
+                dpjp_name=dpjp_name,
+                dpjp_sip=dpjp_sip,
+                patient_id_token=f"PST-HASH-{id_suffix4}",
+                is_signed_electronically=True,
+                is_stamp_valid=True,
+                ocr_confidence_pct=97.2,
+                extracted_text_snippet=(
+                    f"SURAT PERINTAH RAWAT INAP (SPRI)\n"
+                    f"Indikasi Rawat: Eksaserbasi akut ({primary_icd10_text})\n"
+                    f"Rencana Tindakan: Tata laksana rawat inap terintegrasi.\n"
+                    f"Tanggal Rencana Masuk: {tgl_layanan}"
+                ),
+                extracted_fields={
+                    "no_spri": f"SPRI-2026-{id_suffix4}",
+                    "tgl_spri": tgl_layanan,
+                    "indikasi_rawat": f"Tata laksana {primary_icd10_code}"
+                }
+            ))
 
         # 6. Hasil Penunjang (Lab / Radiologi) if applicable
         if not is_phantom:
@@ -308,21 +354,29 @@ class ClaimDocumentAuditor:
         primary_icd10: str = "M54.5",
         procedure_icd9cm: Optional[str] = None,
         claimed_tariff_rp: float = 0.0,
-        documents: Optional[List[DocumentMetadata]] = None
+        documents: Optional[List[DocumentMetadata]] = None,
+        claim_data: Optional[Dict[str, Any]] = None,
     ) -> DocumentAuditReport:
         """
         Audit forensik komprehensif terhadap dokumen yang disubmit faskes.
         """
         if not documents:
-            documents = self.generate_synthetic_document_bundle(claim_id)
+            documents = self.generate_synthetic_document_bundle(claim_id, claim_data=claim_data)
 
         findings: List[DocumentAuditFinding] = []
         doc_types = {d.doc_type: d for d in documents}
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. Kelengkapan Berkas Wajib RITL
+        # 1. Kelengkapan Berkas Wajib (RJTL vs RITL)
+        sep_doc = doc_types.get("SEP")
+        sep_svc = str((sep_doc.extracted_fields or {}).get("jenis_pelayanan", "")) if sep_doc else ""
+        is_rjtl = (
+            str((claim_data or {}).get("jenis_pelayanan") or "").upper() == "RJTL"
+            or "RJTL" in sep_svc.upper()
+        )
+        required_docs = self.MANDATORY_DOCS_RJTL if is_rjtl else self.MANDATORY_DOCS_RITL
         missing_docs = []
-        for req_doc in self.MANDATORY_DOCS_RITL:
+        for req_doc in required_docs:
             if req_doc not in doc_types:
                 missing_docs.append(req_doc)
                 findings.append(DocumentAuditFinding(
@@ -336,8 +390,14 @@ class ClaimDocumentAuditor:
                     remediation_action="Kembalikan klaim ke Faskes (Status: PENDING_BERKAS) untuk pengunggahan ulang dokumen wajib."
                 ))
 
-        # 2. Verifikasi Laporan Operasi untuk Prosedur Bedah
-        has_surgical_procedure = bool(procedure_icd9cm and procedure_icd9cm.strip() and procedure_icd9cm != "-")
+        # 2. Verifikasi Laporan Operasi untuk Prosedur Bedah (ICD-9-CM Bab 01-86, non-diagnostik/non-HD)
+        proc_token = (procedure_icd9cm or "").strip().split(" ")[0].split("(")[0].strip()
+        proc_prefix = proc_token.split(".")[0] if proc_token else ""
+        has_surgical_procedure = bool(
+            proc_prefix.isdigit()
+            and 1 <= int(proc_prefix) <= 86
+            and proc_token not in ("39.95",)
+        )
         if has_surgical_procedure:
             if "LAPORAN_OPERASI" not in doc_types:
                 findings.append(DocumentAuditFinding(
@@ -466,7 +526,7 @@ class ClaimDocumentAuditor:
             claim_id=claim_id,
             audit_timestamp=now_str,
             total_documents_submitted=len(documents),
-            mandatory_documents_required=len(self.MANDATORY_DOCS_RITL),
+            mandatory_documents_required=len(required_docs),
             missing_documents=missing_docs,
             compliance_score_pct=compliance_score,
             audit_status=audit_status,

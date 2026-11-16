@@ -1103,10 +1103,8 @@ class DuckDbAnalyticsEngine:
         age = 52
         if claim_id in SYNTHETIC_CLAIMS_DATABASE:
             c_obj = SYNTHETIC_CLAIMS_DATABASE[claim_id]
-            if hasattr(c_obj, "secondary_icd10s"):
-                sec_dxs = c_obj.secondary_icd10s or []
-            if hasattr(c_obj, "patient_age"):
-                age = c_obj.patient_age or 52
+            sec_dxs = list(getattr(c_obj, "icd10_secondary", None) or getattr(c_obj, "secondary_icd10s", None) or [])
+            age = getattr(c_obj, "patient_age", None) or 52
 
         audit = clinical_auditor.calculate_charlson_index(primary_dx, sec_dxs, age)
         audit["claim_id"] = claim_id
@@ -1135,12 +1133,16 @@ class DuckDbAnalyticsEngine:
         los = 1
         if claim_id in SYNTHETIC_CLAIMS_DATABASE:
             c_obj = SYNTHETIC_CLAIMS_DATABASE[claim_id]
-            if hasattr(c_obj, "secondary_icd10s"):
-                sec_dxs = c_obj.secondary_icd10s or []
-            if hasattr(c_obj, "patient_age"):
-                age = c_obj.patient_age or 52
-            if hasattr(c_obj, "los_days"):
-                los = c_obj.los_days or 1
+            sec_dxs = list(getattr(c_obj, "icd10_secondary", None) or getattr(c_obj, "secondary_icd10s", None) or [])
+            age = getattr(c_obj, "patient_age", None) or 52
+            if getattr(c_obj, "los_hari", None) is not None:
+                los = int(c_obj.los_hari)
+            elif getattr(c_obj, "los_days", None) is not None:
+                los = int(c_obj.los_days)
+            elif getattr(c_obj, "jenis_pelayanan", None) == "RJTL":
+                los = 0
+            elif getattr(c_obj, "fkl03_tgl_masuk", None) and getattr(c_obj, "fkl04_tgl_pulang", None):
+                los = max(0, (c_obj.fkl04_tgl_pulang - c_obj.fkl03_tgl_masuk).days)
 
         upcoding_eval = clinical_auditor.validate_ina_cbg_severity(cbg, primary_dx, sec_dxs, age, los)
         upcoding_eval["claim_id"] = claim_id
@@ -1159,8 +1161,18 @@ class DuckDbAnalyticsEngine:
         sql = f"SELECT claim_id, tanggal_layanan FROM claims_warehouse WHERE claim_id = '{claim_id}' LIMIT 1;"
         res = self.execute_query(sql, output_format="json")
         row = (res.get("data") or [{}])[0]
-        adm = row.get("tanggal_layanan", "2026-01-01")
+        adm = str(row.get("tanggal_layanan") or "2026-01-01")[:10]
         dis = "2026-01-03"
+        if claim_id in SYNTHETIC_CLAIMS_DATABASE:
+            c_obj = SYNTHETIC_CLAIMS_DATABASE[claim_id]
+            if getattr(c_obj, "fkl03_tgl_masuk", None):
+                adm = c_obj.fkl03_tgl_masuk.isoformat()
+            elif getattr(c_obj, "tanggal_layanan", None):
+                adm = c_obj.tanggal_layanan.isoformat()
+            if getattr(c_obj, "fkl04_tgl_pulang", None):
+                dis = c_obj.fkl04_tgl_pulang.isoformat()
+            elif getattr(c_obj, "jenis_pelayanan", None) == "RJTL":
+                dis = adm
 
         eval_res = temporal_coherence.validate_episode_causality(adm, dis)
         eval_res["claim_id"] = claim_id

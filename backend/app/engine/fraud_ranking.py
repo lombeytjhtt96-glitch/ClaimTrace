@@ -53,7 +53,7 @@ class FraudRankingEngine:
             "faskes_id": "RS001",
             "faskes_name": "RS Medika Prima",
             "kelas_rs": "Kelas B",
-            "kepedutian_wilayah": "Wilayah IV (Jawa Barat)",
+            "kepedutian_wilayah": "Wilayah V (Jawa Barat)",
             "kantor_cabang": "KC Bandung",
             "accreditation_status": "Paripurna (KARS)",
             "base_volume": 12450,

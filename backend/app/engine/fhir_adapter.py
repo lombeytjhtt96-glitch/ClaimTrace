@@ -102,7 +102,11 @@ def claim_to_fhir_bundle(claim: ClaimInput, triage: Optional[TriageResult] = Non
             {
                 "use": "official",
                 "system": "https://fhir.kemkes.go.id/id/nik-tenaga-kesehatan",
-                "value": f"SDMK-{claim.dpjp_meta.dpjp_id_hash[:8]}"
+                "value": (
+                    str(claim.dpjp_meta.dpjp_id_hash)
+                    if str(claim.dpjp_meta.dpjp_id_hash).startswith("SDMK-")
+                    else f"SDMK-{str(claim.dpjp_meta.dpjp_id_hash)[:12]}"
+                )
             },
             {
                 "use": "secondary",

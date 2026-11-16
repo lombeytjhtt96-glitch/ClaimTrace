@@ -26,7 +26,7 @@ import {
   HelpCircle,
   RefreshCw
 } from 'lucide-react';
-import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 
 export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
   const [rankingData, setRankingData] = useState(null);
@@ -41,7 +41,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
     fetchRankings();
   }, [selectedWilayah, selectedKelas, sortBy]);
 
-  const fetchRankings = async () => {
+  const fetchRankings = async (forceRefresh = false) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -49,9 +49,11 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
       if (selectedKelas) params.append('kelas_rs', selectedKelas);
       if (sortBy) params.append('sort_by', sortBy);
 
-      const res = await authFetch(`${API_BASE_URL}/api/v1/analytics/fraud-ranking?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
+      const url = `${API_BASE_URL}/api/v1/analytics/fraud-ranking?${params.toString()}`;
+      const data = forceRefresh
+        ? await authFetch(url).then((r) => (r.ok ? r.json() : null))
+        : await cachedAuthGetJson(url);
+      if (data) {
         setRankingData(data);
         if (data.rankings && data.rankings.length > 0 && !selectedFaskesDetail) {
           setSelectedFaskesDetail(data.rankings[0]);
@@ -175,6 +177,9 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
             <input
+              id="fraud-rank-search"
+              name="fraud_rank_search"
+              aria-label="Cari nama faskes, kode, atau cabang"
               type="text"
               placeholder="Cari nama faskes, kode, cabang..."
               value={searchQuery}
@@ -187,6 +192,9 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
 
           {/* WILAYAH FILTER */}
           <select
+            id="fraud-rank-wilayah"
+            name="fraud_rank_wilayah"
+            aria-label="Filter Kedeputian Wilayah"
             value={selectedWilayah}
             onChange={(e) => setSelectedWilayah(e.target.value)}
             className={`text-xs px-2.5 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer ${
@@ -194,7 +202,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
             }`}
           >
             <option value="">Semua Kedeputian Wilayah</option>
-            <option value="Jawa Barat">Wilayah IV (Jawa Barat)</option>
+            <option value="Jawa Barat">Wilayah V (Jawa Barat)</option>
             <option value="Jawa Timur">Wilayah VII (Jawa Timur)</option>
             <option value="DKI Jakarta">Wilayah IV (DKI Jakarta)</option>
             <option value="Jawa Tengah">Wilayah VI (Jawa Tengah)</option>
@@ -205,6 +213,9 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
 
           {/* KELAS FILTER */}
           <select
+            id="fraud-rank-kelas"
+            name="fraud_rank_kelas"
+            aria-label="Filter Kelas RS"
             value={selectedKelas}
             onChange={(e) => setSelectedKelas(e.target.value)}
             className={`text-xs px-2.5 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer ${
@@ -220,8 +231,11 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
 
         {/* SORT BY */}
         <div className="flex items-center space-x-2">
-          <span className="text-xs text-slate-500 shrink-0">Urutkan:</span>
+          <label htmlFor="fraud-rank-sort" className="text-xs text-slate-500 shrink-0">Urutkan:</label>
           <select
+            id="fraud-rank-sort"
+            name="fraud_rank_sort"
+            aria-label="Urutkan peringkat risiko faskes"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer ${

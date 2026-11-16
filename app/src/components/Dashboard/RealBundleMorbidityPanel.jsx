@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
 import { Stethoscope, Upload, CheckCircle2, AlertTriangle, RefreshCw, Activity } from 'lucide-react';
 
-export default function RealBundleMorbidityPanel({ activeClaimId = 'CLM-2026-8801', isLight = true, onBundleAudited }) {
+export default function RealBundleMorbidityPanel({
+  activeClaimId = 'CLM-2026-8801',
+  activeClaim = null,
+  currentUser = null,
+  isLight = true,
+  onBundleAudited,
+}) {
   const [primaryIcd, setPrimaryIcd] = useState('R50.9');
   const [secondaryIcdText, setSecondaryIcdText] = useState('A41.9, N18.5');
   const [procedureCode, setProcedureCode] = useState('39.95');
@@ -62,16 +68,25 @@ export default function RealBundleMorbidityPanel({ activeClaimId = 'CLM-2026-880
     setLoadingSubmit(true);
     setErrorMsg('');
     try {
+      const dpjpActorName = currentUser?.name || activeClaim?.dpjp_name || undefined;
+      const hospitalName = activeClaim?.faskes_name || activeClaim?.hospital || undefined;
       const docs = [
         {
           doc_type: 'SEP',
           is_signed_electronically: signedDpjp,
-          extracted_fields: { tgl_sep: tglMasuk },
+          extracted_fields: {
+            tgl_sep: tglMasuk,
+            ...(hospitalName ? { faskes_name: hospitalName } : {}),
+          },
         },
         {
           doc_type: 'RESUME_MEDIS',
           is_signed_electronically: signedDpjp,
-          extracted_fields: { tgl_masuk: tglMasuk, tgl_keluar: tglKeluar },
+          extracted_fields: {
+            tgl_masuk: tglMasuk,
+            tgl_keluar: tglKeluar,
+            ...(dpjpActorName ? { dpjp_name: dpjpActorName } : {}),
+          },
         },
         {
           doc_type: 'PENUNJANG_LAB',
@@ -95,7 +110,7 @@ export default function RealBundleMorbidityPanel({ activeClaimId = 'CLM-2026-880
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           claim_id: activeClaimId,
-          ina_cbg_code: 'I-4-10-II',
+          ina_cbg_code: activeClaim?.ina_cbg_code || 'I-4-10-II',
           primary_icd10: primaryIcd.trim().toUpperCase(),
           secondary_icd10s: parseList(secondaryIcdText).map((c) => c.toUpperCase()),
           procedure_icd9cm: procedureCode.trim() || null,
@@ -243,8 +258,10 @@ export default function RealBundleMorbidityPanel({ activeClaimId = 'CLM-2026-880
             Tarif Tagih (Rp) &amp; PSTV01
           </label>
           <div className="grid grid-cols-2 gap-2">
-            <input id="mb-tarif" type="number" min="0" value={tarifRp} onChange={(e) => setTarifRp(e.target.value)} className={inputClass} />
+            <input id="mb-tarif" name="tarif_klaim_rp" type="number" min="0" value={tarifRp} onChange={(e) => setTarifRp(e.target.value)} className={inputClass} />
             <input
+              id="mb-pstv01"
+              name="pstv01"
               aria-label="ID Peserta PSTV01 Readmisi"
               type="number"
               value={pstv01Sample}
@@ -255,8 +272,10 @@ export default function RealBundleMorbidityPanel({ activeClaimId = 'CLM-2026-880
         </div>
 
         <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-3 pt-1">
-          <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+          <label htmlFor="mb-signed-dpjp" className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
             <input
+              id="mb-signed-dpjp"
+              name="signed_dpjp"
               type="checkbox"
               checked={signedDpjp}
               onChange={(e) => setSignedDpjp(e.target.checked)}

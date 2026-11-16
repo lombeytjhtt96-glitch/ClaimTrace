@@ -287,7 +287,10 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
             }`} />
-            <input aria-label="Bidang input data"
+            <input
+              id="dpjp-search-input"
+              name="dpjp_search"
+              aria-label="Cari nama dokter, NIP, STR, atau fasilitas kesehatan"
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

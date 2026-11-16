@@ -85,7 +85,14 @@ _FORNAS_RESTRICTIONS = [
 
 
 def _normalize_icd(code: Optional[str]) -> str:
-    return (code or "").strip().upper()
+    clean = (code or "").strip().upper()
+    if " (" in clean:
+        clean = clean.split(" (", 1)[0].strip()
+    elif " " in clean:
+        first = clean.split(None, 1)[0]
+        if re.match(r"^[A-Z]\d{2}(\.[0-9A-Z]{1,4})?$", first):
+            clean = first
+    return clean
 
 
 def _matches_any(code: str, patterns: List[str]) -> bool:
@@ -119,7 +126,13 @@ def audit_morbidity_rules(
                 "code": prim,
                 "role": "PRIMARY",
                 "valid_in_master": prim_info is not None,
-                "description": (prim_info or {}).get("display_id") or (prim_info or {}).get("display_en") or "Kode tidak ditemukan di master ICD-10",
+                "description": (
+                    (prim_info or {}).get("name_id")
+                    or (prim_info or {}).get("display_id")
+                    or (prim_info or {}).get("name_en")
+                    or (prim_info or {}).get("display_en")
+                    or "Kode tidak ditemukan di master ICD-10"
+                ),
             }
         )
         if prim_info is None and not re.match(r"^[A-Z]\d{2}(\.[0-9A-Z]{1,4})?$", prim):
@@ -140,7 +153,13 @@ def audit_morbidity_rules(
                 "code": sec,
                 "role": "SECONDARY",
                 "valid_in_master": info is not None,
-                "description": (info or {}).get("display_id") or (info or {}).get("display_en") or "Tidak terpetakan persis (subkode / lokal)",
+                "description": (
+                    (info or {}).get("name_id")
+                    or (info or {}).get("display_id")
+                    or (info or {}).get("name_en")
+                    or (info or {}).get("display_en")
+                    or "Tidak terpetakan persis (subkode / lokal)"
+                ),
             }
         )
 

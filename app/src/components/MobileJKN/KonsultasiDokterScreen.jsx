@@ -130,7 +130,10 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
 
           {/* Chat Input Bar */}
           <form onSubmit={handleSend} className="bg-white p-2 border-t border-slate-200 flex items-center space-x-2 shrink-0">
-            <input aria-label="Bidang input data"
+            <input
+              id="mobile-consult-message"
+              name="mobile_consult_message"
+              aria-label="Ketik pesan keluhan kepada dokter"
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}

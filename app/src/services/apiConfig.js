@@ -98,6 +98,8 @@ export const saveAuthenticatedSession = (token, user) => {
 export const clearSessionStorage = ({ broadcast = true } = {}) => {
   _sessionJsonCache.clear();
   _inflightGetMap.clear();
+  _verifySessionCache.clear();
+  _verifySessionInflight.clear();
   _prefetchedSession = false;
   if (typeof localStorage === 'undefined') return;
   try {
@@ -119,12 +121,93 @@ export const getCachedJsonSync = (url) => {
   return entry.data;
 };
 
+const _verifySessionInflight = new Map();
+const _verifySessionCache = new Map();
+
+export const verifySessionRequest = async (token, touch = false) => {
+  const key = `${token || ''}:${touch ? 1 : 0}`;
+  if (!touch) {
+    const cached = _verifySessionCache.get(key);
+    if (cached && Date.now() - cached.ts < 1500) {
+      return new Response(cached.bodyText, {
+        status: cached.status,
+        headers: { 'Content-Type': cached.contentType || 'application/json' },
+      });
+    }
+  }
+  if (_verifySessionInflight.has(key)) {
+    const cachedBody = await _verifySessionInflight.get(key);
+    return new Response(cachedBody.bodyText, {
+      status: cachedBody.status,
+      headers: { 'Content-Type': cachedBody.contentType || 'application/json' },
+    });
+  }
+  const promise = fetch(
+    `${API_BASE_URL}/api/v1/auth/verify-session?touch=${touch ? 1 : 0}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-BPJS-Token': token,
+        'X-Device-Fingerprint': getDeviceFingerprint(),
+      },
+    }
+  )
+    .then(async (res) => {
+      const bodyText = await res.text();
+      const entry = {
+        ts: Date.now(),
+        status: res.status,
+        bodyText,
+        contentType: res.headers.get('content-type') || 'application/json',
+      };
+      if (!touch && res.ok) {
+        _verifySessionCache.set(key, entry);
+      }
+      return entry;
+    })
+    .finally(() => {
+      _verifySessionInflight.delete(key);
+    });
+  _verifySessionInflight.set(key, promise);
+  const resolved = await promise;
+  return new Response(resolved.bodyText, {
+    status: resolved.status,
+    headers: { 'Content-Type': resolved.contentType || 'application/json' },
+  });
+};
+
+export const invalidateSessionApiCache = (prefix = '') => {
+  if (!prefix) {
+    _sessionJsonCache.clear();
+    return;
+  }
+  for (const key of _sessionJsonCache.keys()) {
+    if (key.includes(prefix)) {
+      _sessionJsonCache.delete(key);
+    }
+  }
+};
+
+if (typeof window !== 'undefined' && !window.__claimtraceCacheListenerAttached) {
+  window.__claimtraceCacheListenerAttached = true;
+  window.addEventListener('claimtrace:operations-updated', () => {
+    _sessionJsonCache.clear();
+  });
+}
+
 export const cachedAuthGetJson = async (url, options = {}) => {
   if (!hasValidSessionStorage()) return null;
+  const { force = false, ttlMs = 3000, ...fetchOptions } = options || {};
+  if (!force && ttlMs > 0) {
+    const cached = _sessionJsonCache.get(url);
+    if (cached && cached.data !== undefined && Date.now() - cached.ts < ttlMs) {
+      return cached.data;
+    }
+  }
   if (_inflightGetMap.has(url)) {
     return _inflightGetMap.get(url);
   }
-  const promise = authFetch(url, options)
+  const promise = authFetch(url, fetchOptions)
     .then(async (res) => {
       if (!res.ok) return null;
       const data = await res.json();

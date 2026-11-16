@@ -349,7 +349,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_2_satusehat_sdmk": 95.0,
                     "lapis_3_mobile_jkn": 92.0,
                     "lapis_4_frista_biometric": 96.0,
-                    "fused_quad_score": 91.8,
+                    "fused_quad_score": 91.7,
                     "verdict": "Jalur Merah Kritis: Terkonfirmasi 4 Lapis Bukti"
                 }
             },
@@ -377,7 +377,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_2_satusehat_sdmk": 40.0,
                     "lapis_3_mobile_jkn": 35.0,
                     "lapis_4_frista_biometric": 15.0,
-                    "fused_quad_score": 89.5,
+                    "fused_quad_score": 48.1,
                     "verdict": "Jalur Merah: Ketidaksesuaian Koding Severity Level"
                 }
             },
@@ -405,7 +405,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_2_satusehat_sdmk": 55.0,
                     "lapis_3_mobile_jkn": 60.0,
                     "lapis_4_frista_biometric": 68.0,
-                    "fused_quad_score": 81.4,
+                    "fused_quad_score": 68.0,
                     "verdict": "Jalur Merah: Indikasi Pemecahan Episode Rawat Jalan"
                 }
             },
@@ -433,7 +433,7 @@ class PostHealthkathonExpansionEngine:
                     "lapis_2_satusehat_sdmk": 72.0,
                     "lapis_3_mobile_jkn": 89.0,
                     "lapis_4_frista_biometric": 94.5,
-                    "fused_quad_score": 86.4,
+                    "fused_quad_score": 85.8,
                     "verdict": "Jalur Merah Kritis: Penagihan Berulang & Spoofing Biometrik"
                 }
             }
@@ -489,16 +489,19 @@ class PostHealthkathonExpansionEngine:
         unbundling_detected = False
         verified_tariff = claimed_tariff_rp
 
+        hb_clean = round(float(hemoglobin), 1)
+        temp_clean = round(float(temperature), 1)
+
         # Check Sepsis Upcoding (A40 / A41)
         if any("A41" in c or "A40" in c for c in sec_codes):
-            if sofa_score < 2 and leukocytes < 12000 and temperature < 38.3:
+            if sofa_score < 2 and leukocytes < 12000 and temp_clean < 38.3:
                 upcoding_detected = True
                 flags.append({
                     "code": "A41.9",
                     "type": "Upcoding Severity Level III",
                     "severity_impact": "Menaikkan klaim dari Severity Level I ke Severity Level III secara tidak sah",
                     "clinical_finding": (
-                        f"Leukosit {leukocytes:,.0f}/uL (Normal), Suhu {temperature} C, Skor SOFA = {sofa_score}. "
+                        f"Leukosit {leukocytes:,.0f}/uL (Normal), Suhu {temp_clean:g} C, Skor SOFA = {sofa_score}. "
                         "Tidak ditemukan bukti disfungsi organ akut maupun kultur darah positif."
                     ),
                     "regulation_citation": "Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Sepsis",
@@ -507,14 +510,14 @@ class PostHealthkathonExpansionEngine:
 
         # Check GI Hemorrhage Upcoding (K92.2 / K92.0 / K92.1)
         if any("K92" in c for c in sec_codes):
-            if hemoglobin >= 12.0:
+            if hb_clean >= 12.0:
                 upcoding_detected = True
                 flags.append({
                     "code": "K92.2",
                     "type": "Upcoding Komorbid Perdarahan GI",
                     "severity_impact": "Penambahan komorbid perdarahan saluran cerna tanpa bukti klinis",
                     "clinical_finding": (
-                        f"Kadar Hemoglobin {hemoglobin} g/dL berada dalam batas normal dan tidak ada laporan "
+                        f"Kadar Hemoglobin {hb_clean:g} g/dL berada dalam batas normal dan tidak ada laporan "
                         "hematemesis/melena maupun endoskopi."
                     ),
                     "regulation_citation": "Permenkes RI No. 26 Tahun 2021 Bab III - Kaidah Koding Penyakit Pencernaan",
@@ -591,7 +594,7 @@ class PostHealthkathonExpansionEngine:
                 ml_feature_drivers = [
                     {
                         "feature": "Nominal Tagihan Klaim vs Bukti Lab Objektif",
-                        "value": f"Rp {claimed_tariff_rp:,.0f} (Hb {hemoglobin} g/dL, Leukosit {leukocytes:,.0f}/uL, SOFA {sofa_score})",
+                        "value": f"Rp {claimed_tariff_rp:,.0f} (Hb {hb_clean:g} g/dL, Leukosit {leukocytes:,.0f}/uL, SOFA {sofa_score})",
                         "impact_weight": "CRITICAL" if upcoding_detected else "LOW"
                     },
                     {
