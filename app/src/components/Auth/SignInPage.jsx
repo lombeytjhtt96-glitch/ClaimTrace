@@ -635,20 +635,20 @@ export default function SignInPage({
   const renderRecaptchaBlock = () => {
     return (
       <div className="pt-1 space-y-2">
-        <div className="flex items-center justify-center min-h-[78px] w-full overflow-hidden">
+        <div className="relative flex items-center justify-center min-h-[78px] w-full overflow-hidden">
           <div
             key={`${mode}-v2`}
             ref={recaptchaV2ContainerRef}
             className="origin-center transition-transform max-[390px]:scale-[0.9] max-[340px]:scale-[0.76]"
           />
-        </div>
 
-        {!recaptchaV2Ready && !recaptchaLoadError && (
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 py-1">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            <span>Memuat Google reCAPTCHA...</span>
-          </div>
-        )}
+          {!recaptchaV2Ready && !recaptchaLoadError && (
+            <div className="absolute inset-0 flex items-center justify-center gap-2 text-xs text-slate-500 pointer-events-none">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Memuat Google reCAPTCHA...</span>
+            </div>
+          )}
+        </div>
 
         {recaptchaLoadError && (
           <div className="text-center space-y-1.5 py-1">

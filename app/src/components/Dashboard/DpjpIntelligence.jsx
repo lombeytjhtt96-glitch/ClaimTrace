@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { exportCsvFile } from '../../utils/exportCsv';
+import { SingleLineYAxisTick, formatAxisLabel } from '../Common/PolicyWidgets';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin,
@@ -18,6 +19,7 @@ import {
   Tooltip,
   Cell,
   ReferenceLine,
+  LabelList,
 } from 'recharts';
 
 // Data DPJP dari integrasi SATUSEHAT SDMK & Analisis Geovelocity
@@ -292,20 +294,20 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 Garis Putus: Ambang 40 px/hari
               </span>
             </div>
-            <div className="h-[200px] w-full">
+            <div className="h-[210px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[...filteredDoctors]
                     .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
                     .slice(0, 6)
                     .map((d) => ({
-                      shortName: d.name.length > 24 ? `${d.name.slice(0, 22)}...` : d.name,
+                      shortName: formatAxisLabel(d.name, { maxChars: 27 }),
                       fullName: d.name,
                       dailyWorkload: Number(d.dailyWorkload || 0),
                       workloadLimit: Number(d.workloadLimit || 40),
                     }))}
                   layout="vertical"
-                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                  margin={{ top: 4, right: 44, left: 6, bottom: 4 }}
                 >
                   <XAxis
                     type="number"
@@ -316,10 +318,18 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                   <YAxis
                     type="category"
                     dataKey="shortName"
-                    width={195}
-                    tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }}
+                    width={200}
+                    interval={0}
                     axisLine={false}
                     tickLine={false}
+                    tick={
+                      <SingleLineYAxisTick
+                        fill={isLight ? '#334155' : '#e2e8f0'}
+                        fontSize={11}
+                        fontWeight={600}
+                        maxChars={27}
+                      />
+                    }
                   />
                   <Tooltip
                     formatter={(val, _name, item) => [
@@ -336,7 +346,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                     }}
                   />
                   <ReferenceLine x={40} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} />
-                  <Bar dataKey="dailyWorkload" radius={[0, 6, 6, 0]} barSize={18}>
+                  <Bar dataKey="dailyWorkload" radius={[0, 6, 6, 0]} barSize={18} isAnimationActive={false}>
                     {[...filteredDoctors]
                       .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
                       .slice(0, 6)
@@ -344,6 +354,17 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                         const over = Number(entry.dailyWorkload || 0) > Number(entry.workloadLimit || 40);
                         return <Cell key={`dpjp-cell-${entry.id || idx}`} fill={over ? '#f43f5e' : '#10b981'} />;
                       })}
+                    <LabelList
+                      dataKey="dailyWorkload"
+                      position="right"
+                      formatter={(val) => `${val}`}
+                      style={{
+                        fontSize: 11,
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                        fontWeight: 700,
+                        fill: isLight ? '#0f172a' : '#f8fafc',
+                      }}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

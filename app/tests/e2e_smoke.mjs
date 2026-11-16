@@ -687,6 +687,21 @@ async function run() {
         await page.getByRole('columnheader', { name: /No\. Klaim/i }).waitFor({ state: 'visible', timeout: 5000 });
         await page.getByRole('button', { name: /Tampilan grid kartu/i }).click();
       }
+      if (qText === 'Faskes') {
+        await page.getByText('Peta Risiko Faskes (Top 6 Indeks FRI)').waitFor({ state: 'visible', timeout: 8000 });
+        await page.locator('.recharts-yAxis-tick-labels text').first().waitFor({ state: 'visible', timeout: 5000 });
+        const faskesAxisAudit = await page.evaluate(() => {
+          const texts = [...document.querySelectorAll('.recharts-yAxis-tick-labels text')];
+          const bad = [];
+          for (const t of texts) {
+            if (t.querySelectorAll('tspan').length > 1) bad.push(`wrapped:${t.textContent}`);
+            if (/Hemodiali\.\.\.|Nusantara\.\.\.|\(Kela/i.test(t.textContent || '')) bad.push(`clipped:${t.textContent}`);
+          }
+          return { count: texts.length, bad };
+        });
+        assert(faskesAxisAudit.count >= 6, `Expected >=6 Faskes Y-axis ticks, found ${faskesAxisAudit.count}`);
+        assert(faskesAxisAudit.bad.length === 0, `Faskes chart Y-axis wrapped/truncated ticks: ${faskesAxisAudit.bad.join(', ')}`);
+      }
       if (qText === 'Manajemen Berkas') {
         const actionBtn = page.locator('button[aria-label^="Opsi aksi berkas"]').first();
         if (await actionBtn.count()) {

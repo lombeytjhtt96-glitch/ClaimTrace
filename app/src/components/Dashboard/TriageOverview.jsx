@@ -1261,8 +1261,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                   .toUpperCase() || 'DR';
 
                 return (
-                  <motion.article
-                    layout
+                  <article
                     key={c.id}
                     onClick={() => onSelectCase(c)}
                     className={`group rounded-2xl border p-4 flex flex-col justify-between gap-3 cursor-pointer transition-all duration-200 ${
@@ -1402,7 +1401,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                         <RefreshCw className={`w-3.5 h-3.5 ${refreshingCardId === c.id ? 'animate-spin text-emerald-500' : ''}`} />
                       </button>
                     </div>
-                  </motion.article>
+                  </article>
                 );
               })}
             </div>
@@ -1502,9 +1501,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 const isChecked = selectedIds.includes(c.id);
                 const statusBadge = formatDecisionStatus(c.statusVerifikasi, c.lane);
                 return (
-                <motion.tr
-                  layout
-                  transition={{ duration: 0.18, ease: "easeOut" }}
+                <tr
                   key={c.id}
                   onClick={() => onSelectCase(c)}
                   className={`group cursor-pointer transition-colors duration-150 ${
@@ -1663,7 +1660,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </td>
-                </motion.tr>
+                </tr>
                 );
               })}
             </tbody>

@@ -324,3 +324,52 @@ export function PolicyStepProgressRing({ pct = 16, size = 24, isLight = true }) 
     </svg>
   );
 }
+
+/**
+ * Normalizes categorical axis labels so horizontal Recharts bars never wrap awkwardly onto multiple lines.
+ */
+export function formatAxisLabel(raw, { maxChars = 29, stripParens = false } = {}) {
+  let label = String(raw || '').trim();
+  if (stripParens) {
+    label = label.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  if (label.length <= maxChars) return label;
+  const sliced = label.slice(0, maxChars - 1);
+  const lastSpace = sliced.lastIndexOf(' ');
+  const clean = lastSpace > Math.floor(maxChars * 0.5) ? sliced.slice(0, lastSpace) : sliced;
+  return `${clean.trimEnd()}…`;
+}
+
+/**
+ * Pure single-line SVG Y-axis tick for Recharts horizontal bar charts.
+ */
+export function SingleLineYAxisTick({
+  x = 0,
+  y = 0,
+  payload,
+  fill = '#334155',
+  fontSize = 11,
+  fontWeight = 500,
+  maxChars = 29,
+  stripParens = false,
+}) {
+  const fullVal = String(payload?.value || '');
+  const displayVal = formatAxisLabel(fullVal, { maxChars, stripParens });
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <title>{fullVal}</title>
+      <text
+        x={-6}
+        y={0}
+        dy={4}
+        textAnchor="end"
+        fill={fill}
+        fontSize={fontSize}
+        fontWeight={fontWeight}
+        fontFamily="'Plus Jakarta Sans', 'Inter', system-ui, sans-serif"
+      >
+        {displayVal}
+      </text>
+    </g>
+  );
+}

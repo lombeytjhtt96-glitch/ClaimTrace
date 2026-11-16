@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { SingleLineYAxisTick, formatAxisLabel } from '../Common/PolicyWidgets';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Hospital, Search, Filter, AlertTriangle, ShieldCheck,
@@ -16,6 +17,7 @@ import {
   YAxis,
   Tooltip,
   Cell,
+  LabelList,
 } from 'recharts';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
@@ -278,20 +280,20 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                 </span>
               </div>
             </div>
-            <div className="h-[210px] w-full">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[...filteredFaskes]
                     .sort((a, b) => Number(b.friScore) - Number(a.friScore))
                     .slice(0, 6)
                     .map((f) => ({
-                      shortName: f.name.length > 26 ? `${f.name.slice(0, 24)}...` : f.name,
+                      shortName: formatAxisLabel(f.name, { maxChars: 29, stripParens: true }),
                       fullName: f.name,
                       friScore: Number(f.friScore || 0),
                       anomalyCount: f.anomalyCount || 0,
                     }))}
                   layout="vertical"
-                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                  margin={{ top: 4, right: 44, left: 6, bottom: 4 }}
                 >
                   <XAxis
                     type="number"
@@ -303,10 +305,19 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                   <YAxis
                     type="category"
                     dataKey="shortName"
-                    width={170}
-                    tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }}
+                    width={198}
+                    interval={0}
                     axisLine={false}
                     tickLine={false}
+                    tick={
+                      <SingleLineYAxisTick
+                        fill={isLight ? '#334155' : '#e2e8f0'}
+                        fontSize={11}
+                        fontWeight={600}
+                        maxChars={29}
+                        stripParens
+                      />
+                    }
                   />
                   <Tooltip
                     formatter={(val, _name, item) => [`${val} / 100 (${item?.payload?.anomalyCount || 0} anomali)`, 'Skor FRI']}
@@ -319,7 +330,7 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                       color: isLight ? '#0f172a' : '#f8fafc',
                     }}
                   />
-                  <Bar dataKey="friScore" radius={[0, 6, 6, 0]} barSize={18}>
+                  <Bar dataKey="friScore" radius={[0, 6, 6, 0]} barSize={18} isAnimationActive={false}>
                     {[...filteredFaskes]
                       .sort((a, b) => Number(b.friScore) - Number(a.friScore))
                       .slice(0, 6)
@@ -328,6 +339,17 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                         const fill = score >= 65 ? '#f43f5e' : score >= 40 ? '#f59e0b' : '#10b981';
                         return <Cell key={`fri-cell-${entry.id || idx}`} fill={fill} />;
                       })}
+                    <LabelList
+                      dataKey="friScore"
+                      position="right"
+                      formatter={(val) => Number(val || 0).toFixed(1).replace('.', ',')}
+                      style={{
+                        fontSize: 11,
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                        fontWeight: 700,
+                        fill: isLight ? '#0f172a' : '#f8fafc',
+                      }}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

@@ -53,6 +53,7 @@ import {
 import {
   SegmentedComplianceBar,
   SegmentedRadialHighlightCard,
+  SingleLineYAxisTick,
 } from '../Common/PolicyWidgets';
 import {
   generateClaimTraceExecutiveReport,
@@ -1150,8 +1151,16 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 stroke={axisStroke}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 11, fill: isLight ? '#1e293b' : '#f1f5f9', fontWeight: 500 }}
-                width={280}
+                interval={0}
+                width={250}
+                tick={
+                  <SingleLineYAxisTick
+                    fill={isLight ? '#1e293b' : '#f1f5f9'}
+                    fontSize={11}
+                    fontWeight={500}
+                    maxChars={36}
+                  />
+                }
               />
               <Tooltip content={<NumberTooltip isLight={isLight} />} cursor={false} />
               <Bar
