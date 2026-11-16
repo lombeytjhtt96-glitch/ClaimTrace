@@ -1073,3 +1073,127 @@ def test_sendcorex_primary_and_bird_fallback_dispatch(monkeypatch, tmp_path, cap
     assert otp_entries_fallback[-1]["sendcorex_sent"] is False
     assert otp_entries_fallback[-1]["bird_sent"] is True
     assert "UPSTREAM_UNAVAILABLE" in caplog.text
+
+
+def test_sendcorex_webhook_hmac_verification_and_audit_ledger(monkeypatch):
+    import hashlib as _hashlib
+    import hmac as _hmac
+
+    main_mod.SENDCOREX_WEBHOOK_EVENTS.clear()
+    monkeypatch.setenv("CLAIMTRACE_STRICT_API_AUTH", "1")
+
+    # 1. Protected read route requires authenticated MFA session
+    unauth_events = client.get("/api/v1/webhooks/sendcorex/events")
+    assert unauth_events.status_code == 401
+
+    # 2. Callback route is exempt from browser JWT gate, but fails closed without secret
+    monkeypatch.setenv("SENDCOREX_WEBHOOK_SECRET", "")
+    sample_delivered = {
+        "event": "delivered",
+        "emailId": "em_scx_001",
+        "timestamp": "2026-11-16T06:00:00.000Z",
+        "data": {
+            "recipientEmail": "verifikator.rahasia@gmail.com",
+            "fromAddress": "claimtrace-portal@corexsend.com",
+        },
+    }
+    raw_delivered = json.dumps(sample_delivered).encode("utf-8")
+    no_secret_res = client.post("/api/v1/webhooks/sendcorex", content=raw_delivered)
+    assert no_secret_res.status_code == 503
+
+    # 3. Rejects missing or wrong HMAC-SHA256 signature and records security event
+    secret = "whsec_claimtrace_test_secret_2026"
+    monkeypatch.setenv("SENDCOREX_WEBHOOK_SECRET", secret)
+    bad_sig_res = client.post(
+        "/api/v1/webhooks/sendcorex",
+        content=raw_delivered,
+        headers={"X-Webhook-Signature": "sha256=" + ("0" * 64), "Content-Type": "application/json"},
+    )
+    assert bad_sig_res.status_code == 401
+    assert main_mod.audit_logger.chain[-1]["event_type"] == "EMAIL_WEBHOOK_SIGNATURE_INVALID"
+
+    # 4. Accepts valid raw-body HMAC signature, masks PII, appends immutable Audit Ledger entry
+    def _sign(raw_bytes: bytes) -> str:
+        return "sha256=" + _hmac.new(secret.encode("utf-8"), raw_bytes, _hashlib.sha256).hexdigest()
+
+    delivered_res = client.post(
+        "/api/v1/webhooks/sendcorex",
+        content=raw_delivered,
+        headers={"X-Webhook-Signature": _sign(raw_delivered), "Content-Type": "application/json"},
+    )
+    assert delivered_res.status_code == 200
+    d_body = delivered_res.json()
+    assert d_body["status"] == "accepted"
+    assert d_body["duplicate"] is False
+    assert d_body["event"] == "delivered"
+    assert d_body["audit_event_type"] == "EMAIL_WEBHOOK_DELIVERY"
+
+    last_audit = main_mod.audit_logger.chain[-1]
+    assert last_audit["event_type"] == "EMAIL_WEBHOOK_DELIVERY"
+    assert last_audit["payload"]["recipient_masked"] != "verifikator.rahasia@gmail.com"
+    assert last_audit["payload"]["recipient_masked"].endswith("@gmail.com")
+    assert "verifikator.rahasia" not in json.dumps(last_audit)
+
+    # 5. Deduplicates identical webhook retries without duplicating ledger entries
+    chain_len_before_retry = len(main_mod.audit_logger.chain)
+    dup_res = client.post(
+        "/api/v1/webhooks/sendcorex",
+        content=raw_delivered,
+        headers={"X-Webhook-Signature": _sign(raw_delivered), "Content-Type": "application/json"},
+    )
+    assert dup_res.status_code == 200
+    assert dup_res.json()["duplicate"] is True
+    assert len(main_mod.audit_logger.chain) == chain_len_before_retry
+
+    # 6. Maps bounced/spam/fbl_complaint to EMAIL_WEBHOOK_ALERT
+    raw_bounced = json.dumps(
+        {
+            "event": "bounced",
+            "emailId": "em_scx_002",
+            "timestamp": "2026-11-16T06:01:00.000Z",
+            "data": {
+                "recipientEmail": "invalid.target@example.id",
+                "fromAddress": "claimtrace-portal@corexsend.com",
+                "reason": "Suppressed — Hard bounce within 90 days",
+                "suppressed": True,
+            },
+        }
+    ).encode("utf-8")
+    bounced_res = client.post(
+        "/api/v1/webhooks/sendcorex",
+        content=raw_bounced,
+        headers={"X-Webhook-Signature": _sign(raw_bounced), "Content-Type": "application/json"},
+    )
+    assert bounced_res.status_code == 200
+    assert bounced_res.json()["audit_event_type"] == "EMAIL_WEBHOOK_ALERT"
+    assert main_mod.audit_logger.chain[-1]["payload"]["suppressed"] is True
+
+    valid_chain, broken_idx = main_mod.audit_logger.verify_integrity()
+    assert valid_chain is True
+    assert broken_idx == -1
+
+    # 7. Authenticated MFA session can inspect recorded webhook summary & events
+    acct = VERIFICATOR_DIRECTORY["198704202011012001"]
+    mfa_token = create_access_token(
+        acct,
+        ttl_minutes=60,
+        token_type="SESSION",
+        stage="AUTHENTICATED",
+        mfa_verified=True,
+        device_fingerprint="DEV-WEBHOOK-01",
+        user_agent="WebhookTestBrowser/1.0",
+        ip_address="127.0.0.1",
+    )
+    events_res = client.get(
+        "/api/v1/webhooks/sendcorex/events?limit=10",
+        headers={
+            "Authorization": f"Bearer {mfa_token}",
+            "X-Device-Fingerprint": "DEV-WEBHOOK-01",
+            "User-Agent": "WebhookTestBrowser/1.0",
+        },
+    )
+    assert events_res.status_code == 200
+    ev_json = events_res.json()
+    assert ev_json["webhook_secret_configured"] is True
+    assert ev_json["total_events"] == 2
+    assert ev_json["counts_by_event"] == {"delivered": 1, "bounced": 1}

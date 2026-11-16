@@ -317,6 +317,7 @@ STRICT_AUTH_EXEMPT_PATHS = {
     "/api/v1/auth/verify-otp",
     "/api/v1/auth/authorize-session",
     "/api/v1/auth/trust-device",
+    "/api/v1/webhooks/sendcorex",
 }
 
 
@@ -599,12 +600,15 @@ import time as _otp_time
 
 _OTP_STORE_LOCK = threading.Lock()
 _AUTH_STORE_LOCK = threading.Lock()
+_MAIL_WEBHOOK_LOCK = threading.Lock()
 OTP_CHALLENGES_FILE = Path(__file__).resolve().parent.parent / "data" / "otp_challenges.json"
 OTP_MAIL_SPOOL_FILE = Path(__file__).resolve().parent.parent / "data" / ".otp_mail_spool.json"
 AUTH_CREDENTIALS_FILE = Path(__file__).resolve().parent.parent / "data" / ".auth_credentials.json"
 DIRECTORY_ACCOUNTS_FILE = Path(__file__).resolve().parent.parent / "data" / ".directory_accounts.json"
 PASSWORD_RESET_SPOOL_FILE = Path(__file__).resolve().parent.parent / "data" / ".password_reset_spool.json"
+SENDCOREX_WEBHOOK_LOG_FILE = Path(__file__).resolve().parent.parent / "data" / ".sendcorex_webhook_events.json"
 ACTIVE_OTP_CHALLENGES: Dict[str, Any] = {}
+SENDCOREX_WEBHOOK_EVENTS: List[Dict[str, Any]] = []
 
 
 def _hash_secret(plain_secret: str) -> str:
@@ -2625,6 +2629,187 @@ def authorize_device_session(
         "expires_in_seconds": bounded_ttl * 60,
         "idle_timeout_seconds": bounded_idle * 60,
         "user": safe_user,
+    }
+
+
+_SENDCOREX_EVENT_TAXONOMY: Dict[str, tuple[str, str]] = {
+    "queued": ("EMAIL_WEBHOOK_DELIVERY", "info"),
+    "processing": ("EMAIL_WEBHOOK_DELIVERY", "info"),
+    "delivered": ("EMAIL_WEBHOOK_DELIVERY", "info"),
+    "retrying": ("EMAIL_WEBHOOK_DELIVERY", "warning"),
+    "bounced": ("EMAIL_WEBHOOK_ALERT", "high"),
+    "spam": ("EMAIL_WEBHOOK_ALERT", "critical"),
+    "failed": ("EMAIL_WEBHOOK_ALERT", "high"),
+    "return_path": ("EMAIL_WEBHOOK_ALERT", "warning"),
+    "fbl_complaint": ("EMAIL_WEBHOOK_ALERT", "critical"),
+    "email_opened": ("EMAIL_WEBHOOK_ENGAGEMENT", "info"),
+    "email_clicked": ("EMAIL_WEBHOOK_ENGAGEMENT", "info"),
+    "unsubscribe": ("EMAIL_WEBHOOK_ENGAGEMENT", "warning"),
+    "tracking_preferences_updated": ("EMAIL_WEBHOOK_ENGAGEMENT", "info"),
+}
+
+
+def _verify_sendcorex_webhook_signature(raw_body: bytes, signature_header: Optional[str], secret: str) -> bool:
+    """Verify Sendcorex X-Webhook-Signature (`sha256=<hex>`) against exact raw request bytes."""
+    sig = (signature_header or "").strip()
+    if not sig or not secret or not sig.startswith("sha256="):
+        return False
+    expected = "sha256=" + hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(sig, expected)
+
+
+def _load_sendcorex_webhook_events_unlocked() -> List[Dict[str, Any]]:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return list(SENDCOREX_WEBHOOK_EVENTS)
+    if SENDCOREX_WEBHOOK_LOG_FILE.exists():
+        try:
+            with open(SENDCOREX_WEBHOOK_LOG_FILE, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+                if isinstance(raw, list):
+                    return [e for e in raw if isinstance(e, dict)]
+        except Exception:
+            pass
+    return list(SENDCOREX_WEBHOOK_EVENTS)
+
+
+def _record_sendcorex_webhook_event(record: Dict[str, Any]) -> tuple[bool, List[Dict[str, Any]]]:
+    """Deduplicate and store masked Sendcorex webhook events with 0600 local log persistence."""
+    dedupe_key = (record.get("event"), record.get("email_id"), record.get("event_timestamp"))
+    with _MAIL_WEBHOOK_LOCK:
+        events = _load_sendcorex_webhook_events_unlocked()
+        if any((e.get("event"), e.get("email_id"), e.get("event_timestamp")) == dedupe_key for e in events):
+            return True, events
+        events.append(record)
+        trimmed = events[-200:]
+        SENDCOREX_WEBHOOK_EVENTS[:] = trimmed
+        if not os.getenv("PYTEST_CURRENT_TEST"):
+            try:
+                SENDCOREX_WEBHOOK_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+                tmp = SENDCOREX_WEBHOOK_LOG_FILE.with_suffix(".tmp")
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(trimmed, f, indent=2)
+                os.chmod(tmp, 0o600)
+                tmp.replace(SENDCOREX_WEBHOOK_LOG_FILE)
+            except Exception:
+                pass
+        return False, trimmed
+
+
+@app.post("/api/v1/webhooks/sendcorex")
+async def receive_sendcorex_webhook(request: Request, response: Response):
+    """
+    Receives signed Sendcorex delivery/feedback webhooks (`X-Webhook-Signature: sha256=...`)
+    and appends PII-masked telemetry to the immutable SHA-256 Audit Ledger.
+    """
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    webhook_secret = os.getenv("SENDCOREX_WEBHOOK_SECRET", "").strip()
+    if not webhook_secret:
+        raise HTTPException(
+            status_code=503,
+            detail="SENDCOREX_WEBHOOK_SECRET belum dikonfigurasi pada server.",
+        )
+
+    raw_body = await request.body()
+    sig_header = request.headers.get("x-webhook-signature")
+    if not _verify_sendcorex_webhook_signature(raw_body, sig_header, webhook_secret):
+        audit_logger.record_event(
+            event_type="EMAIL_WEBHOOK_SIGNATURE_INVALID",
+            claim_id="SEC-MAIL",
+            actor="SENDCOREX_WEBHOOK",
+            payload={
+                "provider": "sendcorex",
+                "client_ip": _extract_client_ip(request),
+                "has_signature": bool(sig_header),
+            },
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="Tanda tangan webhook X-Webhook-Signature tidak valid.",
+        )
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Payload JSON webhook tidak valid.")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Payload webhook wajib berupa objek JSON.")
+
+    event_name = str(payload.get("event") or "").strip().lower()
+    if not event_name:
+        raise HTTPException(status_code=400, detail="Field 'event' pada webhook wajib diisi.")
+
+    email_id = str(payload.get("emailId") or payload.get("email_id") or "").strip() or None
+    event_ts = str(payload.get("timestamp") or datetime.now(timezone.utc).isoformat()).strip()
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+
+    recipient_raw = str(
+        data.get("recipientEmail") or data.get("complainant") or data.get("recipient") or ""
+    ).strip()
+    recipient_masked = _mask_email(recipient_raw) if "@" in recipient_raw else (recipient_raw[:12] if recipient_raw else None)
+    from_addr = str(data.get("fromAddress") or "").strip() or None
+    reason = str(data.get("reason") or "").strip()[:300] or None
+    source = str(data.get("source") or "").strip() or None
+    suppressed = bool(data["suppressed"]) if "suppressed" in data else None
+
+    audit_event_type, severity = _SENDCOREX_EVENT_TAXONOMY.get(
+        event_name, ("EMAIL_WEBHOOK_OTHER", "info")
+    )
+    record = {
+        "provider": "sendcorex",
+        "event": event_name,
+        "severity": severity,
+        "email_id": email_id,
+        "recipient_masked": recipient_masked,
+        "from_address": from_addr,
+        "reason": reason,
+        "source": source,
+        "suppressed": suppressed,
+        "event_timestamp": event_ts,
+        "received_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    is_dup, _ = _record_sendcorex_webhook_event(record)
+    audit_index: Optional[int] = None
+    if not is_dup:
+        ledger_entry = audit_logger.record_event(
+            event_type=audit_event_type,
+            claim_id="SEC-MAIL",
+            actor="SENDCOREX_WEBHOOK",
+            payload=record,
+        )
+        audit_index = ledger_entry.get("index")
+        log_fn = logger.warning if severity in ("high", "critical", "warning") else logger.info
+        log_fn(
+            f"SENDCOREX_WEBHOOK event={event_name} severity={severity} email_id={email_id or 'n/a'} "
+            f"recipient={recipient_masked or 'n/a'} reason={reason or '-'}"
+        )
+
+    return {
+        "status": "accepted",
+        "received": True,
+        "duplicate": is_dup,
+        "event": event_name,
+        "email_id": email_id,
+        "audit_event_type": audit_event_type,
+        "audit_index": audit_index,
+    }
+
+
+@app.get("/api/v1/webhooks/sendcorex/events")
+def list_sendcorex_webhook_events(limit: int = Query(50, ge=1, le=200)):
+    """Returns recent masked Sendcorex delivery webhook events and counts (MFA session required)."""
+    with _MAIL_WEBHOOK_LOCK:
+        events = _load_sendcorex_webhook_events_unlocked()
+    counts: Dict[str, int] = {}
+    for ev in events:
+        name = str(ev.get("event") or "unknown")
+        counts[name] = counts.get(name, 0) + 1
+    return {
+        "status": "success",
+        "webhook_secret_configured": bool(os.getenv("SENDCOREX_WEBHOOK_SECRET", "").strip()),
+        "total_events": len(events),
+        "counts_by_event": counts,
+        "events": list(reversed(events[-limit:])),
     }
 
 
