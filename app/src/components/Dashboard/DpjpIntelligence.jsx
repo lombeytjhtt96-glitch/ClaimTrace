@@ -3,12 +3,22 @@ import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../servic
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { exportCsvFile } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin, 
-  Stethoscope, Search, Filter, ChevronRight, Activity, 
-  CheckCircle2, XCircle, ExternalLink, Calendar, Car, 
+import {
+  UserCheck, AlertTriangle, ShieldAlert, Clock, MapPin,
+  Stethoscope, Search, Filter, ChevronRight, Activity,
+  CheckCircle2, XCircle, ExternalLink, Calendar, Car,
   Hospital, Phone, Award, AlertOctagon, TrendingUp, Download
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+  ReferenceLine,
+} from 'recharts';
 
 // Data DPJP dari integrasi SATUSEHAT SDMK & Analisis Geovelocity
 export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight }) {
@@ -153,24 +163,17 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                   <h1 className={`text-base font-bold tracking-tight flex flex-wrap items-center gap-2 ${
                     isLight ? 'text-slate-900' : 'text-white'
                   }`}>
-                    <span>Intelijen DPJP &amp; Validasi SATUSEHAT SDMK</span>
+                    <span>Intelijen DPJP &amp; Validasi SIP (SDMK)</span>
                     <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold border ${
                       isLight
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                         : 'bg-[#FFCA40]/10 text-[#FFCA40] border-[#FFCA40]/30'
                     }`}>
-                      LAPIS 2 DSS
-                    </span>
-                    <span className={`text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded border ${
-                      isLight
-                        ? 'bg-slate-100 text-slate-700 border-slate-300'
-                        : 'bg-white/5 text-white/70 border-white/10'
-                    }`}>
-                      MITRE ATT&amp;CK: T1078 · MITRE F3: FA0001 · NIST CSF: DE.CM-01
+                      PMK 14/2021
                     </span>
                   </h1>
                   <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                    Verifikasi Surat Izin Praktik (SIP), deteksi anomali beban kerja (Permenkes 14/2021), dan deteksi mustahil hadir (<em>Impossible Travel Geovelocity</em> - TTP MITRE ATT&amp;CK T1078).
+                    Validasi masa berlaku SIP dokter, beban pasien harian, dan anomali perpindahan antar-faskes.
                   </p>
                 </div>
               </div>
@@ -268,6 +271,85 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
             </div>
           </div>
         </div>
+
+        {/* GRAFIK BEBAN PRAKTIK HARIAN DPJP VS AMBANG WAJAR */}
+        {filteredDoctors.length > 0 && (
+          <div className={`rounded-2xl p-4 sm:p-5 border ${
+            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/75 border-white/10'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Beban Harian Pasien per DPJP vs Batas Wajar (40 px/hari)
+                </h2>
+                <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Batang merah menandakan volume praktik melebihi kapasitas fisiologis layanan klinis
+                </p>
+              </div>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+              }`}>
+                Garis Putus: Ambang 40 px/hari
+              </span>
+            </div>
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[...filteredDoctors]
+                    .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
+                    .slice(0, 6)
+                    .map((d) => ({
+                      shortName: d.name.length > 24 ? `${d.name.slice(0, 22)}...` : d.name,
+                      fullName: d.name,
+                      dailyWorkload: Number(d.dailyWorkload || 0),
+                      workloadLimit: Number(d.workloadLimit || 40),
+                    }))}
+                  layout="vertical"
+                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                >
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11, fill: isLight ? '#64748b' : '#94a3b8' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="shortName"
+                    width={195}
+                    tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val, _name, item) => [
+                      `${val} px/hari (Batas ${item?.payload?.workloadLimit || 40})`,
+                      'Beban Praktik',
+                    ]}
+                    labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullName || ''}
+                    contentStyle={{
+                      backgroundColor: isLight ? '#ffffff' : '#0b1936',
+                      borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.12)',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      color: isLight ? '#0f172a' : '#f8fafc',
+                    }}
+                  />
+                  <ReferenceLine x={40} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} />
+                  <Bar dataKey="dailyWorkload" radius={[0, 6, 6, 0]} barSize={18}>
+                    {[...filteredDoctors]
+                      .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
+                      .slice(0, 6)
+                      .map((entry, idx) => {
+                        const over = Number(entry.dailyWorkload || 0) > Number(entry.workloadLimit || 40);
+                        return <Cell key={`dpjp-cell-${entry.id || idx}`} fill={over ? '#f43f5e' : '#10b981'} />;
+                      })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* SEARCH & FILTER CONTROLS */}
         <div className={`flex flex-col md:flex-row gap-2.5 items-center justify-between p-3 rounded-2xl border shadow-xl ${
@@ -465,8 +547,14 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                     }`}>
                       {doc.dailyWorkload} / {doc.workloadLimit} px
                     </span>
+                    <div className={`w-24 h-1.5 ml-auto mt-1 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
+                      <div
+                        className={`h-full rounded-full ${doc.dailyWorkload > doc.workloadLimit ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.min(100, Math.round((doc.dailyWorkload / Math.max(1, doc.workloadLimit || 40)) * 100))}%` }}
+                      />
+                    </div>
                     {doc.dailyWorkload > doc.workloadLimit && (
-                      <span className={`text-[9px] block font-bold ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+                      <span className={`text-[9px] block font-bold mt-0.5 ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
                         +{doc.dailyWorkload - doc.workloadLimit} di atas batas
                       </span>
                     )}

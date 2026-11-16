@@ -379,19 +379,11 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               <h1 className={`text-2xl md:text-3xl font-bold mb-1.5 tracking-tight ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                Analitik Wawasan &amp; Privasi Klaim (Insights Analytics)
+                Analitik Tren &amp; Privasi Data Klaim
               </h1>
-              <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                isLight
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-white/10 text-[#FFCA40] border-white/10'
-              }`}>
-                NIST CSF 2.0: PR.DS-02 · NIST AI RMF 1.0 · MITRE F3
-              </span>
             </div>
             <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Analitik pengawasan klaim JKN berbasis <em>k-anonymity</em>,{' '}
-              <em>differential privacy</em>, dan kepatuhan Zero-PHI (UU PDP No. 27/2022 &amp; NIST Privacy Framework).
+              Pemantauan tren anomali antar-rumah sakit dengan perlindungan privasi peserta Zero-PHI (UU PDP No. 27/2022).
             </p>
           </div>
         </div>

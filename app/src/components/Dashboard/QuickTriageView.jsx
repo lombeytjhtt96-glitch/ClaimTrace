@@ -326,14 +326,9 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
               }`}>
                 REAL-TIME
               </span>
-              <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                isLight ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-white/80 border-white/10'
-              }`}>
-                MITRE F3: FA0001 · FA0002.F1018 · NIST CSF 2.0: DE.CM-01
-              </span>
             </div>
             <p className={`text-xs ml-12 ${isLight ? 'text-slate-700 font-medium' : 'text-white/60'}`}>
-              Registrasi berkas klaim anomali via Orkestrator CMA dengan klasifikasi taksonomi kejahatan finansial MITRE F3 v1.1.
+              Registrasi berkas klaim anomali untuk penugasan prioritas ke verifikator medis.
             </p>
             <button
               type="button"
@@ -363,7 +358,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         }`}>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Menunggu (Pending)
+              Menunggu
             </p>
             <div className={`p-2 rounded-xl border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/20 border-blue-500/30'}`}>
               <FolderOpen className={`w-4 h-4 ${isLight ? 'text-blue-700' : 'text-blue-400'}`} />
@@ -378,7 +373,7 @@ export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: 
         }`}>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <p className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Aktif (Active)
+              Aktif
             </p>
             <div className={`p-2 rounded-xl border ${isLight ? 'bg-emerald-50 border-emerald-200' : 'bg-emerald-500/20 border-emerald-500/30'}`}>
               <Users className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />

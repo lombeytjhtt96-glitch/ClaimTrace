@@ -21,11 +21,11 @@ import {
   Clock, Hospital, Stethoscope, AlertOctagon, Download, Eye, Check, X,
   Share2, Mail, Printer, QrCode, CreditCard, ChevronLeft, Info,
   PhoneCall, Heart, ListFilter, Database, ShieldAlert,
-  Radio, Key, LayoutDashboard, Building2, UserCheck,
-  ChevronDown, LogOut, PanelLeftClose, PanelLeft, ExternalLink, Bot,
+  Key, LayoutDashboard, Building2, UserCheck,
+  ChevronDown, LogOut, PanelLeftClose, PanelLeft, ExternalLink,
   EyeOff, RotateCcw, Settings, Briefcase, Zap, Flag, Calendar,
   Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon,
-  FileCheck2, Trophy
+  FileCheck2
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
@@ -51,6 +51,7 @@ const PengaduanScreen = lazyWithRetry(() => import('./components/MobileJKN/Penga
 const BugarScreen = lazyWithRetry(() => import('./components/MobileJKN/BugarScreen'));
 const ObatScreen = lazyWithRetry(() => import('./components/MobileJKN/ObatScreen'));
 import TabErrorBoundary from './components/Common/TabErrorBoundary';
+import WorkspaceHubShell from './components/Common/WorkspaceHubShell';
 import { verifySessionRequest } from './services/apiConfig';
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
@@ -60,7 +61,6 @@ const DpjpIntelligence = lazyWithRetry(() => import('./components/Dashboard/Dpjp
 const MobileTelemetry = lazyWithRetry(() => import('./components/Dashboard/MobileTelemetry'));
 const DecisionConsole = lazyWithRetry(() => import('./components/Dashboard/DecisionConsole'));
 const AuditLedger = lazyWithRetry(() => import('./components/Dashboard/AuditLedger'));
-const AgentCopilot = lazyWithRetry(() => import('./components/Dashboard/AgentCopilot'));
 const AdminProfileView = lazyWithRetry(() => import('./components/Dashboard/AdminProfileView'));
 const AdminSettingsView = lazyWithRetry(() => import('./components/Dashboard/AdminSettingsView'));
 const InsightsAnalyticsView = lazyWithRetry(() => import('./components/Dashboard/InsightsAnalyticsView'));
@@ -69,15 +69,174 @@ const CasesManagementView = lazyWithRetry(() => import('./components/Dashboard/C
 const QuickTriageView = lazyWithRetry(() => import('./components/Dashboard/QuickTriageView'));
 const FlaggedSessionsView = lazyWithRetry(() => import('./components/Dashboard/FlaggedSessionsView'));
 const ClarificationScheduleView = lazyWithRetry(() => import('./components/Dashboard/ClarificationScheduleView'));
-const CommandCenterView = lazyWithRetry(() => import('./components/Dashboard/CommandCenterView'));
 const ConversationsView = lazyWithRetry(() => import('./components/Dashboard/ConversationsView'));
 const InterventionsView = lazyWithRetry(() => import('./components/Dashboard/InterventionsView'));
 const DatabaseViewerView = lazyWithRetry(() => import('./components/Dashboard/DatabaseViewerView'));
 const HealthAIChatView = lazyWithRetry(() => import('./components/Dashboard/HealthAIChatView'));
-const PostHealthkathonSuiteView = lazyWithRetry(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
 const OfficialReportsView = lazyWithRetry(() => import('./components/Dashboard/OfficialReportsView'));
 const DocumentCheckerView = lazyWithRetry(() => import('./components/Dashboard/DocumentCheckerView'));
 const FraudRankingView = lazyWithRetry(() => import('./components/Dashboard/FraudRankingView'));
+
+const HUB_SUB_DEFAULTS = {
+  queue: 'priority',
+  investigation: 'audit',
+  faskes: 'surveillance',
+  empirical: 'benford',
+  mobile_bridge: 'telemetry',
+  official_reports: 'reports',
+  settings: 'preferences',
+};
+
+const LEGACY_TAB_MAP = {
+  executive: { tab: 'executive' },
+  queue: { tab: 'queue', sub: 'priority' },
+  quick_triage: { tab: 'queue', sub: 'quick' },
+  cases_mgmt: { tab: 'queue', sub: 'files' },
+  flagged_sessions: { tab: 'queue', sub: 'flagged' },
+  investigation: { tab: 'investigation', sub: 'audit' },
+  document_checker: { tab: 'investigation', sub: 'dokumen' },
+  decision: { tab: 'decision' },
+  faskes: { tab: 'faskes', sub: 'surveillance' },
+  fraud_ranking: { tab: 'faskes', sub: 'ranking' },
+  dpjp: { tab: 'faskes', sub: 'dpjp' },
+  retention: { tab: 'faskes', sub: 'retention' },
+  empirical: { tab: 'empirical', sub: 'benford' },
+  insights: { tab: 'empirical', sub: 'trends' },
+  database_viewer: { tab: 'empirical', sub: 'sql' },
+  db_viewer: { tab: 'empirical', sub: 'sql' },
+  mobile_bridge: { tab: 'mobile_bridge', sub: 'telemetry' },
+  appointments: { tab: 'mobile_bridge', sub: 'schedule' },
+  clarification_sched: { tab: 'mobile_bridge', sub: 'schedule' },
+  conversations: { tab: 'mobile_bridge', sub: 'dialog' },
+  interventions: { tab: 'mobile_bridge', sub: 'interventions' },
+  official_reports: { tab: 'official_reports', sub: 'reports' },
+  audit: { tab: 'official_reports', sub: 'ledger' },
+  health_ai_chat: { tab: 'health_ai_chat' },
+  agent_copilot: { tab: 'health_ai_chat' },
+  command_center: { tab: 'queue', sub: 'files' },
+  expansion_suite: { tab: 'investigation', sub: 'audit' },
+  settings: { tab: 'settings', sub: 'preferences' },
+  profile: { tab: 'settings', sub: 'profile' },
+};
+
+const buildMitraCaseFallback = (cId) =>
+  typeof cId === 'object' && cId !== null
+    ? cId
+    : {
+        id: cId || 'CLM-2026-10-085',
+        sep: '0132R0011026V000085',
+        hospital: 'RS Khusus Mitra Husada',
+        hospitalType: 'FKRTL (RS Khusus Kelas C)',
+        code: 'Z-3-12-0',
+        description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
+        tariff: 'Rp 15.300.000 (85 Klaim)',
+        dpjp: 'dr. Hendra, Sp.KFR',
+        sipNumber: '446.1/108/DPJP/2023',
+        date: '14 Okt 2026',
+        batchTag: 'BAKSOS_MASSAL_OKT26',
+        sampleCount: 10,
+        participantCount: 10,
+        deniedCount: 8,
+        s1: 85,
+        s2: 95,
+        s3: 80,
+        totalScore: 88.0,
+        lane: 'red',
+        status: 'AUDIT KHUSUS MERAH',
+        notes: 'Klaster Baksos 85 klaim fisioterapi tanpa rujukan FKTP sah; SIP DPJP mutasi.',
+        flags: ['BAKSOS MASSAL', 'SIP MUTASI'],
+      };
+
+const DPJP_CASE_OVERRIDES = {
+  overcapacity_anak: {
+    hospital: 'RS Ibu & Anak Kasih Bunda',
+    hospitalType: 'RS Khusus (Kelas C)',
+    code: 'Q-5-42-0',
+    description: 'Pelayanan Spesialis Anak - Beban Pasien Harian Melampaui Batas Permenkes',
+    tariff: 'Rp 27.000.000',
+    dpjp: 'dr. Ratna Wulandari, Sp.A',
+    sipNumber: 'SIP.503/1102/DPMPTSP/2025',
+    totalScore: 78.0,
+    lane: 'red',
+    status: 'AUDIT OVERCAPACITY MERAH',
+    notes: 'Beban harian 72 pasien/hari melampaui batas Permenkes No. 14/2021 (maks. 40 pasien/hari).',
+    flags: ['OVERCAPACITY', 'BEBAN HARIAN TINGGI'],
+  },
+  sip_obgyn: {
+    hospital: 'RS Hermina Kemayoran Jakarta',
+    hospitalType: 'RS Swasta (Kelas B)',
+    code: 'W-4-10-I',
+    description: 'Prosedur Ginekologi - Klaim Diajukan Saat Masa Berlaku SIP Berakhir',
+    tariff: 'Rp 33.600.000',
+    dpjp: 'dr. Maya Kusuma, Sp.OG',
+    sipNumber: 'SIP.503/3321/DPMPTSP/2021',
+    totalScore: 82.0,
+    lane: 'red',
+    status: 'AUDIT SIP MERAH',
+    notes: 'SIP dokter di faskes ini telah kadaluwarsa per Juni 2024 namun tagihan klaim tetap berjalan aktif.',
+    flags: ['SIP KADALUWARSA', 'KLAIM ILEGAL'],
+  },
+  overcapacity_rad: {
+    hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+    hospitalType: 'RS Pemerintah (Kelas A - Rujukan Nasional)',
+    code: 'U-3-12-0',
+    description: 'Pemeriksaan Radiologi Lanjut - Beban Bacaan 65 Pasien/Hari',
+    tariff: 'Rp 42.000.000',
+    dpjp: 'dr. Farhan Malik, Sp.Rad',
+    sipNumber: 'SIP.503/7712/DPMPTSP/2023',
+    totalScore: 76.0,
+    lane: 'red',
+    status: 'AUDIT OVERCAPACITY MERAH',
+    notes: 'Beban harian 65 ekspertise radiologi/hari melampaui ambang batas rasional Permenkes 14/2021.',
+    flags: ['OVERCAPACITY', 'BEBAN RADIOLOGI TINGGI'],
+  },
+  geovelocity_mata: {
+    hospital: 'RS Mata Solo',
+    hospitalType: 'RS Khusus (Kelas B)',
+    code: 'C-4-13-I',
+    description: 'Operasi Phacoemulsifikasi Katarak - Geovelocity Peak Hour (98.2 km/jam)',
+    tariff: 'Rp 89.000.000',
+    dpjp: 'dr. Sinta Anggraini, Sp.M',
+    sipNumber: 'SIP.503/8890/DPMPTSP/2022',
+    totalScore: 86.0,
+    lane: 'red',
+    status: 'AUDIT GEOVELOCITY MERAH',
+    notes: 'Anomali Geovelocity: Tercatat operasi katarak di Solo dan visite di Boyolali dalam jeda 30 menit pada jam sibuk.',
+    flags: ['GEOVELOCITY ALERT', 'IMPOSSIBLE TRAVEL', 'SIP MUTASI'],
+  },
+};
+
+const buildDpjpCaseFallback = (cId) => {
+  const base = {
+    id: cId,
+    sep: `0132R0011026V${String(cId || '000001').slice(-6)}`,
+    hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+    hospitalType: 'FKRTL (RS Pemerintah Kelas A - Rujukan Nasional)',
+    code: 'B-1-10-I',
+    description: 'Prosedur Laparotomi & Tindakan Bedah Minor (Anomali Geovelocity)',
+    tariff: 'Rp 59.500.000',
+    dpjp: 'dr. Hendra Prasetya, Sp.B',
+    sipNumber: 'SIP.503/4412/DPMPTSP/2023',
+    date: '24 Okt 2026',
+    batchTag: 'GEOVELOCITY_ANOMALY_OKT26',
+    sampleCount: 10,
+    participantCount: 10,
+    deniedCount: 9,
+    s1: 95,
+    s2: 90,
+    s3: 85,
+    totalScore: 91.5,
+    lane: 'red',
+    status: 'AUDIT GEOVELOCITY MERAH',
+    notes: 'Anomali Geovelocity Impossible Travel: DPJP tercatat operasi di Jakarta Pusat (RSCM) dan Bandung (RSHS) dalam selisih 45 menit (kecepatan mustahil 185.2 km/jam).',
+    flags: ['GEOVELOCITY ALERT', 'IMPOSSIBLE TRAVEL', 'SIP EXPIRED'],
+  };
+  if (cId.includes('0744') || cId.includes('0751')) return { ...base, ...DPJP_CASE_OVERRIDES.overcapacity_anak };
+  if (cId.includes('0612') || cId.includes('0619')) return { ...base, ...DPJP_CASE_OVERRIDES.sip_obgyn };
+  if (cId.includes('0921')) return { ...base, ...DPJP_CASE_OVERRIDES.overcapacity_rad };
+  if (cId.includes('1002')) return { ...base, ...DPJP_CASE_OVERRIDES.geovelocity_mata };
+  return base;
+};
 
 export default function App() {
   // Fail-closed initial router: NEVER opens landing or unauthenticated dashboard
@@ -104,22 +263,19 @@ export default function App() {
     return 'login';
   };
 
-  const getInitialTab = () => {
+  const resolveInitialRoute = () => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const v = params.get('view');
-      if (v === 'health_ai') return 'health_ai_chat';
+      if (v === 'health_ai') return { tab: 'health_ai_chat', sub: undefined };
       const rawTab = params.get('tab');
-      const aliasMap = {
-        clarification_sched: 'appointments',
-        db_viewer: 'database_viewer',
-      };
-      const t = aliasMap[rawTab] || rawTab;
-      if (['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings', 'document_checker', 'fraud_ranking'].includes(t)) {
-        return t;
+      const mapped = LEGACY_TAB_MAP[rawTab];
+      const explicitSub = params.get('sub') || undefined;
+      if (mapped) {
+        return { tab: mapped.tab, sub: explicitSub || mapped.sub };
       }
     }
-    return 'executive';
+    return { tab: 'executive', sub: undefined };
   };
 
   // Global View Router: strictly 'login' | 'reset_password' | 'logout' | 'dashboard'
@@ -140,10 +296,27 @@ export default function App() {
     return 'dashboard';
   };
   const [viewMode, setViewMode] = useState(getInitialViewMode);
-  
-  // Tab aktif di Dashboard Cockpit:
-  // 'executive' | 'queue' | 'investigation' | 'agent_copilot' | 'empirical' | 'faskes' | 'dpjp' | 'mobile_bridge' | 'decision' | 'audit'
-  const [dashboardTab, setDashboardTab] = useState(getInitialTab);
+
+  // Consolidated 10-Module Dashboard Router + Per-Hub Sub-Tab State
+  const initialRoute = resolveInitialRoute();
+  const [dashboardTab, setRawDashboardTab] = useState(initialRoute.tab);
+  const [hubSubTabs, setHubSubTabs] = useState(() => ({
+    ...HUB_SUB_DEFAULTS,
+    ...(initialRoute.sub && HUB_SUB_DEFAULTS[initialRoute.tab] ? { [initialRoute.tab]: initialRoute.sub } : {}),
+  }));
+
+  const setDashboardTab = (targetId, explicitSub) => {
+    const resolved = LEGACY_TAB_MAP[targetId] || { tab: 'executive' };
+    setRawDashboardTab(resolved.tab);
+    const nextSub = explicitSub || resolved.sub;
+    if (nextSub && HUB_SUB_DEFAULTS[resolved.tab]) {
+      setHubSubTabs((prev) => ({ ...prev, [resolved.tab]: nextSub }));
+    }
+  };
+
+  const setHubSubTab = (hubId, subId) => {
+    setHubSubTabs((prev) => ({ ...prev, [hubId]: subId }));
+  };
   const [isMobileViewport, setIsMobileViewport] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
   const [selectedCase, setSelectedCase] = useState(null);
@@ -189,6 +362,7 @@ export default function App() {
       if (safeUrlView === 'login') {
         url.searchParams.delete('view');
         url.searchParams.delete('tab');
+        url.searchParams.delete('sub');
         url.searchParams.delete('mode');
         url.searchParams.delete('token');
         if (url.hash === '#login') {
@@ -198,6 +372,12 @@ export default function App() {
         url.searchParams.set('view', safeUrlView);
         if (safeUrlView === 'dashboard') {
           url.searchParams.set('tab', dashboardTab);
+          const activeSub = HUB_SUB_DEFAULTS[dashboardTab] ? hubSubTabs[dashboardTab] : null;
+          if (activeSub && activeSub !== HUB_SUB_DEFAULTS[dashboardTab]) {
+            url.searchParams.set('sub', activeSub);
+          } else {
+            url.searchParams.delete('sub');
+          }
           if (viewMode !== 'dashboard') {
             url.searchParams.set('mode', viewMode);
           } else {
@@ -205,6 +385,7 @@ export default function App() {
           }
         } else {
           url.searchParams.delete('tab');
+          url.searchParams.delete('sub');
           url.searchParams.delete('mode');
         }
         if (safeUrlView === 'reset_password' && resetToken) {
@@ -215,7 +396,7 @@ export default function App() {
       }
       window.history.replaceState(null, '', url.toString());
     }
-  }, [authView, dashboardTab, viewMode, authStatusVerified, resetToken]);
+  }, [authView, dashboardTab, hubSubTabs, viewMode, authStatusVerified, resetToken]);
 
   // Handle browser Back & Forward navigation buttons (fail-closed popstate synchronization)
   useEffect(() => {
@@ -241,13 +422,8 @@ export default function App() {
           setAuthView('login');
         }
         const rawTab = params.get('tab');
-        const aliasMap = {
-          clarification_sched: 'appointments',
-          db_viewer: 'database_viewer',
-        };
-        const t = aliasMap[rawTab] || rawTab;
-        if (t && ['executive', 'insights', 'retention', 'cases_mgmt', 'quick_triage', 'flagged_sessions', 'appointments', 'command_center', 'conversations', 'interventions', 'database_viewer', 'queue', 'investigation', 'expansion_suite', 'agent_copilot', 'health_ai_chat', 'empirical', 'faskes', 'dpjp', 'mobile_bridge', 'decision', 'official_reports', 'audit', 'profile', 'settings', 'document_checker', 'fraud_ranking'].includes(t)) {
-          setDashboardTab(t);
+        if (rawTab && LEGACY_TAB_MAP[rawTab]) {
+          setDashboardTab(rawTab, params.get('sub') || undefined);
         }
         const m = params.get('mode');
         if (m && ['dashboard', 'split', 'mobile'].includes(m)) {
@@ -323,69 +499,67 @@ export default function App() {
     };
   }, [authView, authStatusVerified, badgesUrl]);
 
-  // Navigasi Cockpit Sidebar Terstruktur & Terfokus (Seluruh 27 Modul Portal Verifikator)
+  // Navigasi Sidebar Verifikator Terfokus (10 Hub Kerja dalam 3 Kelompok)
   const sidebarNavGroups = [
     {
       group: 'Alur Kerja Utama',
       items: [
         { id: 'executive', label: 'Dashboard Ringkasan', keywords: 'ringkasan eksekutif home beranda kpi', icon: LayoutDashboard },
-        { id: 'queue', label: 'Antrean Klaim', keywords: 'antrean daftar sep prioritas top-k triase', icon: ListFilter, badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined, badgeColor: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { id: 'investigation', label: 'Telaah Kasus', keywords: 'investigasi 4 lapis charlson upcoding koherensi klinis', icon: FileText },
+        {
+          id: 'queue',
+          label: 'Antrean & Berkas',
+          keywords: 'antrean daftar sep prioritas top-k triase cepat manajemen berkas ditandai flagged',
+          icon: ListFilter,
+          badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined,
+          badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+        },
+        { id: 'investigation', label: 'Telaah & Dokumen', keywords: 'telaah kasus investigasi 4 lapis upcoding 7 dokumen icd-10 mb1', icon: FileText },
         { id: 'decision', label: 'Konsol Putusan', keywords: 'putusan bakb bahv sanggahan fhir claim submit', icon: ShieldAlert },
       ],
     },
     {
-      group: 'Forensik & Intelijen',
+      group: 'Forensik & Koordinasi',
       items: [
-        { id: 'document_checker', label: 'Cek Dokumen RS', keywords: '7 dokumen rm sep icd-10 kemenkes pnpk', icon: FileCheck2 },
-        { id: 'fraud_ranking', label: 'Peringkat Risiko Faskes', keywords: 'ranking faskes graf sindikat rujukan', icon: Building2 },
-        { id: 'faskes', label: 'Surveilans Faskes (FRI)', keywords: 'fri profil rs klaim faskes', icon: Activity },
-        { id: 'dpjp', label: 'Intelijen DPJP & SIP', keywords: 'dpjp dokter sip geovelocity impossible travel', icon: Stethoscope },
-        { id: 'empirical', label: 'Forensik Empiris & Benford', keywords: 'benford lorenz gini phantom repeat billing', icon: Zap },
-        { id: 'database_viewer', label: 'Gudang Data & SQL', keywords: 'sql query tabel analitik gudang', icon: Database },
+        { id: 'faskes', label: 'Faskes & DPJP', keywords: 'fri profil rs ranking sindikat dpjp sip geovelocity retensi kepatuhan', icon: Building2 },
+        { id: 'empirical', label: 'Forensik & Gudang Data', keywords: 'benford lorenz gini phantom repeat billing sql tren privasi analitik', icon: Zap },
+        { id: 'mobile_bridge', label: 'Klarifikasi & Mobile JKN', keywords: 'mobile jkn lapis 3 jadwal klarifikasi peserta dialog intervensi s06', icon: Smartphone },
       ],
     },
     {
-      group: 'Laporan & Tata Kelola',
+      group: 'Laporan & Sistem',
       items: [
-        { id: 'official_reports', label: 'Laporan Resmi (BAHV)', keywords: 'cetak pdf sp-1 bahv ba pending berita acara', icon: Printer },
-        { id: 'audit', label: 'Jejak Audit Sistem', keywords: 'audit sha-256 ledger log forensik', icon: Key },
-        { id: 'agent_copilot', label: 'Kopilot Agen Audit', keywords: 'kopilot agent analisis otonom', icon: Bot },
-        { id: 'expansion_suite', label: 'Standar & Tata Kelola BEA', keywords: 'bea fairguard pdr healthkathon', icon: Trophy },
-        { id: 'settings', label: 'Pengaturan', keywords: 'setting tema kebijakan ambang rbac', icon: Settings },
-      ],
-    },
-    {
-      group: 'Operasional Cabang',
-      collapsible: true,
-      items: [
-        { id: 'command_center', label: 'Pusat Komando Cabang', keywords: 'komando sla monitoring cabang', icon: Radio },
-        { id: 'cases_mgmt', label: 'Manajemen Berkas', keywords: 'manajemen kasus berkas', icon: Briefcase },
-        { id: 'quick_triage', label: 'Triase Cepat', keywords: 'triase cepat jalur merah kuning', icon: ClipboardList },
-        { id: 'flagged_sessions', label: 'Berkas Ditandai', keywords: 'flagged ditandai anomali', icon: Flag },
-        { id: 'mobile_bridge', label: 'Telemetri Mobile JKN', keywords: 'mobile jkn lapis 3 konfirmasi peserta', icon: Smartphone },
-        { id: 'appointments', label: 'Jadwal Klarifikasi RS', keywords: 'jadwal panggilan klarifikasi faskes', icon: Calendar },
-        { id: 'conversations', label: 'Konfirmasi Peserta', keywords: 'percakapan respon peserta', icon: MessageSquare },
-        { id: 'interventions', label: 'Intervensi & Tindak Lanjut', keywords: 'intervensi s06 hold pembayaran', icon: ShieldCheck },
-        { id: 'insights', label: 'Analitik Tren Klaim', keywords: 'insights tren statistik', icon: Sparkles },
-        { id: 'retention', label: 'Kepatuhan & Retensi RS', keywords: 'retensi kepatuhan faskes', icon: Users },
-        { id: 'health_ai_chat', label: 'Asisten Klinis JKN', keywords: 'asisten chat tanya regulasi jkn', icon: HelpCircle },
-        { id: 'profile', label: 'Profil & Keamanan Sesi', keywords: 'profil sandi sesi perangkat dipercaya', icon: User },
+        { id: 'official_reports', label: 'Laporan & Jejak Audit', keywords: 'cetak pdf sp-1 bahv ba pending berita acara vedika audit sha-256 ledger', icon: Printer },
+        { id: 'health_ai_chat', label: 'Asisten Klinis JKN', keywords: 'asisten chat tanya regulasi jkn permenkes kopilot ai', icon: Sparkles },
+        { id: 'settings', label: 'Pengaturan & Akun', keywords: 'setting tema kebijakan ambang profil sandi sesi perangkat', icon: Settings },
       ],
     },
   ];
 
+  const commandPaletteSubItems = [
+    { id: 'quick_triage', label: 'Triase Cepat', keywords: 'triase cepat jalur merah kuning', icon: ClipboardList },
+    { id: 'cases_mgmt', label: 'Manajemen Berkas', keywords: 'manajemen kasus berkas', icon: Briefcase },
+    { id: 'flagged_sessions', label: 'Berkas Ditandai', keywords: 'flagged ditandai anomali', icon: Flag },
+    { id: 'document_checker', label: 'Cek 7 Dokumen RS', keywords: '7 dokumen rm sep icd-10 kemenkes pnpk', icon: FileCheck2 },
+    { id: 'fraud_ranking', label: 'Peringkat Risiko Faskes', keywords: 'ranking faskes kohort sindikat', icon: Building2 },
+    { id: 'dpjp', label: 'Intelijen DPJP & SIP', keywords: 'dpjp dokter sip geovelocity impossible travel', icon: Stethoscope },
+    { id: 'retention', label: 'Kepatuhan & Retensi RS', keywords: 'retensi kepatuhan faskes', icon: Users },
+    { id: 'insights', label: 'Analitik Tren Klaim', keywords: 'insights tren statistik privasi', icon: Sparkles },
+    { id: 'database_viewer', label: 'Gudang Data & SQL', keywords: 'sql query tabel analitik gudang', icon: Database },
+    { id: 'appointments', label: 'Jadwal Klarifikasi RS', keywords: 'jadwal panggilan klarifikasi faskes', icon: Calendar },
+    { id: 'conversations', label: 'Konfirmasi Peserta', keywords: 'percakapan respon peserta', icon: MessageSquare },
+    { id: 'interventions', label: 'Intervensi & Tindak Lanjut', keywords: 'intervensi s06 hold pembayaran', icon: ShieldCheck },
+    { id: 'audit', label: 'Jejak Audit Sistem', keywords: 'audit sha-256 ledger log forensik', icon: Key },
+    { id: 'profile', label: 'Profil & Keamanan Sesi', keywords: 'profil sandi sesi perangkat dipercaya', icon: User },
+  ];
+
   const sidebarNavItems = sidebarNavGroups.flatMap((g) => g.items);
-  const opsGroupIds = sidebarNavGroups.find((g) => g.collapsible)?.items.map((i) => i.id) || [];
-  const [opsGroupExpanded, setOpsGroupExpanded] = useState(() => opsGroupIds.includes(dashboardTab));
+  const commandPaletteGroups = [
+    ...sidebarNavGroups,
+    { group: 'Akses Cepat Sub-Tampilan', items: commandPaletteSubItems },
+  ];
+  const allSearchableItems = [...sidebarNavItems, ...commandPaletteSubItems];
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [commandPaletteQuery, setCommandPaletteQuery] = useState('');
-
-  useEffect(() => {
-    if (opsGroupIds.includes(dashboardTab)) {
-      setOpsGroupExpanded(true);
-    }
-  }, [dashboardTab]);
 
   useEffect(() => {
     if (authView !== 'dashboard' || !authStatusVerified) return;
@@ -449,7 +623,6 @@ export default function App() {
   const idleLimitSecRef = useRef(900);
   const prevMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   const headerPopoversRef = useRef(null);
-  const opsGroupButtonRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && currentUser?.isMfaVerified) {
@@ -1660,50 +1833,20 @@ export default function App() {
           } ${
             isLight ? 'scrollbar-thumb-slate-200' : 'scrollbar-thumb-slate-800'
           }`}>
-            {sidebarNavGroups.map((group, gIdx) => {
-              const isGroupCollapsed = Boolean(group.collapsible && !opsGroupExpanded);
-              return (
+            {sidebarNavGroups.map((group, gIdx) => (
               <div key={group.group} className="space-y-0.5">
                 {!sidebarCollapsed ? (
-                  group.collapsible ? (
-                    <button
-                      ref={opsGroupButtonRef}
-                      type="button"
-                      onClick={() => {
-                        setOpsGroupExpanded((prev) => {
-                          const next = !prev;
-                          if (next) {
-                            requestAnimationFrame(() => {
-                              opsGroupButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            });
-                          }
-                          return next;
-                        });
-                      }}
-                      aria-expanded={opsGroupExpanded}
-                      className={`w-full px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none rounded-lg transition cursor-pointer ${
-                        isLight ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 hover:bg-white/5'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {opsGroupExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        <span>{group.group}</span>
-                      </span>
-                      <span className={`text-[9px] font-mono font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{group.items.length}</span>
-                    </button>
-                  ) : (
-                    <div className={`px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none ${
-                      isLight ? 'text-slate-600' : 'text-slate-300'
-                    }`}>
-                      <span>{group.group}</span>
-                      <span className={`text-[9px] font-mono font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{group.items.length}</span>
-                    </div>
-                  )
+                  <div className={`px-2.5 pt-1.5 pb-1 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between select-none ${
+                    isLight ? 'text-slate-600' : 'text-slate-300'
+                  }`}>
+                    <span>{group.group}</span>
+                    <span className={`text-[9px] font-mono font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{group.items.length}</span>
+                  </div>
                 ) : (
                   gIdx > 0 && <div className={`my-1.5 border-t ${isLight ? 'border-slate-200' : 'border-slate-800/80'}`} />
                 )}
 
-                {(!isGroupCollapsed || sidebarCollapsed) && group.items.map((item) => {
+                {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = dashboardTab === item.id;
                   return (
@@ -1785,8 +1928,7 @@ export default function App() {
                   );
                 })}
               </div>
-              );
-            })}
+            ))}
           </div>
         </motion.aside>
 
@@ -2365,9 +2507,9 @@ export default function App() {
                         <div className="flex items-center gap-1 pl-1 border-l border-emerald-500/30">
                           <button
                             type="button"
-                            onClick={() => setDashboardTab('investigation')}
+                            onClick={() => setDashboardTab('investigation', 'audit')}
                             className={`px-1.5 py-0.5 rounded font-semibold transition cursor-pointer ${
-                              dashboardTab === 'investigation'
+                              dashboardTab === 'investigation' && hubSubTabs.investigation === 'audit'
                                 ? (isLight ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-slate-950')
                                 : (isLight ? 'hover:bg-emerald-100 text-emerald-800' : 'hover:bg-white/10 text-emerald-300')
                             }`}
@@ -2378,7 +2520,7 @@ export default function App() {
                             type="button"
                             onClick={() => setDashboardTab('document_checker')}
                             className={`px-1.5 py-0.5 rounded font-semibold transition cursor-pointer ${
-                              dashboardTab === 'document_checker'
+                              dashboardTab === 'investigation' && hubSubTabs.investigation === 'dokumen'
                                 ? (isLight ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-slate-950')
                                 : (isLight ? 'hover:bg-emerald-100 text-emerald-800' : 'hover:bg-white/10 text-emerald-300')
                             }`}
@@ -2498,424 +2640,268 @@ export default function App() {
                       />
                     )}
 
-                    {dashboardTab === 'insights' && (
-                      <InsightsAnalyticsView
-                        isLight={isLight}
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                      />
-                    )}
-
-                    {dashboardTab === 'retention' && (
-                      <RetentionAnalyticsView
-                        isLight={isLight}
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                      />
-                    )}
-
-                    {dashboardTab === 'cases_mgmt' && (
-                      <CasesManagementView
-                        isLight={isLight}
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                        onInspectCase={(cId) => {
-                          setSelectedCase({ id: cId });
-                          setDashboardTab('investigation');
-                        }}
-                        onSelectCase={(cId) => {
-                          setSelectedCase({ id: cId });
-                          setDashboardTab('investigation');
-                        }}
-                      />
-                    )}
-
-                    {dashboardTab === 'quick_triage' && (
-                      <QuickTriageView
-                        isLight={isLight}
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                        onSelectCase={(cId) => {
-                          setSelectedCase({ id: cId });
-                          setDashboardTab('investigation');
-                        }}
-                      />
-                    )}
-
-                    {dashboardTab === 'flagged_sessions' && (
-                      <FlaggedSessionsView
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                        onSelectCase={(cId) => {
-                          setSelectedCase({ id: cId });
-                          setDashboardTab('investigation');
-                        }}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'appointments' && (
-                      <ClarificationScheduleView
-                        isLight={isLight}
-                        onNavigateTab={(t) => setDashboardTab(t)}
-                        onSelectCase={(cId) => {
-                          setSelectedCase({ id: cId });
-                          setDashboardTab('investigation');
-                        }}
-                      />
-                    )}
-
-                    {dashboardTab === 'command_center' && (
-                      <CommandCenterView
-                        onSelectCase={(cId) => {
-                          setSelectedCase(typeof cId === 'object' && cId !== null ? cId : {
-                            id: cId || 'CLM-2026-10-085',
-                            sep: '0132R0011026V000085',
-                            hospital: 'RS Khusus Mitra Husada',
-                            hospitalType: 'FKRTL (RS Khusus Kelas C)',
-                            code: 'Z-3-12-0',
-                            description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
-                            tariff: 'Rp 15.300.000 (85 Klaim)',
-                            dpjp: 'dr. Hendra, Sp.KFR',
-                            sipNumber: '446.1/108/DPJP/2023',
-                            date: '14 Okt 2026',
-                            batchTag: 'BAKSOS_MASSAL_OKT26',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 8,
-                            s1: 85,
-                            s2: 95,
-                            s3: 80,
-                            totalScore: 88.0,
-                            lane: 'red',
-                            status: 'AUDIT KHUSUS MERAH',
-                            notes: 'Klaster Baksos 85 klaim fisioterapi tanpa rujukan FKTP sah; SIP DPJP mutasi.',
-                            flags: ['BAKSOS MASSAL', 'SIP MUTASI']
-                          });
-                          setDashboardTab('investigation');
-                        }}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'conversations' && (
-                      <ConversationsView
-                        onSelectCase={(cId) => {
-                          setSelectedCase(typeof cId === 'object' && cId !== null ? cId : {
-                            id: cId || 'CLM-2026-10-085',
-                            sep: '0132R0011026V000085',
-                            hospital: 'RS Khusus Mitra Husada',
-                            hospitalType: 'FKRTL (RS Khusus Kelas C)',
-                            code: 'Z-3-12-0',
-                            description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
-                            tariff: 'Rp 15.300.000 (85 Klaim)',
-                            dpjp: 'dr. Hendra, Sp.KFR',
-                            sipNumber: '446.1/108/DPJP/2023',
-                            date: '14 Okt 2026',
-                            batchTag: 'BAKSOS_MASSAL_OKT26',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 8,
-                            s1: 85,
-                            s2: 95,
-                            s3: 80,
-                            totalScore: 88.0,
-                            lane: 'red',
-                            status: 'AUDIT KHUSUS MERAH',
-                            notes: 'Klaster Baksos 85 klaim fisioterapi tanpa rujukan FKTP sah; SIP DPJP mutasi.',
-                            flags: ['BAKSOS MASSAL', 'SIP MUTASI']
-                          });
-                          setDashboardTab('investigation');
-                        }}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'interventions' && (
-                      <InterventionsView
-                        onSelectCase={(cId) => {
-                          setSelectedCase(typeof cId === 'object' && cId !== null ? cId : {
-                            id: cId || 'CLM-2026-10-085',
-                            sep: '0132R0011026V000085',
-                            hospital: 'RS Khusus Mitra Husada',
-                            hospitalType: 'FKRTL (RS Khusus Kelas C)',
-                            code: 'Z-3-12-0',
-                            description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
-                            tariff: 'Rp 15.300.000 (85 Klaim)',
-                            dpjp: 'dr. Hendra, Sp.KFR',
-                            sipNumber: '446.1/108/DPJP/2023',
-                            date: '14 Okt 2026',
-                            batchTag: 'BAKSOS_MASSAL_OKT26',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 8,
-                            s1: 85,
-                            s2: 95,
-                            s3: 80,
-                            totalScore: 88.0,
-                            lane: 'red',
-                            status: 'AUDIT KHUSUS MERAH',
-                            notes: 'Klaster Baksos 85 klaim fisioterapi tanpa rujukan FKTP sah; SIP DPJP mutasi.',
-                            flags: ['BAKSOS MASSAL', 'SIP MUTASI']
-                          });
-                          setDashboardTab('investigation');
-                        }}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'database_viewer' && (
-                      <DatabaseViewerView isLight={isLight} />
-                    )}
-
                     {dashboardTab === 'queue' && (
-                      <TriageOverview 
-                        onSelectCase={(c) => {
-                          setSelectedCase(c);
-                          setDashboardTab('investigation');
-                        }} 
+                      <WorkspaceHubShell
                         isLight={isLight}
-                        initialSearchQuery={globalSearchQuery}
-                      />
+                        ariaLabel="Sub-navigasi Antrean dan Berkas Klaim"
+                        activeSubTab={hubSubTabs.queue}
+                        onChangeSubTab={(sub) => setHubSubTab('queue', sub)}
+                        tabs={[
+                          {
+                            id: 'priority',
+                            label: 'Antrean Prioritas',
+                            icon: ListFilter,
+                            badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined,
+                          },
+                          { id: 'quick', label: 'Triase Cepat', icon: ClipboardList },
+                          { id: 'files', label: 'Manajemen Berkas', icon: Briefcase },
+                          { id: 'flagged', label: 'Berkas Ditandai', icon: Flag },
+                        ]}
+                      >
+                        {hubSubTabs.queue === 'priority' && (
+                          <TriageOverview
+                            onSelectCase={(c) => {
+                              setSelectedCase(c);
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                            isLight={isLight}
+                            initialSearchQuery={globalSearchQuery}
+                          />
+                        )}
+                        {hubSubTabs.queue === 'quick' && (
+                          <QuickTriageView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onSelectCase={(cId) => {
+                              setSelectedCase({ id: cId });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.queue === 'files' && (
+                          <CasesManagementView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onInspectCase={(cId) => {
+                              setSelectedCase({ id: cId });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                            onSelectCase={(cId) => {
+                              setSelectedCase({ id: cId });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.queue === 'flagged' && (
+                          <FlaggedSessionsView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onSelectCase={(cId) => {
+                              setSelectedCase({ id: cId });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
                     {dashboardTab === 'investigation' && (
-                      <CaseInvestigation 
-                        caseData={selectedCase}
-                        s1={selectedCase?.s1 ?? s1}
-                        s2={selectedCase?.s2 ?? s2}
-                        s3={selectedCase && patientResponse === null ? (selectedCase.s3 ?? s3) : s3}
-                        patientResponse={patientResponse}
-                        onBackToQueue={() => setDashboardTab('queue')}
-                        onOpenDecision={() => setDashboardTab('decision')}
-                        onOpenDocumentChecker={() => setDashboardTab('document_checker')}
-                        onOpenAgentCopilot={() => setDashboardTab('agent_copilot')}
-                        onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
+                      <WorkspaceHubShell
                         isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'expansion_suite' && (
-                      <PostHealthkathonSuiteView
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'health_ai_chat' && (
-                      <HealthAIChatView 
-                        onNavigateTab={(tab) => setDashboardTab(tab)}
-                        currentUser={currentUser}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'agent_copilot' && (
-                      <AgentCopilot 
-                        selectedClaimId={selectedCase?.id || 'CLM-2026-10-085'}
-                        onGoToCase={() => setDashboardTab('investigation')}
-                        onGoToDecision={() => setDashboardTab('decision')}
-                        onGoToAudit={() => setDashboardTab('audit')}
-                        isLight={isLight}
-                      />
-                    )}
-
-                    {dashboardTab === 'empirical' && (
-                      <EmpiricalForensics 
-                        isLight={isLight}
-                        onInspectCase={(c) => {
-                          setSelectedCase({
-                            id: c.claim_1,
-                            sep: c.claim_1,
-                            hospital: c.faskes_owner_1,
-                            hospitalType: 'FKRTL (Data Transaksi Resmi BPJS Kesehatan)',
-                            code: c.cbg_1,
-                            description: c.cbg_desc_1,
-                            tariff: `Rp ${c.total_biaya.toLocaleString('id-ID')}`,
-                            dpjp: 'DPJP Terdaftar FKRTL',
-                            sipNumber: '446.1/108/DPJP/2023',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 8,
-                            batchTag: 'REPEAT_SAMEDAY_2024',
-                            s1: 85,
-                            s2: 80,
-                            s3: 75,
-                            totalScore: 81.5,
-                            lane: 'red',
-                            status: 'AUDIT REPEAT MERAH',
-                            date: c.tgl_masuk,
-                            notes: `${c.modus}. Pasangan klaim ${c.claim_1} dan ${c.claim_2} diajukan pada hari sama.`,
-                            flags: ['REPEAT BILLING', 'SAME-DAY SPLIT']
-                          });
-                          setDashboardTab('investigation');
-                        }}
-                      />
+                        ariaLabel="Sub-navigasi Telaah Kasus dan Dokumen RS"
+                        activeSubTab={hubSubTabs.investigation}
+                        onChangeSubTab={(sub) => setHubSubTab('investigation', sub)}
+                        tabs={[
+                          { id: 'audit', label: 'Audit 4-Lapis & Klinis', icon: FileText },
+                          { id: 'dokumen', label: 'Cek 7 Dokumen & ICD-10', icon: FileCheck2 },
+                        ]}
+                      >
+                        {hubSubTabs.investigation === 'audit' && (
+                          <CaseInvestigation
+                            caseData={selectedCase}
+                            s1={selectedCase?.s1 ?? s1}
+                            s2={selectedCase?.s2 ?? s2}
+                            s3={selectedCase && patientResponse === null ? (selectedCase.s3 ?? s3) : s3}
+                            patientResponse={patientResponse}
+                            onBackToQueue={() => setDashboardTab('queue', 'priority')}
+                            onOpenDecision={() => setDashboardTab('decision')}
+                            onOpenDocumentChecker={() => setDashboardTab('document_checker')}
+                            isLight={isLight}
+                          />
+                        )}
+                        {hubSubTabs.investigation === 'dokumen' && (
+                          <DocumentCheckerView
+                            isLight={isLight}
+                            currentUser={currentUser}
+                            initialClaimId={selectedCase?.id}
+                            onSelectClaim={(claimObj) => {
+                              if (claimObj?.id) setSelectedCase(claimObj);
+                            }}
+                          />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
                     {dashboardTab === 'faskes' && (
-                      <FaskesSurveillance 
+                      <WorkspaceHubShell
                         isLight={isLight}
-                        onSelectFaskesCase={(cId) => {
-                          setSelectedCase({
-                            id: cId || 'CLM-2026-10-085',
-                            sep: '0132R0011026V000085',
-                            hospital: 'RS Khusus Mitra Husada',
-                            hospitalType: 'FKRTL (RS Khusus Kelas C)',
-                            code: 'Z-3-12-0',
-                            description: 'Prosedur Fisioterapi / Rehabilitasi Medis Massal Pasca-Baksos',
-                            tariff: 'Rp 15.300.000 (85 Klaim)',
-                            dpjp: 'dr. Hendra, Sp.KFR',
-                            sipNumber: '446.1/108/DPJP/2023',
-                            date: '14 Okt 2026',
-                            batchTag: 'BAKSOS_MASSAL_OKT26',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 8,
-                            s1: 85,
-                            s2: 95,
-                            s3: 80,
-                            totalScore: 88.0,
-                            lane: 'red',
-                            status: 'AUDIT KHUSUS MERAH',
-                            notes: 'Klaster Baksos 85 klaim fisioterapi tanpa rujukan FKTP sah; SIP DPJP mutasi.',
-                            flags: ['BAKSOS MASSAL', 'SIP MUTASI']
-                          });
-                          setDashboardTab('investigation');
-                        }}
-                        onSelectHospital={(h) => {
-                          // View or filter hospital
-                        }}
-                      />
+                        ariaLabel="Sub-navigasi Pengawasan Faskes dan DPJP"
+                        activeSubTab={hubSubTabs.faskes}
+                        onChangeSubTab={(sub) => setHubSubTab('faskes', sub)}
+                        tabs={[
+                          { id: 'surveillance', label: 'Profil Risiko Faskes', icon: Activity },
+                          { id: 'ranking', label: 'Peringkat & Kohort RS', icon: Building2 },
+                          { id: 'dpjp', label: 'Intelijen DPJP & SIP', icon: Stethoscope },
+                          { id: 'retention', label: 'Kepatuhan & Retensi', icon: Users },
+                        ]}
+                      >
+                        {hubSubTabs.faskes === 'surveillance' && (
+                          <FaskesSurveillance
+                            isLight={isLight}
+                            onSelectFaskesCase={(cId) => {
+                              setSelectedCase(buildMitraCaseFallback(cId));
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                            onSelectHospital={() => {}}
+                          />
+                        )}
+                        {hubSubTabs.faskes === 'ranking' && (
+                          <FraudRankingView
+                            isLight={isLight}
+                            onSelectFaskes={() => setHubSubTab('faskes', 'surveillance')}
+                          />
+                        )}
+                        {hubSubTabs.faskes === 'dpjp' && (
+                          <DpjpIntelligence
+                            isLight={isLight}
+                            onSelectCase={(cId) => {
+                              setSelectedCase(buildDpjpCaseFallback(cId));
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.faskes === 'retention' && (
+                          <RetentionAnalyticsView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                          />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
-                    {dashboardTab === 'document_checker' && (
-                      <DocumentCheckerView
+                    {dashboardTab === 'empirical' && (
+                      <WorkspaceHubShell
                         isLight={isLight}
-                        currentUser={currentUser}
-                        initialClaimId={selectedCase?.id}
-                        onSelectClaim={(claimObj) => {
-                          if (claimObj?.id) setSelectedCase(claimObj);
-                        }}
-                      />
-                    )}
-
-                    {dashboardTab === 'fraud_ranking' && (
-                      <FraudRankingView
-                        isLight={isLight}
-                        onSelectFaskes={(fId) => {
-                          setDashboardTab('faskes');
-                        }}
-                      />
-                    )}
-
-                    {dashboardTab === 'dpjp' && (
-                      <DpjpIntelligence 
-                        onSelectCase={(cId) => {
-                          let caseDetails = {
-                            id: cId,
-                            sep: `0132R0011026V${cId.slice(-6)}`,
-                            hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-                            hospitalType: 'FKRTL (RS Pemerintah Kelas A - Rujukan Nasional)',
-                            code: 'B-1-10-I',
-                            description: 'Prosedur Laparotomi & Tindakan Bedah Minor (Anomali Geovelocity)',
-                            tariff: 'Rp 59.500.000',
-                            dpjp: 'dr. Hendra Prasetya, Sp.B',
-                            sipNumber: 'SIP.503/4412/DPMPTSP/2023',
-                            date: '24 Okt 2026',
-                            batchTag: 'GEOVELOCITY_ANOMALY_OKT26',
-                            sampleCount: 10,
-                            participantCount: 10,
-                            deniedCount: 9,
-                            s1: 95,
-                            s2: 90,
-                            s3: 85,
-                            totalScore: 91.5,
-                            lane: 'red',
-                            status: 'AUDIT GEOVELOCITY MERAH',
-                            notes: 'Anomali Geovelocity Impossible Travel: DPJP tercatat operasi di Jakarta Pusat (RSCM) dan Bandung (RSHS) dalam selisih 45 menit (kecepatan mustahil 185.2 km/jam).',
-                            flags: ['GEOVELOCITY ALERT', 'IMPOSSIBLE TRAVEL', 'SIP EXPIRED']
-                          };
-                          if (cId.includes('0744') || cId.includes('0751')) {
-                            caseDetails = {
-                              ...caseDetails,
-                              hospital: 'RS Ibu & Anak Kasih Bunda',
-                              hospitalType: 'RS Khusus (Kelas C)',
-                              code: 'Q-5-42-0',
-                              description: 'Pelayanan Spesialis Anak - Beban Pasien Harian Melampaui Batas Permenkes',
-                              tariff: 'Rp 27.000.000',
-                              dpjp: 'dr. Ratna Wulandari, Sp.A',
-                              sipNumber: 'SIP.503/1102/DPMPTSP/2025',
-                              totalScore: 78.0,
-                              lane: 'red',
-                              status: 'AUDIT OVERCAPACITY MERAH',
-                              notes: 'Beban harian 72 pasien/hari melampaui batas Permenkes No. 14/2021 (maks. 40 pasien/hari).',
-                              flags: ['OVERCAPACITY', 'BEBAN HARIAN TINGGI']
-                            };
-                          } else if (cId.includes('0612') || cId.includes('0619')) {
-                            caseDetails = {
-                              ...caseDetails,
-                              hospital: 'RS Hermina Kemayoran Jakarta',
-                              hospitalType: 'RS Swasta (Kelas B)',
-                              code: 'W-4-10-I',
-                              description: 'Prosedur Ginekologi - Klaim Diajukan Saat Masa Berlaku SIP Berakhir',
-                              tariff: 'Rp 33.600.000',
-                              dpjp: 'dr. Maya Kusuma, Sp.OG',
-                              sipNumber: 'SIP.503/3321/DPMPTSP/2021',
-                              totalScore: 82.0,
-                              lane: 'red',
-                              status: 'AUDIT SIP MERAH',
-                              notes: 'SIP dokter di faskes ini telah kadaluwarsa per Juni 2024 namun tagihan klaim tetap berjalan aktif.',
-                              flags: ['SIP KADALUWARSA', 'KLAIM ILEGAL']
-                            };
-                          } else if (cId.includes('0921')) {
-                            caseDetails = {
-                              ...caseDetails,
-                              hospital: 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-                              hospitalType: 'RS Pemerintah (Kelas A - Rujukan Nasional)',
-                              code: 'U-3-12-0',
-                              description: 'Pemeriksaan Radiologi Lanjut - Beban Bacaan 65 Pasien/Hari',
-                              tariff: 'Rp 42.000.000',
-                              dpjp: 'dr. Farhan Malik, Sp.Rad',
-                              sipNumber: 'SIP.503/7712/DPMPTSP/2023',
-                              totalScore: 76.0,
-                              lane: 'red',
-                              status: 'AUDIT OVERCAPACITY MERAH',
-                              notes: 'Beban harian 65 ekspertise radiologi/hari melampaui ambang batas rasional Permenkes 14/2021.',
-                              flags: ['OVERCAPACITY', 'BEBAN RADIOLOGI TINGGI']
-                            };
-                          } else if (cId.includes('1002')) {
-                            caseDetails = {
-                              ...caseDetails,
-                              hospital: 'RS Mata Solo',
-                              hospitalType: 'RS Khusus (Kelas B)',
-                              code: 'C-4-13-I',
-                              description: 'Operasi Phacoemulsifikasi Katarak - Geovelocity Peak Hour (98.2 km/jam)',
-                              tariff: 'Rp 89.000.000',
-                              dpjp: 'dr. Sinta Anggraini, Sp.M',
-                              sipNumber: 'SIP.503/8890/DPMPTSP/2022',
-                              totalScore: 86.0,
-                              lane: 'red',
-                              status: 'AUDIT GEOVELOCITY MERAH',
-                              notes: 'Anomali Geovelocity: Tercatat operasi katarak di Solo dan visite di Boyolali dalam jeda 30 menit pada jam sibuk.',
-                              flags: ['GEOVELOCITY ALERT', 'IMPOSSIBLE TRAVEL', 'SIP MUTASI']
-                            };
-                          }
-                          setSelectedCase(caseDetails);
-                          setDashboardTab('investigation');
-                        }}
-                        isLight={isLight}
-                      />
+                        ariaLabel="Sub-navigasi Forensik Statistik dan Gudang Data"
+                        activeSubTab={hubSubTabs.empirical}
+                        onChangeSubTab={(sub) => setHubSubTab('empirical', sub)}
+                        tabs={[
+                          { id: 'benford', label: 'Benford, Gini & Anomali', icon: Zap },
+                          { id: 'trends', label: 'Tren & Privasi Analitik', icon: Sparkles },
+                          { id: 'sql', label: 'Gudang Data SQL', icon: Database },
+                        ]}
+                      >
+                        {hubSubTabs.empirical === 'benford' && (
+                          <EmpiricalForensics
+                            isLight={isLight}
+                            onInspectCase={(c) => {
+                              setSelectedCase({
+                                id: c.claim_1,
+                                sep: c.claim_1,
+                                hospital: c.faskes_owner_1,
+                                hospitalType: 'FKRTL (Data Transaksi Resmi BPJS Kesehatan)',
+                                code: c.cbg_1,
+                                description: c.cbg_desc_1,
+                                tariff: `Rp ${c.total_biaya.toLocaleString('id-ID')}`,
+                                dpjp: 'DPJP Terdaftar FKRTL',
+                                sipNumber: '446.1/108/DPJP/2023',
+                                sampleCount: 10,
+                                participantCount: 10,
+                                deniedCount: 8,
+                                batchTag: 'REPEAT_SAMEDAY_2024',
+                                s1: 85,
+                                s2: 80,
+                                s3: 75,
+                                totalScore: 81.5,
+                                lane: 'red',
+                                status: 'AUDIT REPEAT MERAH',
+                                date: c.tgl_masuk,
+                                notes: `${c.modus}. Pasangan klaim ${c.claim_1} dan ${c.claim_2} diajukan pada hari sama.`,
+                                flags: ['REPEAT BILLING', 'SAME-DAY SPLIT'],
+                              });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.empirical === 'trends' && (
+                          <InsightsAnalyticsView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                          />
+                        )}
+                        {hubSubTabs.empirical === 'sql' && (
+                          <DatabaseViewerView isLight={isLight} />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
                     {dashboardTab === 'mobile_bridge' && (
-                      <MobileTelemetry 
-                        onTriggerPush={triggerSimulation}
-                        onToggleSimulator={toggleSimulation}
-                        onCloseSimulator={closeSimulator}
-                        isSimulatorOpen={viewMode === 'split' || viewMode === 'mobile'}
-                        patientResponse={patientResponse}
-                        onResetDemo={resetDemo}
+                      <WorkspaceHubShell
                         isLight={isLight}
-                      />
+                        ariaLabel="Sub-navigasi Klarifikasi dan Mobile JKN"
+                        activeSubTab={hubSubTabs.mobile_bridge}
+                        onChangeSubTab={(sub) => setHubSubTab('mobile_bridge', sub)}
+                        tabs={[
+                          { id: 'telemetry', label: 'Telemetri Mobile JKN', icon: Smartphone },
+                          { id: 'schedule', label: 'Jadwal Klarifikasi RS', icon: Calendar },
+                          { id: 'dialog', label: 'Konfirmasi Peserta', icon: MessageSquare },
+                          { id: 'interventions', label: 'Intervensi FKRTL', icon: ShieldCheck },
+                        ]}
+                      >
+                        {hubSubTabs.mobile_bridge === 'telemetry' && (
+                          <MobileTelemetry
+                            onTriggerPush={triggerSimulation}
+                            onToggleSimulator={toggleSimulation}
+                            onCloseSimulator={closeSimulator}
+                            isSimulatorOpen={viewMode === 'split' || viewMode === 'mobile'}
+                            patientResponse={patientResponse}
+                            onResetDemo={resetDemo}
+                            isLight={isLight}
+                          />
+                        )}
+                        {hubSubTabs.mobile_bridge === 'schedule' && (
+                          <ClarificationScheduleView
+                            isLight={isLight}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onSelectCase={(cId) => {
+                              setSelectedCase({ id: cId });
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.mobile_bridge === 'dialog' && (
+                          <ConversationsView
+                            isLight={isLight}
+                            onSelectCase={(cId) => {
+                              setSelectedCase(buildMitraCaseFallback(cId));
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                        {hubSubTabs.mobile_bridge === 'interventions' && (
+                          <InterventionsView
+                            isLight={isLight}
+                            onSelectCase={(cId) => {
+                              setSelectedCase(buildMitraCaseFallback(cId));
+                              setDashboardTab('investigation', 'audit');
+                            }}
+                          />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
                     {dashboardTab === 'decision' && (
-                      <DecisionConsole 
+                      <DecisionConsole
                         caseData={selectedCase}
                         totalScore={selectedCase?.totalScore ?? totalScore}
                         s1={selectedCase?.s1 ?? s1}
@@ -2924,43 +2910,74 @@ export default function App() {
                         patientResponse={patientResponse}
                         verificatorAction={verificatorAction}
                         onSetVerificatorAction={setVerificatorAction}
-                        onBackToInvestigation={() => setDashboardTab('investigation')}
-                        onBackToQueue={() => setDashboardTab('queue')}
-                        onOpenExpansionSuite={() => setDashboardTab('expansion_suite')}
+                        onBackToInvestigation={() => setDashboardTab('investigation', 'audit')}
+                        onBackToQueue={() => setDashboardTab('queue', 'priority')}
                         currentUser={currentUser}
                         isLight={isLight}
                       />
                     )}
 
                     {dashboardTab === 'official_reports' && (
-                      <OfficialReportsView
-                        onBack={() => setDashboardTab('decision')}
+                      <WorkspaceHubShell
                         isLight={isLight}
-                        currentUser={currentUser}
-                        selectedCase={selectedCase}
-                      />
+                        ariaLabel="Sub-navigasi Laporan Resmi dan Jejak Audit"
+                        activeSubTab={hubSubTabs.official_reports}
+                        onChangeSubTab={(sub) => setHubSubTab('official_reports', sub)}
+                        tabs={[
+                          { id: 'reports', label: 'Berita Acara Resmi (BAHV / SP-1)', icon: Printer },
+                          { id: 'ledger', label: 'Jejak Audit SHA-256', icon: Key },
+                        ]}
+                      >
+                        {hubSubTabs.official_reports === 'reports' && (
+                          <OfficialReportsView
+                            onBack={() => setDashboardTab('decision')}
+                            isLight={isLight}
+                            currentUser={currentUser}
+                            selectedCase={selectedCase}
+                          />
+                        )}
+                        {hubSubTabs.official_reports === 'ledger' && (
+                          <AuditLedger isLight={isLight} />
+                        )}
+                      </WorkspaceHubShell>
                     )}
 
-                    {dashboardTab === 'audit' && (
-                      <AuditLedger isLight={isLight} />
-                    )}
-
-                    {dashboardTab === 'profile' && (
-                      <AdminProfileView
+                    {dashboardTab === 'health_ai_chat' && (
+                      <HealthAIChatView
+                        onNavigateTab={(tab) => setDashboardTab(tab)}
                         currentUser={currentUser}
-                        onUpdateUser={(updated) => setCurrentUser(updated)}
-                        onBackToDashboard={() => setDashboardTab('executive')}
                         isLight={isLight}
                       />
                     )}
 
                     {dashboardTab === 'settings' && (
-                      <AdminSettingsView
-                        currentTheme={theme}
-                        onThemeChange={setTheme}
-                        onBackToDashboard={() => setDashboardTab('executive')}
+                      <WorkspaceHubShell
                         isLight={isLight}
-                      />
+                        ariaLabel="Sub-navigasi Pengaturan dan Akun Verifikator"
+                        activeSubTab={hubSubTabs.settings}
+                        onChangeSubTab={(sub) => setHubSubTab('settings', sub)}
+                        tabs={[
+                          { id: 'preferences', label: 'Preferensi & Ambang Sistem', icon: Settings },
+                          { id: 'profile', label: 'Profil & Keamanan Sesi', icon: User },
+                        ]}
+                      >
+                        {hubSubTabs.settings === 'preferences' && (
+                          <AdminSettingsView
+                            currentTheme={theme}
+                            onThemeChange={setTheme}
+                            onBackToDashboard={() => setDashboardTab('executive')}
+                            isLight={isLight}
+                          />
+                        )}
+                        {hubSubTabs.settings === 'profile' && (
+                          <AdminProfileView
+                            currentUser={currentUser}
+                            onUpdateUser={(updated) => setCurrentUser(updated)}
+                            onBackToDashboard={() => setDashboardTab('executive')}
+                            isLight={isLight}
+                          />
+                        )}
+                      </WorkspaceHubShell>
                     )}
                     </Suspense>
                     </TabErrorBoundary>
@@ -3016,14 +3033,14 @@ export default function App() {
                         return;
                       }
                       const q = commandPaletteQuery.trim().toLowerCase();
-                      const match = sidebarNavItems.find((m) =>
+                      const match = allSearchableItems.find((m) =>
                         `${m.label} ${m.keywords || ''} ${m.id}`.toLowerCase().includes(q)
                       );
                       if (match) {
                         setDashboardTab(match.id);
                       } else if (q) {
                         setGlobalSearchQuery(commandPaletteQuery.trim());
-                        setDashboardTab('queue');
+                        setDashboardTab('queue', 'priority');
                       }
                       setCommandPaletteOpen(false);
                     }
@@ -3046,7 +3063,7 @@ export default function App() {
               </div>
 
               <div className="max-h-[60vh] overflow-y-auto p-2.5 space-y-3">
-                {sidebarNavGroups.map((grp) => {
+                {commandPaletteGroups.map((grp) => {
                   const q = commandPaletteQuery.trim().toLowerCase();
                   const matches = grp.items.filter((it) =>
                     !q || `${it.label} ${it.keywords || ''} ${it.id}`.toLowerCase().includes(q)
@@ -3062,7 +3079,10 @@ export default function App() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                         {matches.map((it) => {
                           const Icon = it.icon;
-                          const isCurrent = dashboardTab === it.id;
+                          const resolvedTarget = LEGACY_TAB_MAP[it.id] || { tab: it.id };
+                          const isCurrent =
+                            dashboardTab === resolvedTarget.tab &&
+                            (!resolvedTarget.sub || hubSubTabs[resolvedTarget.tab] === resolvedTarget.sub);
                           return (
                             <button
                               key={it.id}

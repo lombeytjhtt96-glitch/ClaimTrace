@@ -1206,6 +1206,7 @@ function getCategoryColor(category, isLight) {
 }
 
 function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isLight }) {
+  const [showFullSummary, setShowFullSummary] = useState(false);
   const hasInsights = insights.ia_summary && insights.ia_summary.trim().length > 0;
   const hasPatterns = insights.patterns && insights.patterns.length > 0;
   const hasRecommendations = insights.recommendations && insights.recommendations.length > 0;
@@ -1230,7 +1231,7 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="flex items-center gap-2">
-              <h3 className={`text-base font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-slate-100'}`}>Wawasan Audit Forensik Klaim (IA)</h3>
+              <h3 className={`text-base font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-slate-100'}`}>Ringkasan Temuan &amp; Rekomendasi Audit</h3>
             </div>
             {insights.report_generated_at && (
               <div className={`flex items-center gap-2 text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
@@ -1282,16 +1283,57 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-6">
-        <div>
-          <h4 className={`text-sm font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white/90'}`}>Ringkasan Eksekutif</h4>
-          <div className={`rounded-xl p-4 border ${
-            isLight
-              ? 'bg-slate-50 border-slate-200'
-              : 'bg-white/5 border-white/10'
-          }`}>
-            <MarkdownRenderer content={insights.ia_summary} isLight={isLight} />
+      <div className="p-6 space-y-5">
+        {/* Ringkasan Visual Terukur */}
+        <div className={`rounded-xl p-4 border space-y-3 ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+        }`}>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+              <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Pola Terdeteksi</span>
+              <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+                {(insights.patterns || []).length}
+              </span>
+            </div>
+            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+              <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Rekomendasi Aksi</span>
+              <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                {(insights.recommendations || []).length}
+              </span>
+            </div>
+            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+              <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Prioritas Tindak</span>
+              <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
+                Tinggi
+              </span>
+            </div>
           </div>
+
+          {hasInsights && (
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <h4 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                  Catatan Ringkas Analisis
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowFullSummary((prev) => !prev)}
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                    isLight
+                      ? 'bg-white border-slate-300 text-emerald-800 hover:bg-slate-100'
+                      : 'bg-white/10 border-white/15 text-[#FFCA40] hover:bg-white/15'
+                  }`}
+                >
+                  {showFullSummary ? 'Tutup Uraian' : 'Lihat Uraian Lengkap'}
+                </button>
+              </div>
+              {showFullSummary && (
+                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                  <MarkdownRenderer content={insights.ia_summary} isLight={isLight} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {hasPatterns && (

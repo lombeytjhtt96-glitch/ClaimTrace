@@ -731,10 +731,10 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                       }`}>
                         Bukti Anomali Komparatif · Repeat &amp; Split Billing
                       </div>
-                      <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${
                         isLight ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                       }`}>
-                        MITRE F3: FA0002.F1018 (Unbundling) · ATT&amp;CK: T1078
+                        Indikasi Unbundling
                       </span>
                     </div>
                     <h3 className={`text-sm font-bold mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>

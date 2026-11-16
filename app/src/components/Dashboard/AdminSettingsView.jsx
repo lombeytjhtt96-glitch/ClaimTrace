@@ -516,69 +516,6 @@ export const INITIAL_SETTINGS_CATEGORIES = [
       },
     ],
   },
-  {
-    id: 'cyber_fraud_frameworks',
-    title: 'Adopsi 6 Kerangka Kerja Siber & Anti-Fraud Internasional',
-    icon: 'CheckCircle2',
-    description:
-      'Konfigurasi pemetaan TTP internasional: MITRE F3 v1.1, MITRE ATT&CK v19.1, NIST CSF 2.0, MITRE ATLAS, MITRE D3FEND, NIST AI RMF 1.0.',
-    settings: [
-      {
-        key: 'mitre_f3_detection',
-        label: 'Deteksi Taktik MITRE Fight Fraud Framework (F3 v1.1)',
-        help_text:
-          'Aktifkan pendeteksian otomatis Positioning (FA0001: Synthetic Identity & SIP Replay) dan Monetization (FA0002: Unbundling & Payout Exploitation).',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-      {
-        key: 'mitre_attack_sdmk_mapping',
-        label: 'Validasi Akun Kedinasan MITRE ATT&CK (T1078 Valid Accounts)',
-        help_text:
-          'Blokir penagihan dari kredensial dokter spesialis/DPJP yang berstatus non-aktif, mutasi, atau melampaui batas kecepatan fisik geovelocity.',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-      {
-        key: 'nist_csf_continuous_monitoring',
-        label: 'Audit Berkelanjutan NIST CSF 2.0 (DE.CM-01)',
-        help_text:
-          'Audit otomatis 100% berkas klaim masuk secara real-time sebelum penandatanganan Berita Acara Kelengkapan Berkas (BAKB).',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-      {
-        key: 'mitre_atlas_llm_guardrails',
-        label: 'Pertahanan AI MITRE ATLAS (AML.T0043 & AML.T0047)',
-        help_text:
-          'Filter intervensi terhadap manipulasi prompt dan upaya adversarial evasion pengelompokan INA-CBG pada ClaimTrace AI.',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-      {
-        key: 'd3fend_cryptographic_ledger',
-        label: 'Integritas Buku Besar MITRE D3FEND (D3-DS & D3-MFA)',
-        help_text:
-          'Segel setiap keputusan verifikator ke dalam rantai hash SHA-256 anti-rekayasa berstandar FIPS 140-3.',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-      {
-        key: 'nist_ai_rmf_governance',
-        label: 'Standar Tata Kelola AI NIST AI RMF 1.0 (GOVERN-1.1)',
-        help_text:
-          'Pastikan seluruh keluaran inferensi model AI tunduk pada prinsip transparansi, keterbukaan bukti, dan bebas bias sistemik.',
-        type: 'toggle',
-        value: true,
-        editable: true,
-      },
-    ],
-  },
 ];
 
 function CategoryIcon({ iconName, className = 'w-5 h-5' }) {

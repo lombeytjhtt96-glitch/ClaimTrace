@@ -342,16 +342,9 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             }`}>
               Jadwal Klarifikasi &amp; Audit Medis
             </h1>
-            <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border shadow-xs ${
-              isLight
-                ? 'bg-amber-50 text-amber-900 border-amber-300'
-                : 'bg-white/10 text-[#FFCA40] border-white/10'
-            }`}>
-              MITRE F3: FA0001 · NIST CSF 2.0: RS.CO-03
-            </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Kelola dan pantau seluruh jadwal klarifikasi klaim antara FKRTL/DPJP, Tim Casemix, dan Verifikator Medis BPJS Kesehatan (SOP Penanganan Fraud &amp; Rekonsiliasi).
+            Jadwal klarifikasi klaim antara FKRTL/DPJP, Tim Casemix, dan Verifikator Medis BPJS Kesehatan.
           </p>
         </div>
 
@@ -380,7 +373,7 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
             }`}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Segarkan (Refresh)</span>
+            <span>Segarkan</span>
           </button>
         </div>
       </div>

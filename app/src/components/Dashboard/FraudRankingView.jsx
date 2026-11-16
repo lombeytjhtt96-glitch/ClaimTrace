@@ -92,7 +92,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
               <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>· Permenkes No. 16/2019 Pencegahan Fraud JKN</span>
             </div>
             <h1 className={`text-xl font-bold tracking-tight mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Peringkat Risiko Kecurangan Faskes (Hospital Risk Leaderboard)
+              Peringkat Risiko Kecurangan Faskes
             </h1>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               Evaluasi komprehensif tingkat kepatuhan klaim, rasio upcoding, potensi kerugian DJS, dan matriks kuadran risiko rumah sakit se-Indonesia.

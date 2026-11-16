@@ -354,7 +354,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
             : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30',
           icon: <AlertTriangle className={`w-3.5 h-3.5 ${isLight ? 'text-amber-800' : 'text-amber-400'}`} />,
-          label: 'Terbuka (Open)',
+          label: 'Terbuka',
         };
       case 'reviewed':
         return {
@@ -362,7 +362,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             ? 'bg-sky-50 text-sky-900 border-sky-300 hover:bg-sky-100'
             : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30',
           icon: <Clock className={`w-3.5 h-3.5 ${isLight ? 'text-sky-700' : 'text-cyan-400'}`} />,
-          label: 'Ditinjau (Reviewed)',
+          label: 'Ditinjau',
         };
       case 'resolved':
         return {
@@ -370,7 +370,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
             : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30',
           icon: <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />,
-          label: 'Selesai (Resolved)',
+          label: 'Selesai',
         };
       default:
         return {
@@ -412,16 +412,9 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                 }`}>
                   {stats.total} total
                 </span>
-                <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                  isLight
-                    ? 'bg-slate-100 text-slate-700 border-slate-200'
-                    : 'bg-white/10 text-white/80 border-white/10'
-                }`}>
-                  MITRE ATT&CK: Anti-T1070 · MITRE F3: FA0001
-                </span>
               </div>
               <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                Tinjau penandaan anomali SEP, sangkalan presensi Mobile JKN Lapis 3, dan diskrepansi resume medis FKRTL anti-rekayasa.
+                Tinjau penandaan anomali SEP, sangkalan presensi Mobile JKN Lapis 3, dan diskrepansi resume medis FKRTL.
               </p>
             </div>
           </div>
@@ -436,7 +429,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'} ${loading ? 'animate-spin' : ''}`} />
-            Segarkan (Refresh)
+            Segarkan
           </button>
         </div>
 
@@ -448,7 +441,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
               : 'bg-amber-500/15 border-amber-500/30 text-white/70'
           }`}>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>Terbuka (Open):</span>
+            <span>Terbuka:</span>
             <span className={`font-bold ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>{stats.open}</span>
           </div>
           <div className={`px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-2 font-medium ${
@@ -457,7 +450,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
               : 'bg-blue-500/15 border-blue-500/30 text-white/70'
           }`}>
             <span className="w-2 h-2 rounded-full bg-sky-500" />
-            <span>Ditinjau (Reviewed):</span>
+            <span>Ditinjau:</span>
             <span className={`font-bold ${isLight ? 'text-sky-900' : 'text-blue-300'}`}>{stats.reviewed}</span>
           </div>
           <div className={`px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-2 font-medium ${
@@ -466,7 +459,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
               : 'bg-emerald-500/15 border-emerald-500/30 text-white/70'
           }`}>
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Selesai (Resolved):</span>
+            <span>Selesai:</span>
             <span className={`font-bold ${isLight ? 'text-emerald-900' : 'text-emerald-300'}`}>{stats.resolved}</span>
           </div>
         </div>
@@ -507,10 +500,10 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                 : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
             }`}
           >
-            <option value="all">Semua Status (All Status)</option>
-            <option value="open">Terbuka (Open)</option>
-            <option value="reviewed">Ditinjau (Reviewed)</option>
-            <option value="resolved">Selesai (Resolved)</option>
+            <option value="all">Semua Status</option>
+            <option value="open">Terbuka</option>
+            <option value="reviewed">Ditinjau</option>
+            <option value="resolved">Selesai</option>
           </select>
 
           {/* Category Filter */}
@@ -526,7 +519,7 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                 : 'bg-[#00134A] border-white/10 text-white focus:border-[#FFCA40]/60'
             }`}
           >
-            <option value="all">Semua Kategori (All Categories)</option>
+            <option value="all">Semua Kategori</option>
             {PREDEFINED_CATEGORIES.map((cat) => (
               <option key={cat.value} value={cat.value}>
                 {cat.label}

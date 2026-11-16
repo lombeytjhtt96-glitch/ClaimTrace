@@ -341,13 +341,13 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
               <ShieldCheck className={`h-6 w-6 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
               Profil Verifikator &amp; Otorisasi
             </h1>
-            <span className={`text-[10.5px] font-mono font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
+            <span className={`text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
               isLight 
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
                 : 'bg-[#FFCA40]/10 text-[#FFCA40] border-[#FFCA40]/30'
             }`}>
               <BadgeCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
-              <span>NIST CSF PR.AC · MITRE F3: FA0001 (Level 4 Investigator)</span>
+              <span>Verifikator Medis Tersertifikasi</span>
             </span>
           </div>
           <p className={`text-xs ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>

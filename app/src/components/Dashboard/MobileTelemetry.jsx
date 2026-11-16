@@ -179,16 +179,9 @@ export default function MobileTelemetry({
                     }`}>
                       LAPIS 3 VERIFIKASI PESERTA
                     </span>
-                    <span className={`text-[9.5px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                      isLight
-                        ? 'bg-slate-100 text-slate-600 border-slate-200'
-                        : 'bg-white/5 text-white/70 border-white/10'
-                    }`}>
-                      MITRE D3FEND: D3-MFA · MITRE F3: FA0001.F1005
-                    </span>
                   </h1>
                   <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                    Pemantauan saluran <em>Push Notification Bridge</em> ke aplikasi peserta secara <em>real-time</em> untuk konfirmasi kehadiran faktual &amp; pencegahan klaim fiktif (MITRE D3FEND D3-MFA Presence Attestation).
+                    Saluran konfirmasi kehadiran peserta real-time via Mobile JKN untuk verifikasi layanan faktual &amp; cegah klaim fiktif.
                   </p>
                 </div>
               </div>

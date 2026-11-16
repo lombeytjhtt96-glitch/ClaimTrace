@@ -4,11 +4,20 @@ import { downloadTextFile } from '../../utils/exportCsv';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion } from 'motion/react';
-import { 
-  AlertOctagon, CheckCircle2, Clock, ChevronRight, 
+import {
+  AlertOctagon, CheckCircle2, Clock, ChevronRight,
   Search, ShieldCheck, CheckSquare, Square, PlusCircle, Download, Check, X,
   UserCheck, Layers
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from 'recharts';
 
 const SIMULATE_PRESETS = [
   {
@@ -633,36 +642,6 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
     }
   };
 
-  const screeningStages = Array.isArray(pipelineSummary?.stages) && pipelineSummary.stages.length === 4
-    ? pipelineSummary.stages
-    : [
-        {
-          stage: 1,
-          name: 'Tahap 1 · Filter Awal & Pengecualian PRB',
-          rule: 'Menyaring 1.699.219 FPK dan mengecualikan resep kronis PRB <= 30 hari (PMK 3/2023 Pasal 37).',
-          metric_label: '1.697.588 (99,90%) wajar -> Fast-Track Hijau',
-        },
-        {
-          stage: 2,
-          name: 'Tahap 2 · Pola Lonjakan & Klaim Ganda (#6/#11)',
-          rule: 'Deteksi lonjakan klaster >= 3,0x baseline, koreksi tarif biaya klaim vs verifikasi, dan klaim ganda hari sama.',
-          metric_label: '4.876 pasang klaim ganda (9.555 berkas) + 1.631 koreksi tarif',
-        },
-        {
-          stage: 3,
-          name: 'Tahap 3 · SDMK, Geovelocity & NLP Semantik',
-          rule: 'Uji SIP Expired (Hard Trigger >= 75), kecepatan antar-RS OSRM > 120 km/jam, dan duplikasi teks >= 90%.',
-          metric_label: 'S2 memisahkan SIP Expired (Merah) vs Unsynced (Kuning)',
-        },
-        {
-          stage: 4,
-          name: 'Tahap 4 · Konfirmasi Mobile JKN & Fusi (0 - 100)',
-          rule: 'Skor = 0,50*S1 + 0,30*S2 + 0,20*S3 -> Hijau (<50), Kuning (50-74,9), Merah (>=75 / Hard Trigger).',
-          metric_label: 'Keputusan verifikator medis + BAHV Bersegel Elektronik BSrE',
-        },
-      ];
-  const thresholdList = pipelineSummary?.scoring_spec?.thresholds || [];
-
   return (
     <div className={`space-y-4 font-sans pb-16 sm:pb-20 ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
       {/* TOP TITLE & ACTIONS BAR */}
@@ -829,6 +808,97 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </p>
         </div>
       </div>
+
+      {/* VISUAL RINGKASAN PROPORSIONAL & TOP FASKES ANTREAN */}
+      {liveClaims.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className={`lg:col-span-5 rounded-2xl p-4 border flex flex-col justify-between gap-3 ${
+            isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#1e2530] border-[#2d3748]'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Proporsi Jalur Penapisan
+              </span>
+              <span className={`text-[11px] font-mono font-semibold tabular-nums ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                {totalQueueCount} berkas
+              </span>
+            </div>
+            <div className={`w-full h-3.5 rounded-full overflow-hidden flex ${isLight ? 'bg-slate-100' : 'bg-white/10'}`} aria-label="Proporsi jalur merah kuning hijau">
+              <div style={{ width: `${redPct}%` }} className="bg-rose-600 h-full transition-all duration-300" title={`Merah ${redPct}%`} />
+              <div style={{ width: `${yellowPct}%` }} className="bg-amber-500 h-full transition-all duration-300" title={`Kuning ${yellowPct}%`} />
+              <div style={{ width: `${greenPct}%` }} className="bg-emerald-600 h-full transition-all duration-300" title={`Hijau ${greenPct}%`} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[11px] tabular-nums">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0" />
+                <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-200 font-semibold'}>Merah {redPct}%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-200 font-semibold'}>Kuning {yellowPct}%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+                <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-200 font-semibold'}>Hijau {greenPct}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={`lg:col-span-7 rounded-2xl p-4 border ${
+            isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#1e2530] border-[#2d3748]'
+          }`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Sebaran Skor Risiko Tertinggi Antrean
+              </span>
+              <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Skala 0 - 100</span>
+            </div>
+            <div className="h-24 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[...liveClaims]
+                    .sort((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
+                    .slice(0, 5)
+                    .map((c) => ({
+                      label: c.hospital
+                        .replace(/^RS(?:UD|U|PN)?\s+(?:Khusus|Umum|Daerah|Swasta)?\s*/i, '')
+                        .replace(/\s*\([^)]*\)/g, '')
+                        .trim()
+                        .slice(0, 14),
+                      score: Math.round(Number(c.totalScore || 0)),
+                      lane: c.lane,
+                    }))}
+                  margin={{ top: 2, right: 8, left: -18, bottom: 0 }}
+                >
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: isLight ? '#475569' : '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    formatter={(v) => [`${v} / 100`, 'Skor Anomali']}
+                    contentStyle={{
+                      borderRadius: 8,
+                      fontSize: 11,
+                      backgroundColor: isLight ? '#ffffff' : '#0E1116',
+                      borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.15)',
+                      color: isLight ? '#0f172a' : '#f8fafc',
+                    }}
+                  />
+                  <Bar dataKey="score" radius={[4, 4, 0, 0]} barSize={26} isAnimationActive={false}>
+                    {[...liveClaims]
+                      .sort((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
+                      .slice(0, 5)
+                      .map((c, idx) => (
+                        <Cell
+                          key={idx}
+                          fill={c.lane === 'red' ? (isLight ? '#BE123C' : '#FB7185') : c.lane === 'yellow' ? (isLight ? '#B45309' : '#FBBF24') : (isLight ? '#047857' : '#34D399')}
+                        />
+                      ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FILTER CONTROLS STRIP */}
       <div className={`rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 border ${
@@ -1292,6 +1362,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     }`}>
                       {Number(c.totalScore).toFixed(1)}
                     </span>
+                    <div className={`h-1 w-12 mx-auto mt-1 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`}>
+                      <div
+                        className={`h-full rounded-full ${
+                          c.lane === 'red' ? 'bg-rose-500' : c.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(8, Number(c.totalScore) || 0))}%` }}
+                      />
+                    </div>
                   </td>
 
                   {/* 7. Status & SLA */}

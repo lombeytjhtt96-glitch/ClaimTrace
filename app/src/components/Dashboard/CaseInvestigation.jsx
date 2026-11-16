@@ -70,8 +70,6 @@ export default function CaseInvestigation({
   onBackToQueue,
   onOpenDecision,
   onOpenDocumentChecker,
-  onOpenAgentCopilot,
-  onOpenExpansionSuite,
   isLight = false
 }) {
   const [volumeViewType, setVolumeViewType] = useState('bar'); // 'bar' | 'area'
@@ -685,44 +683,64 @@ export default function CaseInvestigation({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs pt-1">
               {(() => {
                 const cbgParts = String(currentCase.code || 'Z-3-12-0').split('-');
                 const fkl20 = cbgParts[0] || 'Z';
                 const fkl21 = cbgParts[1] || '3';
-                const fkl22 = cbgParts[2] || '12';
                 const fkl23 = cbgParts[3] || '0';
                 const icdRaw = String(rawClaim?.icd10_primary || '').toUpperCase();
                 const isHardNegDiag = ['Z49.1', 'Z51.1', 'I69.3'].some((code) => icdRaw.includes(code));
+                const boxCls = isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-white/5 border-white/10';
                 return (
                   <>
-                    <span className={`font-semibold px-2.5 py-1 rounded-xl border ${isLight ? 'text-slate-800 bg-slate-50 border-slate-200' : 'text-white/90 bg-white/5 border-white/10'}`}>
-                      INA-CBG <strong className={`tabular-nums font-mono ${isLight ? 'text-amber-800' : 'text-[#FFCA40]'}`}>{currentCase.code}</strong>: <span className={isLight ? 'text-slate-600 font-normal' : 'text-white/70 font-normal'}>{currentCase.description}</span>
-                      <span className={`ml-1.5 font-mono text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>(CMG {fkl20} · {fkl21 === '4' ? 'Rawat Inap' : 'Rawat Jalan/Khusus'} · Level {fkl23})</span>
-                    </span>
-                    <span className={`font-bold px-2.5 py-1 rounded-xl font-mono tabular-nums shadow-xs border ${isLight ? 'text-emerald-800 bg-emerald-50 border-emerald-300' : 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'}`}>
-                      {currentCase.tariff}
-                    </span>
-                    <span className={`px-2.5 py-1 rounded-xl border ${isLight ? 'text-slate-700 bg-slate-50 border-slate-200' : 'text-white/70 bg-white/5 border-white/10'}`}>
-                      Tanggal: <strong className={`font-mono tabular-nums ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentCase.date}</strong>
-                    </span>
-                    <span className={`px-2.5 py-1 rounded-xl border ${isLight ? 'text-slate-700 bg-slate-50 border-slate-200' : 'text-white/70 bg-white/5 border-white/10'}`}>
-                      DPJP: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{currentCase.dpjp}</strong>
-                    </span>
-                    <span className={`text-[10.5px] font-mono font-bold px-2.5 py-1 rounded-xl border ${
-                      effectiveLane === 'HIJAU'
-                        ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
-                        : (isLight ? 'bg-amber-50 text-amber-900 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/35')
-                    }`}>
-                      {effectiveLane === 'HIJAU' ? 'BEA C03.04 → Siap S06 In-Monica' : 'BEA C03.04 → Tahan Pencairan S06 In-Monica'}
-                    </span>
-                    {(isHardNegDiag || sipStatus === 'UNSYNCED') && (
-                      <span className={`text-[10.5px] font-mono font-bold px-2.5 py-1 rounded-xl border ${
-                        isLight ? 'bg-cyan-50 text-cyan-900 border-cyan-300' : 'bg-cyan-500/15 text-cyan-200 border-cyan-500/35'
-                      }`}>
-                        FairGuard Aktif: {sipStatus === 'UNSYNCED' ? 'SIP Unsynced (Kuning Administratif)' : 'Layanan Kronis Terlindungi'}
+                    <div className={`px-3 py-2 rounded-xl border ${boxCls}`}>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        INA-CBG · {fkl20}-{fkl21 === '4' ? 'RI' : 'RJ'} Lv.{fkl23}
                       </span>
-                    )}
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 mt-0.5">
+                        <strong className={`font-mono text-xs whitespace-nowrap shrink-0 ${isLight ? 'text-slate-900' : 'text-white'}`}>{currentCase.code}</strong>
+                        <span className={`font-mono font-bold text-xs tabular-nums whitespace-nowrap shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-300'}`}>{currentCase.tariff}</span>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-2 rounded-xl border ${boxCls}`}>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        DPJP &amp; Layanan
+                      </span>
+                      <div className={`font-semibold truncate mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`} title={currentCase.dpjp}>
+                        {currentCase.dpjp}
+                      </div>
+                    </div>
+                    <div className={`px-3 py-2 rounded-xl border ${boxCls}`}>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        Tanggal &amp; Prosedur
+                      </span>
+                      <div className={`truncate mt-0.5 ${isLight ? 'text-slate-800' : 'text-white/90'}`} title={currentCase.description}>
+                        <span className="font-mono font-semibold">{currentCase.date}</span> · {currentCase.description}
+                      </div>
+                    </div>
+                    <div className={`px-3 py-2 rounded-xl border ${
+                      effectiveLane === 'MERAH'
+                        ? (isLight ? 'bg-rose-50/80 border-rose-200' : 'bg-rose-500/10 border-rose-500/30')
+                        : effectiveLane === 'KUNING'
+                        ? (isLight ? 'bg-amber-50/80 border-amber-200' : 'bg-amber-500/10 border-amber-500/30')
+                        : (isLight ? 'bg-emerald-50/80 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/30')
+                    }`}>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider block ${
+                        effectiveLane === 'MERAH' ? (isLight ? 'text-rose-700' : 'text-rose-300') : effectiveLane === 'KUNING' ? (isLight ? 'text-amber-700' : 'text-amber-300') : (isLight ? 'text-emerald-700' : 'text-emerald-300')
+                      }`}>
+                        Rekomendasi Penapisan
+                      </span>
+                      <div className={`font-bold mt-0.5 truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {isHardNegDiag || sipStatus === 'UNSYNCED'
+                          ? (sipStatus === 'UNSYNCED' ? 'Tunda Klarifikasi (FairGuard SIP)' : 'Layanan Kronis Terlindungi')
+                          : effectiveLane === 'HIJAU'
+                          ? 'Siap Layak Bayar (Fast-Track)'
+                          : effectiveLane === 'KUNING'
+                          ? 'Klarifikasi Dokumen FPK'
+                          : 'Tahan Bayar · Wajib Audit'}
+                      </div>
+                    </div>
                   </>
                 );
               })()}
@@ -777,8 +795,8 @@ export default function CaseInvestigation({
         </div>
       </div>
 
-      {/* RINGKASAN TEMUAN AUDIT MEDIS */}
-      <div className={`border rounded-2xl p-4 space-y-3.5 transition-colors ${
+      {/* VISUAL PROFIL RISIKO 4-LAPIS (RINGKAS & VISUAL-FIRST) */}
+      <div className={`border rounded-2xl p-4 space-y-3 transition-colors ${
         isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A] border-white/10 shadow-lg'
       }`}>
         <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2.5 ${isLight ? 'border-slate-100' : 'border-white/10'}`}>
@@ -788,73 +806,95 @@ export default function CaseInvestigation({
             </div>
             <div>
               <h2 className={`text-sm font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Ringkasan Temuan Verifikasi Medis
+                Profil Risiko Verifikasi Medis
               </h2>
-              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-                Penyaringan pra-pembayaran klaim sesuai Permenkes No. 26/2021 dan Perpres No. 82/2018
+              <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                PMK 26/2021 · Perpres 82/2018 · Perbandingan Skor Lapis 1 - 4
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
-              effectiveLane === 'MERAH'
-                ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30')
-                : effectiveLane === 'KUNING'
-                ? (isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30')
-                : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
-            }`}>
-              Rekomendasi: {effectiveLane === 'MERAH' ? 'Klarifikasi Faskes / Tunda Bayar' : effectiveLane === 'KUNING' ? 'Konfirmasi Dokumen' : 'Layak Lolos Verifikasi'}
-            </span>
-          </div>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
+            effectiveLane === 'MERAH'
+              ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30')
+              : effectiveLane === 'KUNING'
+              ? (isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30')
+              : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30')
+          }`}>
+            {effectiveLane === 'MERAH' ? 'Klarifikasi Faskes / Tunda Bayar' : effectiveLane === 'KUNING' ? 'Konfirmasi Dokumen' : 'Layak Lolos Verifikasi'}
+          </span>
         </div>
 
-        {/* 3 Core Factual Findings */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className={`p-3 rounded-xl border space-y-1 ${isLight ? 'bg-slate-50/70 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              1. Keabsahan Izin Praktik DPJP
-            </span>
-            <div className="flex items-center gap-1.5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+          {/* Grafik Batang Horizontal 4-Lapis */}
+          <div className="lg:col-span-7 h-36 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                layout="vertical"
+                data={[
+                  { layer: 'Lapis 1 · Pola', score: Math.round(effS1) },
+                  { layer: 'Lapis 2 · SDMK', score: Math.round(effS2) },
+                  { layer: 'Lapis 3 · Mobile', score: Math.round(effS3) },
+                  { layer: 'Skor Akhir', score: Math.round(Number(totalScore || 0)) },
+                ]}
+                margin={{ top: 2, right: 36, left: 8, bottom: 2 }}
+              >
+                <XAxis type="number" domain={[0, 100]} hide />
+                <YAxis
+                  type="category"
+                  dataKey="layer"
+                  width={108}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: isLight ? '#334155' : '#cbd5e1', fontWeight: 600 }}
+                />
+                <Tooltip
+                  cursor={{ fill: isLight ? 'rgba(15,23,42,0.04)' : 'rgba(255,255,255,0.04)' }}
+                  formatter={(v) => [`${v} / 100`, 'Skor Anomali']}
+                  contentStyle={{
+                    borderRadius: 10,
+                    fontSize: 11,
+                    backgroundColor: isLight ? '#ffffff' : '#0E1116',
+                    borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.15)',
+                    color: isLight ? '#0f172a' : '#f8fafc',
+                  }}
+                />
+                <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={16} isAnimationActive={false}>
+                  {[effS1, effS2, effS3, totalScore].map((val, idx) => {
+                    const n = Number(val || 0);
+                    const fill = n >= 75 ? (isLight ? '#BE123C' : '#FB7185') : n >= 50 ? (isLight ? '#B45309' : '#FBBF24') : (isLight ? '#047857' : '#34D399');
+                    return <Cell key={idx} fill={fill} />;
+                  })}
+                  <LabelList
+                    dataKey="score"
+                    position="right"
+                    style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 700, fill: isLight ? '#0f172a' : '#f8fafc' }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* 3 Indikator Visual Cepat */}
+          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2">
+            <div className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+              <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Izin Praktik SIP</span>
               <span className={`text-xs font-bold ${sipStatus === 'EXPIRED' ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-emerald-700' : 'text-emerald-400')}`}>
-                {sipStatus === 'EXPIRED' ? 'SIP Tidak Aktif / Kadaluarsa' : 'SIP Terverifikasi Aktif'}
+                {sipStatus === 'EXPIRED' ? 'Kadaluwarsa' : sipStatus === 'UNSYNCED' ? 'Perlu Sinkron' : 'Aktif Sah'}
               </span>
             </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              {sipStatus === 'EXPIRED' 
-                ? `SIP ${currentCase.dpjp} tidak aktif pada tanggal layanan di faskes ini berdasarkan sinkronisasi SATUSEHAT SDMK.`
-                : `SIP ${currentCase.dpjp} terdaftar sah dan aktif di faskes yang bersangkutan.`}
-            </p>
-          </div>
-
-          <div className={`p-3 rounded-xl border space-y-1 ${isLight ? 'bg-slate-50/70 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              2. Konfirmasi Kehadiran Peserta
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs font-bold ${currentCase.deniedCount > 0 ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-emerald-700' : 'text-emerald-400')}`}>
-                {currentCase.deniedCount > 0 ? `${currentCase.deniedCount} dari ${currentCase.sampleCount} Peserta Menolak` : 'Seluruh Peserta Mengonfirmasi'}
+            <div className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+              <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Konfirmasi Peserta</span>
+              <span className={`text-xs font-bold font-mono tabular-nums ${currentCase.deniedCount > 0 ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-emerald-700' : 'text-emerald-400')}`}>
+                {currentCase.deniedCount > 0 ? `${currentCase.deniedCount}/${currentCase.sampleCount} Menolak` : `${currentCase.sampleCount}/${currentCase.sampleCount} Hadir`}
               </span>
             </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              {currentCase.deniedCount > 0 
-                ? 'Sebagian besar peserta terhubung menyatakan tidak pernah menerima tindakan medis pada tanggal yang ditagihkan faskes.'
-                : 'Peserta mengonfirmasi kehadiran dan menerima pelayanan medis sesuai rekam medis.'}
-            </p>
-          </div>
-
-          <div className={`p-3 rounded-xl border space-y-1 ${isLight ? 'bg-slate-50/70 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-            <span className={`text-[10.5px] font-bold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-              3. Pola Frekuensi Klaim
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-xs font-bold ${spikeRatio >= 3 ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-emerald-700' : 'text-emerald-400')}`}>
-                Lonjakan {spikeRatio.toFixed(1)}x Baseline
+            <div className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+              <span className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-white/60'}`}>Frekuensi Klaster</span>
+              <span className={`text-xs font-bold font-mono tabular-nums ${spikeRatio >= 3 ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-emerald-700' : 'text-emerald-400')}`}>
+                {spikeRatio.toFixed(1)}x Baseline · {clusterVolume} SEP
               </span>
             </div>
-            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Terdeteksi volume {clusterVolume} berkas klaim sejenis dalam 1 klaster penagihan, melampaui ambang batas wajar faskes kelas B.
-            </p>
           </div>
         </div>
       </div>
@@ -1316,15 +1356,15 @@ export default function CaseInvestigation({
               Telemetri Biometrik FRISTA BPJS (Face + Sidik Jari) &amp; Deteksi Multi-Tipologi (Upcoding #4 · Unbundling #9)
             </h3>
           </div>
-          {onOpenExpansionSuite && (
+          {onOpenDocumentChecker && (
             <button
               type="button"
-              onClick={onOpenExpansionSuite}
-              aria-label="Buka Suite Forensik Lanjutan FRISTA, Upcoding, RAG, dan QR PDF"
+              onClick={onOpenDocumentChecker}
+              aria-label="Buka kelengkapan 7 dokumen RS dan uji koding ICD-10"
               className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition-colors duration-150 cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
             >
               <Layers className="size-3.5" />
-              <span>Buka Suite Forensik Lanjutan (FRISTA · Upcoding · RAG · QR PDF)</span>
+              <span>Cek 7 Dokumen &amp; ICD-10</span>
               <ArrowRight className="size-3.5" />
             </button>
           )}

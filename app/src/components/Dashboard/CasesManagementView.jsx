@@ -335,33 +335,33 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className={`text-xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Tickets
+            Manajemen Penugasan Kasus Klaim
           </h1>
-          <div className="flex items-center space-x-1.5 text-xs text-slate-400 mt-0.5">
-            <span>Manajemen Kasus</span>
-            <ChevronRight className="w-3 h-3 text-slate-400" />
-            <span>Apps</span>
-            <ChevronRight className="w-3 h-3 text-slate-400" />
-            <span className={isLight ? 'text-slate-700 font-semibold' : 'text-slate-200 font-semibold'}>Tickets</span>
-          </div>
+          <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            Distribusi berkas bermasalah ke verifikator medis dan pantauan tenggat SLA
+          </p>
         </div>
 
-        {/* Date Filter Pills (All, 1M, 6M, 1Y) */}
         <div className={`flex items-center p-1 rounded-xl border text-xs font-semibold ${
           isLight ? 'bg-white border-slate-200 shadow-2xs' : 'bg-[#222b38] border-[#2d3748]'
         }`}>
-          {['All', '1M', '6M', '1Y'].map((t) => (
+          {[
+            { id: 'All', label: 'Semua' },
+            { id: '1M', label: '1 Bln' },
+            { id: '6M', label: '6 Bln' },
+            { id: '1Y', label: '1 Thn' },
+          ].map((t) => (
             <button
-              key={t}
+              key={t.id}
               type="button"
-              onClick={() => setTimeFilter(t)}
+              onClick={() => setTimeFilter(t.id)}
               className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                timeFilter === t
+                timeFilter === t.id
                   ? (isLight ? 'bg-slate-100 text-slate-900 font-bold' : 'bg-white/10 text-white font-bold')
                   : (isLight ? 'text-slate-500 hover:text-slate-800' : 'text-slate-400 hover:text-white')
               }`}
             >
-              {t}
+              {t.label}
             </button>
           ))}
         </div>
@@ -376,7 +376,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
               {cases.length ? (cases.length * 128 + 1245).toLocaleString('id-ID') : '25.563'}
             </div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TOTAL TIKET KLAIM
+              TOTAL BERKAS KLAIM
             </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -391,7 +391,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
               {pageCritical + pageHigh ? (pageCritical + pageHigh) * 42 + 284 : '6.952'}
             </div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TIKET PENDING / KLARIFIKASI
+              PERLU KLARIFIKASI
             </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -406,7 +406,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
               {cases.filter(c => c.status === 'resolved').length ? (cases.filter(c => c.status === 'resolved').length * 95 + 1200).toLocaleString('id-ID') : '18.361'}
             </div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TIKET SELESAI / LAYAK
+              LAYAK BAYAR / SELESAI
             </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -421,7 +421,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
               {pageSlaBreached ? pageSlaBreached * 10 + 15 : '250'}
             </div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-              TIKET TAHAN / AUDIT
+              TAHAN / AUDIT LANJUT
             </div>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -436,7 +436,7 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
       }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-[#2d3748]">
           <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-            Kelola Antrean Tiket Klaim
+            Daftar Berkas Penugasan Klaim
           </h2>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -824,10 +824,10 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
                         : 'bg-[#00134A] border-white/10 text-white'
                     }`}
                   >
-                    <option value="new">Baru (New)</option>
+                    <option value="new">Baru</option>
                     <option value="in_progress">Sedang Diaudit</option>
-                    <option value="resolved">Selesai (Resolved)</option>
-                    <option value="closed">Ditutup (Closed)</option>
+                    <option value="resolved">Selesai</option>
+                    <option value="closed">Ditutup</option>
                   </select>
                 </div>
 

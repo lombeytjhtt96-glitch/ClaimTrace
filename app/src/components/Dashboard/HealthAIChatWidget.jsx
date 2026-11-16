@@ -248,7 +248,7 @@ export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, is
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   <span className="text-[10px] text-white/80 font-semibold uppercase tracking-wider leading-none">
-                    Orkestrator Online · NIST AI RMF 1.0
+                    Asisten Klinis Siap Membantu
                   </span>
                 </div>
               </div>

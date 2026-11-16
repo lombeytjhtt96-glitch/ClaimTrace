@@ -220,15 +220,15 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                Modul Verifikasi Dokumen RS
+                Verifikasi 7 Dokumen Wajib RS
               </span>
-              <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>· Petunjuk Teknis Verifikasi Digital Klaim</span>
+              <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>· PMK 26/2021</span>
             </div>
             <h1 className={`text-xl font-display font-semibold tracking-tight mt-1 ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
               Pengecekan Dokumen Klaim & Berkas Rekam Medis RS
             </h1>
             <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-              Inspeksi forensik kelengkapan 7 berkas wajib FKRTL, validasi tanda tangan DPJP, verifikasi penunjang objektif, dan deteksi unbundling billing.
+              Audit visual kelengkapan 7 berkas RM, validasi TTE DPJP, serta uji koding ICD-10 dan kaidah Fornas.
             </p>
           </div>
 
@@ -385,28 +385,38 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
         {/* LEFT COLUMN: DOCUMENT TABS & VIEWER (7 COLUMNS) */}
         <div className="lg:col-span-7 space-y-3">
           {/* DOCUMENT TABS */}
-          <div className={`p-2 rounded-xl border flex flex-wrap gap-1.5 ${
+          <div className={`p-2 rounded-xl border flex flex-wrap items-center gap-1.5 ${
             isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
           }`}>
             {documentsBundle.map((doc) => {
               const isSelected = selectedDocType === doc.doc_type;
+              const isDocComplete = Boolean(doc.is_signed_electronically && doc.is_stamp_valid);
               return (
                 <button
                   key={doc.doc_id}
+                  type="button"
                   onClick={() => setSelectedDocType(doc.doc_type)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center space-x-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
                       ? 'bg-emerald-700 text-white shadow-xs'
                       : isLight
-                      ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      isDocComplete ? 'bg-emerald-400' : 'bg-rose-500'
+                    }`}
+                    aria-hidden="true"
+                  />
                   <FileText className="w-3.5 h-3.5 shrink-0" />
                   <span>{doc.doc_title.split('(')[0].trim()}</span>
-                  {doc.doc_type === 'RESUME_MEDIS' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  )}
+                  <span className={`text-[10px] font-mono ${
+                    isSelected ? 'text-emerald-100' : isLight ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
+                    {isDocComplete ? 'Sah' : 'Perlu Cek'}
+                  </span>
                 </button>
               );
             })}

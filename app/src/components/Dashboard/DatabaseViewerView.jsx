@@ -701,12 +701,7 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
               isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
             }`}>
-              Database OLAP Persistent (237 MB)
-            </span>
-            <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-              isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-white/10 text-[#FFCA40] border-white/10'
-            }`}>
-              MITRE D3FEND: D3-DS · NIST CSF 2.0: PR.DS-01
+              Gudang Data JKN Terindeks
             </span>
           </div>
           <p className={`text-xs sm:text-sm mt-2 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>

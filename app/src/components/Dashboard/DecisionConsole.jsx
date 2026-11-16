@@ -26,7 +26,6 @@ export default function DecisionConsole({
   onSetVerificatorAction,
   onBackToInvestigation,
   onBackToQueue,
-  onOpenExpansionSuite,
   currentUser,
   isLight: propIsLight
 }) {
@@ -1483,20 +1482,6 @@ export default function DecisionConsole({
                 <Download className="w-4 h-4" />
                 <span>Buka Pratinjau &amp; Cetak Dokumen PDF</span>
               </button>
-
-              {onOpenExpansionSuite && (
-                <button type="button"
-                  onClick={onOpenExpansionSuite}
-                  className={`w-full font-bold text-xs py-2 px-3 rounded-xl border transition flex items-center justify-center space-x-2 cursor-pointer ${
-                    isLight
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                      : 'bg-white/10 hover:bg-white/15 text-emerald-300 border-white/15'
-                  }`}
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Cetak Berita Acara FKRTL + Segel SHA-256</span>
-                </button>
-              )}
             </div>
           </div>
 

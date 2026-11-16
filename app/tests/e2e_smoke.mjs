@@ -346,11 +346,11 @@ async function run() {
     await page.keyboard.press('Escape');
     await escPalette.waitFor({ state: 'hidden', timeout: 5000 });
 
-    // Ctrl+K -> Telaah Kasus (Investigasi) + Audit Klinis + Jump ke Cek 7 Dokumen RS
-    await navigateViaCommandPalette('Investigasi', /Telaah Kasus/i);
+    // Ctrl+K -> Telaah & Dokumen + Audit Klinis + Jump ke Cek 7 Dokumen & ICD-10
+    await navigateViaCommandPalette('Telaah', /Telaah & Dokumen/i);
     await page.getByText(/Audit Klinis & Kaidah Koding INA-CBG/i).waitFor({ state: 'visible', timeout: 10000 });
     await page.getByText('Audit Klinis Tersinkron').first().waitFor({ state: 'visible', timeout: 10000 });
-    await page.getByRole('button', { name: /Cek 7 Dokumen RS/i }).click();
+    await page.getByRole('button', { name: /Buka kelengkapan 7 dokumen RS/i }).click();
     await page.getByText('Pengecekan Dokumen Klaim & Berkas Rekam Medis RS').waitFor({ state: 'visible', timeout: 10000 });
     console.log('[PASS] Ctrl+K navigation + CaseInvestigation clinical audit + 7 Dokumen jump');
 
@@ -359,7 +359,7 @@ async function run() {
       page.waitForResponse(
         (res) => res.url().includes('/api/v1/analytics/fraud-ranking/warehouse-clusters') && res.request().method() === 'GET'
       ),
-      page.getByRole('button', { name: /Peringkat Risiko Faskes/i }).click(),
+      navigateViaCommandPalette('Peringkat', /Peringkat Risiko Faskes/i),
     ]);
     if (clusterRes.status() !== 200) {
       throw new Error(`Warehouse cluster API failed with status ${clusterRes.status()}`);
@@ -379,8 +379,8 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     console.log('[PASS] Pillar 1 Live SQL Warehouse Cohort Panel + Mobile Overflow Check');
 
-    // Pillar 2 UI: Cek Dokumen RS -> ICD-10 Kamus + RealBundleMorbidityPanel (Rule MB1-MB5 & Submit Real Bundle)
-    await page.getByRole('button', { name: /Cek Dokumen RS/i }).click();
+    // Pillar 2 UI: Cek 7 Dokumen RS -> ICD-10 Kamus + RealBundleMorbidityPanel (Rule MB1-MB5 & Submit Real Bundle)
+    await navigateViaCommandPalette('7 Dokumen', /Cek 7 Dokumen RS/i);
     await page.getByRole('button', { name: /Uji Rule MB1-MB5 & Fornas/i }).waitFor({ state: 'visible', timeout: 10000 });
 
     const icdInput = page.getByLabel(/Cari kode atau nama penyakit ICD-10/i);
@@ -454,7 +454,7 @@ async function run() {
     console.log('[PASS] Pillar 2 ICD-10 Kamus + MB1-MB5 + Fornas + Real Document Bundle Submit & Cleanup');
 
     // Pembuktian Empiris -> Audit Benford & Gini Tab
-    await navigateViaCommandPalette('Benford', /Forensik Empiris & Benford/i);
+    await navigateViaCommandPalette('Benford', /Forensik & Gudang Data/i);
     const [benfordRes, giniRes] = await Promise.all([
       page.waitForResponse((res) => res.url().includes('/api/v1/analytics/benford-audit') && res.request().method() === 'GET'),
       page.waitForResponse((res) => res.url().includes('/api/v1/analytics/gini-concentration') && res.request().method() === 'GET'),
@@ -509,7 +509,7 @@ async function run() {
     console.log(`[PASS] Pillar 3 SLA + HL7 FHIR Claim/$submit + Sanggahan BAKB Appeals (${newAppealId})`);
 
     // Laporan Resmi -> Dynamic signer + Pratinjau VEDIKA Server + CSV
-    await navigateViaCommandPalette('BAHV', /Laporan Resmi \(BAHV\)/i);
+    await navigateViaCommandPalette('BAHV', /Laporan & Jejak Audit/i);
     await page.getByText(/Hendra Wijaya, S\.Si, M\.M/i).first().waitFor({ state: 'visible', timeout: 10000 });
     await page.getByRole('button', { name: /Unduh CSV/i }).waitFor({ state: 'visible', timeout: 8000 });
     const popupPromise = page.waitForEvent('popup', { timeout: 4000 }).catch(() => null);
@@ -606,25 +606,29 @@ async function run() {
     };
 
     const fullTabSweep = [
-      ['Antrean Klaim', /Antrean Klaim/i],
-      ['Surveilans Faskes', /Surveilans Faskes \(FRI\)/i],
-      ['Intelijen DPJP', /Intelijen DPJP & SIP/i],
-      ['Gudang Data', /Gudang Data & SQL/i],
-      ['Jejak Audit', /Jejak Audit Sistem/i],
-      ['Kopilot Agen', /Kopilot Agen Audit/i],
-      ['Standar & Tata Kelola', /Standar & Tata Kelola BEA/i],
-      ['Pengaturan', /Pengaturan/i],
-      ['Pusat Komando', /Pusat Komando Cabang/i],
-      ['Manajemen Berkas', /Manajemen Berkas/i],
+      ['Antrean', /Antrean & Berkas/i],
+      ['Telaah', /Telaah & Dokumen/i],
+      ['Konsol Putusan', /Konsol Putusan/i],
+      ['Faskes', /Faskes & DPJP/i],
+      ['Forensik', /Forensik & Gudang Data/i],
+      ['Klarifikasi & Mobile', /Klarifikasi & Mobile JKN/i],
+      ['BAHV', /Laporan & Jejak Audit/i],
+      ['Asisten Klinis', /Asisten Klinis JKN/i],
+      ['Pengaturan', /Pengaturan & Akun/i],
       ['Triase Cepat', /Triase Cepat/i],
+      ['Manajemen Berkas', /Manajemen Berkas/i],
       ['Berkas Ditandai', /Berkas Ditandai/i],
-      ['Telemetri Mobile', /Telemetri Mobile JKN/i],
+      ['7 Dokumen', /Cek 7 Dokumen RS/i],
+      ['Peringkat Risiko', /Peringkat Risiko Faskes/i],
+      ['Intelijen DPJP', /Intelijen DPJP & SIP/i],
+      ['Kepatuhan & Retensi', /Kepatuhan & Retensi RS/i],
+      ['Analitik Tren', /Analitik Tren Klaim/i],
+      ['Gudang Data', /Gudang Data & SQL/i],
       ['Jadwal Klarifikasi', /Jadwal Klarifikasi RS/i],
       ['Konfirmasi Peserta', /Konfirmasi Peserta/i],
       ['Intervensi', /Intervensi & Tindak Lanjut/i],
-      ['Analitik Tren', /Analitik Tren Klaim/i],
-      ['Kepatuhan & Retensi', /Kepatuhan & Retensi RS/i],
-      ['Asisten Klinis', /Asisten Klinis JKN/i],
+      ['Jejak Audit', /Jejak Audit Sistem/i],
+      ['Keamanan Sesi', /Profil & Keamanan Sesi/i],
     ];
 
     for (const [qText, btnRegex] of fullTabSweep) {
@@ -653,10 +657,10 @@ async function run() {
     // Mobile 360x780 sweep across dense modules in Light and Dark mode
     const mobileDenseTabs = [
       ['Gudang Data', /Gudang Data & SQL/i],
-      ['BAHV', /Laporan Resmi \(BAHV\)/i],
-      ['Pengaturan', /Pengaturan/i],
+      ['BAHV', /Laporan & Jejak Audit/i],
+      ['Pengaturan', /Pengaturan & Akun/i],
       ['Manajemen Berkas', /Manajemen Berkas/i],
-      ['Telemetri Mobile', /Telemetri Mobile JKN/i],
+      ['Klarifikasi', /Klarifikasi & Mobile JKN/i],
     ];
     await page.setViewportSize({ width: 360, height: 780 });
     for (const [qText, btnRegex] of mobileDenseTabs) {

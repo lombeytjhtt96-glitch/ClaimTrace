@@ -3,11 +3,20 @@ import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../servic
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
-  ExternalLink, TrendingUp, Building2, MapPin, CheckCircle2, 
+import {
+  Hospital, Search, Filter, AlertTriangle, ShieldCheck,
+  ExternalLink, TrendingUp, Building2, MapPin, CheckCircle2,
   XCircle, Clock, ChevronRight, AlertOctagon, Activity, X
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Cell,
+} from 'recharts';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
   const isLight = useCockpitTheme(propIsLight);
@@ -161,25 +170,22 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             : 'bg-[#00153A]/85 border-white/10 shadow-xl shadow-[#00081c]/50 text-white'
         }`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-center space-x-2">
                 <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
                   isLight
-                    ? 'bg-amber-50 text-amber-900 border-amber-300'
-                    : 'bg-[#FFCA40]/10 text-[#FFCA40] border-[#FFCA40]/30'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                 }`}>
-                  FASKES SURVEILLANCE &amp; RISK PROFILING
+                  Surveilans Faskes (FRI)
                 </span>
-                <span className={`text-[10px] font-semibold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                  Direktori FKRTL Pemantauan Nasional · Multiregional
+                <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                  Direktori FKRTL Nasional · PMK 26/2021
                 </span>
               </div>
               <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 Pemantauan Kepatuhan &amp; Indeks Risiko Fasilitas Kesehatan
               </h2>
-              <p className={`text-xs max-w-4xl leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                Menilai profil risiko fraud fasilitas kesehatan (<em>Fraud Risk Index - FRI</em>) berdasarkan riwayat lonjakan klaim massal, keabsahan SIP DPJP pada portal SATUSEHAT Kemenkes, dan kepatuhan koding INA-CBG sesuai Permenkes No. 26/2021.
-              </p>
             </div>
           </div>
 
@@ -242,6 +248,92 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
             </div>
           </div>
         </div>
+
+        {/* GRAFIK PERBANDINGAN INDEKS RISIKO FRI FASKES */}
+        {filteredFaskes.length > 0 && (
+          <div className={`rounded-2xl p-4 sm:p-5 border ${
+            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/75 border-white/10'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Peta Risiko Faskes (Top 6 Indeks FRI)
+                </h2>
+                <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Perbandingan visual skor risiko kecurangan antar fasilitas kesehatan (ambang waspada ≥ 40, kritis ≥ 65)
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-[10px] font-semibold">
+                <span className="inline-flex items-center gap-1.5 text-rose-500">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
+                  Kritis (&ge; 65)
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-amber-500">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                  Waspada (40-64)
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-emerald-500">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                  Normal (&lt; 40)
+                </span>
+              </div>
+            </div>
+            <div className="h-[210px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[...filteredFaskes]
+                    .sort((a, b) => Number(b.friScore) - Number(a.friScore))
+                    .slice(0, 6)
+                    .map((f) => ({
+                      shortName: f.name.length > 26 ? `${f.name.slice(0, 24)}...` : f.name,
+                      fullName: f.name,
+                      friScore: Number(f.friScore || 0),
+                      anomalyCount: f.anomalyCount || 0,
+                    }))}
+                  layout="vertical"
+                  margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+                >
+                  <XAxis
+                    type="number"
+                    domain={[0, 100]}
+                    tick={{ fontSize: 11, fill: isLight ? '#64748b' : '#94a3b8' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="shortName"
+                    width={170}
+                    tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val, _name, item) => [`${val} / 100 (${item?.payload?.anomalyCount || 0} anomali)`, 'Skor FRI']}
+                    labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullName || ''}
+                    contentStyle={{
+                      backgroundColor: isLight ? '#ffffff' : '#0b1936',
+                      borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.12)',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      color: isLight ? '#0f172a' : '#f8fafc',
+                    }}
+                  />
+                  <Bar dataKey="friScore" radius={[0, 6, 6, 0]} barSize={18}>
+                    {[...filteredFaskes]
+                      .sort((a, b) => Number(b.friScore) - Number(a.friScore))
+                      .slice(0, 6)
+                      .map((entry, idx) => {
+                        const score = Number(entry.friScore || 0);
+                        const fill = score >= 65 ? '#f43f5e' : score >= 40 ? '#f59e0b' : '#10b981';
+                        return <Cell key={`fri-cell-${entry.id || idx}`} fill={fill} />;
+                      })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* SEARCH & FILTERS */}
         <div className={`p-3 rounded-2xl border flex flex-wrap items-center justify-between gap-3 backdrop-blur-xl transition-all ${
@@ -430,24 +522,24 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
                     </p>
 
                     {isCritical && (
-                      <div className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
                         isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                       }`}>
-                        MITRE F3: FA0001 (Positioning) · ATT&amp;CK: T1078
+                        Prioritas Audit Kredensial &amp; SIP DPJP
                       </div>
                     )}
                     {isMedium && (
-                      <div className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
                         isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                       }`}>
-                        MITRE F3: FA0002.F1018 (Unbundling Arbitrage)
+                        Indikasi Pemecahan Klaim (Unbundling)
                       </div>
                     )}
                     {!isCritical && !isMedium && (
-                      <div className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
                         isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                       }`}>
-                        NIST CSF 2.0: DE.CM-01 (Kepatuhan Terverifikasi)
+                        Kepatuhan Terverifikasi
                       </div>
                     )}
                   </div>

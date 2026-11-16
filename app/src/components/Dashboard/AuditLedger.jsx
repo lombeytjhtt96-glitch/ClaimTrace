@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { 
   Shield, ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
   Search, Filter, Download, RefreshCw, Key, Hash, Database,
@@ -647,19 +648,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   <span>Audit Ledger Kriptografis SHA-256</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border ${
-                    isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                  <span className={`text-xs px-2 py-0.5 rounded-full border font-mono ${
+                    isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                   }`}>
                     JEJAK AUDIT ANTI-REKAYASA
                   </span>
-                  <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${
-                    isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 text-[#FFCA40] border-white/10'
-                  }`}>
-                    MITRE D3FEND: D3-DS · NIST CSF 2.0: PR.DS-01 · ATT&CK: Anti-T1070
-                  </span>
                 </h1>
                 <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                  Buku besar keputusan verifikator, pemicu verifikasi peserta, dan akses data medis yang dirangkai secara <em>hash-chaining</em> anti-rekayasa sesuai standar audit BPK, KPK, dan mitigasi anti-tampering.
+                  Catatan keputusan verifikator, konfirmasi peserta, dan verifikasi SHA-256 berantai sesuai standar audit BPK.
                 </p>
               </div>
             </div>
@@ -710,40 +706,16 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 <span>Ekspor Dossier TGR (CSV)</span>
               </button>
               <button type="button" 
-                onClick={handleOpenSecOpsModal}
-                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
-                  isLight
-                    ? 'bg-sky-50 hover:bg-sky-100 text-sky-900 border-sky-300'
-                    : 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border-cyan-500/40'
-                }`}
-                title="Buka Konsol Aturan Deteksi YARA-L 2.0 & Manajemen Kasus SOAR"
-              >
-                <Terminal className="w-3.5 h-3.5 text-sky-500" />
-                <span>Detection &amp; SOAR</span>
-              </button>
-              <button type="button" 
                 onClick={handleOpenReceiptsModal}
                 className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
                   isLight
                     ? 'bg-purple-50 hover:bg-purple-100 text-purple-900 border-purple-300'
                     : 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/40'
                 }`}
-                title="Buka Konsol Agent Decision Receipts & Human Gate"
+                title="Buka Bukti Keputusan Verifikator & Human Gate"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-500" />
-                <span>Decision Receipts &amp; Human Gate</span>
-              </button>
-              <button type="button" 
-                onClick={handleOpenCyberModal}
-                className={`flex items-center space-x-1.5 border text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs ${
-                  isLight
-                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300'
-                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/40'
-                }`}
-                title="Buka Matriks Taksonomi Keamanan Siber MITRE F3, ATT&CK & D3FEND"
-              >
-                <Shield className="w-3.5 h-3.5 text-amber-500" />
-                <span>MITRE F3 &amp; D3FEND Matrix</span>
+                <span>Bukti Keputusan &amp; Human Gate</span>
               </button>
             </div>
           </div>
@@ -834,6 +806,71 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
           </div>
         </div>
       </div>
+
+      {/* DISTRIBUSI VISUAL EVENT JEJAK AUDIT */}
+      {filteredBlocks.length > 0 && (() => {
+        const countRejected = filteredBlocks.filter((b) => String(b.action || '').includes('REJECTED')).length;
+        const countApproved = filteredBlocks.filter((b) => String(b.action || '').includes('APPROVED')).length;
+        const countWasrik = filteredBlocks.filter((b) => String(b.action || '').includes('WASRIK') || String(b.actorRole || '').includes('Wasrik')).length;
+        const countMobile = filteredBlocks.filter((b) => String(b.action || '').includes('MOBILE')).length;
+        const countTriage = filteredBlocks.filter((b) => String(b.action || '').includes('TRIAGE')).length;
+        const countOther = Math.max(0, filteredBlocks.length - (countRejected + countApproved + countWasrik + countMobile + countTriage));
+        const eventDistribution = [
+          { label: 'Triase & Skoring AI', count: countTriage, fill: '#6366f1' },
+          { label: 'Konfirmasi Mobile', count: countMobile, fill: '#0284c7' },
+          { label: 'Audit Wasrik', count: countWasrik, fill: '#f59e0b' },
+          { label: 'Tolak Klaim', count: countRejected, fill: '#f43f5e' },
+          { label: 'Setujui Klaim', count: countApproved, fill: '#10b981' },
+          ...(countOther > 0 ? [{ label: 'Akses & Sistem', count: countOther, fill: '#64748b' }] : []),
+        ];
+        return (
+          <div className={`rounded-2xl p-4 border ${
+            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#00153A]/75 border-white/10'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+              <div>
+                <h2 className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                  Distribusi Event Jejak Audit
+                </h2>
+                <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Komposisi rekaman transaksi ledger aktif ({filteredBlocks.length} blok terverifikasi SHA-256)
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono font-semibold">
+                {eventDistribution.map((item) => (
+                  <span key={item.label} className="inline-flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }} />
+                    <span className={isLight ? 'text-slate-700' : 'text-slate-200'}>{item.label}: {item.count}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="h-[175px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={eventDistribution} layout="vertical" margin={{ top: 4, right: 20, left: 6, bottom: 4 }}>
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="label" width={135} interval={0} tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    formatter={(val) => [`${val} blok`, 'Jumlah Event']}
+                    contentStyle={{
+                      backgroundColor: isLight ? '#ffffff' : '#0b1936',
+                      borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.12)',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      color: isLight ? '#0f172a' : '#f8fafc',
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={16}>
+                    {eventDistribution.map((item) => (
+                      <Cell key={item.label} fill={item.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* DUAL-PANE WORKSPACE: INDEPENDENT SCROLLING TABLE & INSPECTOR */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[460px]">

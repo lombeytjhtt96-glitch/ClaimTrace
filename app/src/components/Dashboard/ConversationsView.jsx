@@ -287,14 +287,9 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             }`}>
               Multi-Agent Dialog Forensik JKN
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-              isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/80 border-white/10'
-            }`}>
-              NIST AI RMF 1.0 · MITRE ATLAS: AML.T0043 Guardrails
-            </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Pemantauan Percakapan Multi-Agen ClaimTrace AI &amp; Interaksi Verifikator Medis JKN · Tinjauan Tingkat Sesi &amp; Berkas Klaim (Terproteksi Anti-Prompt Injection MITRE ATLAS AML.T0043).
+            Pemantauan riwayat konsultasi verifikator bersama Asisten Klinis JKN per sesi dan berkas klaim.
           </p>
         </div>
         <div className="flex items-center gap-2.5">

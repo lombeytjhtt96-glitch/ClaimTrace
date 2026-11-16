@@ -365,16 +365,9 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             }`}>
               Sub-Agen TCA &amp; Wasrik JKN
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-              isLight
-                ? 'bg-slate-100 text-slate-700 border-slate-300'
-                : 'bg-white/5 text-white/70 border-white/10'
-            }`}>
-              MITRE D3FEND: D3-ICA · MITRE F3: FA0002 Clawback
-            </span>
           </div>
           <p className={`text-sm mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-            Pemantauan &amp; Eksekusi Rencana Intervensi Faskes Hasil Audit Forensik TCA BPJS Kesehatan · Penyelesaian BAKB, Kepatuhan SLA, dan Mitigasi Kerugian Finansial (MITRE F3 Monetization).
+            Pemantauan rencana intervensi Faskes, penyelesaian BAKB, kepatuhan SLA, dan mitigasi kerugian DJS.
           </p>
         </div>
 

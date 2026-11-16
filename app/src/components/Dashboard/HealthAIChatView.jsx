@@ -93,7 +93,7 @@ const SUGGESTED_PROMPTS = [
     subtitle: 'Konfirmasi sangkalan kehadiran peserta pada klaim katarak',
     prompt: 'Bagaimana hasil verifikasi Lapis 3 Mobile JKN pada kasus klaim katarak Ny. Siti Aisyah? Apakah ada sangkalan kehadiran dan bagaimana aspek yuridis pembuktiannya?',
     icon: Radio,
-    badge: 'D3FEND D3-MFA',
+    badge: 'Lapis 3 JKN',
     badgeColorLight: 'bg-emerald-50 text-emerald-800 border-emerald-300',
     badgeColorDark: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
   },
@@ -436,25 +436,18 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
               <h1 className={`text-base md:text-lg font-bold tracking-tight ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                Asisten Audit JKN (HealthAI Enhanced)
+                Asisten Klinis &amp; Regulasi JKN
               </h1>
-              <span className={`text-[10.5px] px-2.5 py-0.5 rounded-full font-mono font-bold border ${
-                isLight
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-              }`}>
-                HealthAI · LangGraph ReAct
-              </span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
                 isLight
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                   : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
               }`}>
-                ClaimTrace Multi-Agent Orchestrator
+                Pedoman PMK 26/2021
               </span>
             </div>
             <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-              Ruang Konsultasi Cerdas Berbasis ReAct: Lapis 1 (Klinis), Lapis 2 (SATUSEHAT SDMK), Lapis 3 (Mobile JKN), CMA, dan IA.
+              Konsultasi penapisan Lapis 1-3, kaidah koding INA-CBG, dan penyusunan BAKB/BAHV.
             </p>
           </div>
         </div>
@@ -885,8 +878,8 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
             <div className={`flex items-center justify-between text-[10px] px-1 ${
               isLight ? 'text-slate-500' : 'text-white/40'
             }`}>
-              <span>Orkestrator: <strong className={isLight ? 'text-slate-800' : 'text-white/70'}>LangGraph Multi-Agent (Auto-Tuned)</strong> · Enterprise Zero-PHI Architecture</span>
-              <span>Kepatuhan: <strong className={isLight ? 'text-slate-800' : 'text-white/70'}>NIST AI RMF 1.0 &amp; UU PDP No. 27/2022</strong></span>
+              <span>Asisten Klinis ClaimTrace · Terintegrasi Pengetahuan Medis JKN</span>
+              <span>Privasi Data: <strong className={isLight ? 'text-slate-800' : 'text-white/70'}>UU PDP No. 27/2022</strong></span>
             </div>
           </div>
 
