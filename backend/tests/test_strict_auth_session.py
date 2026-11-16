@@ -854,11 +854,15 @@ def test_sendcorex_primary_dispatch_and_spool_fallback(monkeypatch, tmp_path, ca
     mail_calls = []
 
     class _FakeResp:
-        def __init__(self, status_code, body):
+        def __init__(self, status_code, body, headers=None):
             self.status_code = status_code
             self._body = body
+            self.headers = headers or {}
+            self.text = body if isinstance(body, str) else json.dumps(body)
 
         def json(self):
+            if isinstance(self._body, str):
+                raise ValueError("Expecting value: line 1 column 1 (char 0)")
             return self._body
 
     class _RoutingMailClient:
@@ -959,6 +963,28 @@ def test_sendcorex_primary_dispatch_and_spool_fallback(monkeypatch, tmp_path, ca
     assert otp_entries_fallback[-1]["sendcorex_sent"] is False
     assert otp_entries_fallback[-1]["smtp_sent"] is False
     assert "UPSTREAM_UNAVAILABLE" in caplog.text
+
+    # Reject HTTP 200 HTML/WAF block pages instead of falsely marking sendcorex_sent=True
+    class _WafHtmlBlockClient(_RoutingMailClient):
+        def post(self, url, headers=None, json=None, data=None):
+            if "/v3.0/send" in url:
+                return _FakeResp(
+                    200,
+                    "<!DOCTYPE html><html><head><title>Access Denied - Spike Security</title></head><body>Blocked</body></html>",
+                    headers={"content-type": "text/html; charset=UTF-8"},
+                )
+            return super().post(url, headers=headers, json=json, data=data)
+
+    caplog.clear()
+    monkeypatch.setattr(main_mod.httpx, "Client", _WafHtmlBlockClient)
+    with caplog.at_level("WARNING", logger="claimtrace"):
+        main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_SCX_WAF_HTML")
+    assert len(mail_calls) == 2
+    otp_entries_waf = json.loads(otp_spool.read_text(encoding="utf-8"))
+    assert otp_entries_waf[-1]["sendcorex_sent"] is False
+    assert otp_entries_waf[-1]["sendcorex_message_id"] is None
+    assert otp_entries_waf[-1]["smtp_sent"] is False
+    assert "non-JSON text/html: Access Denied - Spike Security" in caplog.text
 
 
 def test_sendcorex_webhook_hmac_verification_and_audit_ledger(monkeypatch):

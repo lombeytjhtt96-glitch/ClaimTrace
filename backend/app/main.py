@@ -824,13 +824,10 @@ def _post_transactional_email(
         except Exception:
             resp_json = None
 
-        if 200 <= resp.status_code < 300 and (resp_json is None or resp_json.get("success") is not False):
-            msg_id: Optional[str] = None
-            msg_status: Optional[str] = None
-            if resp_json:
-                msg_id = str(resp_json.get("id")) if resp_json.get("id") else None
-                raw_status = resp_json.get("status") or resp_json.get("code")
-                msg_status = str(raw_status) if raw_status else None
+        if 200 <= resp.status_code < 300 and resp_json is not None and resp_json.get("success") is not False:
+            msg_id = str(resp_json.get("id")) if resp_json.get("id") else None
+            raw_status = resp_json.get("status") or resp_json.get("code")
+            msg_status = str(raw_status) if raw_status else None
             logger.info(
                 f"{log_tag} {provider_label} transactional mail accepted for {_mask_email(to_email)} "
                 f"status={msg_status or resp.status_code} id={msg_id or 'n/a'}"
@@ -844,6 +841,18 @@ def _post_transactional_email(
             detail = err_obj.get("message") or err_obj.get("detail")
             if code or detail:
                 err_summary = f"HTTP {resp.status_code} ({code}: {detail})"
+        elif 200 <= resp.status_code < 300:
+            content_type = (resp.headers.get("content-type") or "unknown").split(";")[0].strip()
+            body_text = resp.text or ""
+            lower_body = body_text.lower()
+            title_start = lower_body.find("<title>")
+            title_end = lower_body.find("</title>", title_start + 7) if title_start != -1 else -1
+            page_title = (
+                " ".join(body_text[title_start + 7 : title_end].split())[:120]
+                if title_start != -1 and title_end != -1
+                else "missing JSON body"
+            )
+            err_summary = f"HTTP {resp.status_code} (non-JSON {content_type}: {page_title})"
         logger.warning(f"{log_tag} {provider_label} API rejected mail for {_mask_email(to_email)}: {err_summary}")
     except Exception as mail_err:
         logger.warning(f"{log_tag} {provider_label} API request error for {_mask_email(to_email)}: {type(mail_err).__name__}")
