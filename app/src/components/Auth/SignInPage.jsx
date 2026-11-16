@@ -628,13 +628,22 @@ export default function SignInPage({
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="w-full max-w-[430px] space-y-5 relative z-10"
       >
-        <div className="text-center space-y-1.5">
-          <h1 className="text-2xl font-bold tracking-tight text-[#061B31]">
-            {activeCopy.title}
-          </h1>
-          <p className="text-xs leading-relaxed text-slate-600">
-            {activeCopy.subtitle}
-          </p>
+        <div className="text-center space-y-2.5">
+          <div className="mx-auto w-12 h-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm p-1.5 flex items-center justify-center">
+            <img
+              alt="Logo ClaimTrace"
+              className="object-contain w-full h-full"
+              src="/assets/images/bpjs_icon.png"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-bold tracking-tight text-[#061B31]">
+              {activeCopy.title}
+            </h1>
+            <p className="text-xs leading-relaxed text-slate-600">
+              {activeCopy.subtitle}
+            </p>
+          </div>
         </div>
 
         <div className={`rounded-2xl border p-4 sm:p-7 space-y-4 ${cardSurface}`}>

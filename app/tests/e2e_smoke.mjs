@@ -200,6 +200,12 @@ async function run() {
     await authPage.goto(`${FRONTEND_URL}/?view=login`, { waitUntil: 'networkidle' });
     await authPage.locator('#login-password').waitFor({ state: 'visible', timeout: 10000 });
     await authPage.getByText('Masukkan Username, Email, NIP, dan Password Anda untuk mengakses portal.').waitFor({ state: 'visible', timeout: 5000 });
+    assert((await authPage.locator('header').count()) === 0, 'SignIn page must not render top navbar header');
+    const logoImg = authPage.locator('img[alt="Logo ClaimTrace"]');
+    await logoImg.waitFor({ state: 'visible', timeout: 5000 });
+    const logoBox = await logoImg.boundingBox();
+    const headingBox = await authPage.getByRole('heading', { name: 'Masuk ClaimTrace' }).boundingBox();
+    assert(logoBox && headingBox && (logoBox.y + logoBox.height) <= headingBox.y + 2, 'Logo ClaimTrace must appear above Masuk ClaimTrace heading');
     await assertNoDarkThemeToggle(authPage, 'SignIn Desktop');
     await assertNoHorizontalOverflow(authPage, 'SignIn Desktop');
 

@@ -1014,31 +1014,6 @@ export default function App() {
           transition={{ duration: 0.2 }}
           className="bg-[#F7F8FA] text-[#061B31] fixed inset-0 h-dvh max-h-dvh flex flex-col font-sans overflow-y-auto z-40"
         >
-          {/* Top Header Navbar (Halaman Auth selalu Tema Terang, tanpa tombol tema gelap) */}
-          <header className="shrink-0 bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)] border-b py-3 px-4 sm:px-6 lg:px-8 z-30">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              
-              {/* Left Section: Logo */}
-              <div className="flex items-center gap-8">
-                {/* Logo with Circular Container */}
-                <div className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 overflow-hidden rounded-full border border-slate-200 bg-slate-100 transition-colors duration-300 shadow-sm p-1 flex items-center justify-center shrink-0">
-                    <img 
-                      alt="BPJS Kesehatan" 
-                      className="object-contain w-full h-full" 
-                      src="/assets/images/bpjs_icon.png"
-                    />
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-base font-bold leading-none text-slate-900 tracking-tight">
-                      ClaimTrace
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </header>
           <SignInPage
             sessionNotice={sessionNotice}
             initialMode={authView === 'reset_password' ? 'reset' : 'login'}
