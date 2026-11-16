@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import lazyWithRetry from './utils/lazyWithRetry';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   API_BASE_URL,
@@ -29,54 +30,54 @@ import {
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
 import SignInPage from './components/Auth/SignInPage';
-const SignOutPage = lazy(() => import('./components/Auth/SignOutPage'));
+const SignOutPage = lazyWithRetry(() => import('./components/Auth/SignOutPage'));
 
 // Primary Cockpit Modules (Lazy-loaded for sub-second Landing LCP)
-const ExecutiveHub = lazy(() => import('./components/Dashboard/ExecutiveHub'));
-const TriageOverview = lazy(() => import('./components/Dashboard/TriageOverview'));
-const CaseInvestigation = lazy(() => import('./components/Dashboard/CaseInvestigation'));
-const HealthAIChatWidget = lazy(() => import('./components/Dashboard/HealthAIChatWidget'));
+const ExecutiveHub = lazyWithRetry(() => import('./components/Dashboard/ExecutiveHub'));
+const TriageOverview = lazyWithRetry(() => import('./components/Dashboard/TriageOverview'));
+const CaseInvestigation = lazyWithRetry(() => import('./components/Dashboard/CaseInvestigation'));
+const HealthAIChatWidget = lazyWithRetry(() => import('./components/Dashboard/HealthAIChatWidget'));
 
 // Mobile JKN Screens (Lazy-loaded on demand)
-const MoreMenuScreen = lazy(() => import('./components/MobileJKN/MoreMenuScreen'));
-const AntreanScreen = lazy(() => import('./components/MobileJKN/AntreanScreen'));
-const RiwayatPelayananScreen = lazy(() => import('./components/MobileJKN/RiwayatPelayananScreen'));
-const TempatTidurScreen = lazy(() => import('./components/MobileJKN/TempatTidurScreen'));
-const KonsultasiDokterScreen = lazy(() => import('./components/MobileJKN/KonsultasiDokterScreen'));
-const UbahDataScreen = lazy(() => import('./components/MobileJKN/UbahDataScreen'));
-const SkriningScreen = lazy(() => import('./components/MobileJKN/SkriningScreen'));
-const PembayaranScreen = lazy(() => import('./components/MobileJKN/PembayaranScreen'));
-const PengaduanScreen = lazy(() => import('./components/MobileJKN/PengaduanScreen'));
-const BugarScreen = lazy(() => import('./components/MobileJKN/BugarScreen'));
-const ObatScreen = lazy(() => import('./components/MobileJKN/ObatScreen'));
+const MoreMenuScreen = lazyWithRetry(() => import('./components/MobileJKN/MoreMenuScreen'));
+const AntreanScreen = lazyWithRetry(() => import('./components/MobileJKN/AntreanScreen'));
+const RiwayatPelayananScreen = lazyWithRetry(() => import('./components/MobileJKN/RiwayatPelayananScreen'));
+const TempatTidurScreen = lazyWithRetry(() => import('./components/MobileJKN/TempatTidurScreen'));
+const KonsultasiDokterScreen = lazyWithRetry(() => import('./components/MobileJKN/KonsultasiDokterScreen'));
+const UbahDataScreen = lazyWithRetry(() => import('./components/MobileJKN/UbahDataScreen'));
+const SkriningScreen = lazyWithRetry(() => import('./components/MobileJKN/SkriningScreen'));
+const PembayaranScreen = lazyWithRetry(() => import('./components/MobileJKN/PembayaranScreen'));
+const PengaduanScreen = lazyWithRetry(() => import('./components/MobileJKN/PengaduanScreen'));
+const BugarScreen = lazyWithRetry(() => import('./components/MobileJKN/BugarScreen'));
+const ObatScreen = lazyWithRetry(() => import('./components/MobileJKN/ObatScreen'));
 import TabErrorBoundary from './components/Common/TabErrorBoundary';
 import { verifySessionRequest } from './services/apiConfig';
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
-const EmpiricalForensics = lazy(() => import('./components/Dashboard/EmpiricalForensics'));
-const FaskesSurveillance = lazy(() => import('./components/Dashboard/FaskesSurveillance'));
-const DpjpIntelligence = lazy(() => import('./components/Dashboard/DpjpIntelligence'));
-const MobileTelemetry = lazy(() => import('./components/Dashboard/MobileTelemetry'));
-const DecisionConsole = lazy(() => import('./components/Dashboard/DecisionConsole'));
-const AuditLedger = lazy(() => import('./components/Dashboard/AuditLedger'));
-const AgentCopilot = lazy(() => import('./components/Dashboard/AgentCopilot'));
-const AdminProfileView = lazy(() => import('./components/Dashboard/AdminProfileView'));
-const AdminSettingsView = lazy(() => import('./components/Dashboard/AdminSettingsView'));
-const InsightsAnalyticsView = lazy(() => import('./components/Dashboard/InsightsAnalyticsView'));
-const RetentionAnalyticsView = lazy(() => import('./components/Dashboard/RetentionAnalyticsView'));
-const CasesManagementView = lazy(() => import('./components/Dashboard/CasesManagementView'));
-const QuickTriageView = lazy(() => import('./components/Dashboard/QuickTriageView'));
-const FlaggedSessionsView = lazy(() => import('./components/Dashboard/FlaggedSessionsView'));
-const ClarificationScheduleView = lazy(() => import('./components/Dashboard/ClarificationScheduleView'));
-const CommandCenterView = lazy(() => import('./components/Dashboard/CommandCenterView'));
-const ConversationsView = lazy(() => import('./components/Dashboard/ConversationsView'));
-const InterventionsView = lazy(() => import('./components/Dashboard/InterventionsView'));
-const DatabaseViewerView = lazy(() => import('./components/Dashboard/DatabaseViewerView'));
-const HealthAIChatView = lazy(() => import('./components/Dashboard/HealthAIChatView'));
-const PostHealthkathonSuiteView = lazy(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
-const OfficialReportsView = lazy(() => import('./components/Dashboard/OfficialReportsView'));
-const DocumentCheckerView = lazy(() => import('./components/Dashboard/DocumentCheckerView'));
-const FraudRankingView = lazy(() => import('./components/Dashboard/FraudRankingView'));
+const EmpiricalForensics = lazyWithRetry(() => import('./components/Dashboard/EmpiricalForensics'));
+const FaskesSurveillance = lazyWithRetry(() => import('./components/Dashboard/FaskesSurveillance'));
+const DpjpIntelligence = lazyWithRetry(() => import('./components/Dashboard/DpjpIntelligence'));
+const MobileTelemetry = lazyWithRetry(() => import('./components/Dashboard/MobileTelemetry'));
+const DecisionConsole = lazyWithRetry(() => import('./components/Dashboard/DecisionConsole'));
+const AuditLedger = lazyWithRetry(() => import('./components/Dashboard/AuditLedger'));
+const AgentCopilot = lazyWithRetry(() => import('./components/Dashboard/AgentCopilot'));
+const AdminProfileView = lazyWithRetry(() => import('./components/Dashboard/AdminProfileView'));
+const AdminSettingsView = lazyWithRetry(() => import('./components/Dashboard/AdminSettingsView'));
+const InsightsAnalyticsView = lazyWithRetry(() => import('./components/Dashboard/InsightsAnalyticsView'));
+const RetentionAnalyticsView = lazyWithRetry(() => import('./components/Dashboard/RetentionAnalyticsView'));
+const CasesManagementView = lazyWithRetry(() => import('./components/Dashboard/CasesManagementView'));
+const QuickTriageView = lazyWithRetry(() => import('./components/Dashboard/QuickTriageView'));
+const FlaggedSessionsView = lazyWithRetry(() => import('./components/Dashboard/FlaggedSessionsView'));
+const ClarificationScheduleView = lazyWithRetry(() => import('./components/Dashboard/ClarificationScheduleView'));
+const CommandCenterView = lazyWithRetry(() => import('./components/Dashboard/CommandCenterView'));
+const ConversationsView = lazyWithRetry(() => import('./components/Dashboard/ConversationsView'));
+const InterventionsView = lazyWithRetry(() => import('./components/Dashboard/InterventionsView'));
+const DatabaseViewerView = lazyWithRetry(() => import('./components/Dashboard/DatabaseViewerView'));
+const HealthAIChatView = lazyWithRetry(() => import('./components/Dashboard/HealthAIChatView'));
+const PostHealthkathonSuiteView = lazyWithRetry(() => import('./components/Dashboard/PostHealthkathonSuiteView'));
+const OfficialReportsView = lazyWithRetry(() => import('./components/Dashboard/OfficialReportsView'));
+const DocumentCheckerView = lazyWithRetry(() => import('./components/Dashboard/DocumentCheckerView'));
+const FraudRankingView = lazyWithRetry(() => import('./components/Dashboard/FraudRankingView'));
 
 export default function App() {
   // Fail-closed initial router: NEVER opens landing or unauthenticated dashboard

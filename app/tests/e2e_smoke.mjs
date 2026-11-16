@@ -242,6 +242,33 @@ async function run() {
     await authCtx.close();
     console.log('[PASS] Auth SignIn & Lupa Password Light-First lock + responsive checks');
 
+    // 1b. Stale dynamic-import chunk recovery (lazyWithRetry auto-reloads once on 404 chunk)
+    const chunkCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await chunkCtx.addInitScript(({ token, user, dfp }) => {
+      localStorage.setItem('claimtrace_device_fp', dfp);
+      localStorage.setItem('bpjs_auth_token', token);
+      localStorage.setItem('bpjs_user_role', user.role);
+      localStorage.setItem('bpjs_user_nip', user.nip);
+      localStorage.setItem('claimtrace_user', JSON.stringify(user));
+      localStorage.removeItem('claimtrace_session_revoked_at');
+    }, { token: sessionData.token, user: sessionData.user, dfp: DEVICE_FP });
+    const chunkPage = await chunkCtx.newPage();
+    let execChunkHits = 0;
+    await chunkPage.route('**/assets/ExecutiveHub-*.js', async (route) => {
+      execChunkHits += 1;
+      if (execChunkHits === 1) {
+        await route.fulfill({ status: 404, contentType: 'text/plain', body: 'Not Found' });
+        return;
+      }
+      await route.continue();
+    });
+    await chunkPage.goto(`${FRONTEND_URL}/?view=dashboard&tab=executive`, { waitUntil: 'domcontentloaded' });
+    await chunkPage.getByText('Total Klaim FKRTL').waitFor({ state: 'visible', timeout: 15000 });
+    assert(execChunkHits >= 2, `Expected stale ExecutiveHub chunk to auto-reload, saw hits=${execChunkHits}`);
+    assert((await chunkPage.getByText(/Kendala Tampilan/i).count()) === 0, 'Unexpected ErrorBoundary after chunk recovery');
+    await chunkCtx.close();
+    console.log('[PASS] Lazy dynamic-import stale chunk auto-recovery verified');
+
     // 2. Authenticated Dashboard + Live 5-Pillar Workflows
     const appCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     await appCtx.addInitScript(({ token, user, dfp }) => {
