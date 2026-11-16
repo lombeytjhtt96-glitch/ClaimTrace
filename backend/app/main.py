@@ -732,17 +732,6 @@ def _validate_password_strength(password: str, current_hash: Optional[str] = Non
         )
 
 
-def _resolve_bird_base_url(api_key: str) -> str:
-    """Resolve HTTPS Bird platform base URL from BIRD_API_BASE_URL or key region prefix (e.g. bk_eu1_*)."""
-    configured = os.getenv("BIRD_API_BASE_URL", "").strip().rstrip("/")
-    if configured.startswith("https://"):
-        return configured
-    parts = (api_key or "").strip().split("_")
-    if len(parts) >= 3 and parts[0] in {"bk", "bm"} and re.match(r"^[a-z]{2}[0-9]+$", parts[1]):
-        return f"https://{parts[1]}.platform.bird.com"
-    return "https://platform.bird.com"
-
-
 def _wrap_email_document(title: str, inner_html: str) -> str:
     """Wrap email markup in a standards-compliant HTML5 email document."""
     safe_title = _html.escape(title)
@@ -778,17 +767,11 @@ def _render_auth_email_html(
     safe_badge = _html.escape(badge_label)
     safe_note = _html.escape(footnote)
     scx_email = os.getenv("SENDCOREX_FROM_EMAIL", "").strip().lower()
-    bird_email = os.getenv("BIRD_FROM_EMAIL", "").strip().lower()
-    active_email = scx_email if (os.getenv("SENDCOREX_API_KEY", "").strip() and scx_email) else bird_email
-    shared_domains = ("@messagebird.dev", "@corexsend.com", "@inboxtaken.com")
-    configured_name = (
-        os.getenv("SENDCOREX_FROM_NAME", "").strip()
-        if active_email == scx_email and scx_email
-        else os.getenv("BIRD_FROM_NAME", "").strip()
-    )
+    shared_domains = ("@corexsend.com", "@inboxtaken.com")
+    configured_name = os.getenv("SENDCOREX_FROM_NAME", "").strip() if scx_email else ""
     brand_label = (
         "ClaimTrace Portal"
-        if (not active_email or active_email.endswith(shared_domains))
+        if (not scx_email or scx_email.endswith(shared_domains))
         else (configured_name or "ClaimTrace Portal")
     )
     safe_brand = _html.escape(brand_label)
@@ -912,48 +895,6 @@ def _send_via_sendcorex_api(
     )
 
 
-def _send_via_bird_api(
-    *,
-    to_email: str,
-    subject: str,
-    body_text: str,
-    body_html: Optional[str],
-    log_tag: str,
-) -> tuple[bool, Optional[str], Optional[str]]:
-    """Send transactional auth email through Bird REST API (/v1/email/messages) using BIRD_API_KEY."""
-    bird_api_key = os.getenv("BIRD_API_KEY", "").strip()
-    allow_in_test = os.getenv("CLAIMTRACE_ENABLE_BIRD_IN_TEST") == "1"
-    is_test_ctx = bool(os.getenv("PYTEST_CURRENT_TEST") or "pytest" in sys.modules)
-    if not bird_api_key or (is_test_ctx and not allow_in_test):
-        return False, None, None
-
-    from_email = os.getenv("BIRD_FROM_EMAIL", "").strip() or "onboarding@messagebird.dev"
-    from_name = os.getenv("BIRD_FROM_NAME", "").strip() or "ClaimTrace Portal"
-    endpoint = f"{_resolve_bird_base_url(bird_api_key)}/v1/email/messages"
-    payload = {
-        "from": {"email": from_email, "name": from_name},
-        "to": [to_email],
-        "subject": subject,
-        "html": body_html or _build_fallback_email_html(subject, body_text),
-        "text": body_text,
-        "category": "transactional",
-        "track_opens": False,
-        "track_clicks": False,
-    }
-    return _post_transactional_email(
-        provider_label="Bird",
-        endpoint=endpoint,
-        headers={
-            "Authorization": f"Bearer {bird_api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        payload=payload,
-        to_email=to_email,
-        log_tag=log_tag,
-    )
-
-
 def _send_email_or_spool(
     *,
     to_email: str,
@@ -964,7 +905,7 @@ def _send_email_or_spool(
     log_tag: str,
     body_html: Optional[str] = None,
 ) -> bool:
-    """Send notification mail via Sendcorex primary, Bird fallback, SMTP fallback, and 0600 local spool."""
+    """Send notification mail via Sendcorex primary, optional SMTP fallback, and 0600 local spool."""
     sent_via_sendcorex, sendcorex_msg_id, sendcorex_status = _send_via_sendcorex_api(
         to_email=to_email,
         subject=subject,
@@ -973,21 +914,9 @@ def _send_email_or_spool(
         log_tag=log_tag,
     )
 
-    sent_via_bird = False
-    bird_msg_id: Optional[str] = None
-    bird_status: Optional[str] = None
-    if not sent_via_sendcorex:
-        sent_via_bird, bird_msg_id, bird_status = _send_via_bird_api(
-            to_email=to_email,
-            subject=subject,
-            body_text=body_text,
-            body_html=body_html,
-            log_tag=log_tag,
-        )
-
     sent_via_smtp = False
     smtp_host = os.getenv("SMTP_HOST", "").strip()
-    if (not sent_via_sendcorex) and (not sent_via_bird) and smtp_host and not os.getenv("PYTEST_CURRENT_TEST"):
+    if (not sent_via_sendcorex) and smtp_host and not os.getenv("PYTEST_CURRENT_TEST"):
         try:
             smtp_port = int(os.getenv("SMTP_PORT", "587"))
             smtp_user = os.getenv("SMTP_USER", "").strip()
@@ -1027,9 +956,6 @@ def _send_email_or_spool(
                 "sendcorex_sent": sent_via_sendcorex,
                 "sendcorex_message_id": sendcorex_msg_id,
                 "sendcorex_status": sendcorex_status,
-                "bird_sent": sent_via_bird,
-                "bird_message_id": bird_msg_id,
-                "bird_status": bird_status,
                 "smtp_sent": sent_via_smtp,
             })
             tmp = spool_file.with_suffix(".tmp")
@@ -1039,7 +965,7 @@ def _send_email_or_spool(
             tmp.replace(spool_file)
         except Exception:
             pass
-    return bool(sent_via_sendcorex or sent_via_bird or sent_via_smtp)
+    return bool(sent_via_sendcorex or sent_via_smtp)
 
 
 def _load_otp_map_unlocked() -> Dict[str, Dict[str, Any]]:

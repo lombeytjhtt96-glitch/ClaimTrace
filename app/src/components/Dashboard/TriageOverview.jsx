@@ -5,7 +5,7 @@ import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion } from 'motion/react';
 import {
-  AlertOctagon, CheckCircle2, Clock, ChevronRight,
+  AlertOctagon, ChevronRight,
   Search, ShieldCheck, CheckSquare, Square, PlusCircle, Download, Check, X,
   UserCheck, Layers
 } from 'lucide-react';

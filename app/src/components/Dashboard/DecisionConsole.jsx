@@ -7,9 +7,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { 
-  AlertOctagon, CheckCircle2, AlertTriangle, FileText, 
-  Download, Printer, Shield, Lock, ArrowLeft, RefreshCw, 
-  Send, UserCheck, Stethoscope, ChevronRight, Check, X,
+  CheckCircle2, AlertTriangle, FileText, 
+  Download, Printer, Lock, ArrowLeft, RefreshCw, 
+  ChevronRight, Check, X,
   FileCheck, ShieldAlert, Gavel, Ban, ShieldCheck
 } from 'lucide-react';
 

@@ -176,18 +176,6 @@ export const verifySessionRequest = async (token, touch = false) => {
   });
 };
 
-export const invalidateSessionApiCache = (prefix = '') => {
-  if (!prefix) {
-    _sessionJsonCache.clear();
-    return;
-  }
-  for (const key of _sessionJsonCache.keys()) {
-    if (key.includes(prefix)) {
-      _sessionJsonCache.delete(key);
-    }
-  }
-};
-
 if (typeof window !== 'undefined' && !window.__claimtraceCacheListenerAttached) {
   window.__claimtraceCacheListenerAttached = true;
   window.addEventListener('claimtrace:operations-updated', () => {
@@ -255,8 +243,6 @@ export const prefetchDashboardHotEndpoints = () => {
     setTimeout(runPrefetch, 120);
   }
 };
-
-export const ensureSessionToken = async () => getStoredAuthToken();
 
 export const authFetch = async (url, options = {}) => {
   const token = getStoredAuthToken();

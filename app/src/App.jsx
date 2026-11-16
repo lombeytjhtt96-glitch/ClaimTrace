@@ -14,18 +14,14 @@ import {
   saveAuthenticatedSession,
 } from './services/apiConfig';
 import { Analytics } from '@vercel/analytics/react';
-import { 
-  Bell, Search, Shield, ShieldCheck, AlertTriangle, CheckCircle, XCircle, 
-  ChevronRight, ArrowRight, ArrowLeft, Activity, FileText, User, 
-  HelpCircle, Home, Smartphone, Monitor, RefreshCw, Lock,
-  Clock, Hospital, Stethoscope, AlertOctagon, Download, Eye, Check, X,
-  Share2, Mail, Printer, QrCode, CreditCard, ChevronLeft, Info,
-  PhoneCall, Heart, ListFilter, Database, ShieldAlert,
-  Key, LayoutDashboard, Building2, UserCheck,
-  ChevronDown, LogOut, PanelLeftClose, PanelLeft, ExternalLink,
-  EyeOff, RotateCcw, Settings, Briefcase, Zap, Flag, Calendar,
-  Users, MessageSquare, ClipboardList, Sparkles, Sun, Moon,
-  FileCheck2
+import {
+  Bell, Search, Shield, ShieldCheck, CheckCircle, XCircle,
+  ChevronRight, ArrowRight, Activity, FileText, User,
+  HelpCircle, Home, Smartphone, Clock, Stethoscope, ChevronLeft, Info,
+  Printer, QrCode, CreditCard, ListFilter, Database, ShieldAlert, Key, LayoutDashboard, Building2,
+  ChevronDown, LogOut, PanelLeftClose, PanelLeft, RotateCcw, Settings, X,
+  Briefcase, Zap, Flag, Calendar, Users, MessageSquare, ClipboardList,
+  Sparkles, Sun, Moon, FileCheck2
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)

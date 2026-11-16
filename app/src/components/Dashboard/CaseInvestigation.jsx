@@ -3,11 +3,11 @@ import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '.
 import { motion, AnimatePresence } from 'motion/react';
 import TemporalAlertCard from './TemporalAlertCard';
 import { 
-  ChevronRight, ArrowLeft, AlertTriangle, ShieldCheck, 
+  ArrowLeft, ShieldCheck, 
   Clock, Hospital, Stethoscope, UserCheck, AlertOctagon,
-  TrendingUp, FileText, CheckCircle2, XCircle, Share2, 
-  ExternalLink, Info, Activity, GitBranch, ArrowRight, Lock, Check,
-  Bot, Zap, ShieldAlert, Sparkles, Cpu, Layers, History, Send, Receipt, Gavel
+  FileText, CheckCircle2, XCircle, 
+  GitBranch, ArrowRight, Check,
+  ShieldAlert, Layers, History, Send, Receipt, Gavel
 } from 'lucide-react';
 import {
   ResponsiveContainer,

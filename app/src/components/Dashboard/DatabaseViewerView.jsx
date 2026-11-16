@@ -19,16 +19,11 @@ import {
   ShieldCheck,
   AlertCircle,
   FileText,
-  Building2,
-  UserCheck,
-  Radio,
   Terminal,
   Play,
   CheckCircle2,
   Clock,
-  Copy,
   Sparkles,
-  ExternalLink,
   Info
 } from 'lucide-react';
 

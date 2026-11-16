@@ -11,7 +11,8 @@ services:
       - "8000:8000"
     environment:
       - APP_ENV=production
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-AQ.Ab8RN6INHQ1PiChn8Zzsal5kUoI-qwGw8BmJoGuNk8wmC4GTUA}
+      - CLAIMTRACE_LLM_ENDPOINT=${CLAIMTRACE_LLM_ENDPOINT:-}
+      - CLAIMTRACE_LLM_API_KEY=${CLAIMTRACE_LLM_API_KEY:-}
       - HOST=0.0.0.0
       - PORT=8000
     volumes:

@@ -246,45 +246,6 @@ export function saveAiTelemetryState(nextState) {
   }
 }
 
-export function setActiveClaimTraceModel(modelName) {
-  const state = getAiTelemetryState();
-  state.active_model = modelName;
-  saveAiTelemetryState(state);
-  return state;
-}
-
-export function updateServerVaultStatus(patch) {
-  const state = getAiTelemetryState();
-  state.server_vault = { ...state.server_vault, ...patch, last_verified: new Date().toISOString() };
-  saveAiTelemetryState(state);
-  return state;
-}
-
-export function updateAutopilotPolicyState(patch) {
-  const state = getAiTelemetryState();
-  state.autopilot_policy = { ...state.autopilot_policy, ...patch };
-  saveAiTelemetryState(state);
-  return state;
-}
-
-export function reviewAutopilotDecision(decisionId, newStatus, reviewerNote) {
-  const state = getAiTelemetryState();
-  state.agent_decisions = state.agent_decisions.map((item) =>
-    item.id === decisionId
-      ? {
-          ...item,
-          status: newStatus,
-          attestation_status: newStatus === 'approved' ? 'SEALED_SHA256' : item.attestation_status,
-          agent_reasoning: reviewerNote
-            ? `${item.agent_reasoning} [Catatan Verifikator: ${reviewerNote}]`
-            : item.agent_reasoning,
-        }
-      : item
-  );
-  saveAiTelemetryState(state);
-  return state;
-}
-
 /**
  * Low-level call to Secure Server-Side ClaimTrace AI Proxy
  * Zero-Client-Key Architecture (NIST CSF 2.0 PR.DS-01)
@@ -648,69 +609,4 @@ export async function generateClaimTraceInterventionCampaign(iaSummary) {
   };
 }
 
-/**
- * Hugging Face Clinical Semantic AI Services
- * Powered by sentence-transformers/all-MiniLM-L6-v2 & Indeks Vektor Lokal
- * Zero-PHI on-premise local inference in compliance with UU PDP No. 27/2022
- */
-export async function getHFSemanticStats() {
-  try {
-    const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/semantic/stats`);
-    if (data) return data;
-  } catch (err) {
-    console.warn('[HFSemantic] Offline fallback for stats:', err);
-  }
-  return {
-    collection_name: 'claimtrace_clinical_resumes',
-    total_documents: 9,
-    metric: 'cosine',
-    model: 'all-MiniLM-L6-v2 (Vektor Semantik Lokal ONNX)',
-    status: 'ONLINE_ACTIVE',
-    cluster_count: 6,
-  };
-}
-
-export async function getHFClinicalResumes() {
-  try {
-    const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/semantic/resumes`);
-    if (data) return data;
-  } catch (err) {
-    console.warn('[HFSemantic] Offline fallback for resumes:', err);
-  }
-  return { total: 0, resumes: [] };
-}
-
-export async function verifyClaimPlagiarismHF(claimId, threshold = 0.90) {
-  try {
-    const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/semantic/verify-claim/${claimId}?threshold=${threshold}`);
-    if (data) return data;
-  } catch (err) {
-    console.warn('[HFSemantic] Offline fallback for verify-claim:', err);
-  }
-  return null;
-}
-
-export async function verifyClinicalTextHF(text, topK = 4) {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/api/v1/semantic/verify-text`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, top_k: topK }),
-    });
-    if (res.ok) return await res.json();
-  } catch (err) {
-    console.warn('[HFSemantic] Offline fallback for verify-text:', err);
-  }
-  return null;
-}
-
-export async function getClusterSemanticMatrixHF(clusterId) {
-  try {
-    const data = await cachedAuthGetJson(`${API_BASE_URL}/api/v1/semantic/cluster-matrix/${clusterId}`);
-    if (data) return data;
-  } catch (err) {
-    console.warn('[HFSemantic] Offline fallback for cluster-matrix:', err);
-  }
-  return null;
-}
 
