@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { exportCsvFile, triggerBlobDownload } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -313,31 +314,7 @@ const FALLBACK_ROWS = Array.from({ length: 25 }, (_, idx) => ({
 const getApiBase = () => API_BASE_URL;
 
 export default function DatabaseViewerView({ isLight: propIsLight }) {
-  const [themeIsLight, setThemeIsLight] = useState(() => {
-    if (typeof propIsLight === 'boolean') return propIsLight;
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      return root.classList.contains('theme-light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setThemeIsLight(propIsLight);
-      return;
-    }
-    if (typeof document === 'undefined') return;
-    const observer = new MutationObserver(() => {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      setThemeIsLight(root.classList.contains('theme-light'));
-    });
-    const root = document.getElementById('cockpit-root') || document.documentElement;
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : themeIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [activeTab, setActiveTab] = useState('explorer'); // 'explorer' | 'sql' | 'erd'
   const [tablesList, setTablesList] = useState([]);
@@ -1062,13 +1039,14 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                     : 'bg-[#00134A] text-white/70 border-white/10'
                 }`}>
                   <tr>
-                    <th className={`py-2.5 px-3 font-bold text-[10px] w-12 text-center border-r ${
+                    <th scope="col" className={`py-2.5 px-3 font-bold text-[10px] w-12 text-center border-r ${
                       isLight ? 'text-slate-500 border-slate-200' : 'text-white/40 border-white/10'
                     }`}>
                       #
                     </th>
                     {columnsSchema.map((col) => (
                       <th
+                        scope="col"
                         key={col.column_name}
                         className={`py-2.5 px-3 whitespace-nowrap font-bold text-[11px] border-r ${
                           isLight ? 'border-slate-200 text-slate-700' : 'border-white/10 text-white/70'
@@ -1488,9 +1466,9 @@ export default function DatabaseViewerView({ isLight: propIsLight }) {
                     isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#00134A] border-white/10 text-white/70'
                   }`}>
                     <tr>
-                      <th className={`py-2 px-3 w-10 text-center border-r ${isLight ? 'border-slate-200' : 'border-white/10'}`}>#</th>
+                      <th scope="col" className={`py-2 px-3 w-10 text-center border-r ${isLight ? 'border-slate-200' : 'border-white/10'}`}>#</th>
                       {sqlResult.columns.map((col) => (
-                        <th key={col} className={`py-2 px-3 whitespace-nowrap border-r font-bold ${
+                        <th scope="col" key={col} className={`py-2 px-3 whitespace-nowrap border-r font-bold ${
                           isLight ? 'border-slate-200 text-slate-900' : 'border-white/10 text-white'
                         }`}>
                           {col}

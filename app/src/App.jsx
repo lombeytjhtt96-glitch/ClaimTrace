@@ -395,6 +395,8 @@ export default function App() {
         setCommandPaletteOpen((prev) => !prev);
       } else if (e.key === 'Escape' && commandPaletteOpen) {
         setCommandPaletteOpen(false);
+      } else if (e.key === 'Escape' && isMobileViewport && !sidebarCollapsed) {
+        setSidebarCollapsed(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -3025,12 +3027,19 @@ export default function App() {
               }`}>
                 <Search className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                 <input
+                  id="command-palette-search-input"
+                  name="command_palette_query"
+                  aria-label="Cari modul atau nomor SEP di seluruh portal"
                   type="text"
                   autoFocus
                   value={commandPaletteQuery}
                   onChange={(e) => setCommandPaletteQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (e.nativeEvent?.isComposing || e.isComposing || e.keyCode === 229) {
+                        return;
+                      }
                       const q = commandPaletteQuery.trim().toLowerCase();
                       const match = sidebarNavItems.find((m) =>
                         `${m.label} ${m.keywords || ''} ${m.id}`.toLowerCase().includes(q)

@@ -37,6 +37,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { API_BASE_URL, authFetch } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import {
   getAiTelemetryState,
   saveAiTelemetryState,
@@ -430,31 +432,7 @@ export default function AgentCopilot({
   onGoToAudit,
   isLight: propIsLight
 }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root');
-      return root ? root.classList.contains('theme-light') : false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   // 5 Unified AI Modules
   const [activeTab, setActiveTab] = useState(() => {
@@ -501,6 +479,8 @@ export default function AgentCopilot({
     note: '',
     errorMessage: '',
   });
+
+  useEscapeKey(noteDialog.isOpen, () => setNoteDialog((prev) => ({ ...prev, isOpen: false })));
 
   // Auto-dismiss pesan error dialog setelah 3.5 detik
   useEffect(() => {
@@ -2469,7 +2449,12 @@ export default function AgentCopilot({
 
       {/* NoteInputDialog for Autopilot Approval / Rejection */}
       {noteDialog.isOpen && (
-        <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all ${
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={noteDialog.title || 'Dialog keputusan autopilot'}
+          onClick={(e) => { if (e.target === e.currentTarget) setNoteDialog((prev) => ({ ...prev, isOpen: false })); }}
+          className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all ${
           isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
         }`}>
           <div className={`relative overflow-hidden rounded-2xl border p-6 max-w-md w-full space-y-4 shadow-2xl transition-all ${

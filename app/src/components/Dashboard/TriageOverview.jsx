@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { downloadTextFile } from '../../utils/exportCsv';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion } from 'motion/react';
 import { 
   AlertOctagon, CheckCircle2, Clock, ChevronRight, 
@@ -185,36 +187,7 @@ const formatDecisionStatus = (statusCode, lane = 'green') => {
 };
 
 export default function TriageOverview({ onSelectCase, isLight: propIsLight, initialSearchQuery = '' }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('theme');
-      if (p === 'light') return true;
-      if (p === 'dark') return false;
-      const root = document.getElementById('cockpit-root');
-      if (root) return root.classList.contains('theme-light');
-      return document.documentElement.classList.contains('light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-      else setInternalIsLight(document.documentElement.classList.contains('light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const mapLiveClaimsSafe = (rawList) => (Array.isArray(rawList) ? rawList : []).map((entry) => {
     const { claim, triage, checklist, pending_reasons, sla_deadline_days } = entry;
@@ -295,6 +268,9 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
   const [fpkPullResult, setFpkPullResult] = useState(null);
   const [showThresholdRules, setShowThresholdRules] = useState(false);
   const [showIngestModal, setShowIngestModal] = useState(false);
+
+  useEscapeKey(showIngestModal, () => setShowIngestModal(false));
+  useEscapeKey(showFpkPullModal, () => setShowFpkPullModal(false));
   const [ingestForm, setIngestForm] = useState(() => ({ ...SIMULATE_PRESETS[0].payload, add_to_queue: true, simulate_llm_timeout: false }));
   const [ingestSubmitting, setIngestSubmitting] = useState(false);
   const [ingestResult, setIngestResult] = useState(null);
@@ -1139,7 +1115,7 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                 : 'bg-[#161A22] text-slate-400 border-white/[0.08]'
             }`}>
               <tr>
-                <th className="py-3 pl-3 pr-2 w-[4%]">
+                <th scope="col" className="py-3 pl-3 pr-2 w-[4%]">
                   <button
                     type="button"
                     aria-label="Pilih semua berkas tampil"
@@ -1153,14 +1129,14 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
                     {allVisibleSelected ? <Check className="w-3 h-3" /> : <Square className="w-3 h-3" />}
                   </button>
                 </th>
-                <th className="py-3 px-3 w-[13%]">No. Klaim</th>
-                <th className="py-3 px-3 w-[20%]">Fasilitas Kesehatan</th>
-                <th className="py-3 px-3 w-[18%]">Layanan &amp; Diagnosis</th>
-                <th className="py-3 px-3 w-[11%]">Dokter DPJP</th>
-                <th className="py-3 px-3 w-[11%]">Nilai Tagihan</th>
-                <th className="py-3 px-2 text-center w-[6%]">Risiko</th>
-                <th className="py-3 px-3 w-[8%]">Status</th>
-                <th className="py-3 pl-2 pr-4 text-right w-[9%]">Aksi</th>
+                <th scope="col" className="py-3 px-3 w-[13%]">No. Klaim</th>
+                <th scope="col" className="py-3 px-3 w-[20%]">Fasilitas Kesehatan</th>
+                <th scope="col" className="py-3 px-3 w-[18%]">Layanan &amp; Diagnosis</th>
+                <th scope="col" className="py-3 px-3 w-[11%]">Dokter DPJP</th>
+                <th scope="col" className="py-3 px-3 w-[11%]">Nilai Tagihan</th>
+                <th scope="col" className="py-3 px-2 text-center w-[6%]">Risiko</th>
+                <th scope="col" className="py-3 px-3 w-[8%]">Status</th>
+                <th scope="col" className="py-3 pl-2 pr-4 text-right w-[9%]">Aksi</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${
@@ -1381,7 +1357,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
 
       {/* INPUT & VERIFIKASI PRA-BAYAR FPK BARU (C03.04) MODAL */}
       {showIngestModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Registrasi dan verifikasi pra-bayar FPK baru"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowIngestModal(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+        >
           <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
           }`}>
@@ -1705,7 +1687,13 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
 
       {/* MODAL TARIK DATA FPK KOLEKTIF VCLAIM + PRA-PURIFIKASI CLAIMTRACE */}
       {showFpkPullModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tarik data klaim dan FPK kolektif"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowFpkPullModal(false); }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+        >
           <div className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
           }`}>

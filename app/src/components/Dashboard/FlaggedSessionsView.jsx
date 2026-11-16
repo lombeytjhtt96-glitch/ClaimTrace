@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { createPortal } from 'react-dom';
 import {
   Flag,
@@ -66,27 +67,7 @@ const PREDEFINED_CATEGORIES = [
 ];
 
 export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLight: propIsLight }) {
-  const [isLight, setIsLight] = useState(() => {
-    if (propIsLight !== undefined) return propIsLight;
-    if (typeof document !== 'undefined') {
-      return document.getElementById('cockpit-root')?.classList.contains('theme-light') || false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propIsLight !== undefined) {
-      setIsLight(propIsLight);
-      return;
-    }
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const obs = new MutationObserver(() => {
-      setIsLight(root.classList.contains('theme-light'));
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, [propIsLight]);
+  const isLight = useCockpitTheme(propIsLight);
 
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -949,7 +930,15 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
                             type="text"
                             value={customTag}
                             onChange={(e) => setCustomTag(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (e.nativeEvent?.isComposing || e.isComposing || e.keyCode === 229) {
+                                  return;
+                                }
+                                addCustomTag();
+                              }
+                            }}
                             placeholder="Tambah tag audit kustom (mis. pnpk-sepsis, klaim-pending)..."
                             className={`flex-1 px-3.5 py-1.5 text-xs rounded-xl border focus:outline-none transition ${
                               isLight
@@ -1009,6 +998,9 @@ export default function FlaggedSessionsView({ onNavigateTab, onSelectCase, isLig
       {/* Bulk Tag Modal */}
       {showBulkTagModal && typeof document !== 'undefined' && createPortal(
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tambah tag ke sesi klaim terpilih"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowBulkTagModal(false);

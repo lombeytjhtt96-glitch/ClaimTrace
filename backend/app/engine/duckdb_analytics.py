@@ -691,12 +691,19 @@ class DuckDbAnalyticsEngine:
         return list(self._get_or_compute_cached("list_tables", 120.0, _compute))
 
     def describe_table(self, table_name: str) -> List[Dict[str, Any]]:
-        """Mendapatkan skema detail kolom tabel"""
+        """Mendapatkan skema detail kolom tabel secara aman dengan validasi allowlist identifier."""
+        clean_name = str(table_name or "").strip()
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", clean_name):
+            raise ValueError("Nama tabel atau view tidak valid.")
+        allowed_tables = {item["name"] for item in self.list_tables()}
+        if clean_name not in allowed_tables:
+            raise ValueError(f"Tabel atau view '{clean_name}' tidak ditemukan di basis data.")
+
         def _compute():
-            res = self.con.execute(f"DESCRIBE {table_name};").fetchall()
+            res = self.con.execute(f'DESCRIBE "{clean_name}";').fetchall()
             return [{"column_name": r[0], "column_type": r[1], "null": r[2]} for r in res]
 
-        return list(self._get_or_compute_cached(f"describe_table:{table_name}", 120.0, _compute))
+        return list(self._get_or_compute_cached(f"describe_table:{clean_name}", 120.0, _compute))
 
     def database_info(self) -> Dict[str, Any]:
         """Informasi ikhtisar status basis data DuckDB mencakup 100% data transaksi resmi BPJS"""

@@ -32,6 +32,7 @@ import {
   Search,
 } from 'lucide-react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 
 const CHART_COLORS = ['#00733B', '#0284c7', '#f59e0b', '#dc2626', '#7c3aed', '#db2777'];
 
@@ -217,28 +218,7 @@ function getChartForQueryType(queryName, data, isLight = false) {
 }
 
 export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigateTab }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      if (sp.get('theme') === 'light') return true;
-      const root = document.getElementById('cockpit-root');
-      if (root?.classList.contains('theme-light')) return true;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const observer = new MutationObserver(() => {
-      const isLightMode = root.classList.contains('theme-light');
-      setInternalIsLight(isLightMode);
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   // Privacy status state (dynamically tracked from backend analytics warehouse)
   const [status, setStatus] = useState({
@@ -1020,6 +1000,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
       {/* Report Detail Modal (Comprehensive Audit Dossier) */}
       {selectedReportModal && (
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rincian dossier laporan audit"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedReportModal(null); }}
           className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
             isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
@@ -1191,6 +1174,9 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
       {/* All Reports Archive Modal */}
       {showAllReportsModal && (
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-label="Arsip lengkap laporan wawasan dan audit klaim"
           onClick={(e) => { if (e.target === e.currentTarget) setShowAllReportsModal(false); }}
           className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
             isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'

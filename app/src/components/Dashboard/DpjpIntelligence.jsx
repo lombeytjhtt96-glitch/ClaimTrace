@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { exportCsvFile } from '../../utils/exportCsv';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -11,25 +12,7 @@ import {
 
 // Data DPJP dari integrasi SATUSEHAT SDMK & Analisis Geovelocity
 export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight }) {
-  // Theme Detection Fallback
-  const [domIsLight, setDomIsLight] = useState(false);
-  useEffect(() => {
-    const checkTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) {
-        setDomIsLight(root.classList.contains('theme-light'));
-      }
-    };
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) {
-      observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    }
-    return () => observer.disconnect();
-  }, []);
-
-  const isLight = propIsLight !== undefined ? propIsLight : domIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const dpjpUrl = `${API_BASE_URL}/api/v1/analytics/dpjp-intelligence`;
   const initialDpjpList = Array.isArray(getCachedJsonSync(dpjpUrl)?.doctors)

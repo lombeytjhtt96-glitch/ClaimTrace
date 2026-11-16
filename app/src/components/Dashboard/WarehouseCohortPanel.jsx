@@ -96,14 +96,14 @@ export default function WarehouseCohortPanel({ isLight = true, kelasFilter = '' 
               <tr className={`border-b text-[11px] uppercase tracking-wider ${
                 isLight ? 'border-slate-200 text-slate-500 bg-slate-50/70' : 'border-white/10 text-slate-400 bg-white/5'
               }`}>
-                <th className="py-2.5 px-3 font-semibold">Kohort Provider</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Volume Klaim</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Klaim / Pasien</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Rasio RITL</th>
-                <th className="py-2.5 px-3 font-semibold text-right">ALOS (CV)</th>
-                <th className="py-2.5 px-3 font-semibold text-right">HHI Poli</th>
-                <th className="py-2.5 px-3 font-semibold text-right">Kronis</th>
-                <th className="py-2.5 px-3 font-semibold text-center">Skor Kohort</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold">Kohort Provider</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">Volume Klaim</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">Klaim / Pasien</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">Rasio RITL</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">ALOS (CV)</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">HHI Poli</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-right">Kronis</th>
+                <th scope="col" className="py-2.5 px-3 font-semibold text-center">Skor Kohort</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/70 dark:divide-white/10 tabular-nums">

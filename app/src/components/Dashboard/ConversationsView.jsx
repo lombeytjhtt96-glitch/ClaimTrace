@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   MessageSquare,
@@ -45,31 +47,7 @@ const RISK_LEVEL_LABELS = {
 
 // Realistic JKN AI Conversation Sessions
 export default function ConversationsView({ onSelectCase, isLight: propIsLight }) {
-  const [themeIsLight, setThemeIsLight] = useState(() => {
-    if (typeof propIsLight === 'boolean') return propIsLight;
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      return root.classList.contains('theme-light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setThemeIsLight(propIsLight);
-      return;
-    }
-    if (typeof document === 'undefined') return;
-    const observer = new MutationObserver(() => {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      setThemeIsLight(root.classList.contains('theme-light'));
-    });
-    const root = document.getElementById('cockpit-root') || document.documentElement;
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : themeIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [userGroups, setUserGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,6 +57,9 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('Indikasi kuat Phantom Billing & Sangkalan Pasien');
   const [toastMsg, setToastMsg] = useState(null);
+
+  useEscapeKey(flagModalOpen, () => setFlagModalOpen(false));
+  useEscapeKey(Boolean(selectedSession) && !flagModalOpen, () => setSelectedSession(null));
 
   const fetchConversations = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
@@ -652,7 +633,12 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
       {/* Session Detail Drilldown Modal */}
       <AnimatePresence>
         {selectedSession && (
-          <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Transkrip sesi audit ${selectedSession.session_id || ''}`.trim()}
+            onClick={(e) => { if (e.target === e.currentTarget) setSelectedSession(null); }}
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
             isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
           }`}>
             <motion.div
@@ -919,7 +905,12 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
 
       {/* Flag Reason Dialog Modal */}
       {flagModalOpen && selectedSession && (
-        <div className={`fixed inset-0 z-60 flex items-center justify-center p-4 animate-fade-in ${
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tandai sesi untuk audit Wasrik"
+          onClick={(e) => { if (e.target === e.currentTarget) setFlagModalOpen(false); }}
+          className={`fixed inset-0 z-60 flex items-center justify-center p-4 animate-fade-in ${
           isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
         }`}>
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-6 space-y-4 ${

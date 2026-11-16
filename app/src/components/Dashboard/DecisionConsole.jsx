@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SanggahanAppealsPanel from './SanggahanAppealsPanel';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
@@ -29,36 +30,7 @@ export default function DecisionConsole({
   currentUser,
   isLight: propIsLight
 }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('theme');
-      if (p === 'light') return true;
-      if (p === 'dark') return false;
-      const root = document.getElementById('cockpit-root');
-      if (root) return root.classList.contains('theme-light');
-      return document.documentElement.classList.contains('light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-      else setInternalIsLight(document.documentElement.classList.contains('light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const defaultCase = {
     id: typeof caseData === 'string' ? caseData : 'CLM-2026-8801',
@@ -754,13 +726,13 @@ export default function DecisionConsole({
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className={`text-[10px] uppercase font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-black/35 text-white/70'}`}>
                     <tr>
-                      <th className="py-2 px-3 border border-slate-200 dark:border-white/10">Status Verifikasi</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Kasus / Lbr</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Biaya Tagih</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Kasus / Hari</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Biaya Tagih</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Disetujui (FKL48)</th>
-                      <th className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Tertahan / Koreksi</th>
+                      <th scope="col" className="py-2 px-3 border border-slate-200 dark:border-white/10">Status Verifikasi</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Kasus / Lbr</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RJTL Biaya Tagih</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Kasus / Hari</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">RITL Biaya Tagih</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Disetujui (FKL48)</th>
+                      <th scope="col" className="py-2 px-2.5 border border-slate-200 dark:border-white/10 text-right">Tertahan / Koreksi</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y font-mono text-[11px] ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/85'}`}>
@@ -1613,6 +1585,9 @@ export default function DecisionConsole({
               onClick={(e) => {
                 if (e.target === e.currentTarget) setShowPdfModal(false);
               }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Pratinjau berkas telaah pra-bayar PDF resmi BPJS Kesehatan"
               className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
             >
             <motion.div 

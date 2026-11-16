@@ -392,7 +392,7 @@ export default function MarkdownRenderer({ content, isLight = false, isUser = fa
                       }
                     >
                       {block.headers.map((h, hIdx) => (
-                        <th key={hIdx} className="px-3 py-2 whitespace-nowrap">
+                        <th scope="col" key={hIdx} className="px-3 py-2 whitespace-nowrap">
                           {renderInlineMarkdown(h, isLight, isUser)}
                         </th>
                       ))}

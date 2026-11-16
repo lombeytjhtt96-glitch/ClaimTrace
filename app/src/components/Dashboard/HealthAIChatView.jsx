@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import {
   Sparkles,
   Send,
@@ -129,31 +130,7 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function HealthAIChatView({ onNavigateTab, currentUser, isLight: propIsLight }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root');
-      return root ? root.classList.contains('theme-light') : false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
   const AGENT_BADGES = useMemo(() => GET_AGENT_BADGES(isLight), [isLight]);
 
   const [messages, setMessages] = useState([

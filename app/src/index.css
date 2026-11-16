@@ -12,13 +12,13 @@
 
     &:has(> head > meta[name="color-scheme"][content="dark"]) {
       color-scheme: dark;
-      --scrollbar-thumb: #64748b;
+      --scrollbar-thumb: #94a3b8;
       --scrollbar-track: #001030;
       scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     }
     &:has(> head > meta[name="color-scheme"][content="light"]) {
       color-scheme: light;
-      --scrollbar-thumb: #cbd5e1;
+      --scrollbar-thumb: #64748b;
       --scrollbar-track: #f8fafc;
       scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     }
@@ -157,6 +157,13 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Modal & dialog scroll containment: prevent scroll gestures chaining to background page */
+dialog:modal,
+[role="dialog"][aria-modal="true"],
+[role="dialog"][aria-modal="true"] .overflow-y-auto {
+  overscroll-behavior: contain;
 }
 
 /* Modern standard scrollbar properties (Baseline) */
@@ -1184,23 +1191,23 @@
 #cockpit-root.theme-light svg text[fill="#A5B4FC"] { fill: #005E30 !important; }
 #cockpit-root.theme-light svg text[fill="#818CF8"] { fill: #005E30 !important; }
 
-/* Standard Scrollbar styling in Light Mode */
+/* Standard Scrollbar styling in Light Mode (WCAG 1.4.11 >= 3:1 contrast) */
 #cockpit-root.theme-light {
-  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb: #64748b;
   --scrollbar-track: #f1f5f9;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 @supports not (scrollbar-color: auto) {
   #cockpit-root.theme-light ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: var(--scrollbar-track);
   }
   #cockpit-root.theme-light ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: var(--scrollbar-thumb);
     border-radius: 9999px;
   }
   #cockpit-root.theme-light ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #475569;
   }
 }
 

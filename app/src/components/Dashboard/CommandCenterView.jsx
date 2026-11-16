@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -35,31 +37,7 @@ import {
 
 // Realistic JKN / BPJS Kesehatan Users, Hospital PICs & Verifiers
 export default function CommandCenterView({ onSelectCase, isLight: propIsLight }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root');
-      return root ? root.classList.contains('theme-light') : false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,6 +51,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
   const [actionMenuOpenId, setActionMenuOpenId] = useState(null);
   const [crmNoteModal, setCrmNoteModal] = useState({ isOpen: false, user: null, note: '' });
   const [toastMsg, setToastMsg] = useState(null);
+
+  useEscapeKey(crmNoteModal.isOpen, () => setCrmNoteModal({ isOpen: false, user: null, note: '' }));
+  useEscapeKey(drawerOpen && !crmNoteModal.isOpen, () => setDrawerOpen(false));
 
   const fetchDirectoryUsers = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
@@ -505,12 +486,12 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
                   ? 'bg-slate-100 text-slate-700 border-slate-200 font-bold'
                   : 'bg-white/5 border-b border-white/10 text-white/70 font-bold'
               }`}>
-                <th className="py-3.5 px-4">PROFIL PETUGAS / DPJP</th>
-                <th className="py-3.5 px-4">PERAN &amp; STATUS AKSES</th>
-                <th className="py-3.5 px-4">PENAPISAN RISIKO INTEGRITAS</th>
-                <th className="py-3.5 px-4">AKTIVITAS &amp; KEPATUHAN SLA</th>
-                <th className="py-3.5 px-4">KANAL KOMUNIKASI CRM</th>
-                <th className="py-3.5 px-4 text-right">TINDAKAN DISPOSISI</th>
+                <th scope="col" className="py-3.5 px-4">PROFIL PETUGAS / DPJP</th>
+                <th scope="col" className="py-3.5 px-4">PERAN &amp; STATUS AKSES</th>
+                <th scope="col" className="py-3.5 px-4">PENAPISAN RISIKO INTEGRITAS</th>
+                <th scope="col" className="py-3.5 px-4">AKTIVITAS &amp; KEPATUHAN SLA</th>
+                <th scope="col" className="py-3.5 px-4">KANAL KOMUNIKASI CRM</th>
+                <th scope="col" className="py-3.5 px-4 text-right">TINDAKAN DISPOSISI</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/5'}`}>
@@ -837,6 +818,9 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
         <AnimatePresence>
           {drawerOpen && selectedUser && (
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Rincian pengguna ${selectedUser.name || 'faskes'}`}
               className="fixed inset-0 !mt-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm"
               onClick={() => setDrawerOpen(false)}
             >
@@ -1173,7 +1157,13 @@ export default function CommandCenterView({ onSelectCase, isLight: propIsLight }
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
           {crmNoteModal.isOpen && (
-            <div className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Catat interaksi CRM JKN"
+              onClick={(e) => { if (e.target === e.currentTarget) setCrmNoteModal({ isOpen: false, user: null, note: '' }); }}
+              className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+            >
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-6 space-y-4 ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/20 text-white'
           }`}>

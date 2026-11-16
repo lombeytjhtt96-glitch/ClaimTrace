@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, ShieldCheck, Lock, FileCode, CheckCircle2, AlertTriangle, 
@@ -52,31 +53,7 @@ const cleanIndicatorText = (rawText) => {
 };
 
 export default function AuditLedger({ isLight: propIsLight }) {
-  const [themeIsLight, setThemeIsLight] = useState(() => {
-    if (typeof propIsLight === 'boolean') return propIsLight;
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      return root.classList.contains('theme-light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setThemeIsLight(propIsLight);
-      return;
-    }
-    if (typeof document === 'undefined') return;
-    const observer = new MutationObserver(() => {
-      const root = document.getElementById('cockpit-root') || document.documentElement;
-      setThemeIsLight(root.classList.contains('theme-light'));
-    });
-    const root = document.getElementById('cockpit-root') || document.documentElement;
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : themeIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
@@ -873,11 +850,11 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-black/40 text-white/70 border-white/10'
               }`}>
                 <tr>
-                  <th className="py-3 px-3.5">Blok #</th>
-                  <th className="py-3 px-3.5">Waktu &amp; Tipe Event</th>
-                  <th className="py-3 px-3.5">Aktor &amp; Peran</th>
-                  <th className="py-3 px-3.5">Klaim / Nominal</th>
-                  <th className="py-3 px-3.5">Hash SHA-256</th>
+                  <th scope="col" className="py-3 px-3.5">Blok #</th>
+                  <th scope="col" className="py-3 px-3.5">Waktu &amp; Tipe Event</th>
+                  <th scope="col" className="py-3 px-3.5">Aktor &amp; Peran</th>
+                  <th scope="col" className="py-3 px-3.5">Klaim / Nominal</th>
+                  <th scope="col" className="py-3 px-3.5">Hash SHA-256</th>
                 </tr>
               </thead>
               <tbody className={`divide-y font-mono ${
@@ -1317,6 +1294,9 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
       <AnimatePresence>
         {showSecOpsModal && (
           <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Konsol Detection Engineering dan SOAR ClaimTrace"
             onClick={(e) => { if (e.target === e.currentTarget) setShowSecOpsModal(false); }}
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
           >
@@ -1615,6 +1595,9 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
         {/* DECISION RECEIPTS & HUMAN GATE MODAL */}
         {showReceiptsModal && (
           <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Konsol Agent Decision Receipts dan Human Gate"
             onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           >
@@ -2018,6 +2001,9 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
         {/* THREAT DEFENSE FRAMEWORKS & MITRE F3 MODAL */}
         {showCyberModal && (
           <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Matriks taksonomi keamanan siber MITRE F3, ATT&CK dan D3FEND"
             onClick={(e) => { if (e.target === e.currentTarget) setShowCyberModal(false); }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           >

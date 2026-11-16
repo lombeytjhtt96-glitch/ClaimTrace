@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import {
   Activity,
   Calendar,
@@ -220,28 +221,7 @@ function TrendChart({
 }
 
 export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsLight }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      if (sp.get('theme') === 'light') return true;
-      const root = document.getElementById('cockpit-root');
-      if (root?.classList.contains('theme-light')) return true;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const observer = new MutationObserver(() => {
-      const isLightMode = root.classList.contains('theme-light');
-      setInternalIsLight(isLightMode);
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const retUrl = `${API_BASE_URL}/api/v1/analytics/retention`;
   const natUrl = `${API_BASE_URL}/api/v1/system/national-scale-metrics`;

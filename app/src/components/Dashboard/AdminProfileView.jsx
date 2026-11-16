@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import {
   Shield,
   Edit3,
@@ -25,36 +26,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDashboard, isLight: propIsLight }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('theme');
-      if (p === 'light') return true;
-      if (p === 'dark') return false;
-      const root = document.getElementById('cockpit-root');
-      if (root) return root.classList.contains('theme-light');
-      return document.documentElement.classList.contains('light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-      else setInternalIsLight(document.documentElement.classList.contains('light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const getDerivedNames = (fullName = '') => {
     const clean = fullName.replace(/\s*\((Akun Fiktif|Fiktif|Sintetis|Simulasi)\)/gi, '').trim();

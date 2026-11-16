@@ -779,6 +779,7 @@ export default function SignInPage({
                     <input
                       id="forgot-username"
                       type="text"
+                      autoComplete="username"
                       placeholder="Masukkan Username"
                       value={username}
                       onChange={(e) => {
@@ -796,6 +797,7 @@ export default function SignInPage({
                     <input
                       id="forgot-email"
                       type="email"
+                      autoComplete="email"
                       placeholder="Masukkan Email" onBlur={handleEmailBlur}
                       value={email}
                       onChange={(e) => {
@@ -814,6 +816,7 @@ export default function SignInPage({
                       id="forgot-nip"
                       type="text"
                       inputMode="numeric"
+                      autoComplete="off"
                       placeholder="Masukkan NIP" pattern="[0-9]*"
                       value={nip}
                       onChange={handleNipChange}

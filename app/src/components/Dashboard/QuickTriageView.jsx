@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   FolderOpen,
@@ -100,30 +101,7 @@ const STATUS_LABELS = {
 };
 
 export default function QuickTriageView({ onNavigateTab, onSelectCase, isLight: propIsLight }) {
-  const [isLight, setIsLight] = useState(() => {
-    if (propIsLight !== undefined) return propIsLight;
-    if (typeof window !== 'undefined') {
-      const urlTheme = new URLSearchParams(window.location.search).get('theme');
-      if (urlTheme === 'light') return true;
-      if (urlTheme === 'dark') return false;
-      return localStorage.getItem('claimtrace_theme') === 'light' || document.getElementById('cockpit-root')?.classList.contains('theme-light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propIsLight !== undefined) {
-      setIsLight(propIsLight);
-      return;
-    }
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const obs = new MutationObserver(() => {
-      setIsLight(root.classList.contains('theme-light'));
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, [propIsLight]);
+  const isLight = useCockpitTheme(propIsLight);
 
   const mapQuickCases = (casesList) => (Array.isArray(casesList) ? casesList : []).map((c) => ({
     case_id: c.case_id || c.id,

@@ -14,7 +14,7 @@
   --ct-inset: #F3F5F8;
   --ct-ink: #061B31;
   --ct-ink-secondary: #475569;
-  --ct-ink-muted: #64748B;
+  --ct-ink-muted: #526175;
   --ct-border: rgba(6, 27, 49, 0.08);
   --ct-accent: #00733B;
 
@@ -22,6 +22,10 @@
   --ct-ui-sidebar: #FFFFFF;
   --ct-ui-surface: #FFFFFF;
   --ct-ui-border: rgba(6, 27, 49, 0.08);
+  --scrollbar-thumb: #475569;
+  --scrollbar-track: #F3F5F8;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 html.dark,
@@ -31,14 +35,18 @@ html.dark,
   --ct-inset: #161A22;
   --ct-ink: #F3F5F8;
   --ct-ink-secondary: #9CA3AF;
-  --ct-ink-muted: #6B7280;
+  --ct-ink-muted: #8B95A5;
   --ct-border: rgba(255, 255, 255, 0.08);
-  --ct-accent: #2E9E68;
+  --ct-accent: #10B981;
 
   --ct-ui-canvas: #090B0E;
   --ct-ui-sidebar: #0E1116;
   --ct-ui-surface: #11141A;
   --ct-ui-border: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb: #94A3B8;
+  --scrollbar-track: #090B0E;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 html,
@@ -132,23 +140,21 @@ table td,
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Subtle clean scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* Subtle clean scrollbars (standard CSS with legacy WebKit fallback) */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.25);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.45);
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
 }
 
 @media print {

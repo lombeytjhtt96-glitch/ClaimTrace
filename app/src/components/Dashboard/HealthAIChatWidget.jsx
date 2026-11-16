@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import {
   MessageSquare,
   X,
@@ -43,27 +44,7 @@ const RISK_LEVEL_COLORS = {
 };
 
 export default function HealthAIChatWidget({ onOpenFullScreen, onNavigateTab, isLight: propIsLight }) {
-  const [isLight, setIsLight] = useState(() => {
-    if (propIsLight !== undefined) return propIsLight;
-    if (typeof document !== 'undefined') {
-      return document.getElementById('cockpit-root')?.classList.contains('theme-light') || false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propIsLight !== undefined) {
-      setIsLight(propIsLight);
-      return;
-    }
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const obs = new MutationObserver(() => {
-      setIsLight(root.classList.contains('theme-light'));
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, [propIsLight]);
+  const isLight = useCockpitTheme(propIsLight);
 
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window !== 'undefined') {

@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { createPortal } from 'react-dom';
 import {
   Shield,
@@ -49,36 +51,7 @@ function formatRelativeTime(iso) {
 }
 
 export default function CasesManagementView({ onNavigateTab, onInspectCase, onSelectCase, isLight: propIsLight }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search).get('theme');
-      if (p === 'light') return true;
-      if (p === 'dark') return false;
-      const root = document.getElementById('cockpit-root');
-      if (root) return root.classList.contains('theme-light');
-      return document.documentElement.classList.contains('light');
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-      else setInternalIsLight(document.documentElement.classList.contains('light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const casesUrl = `${API_BASE_URL}/api/v1/operations/cases`;
   const verifsUrl = `${API_BASE_URL}/api/v1/auth/verificators`;
@@ -148,6 +121,8 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(1);
   const [selectedCase, setSelectedCase] = useState(null);
+
+  useEscapeKey(Boolean(selectedCase), () => setSelectedCase(null));
 
   const handleChipClick = (key) => {
     setActiveChip(key);
@@ -549,15 +524,15 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
           <table className="w-full text-left min-w-[950px] divide-y divide-slate-200 dark:divide-[#2d3748]">
             <thead>
               <tr className="text-[11.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <th className="py-3 px-3">No. Tiket</th>
-                <th className="py-3 px-3">Faskes Pengaju</th>
-                <th className="py-3 px-3">Uraian Kasus &amp; Kode INA-CBG</th>
-                <th className="py-3 px-3">Verifikator Penanggung Jawab</th>
-                <th className="py-3 px-3">Prioritas Risiko</th>
-                <th className="py-3 px-3">Status Berkas</th>
-                <th className="py-3 px-3">Tanggal Masuk</th>
-                <th className="py-3 px-3">Batas SLA (10 HK)</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th scope="col" className="py-3 px-3">No. Tiket</th>
+                <th scope="col" className="py-3 px-3">Faskes Pengaju</th>
+                <th scope="col" className="py-3 px-3">Uraian Kasus &amp; Kode INA-CBG</th>
+                <th scope="col" className="py-3 px-3">Verifikator Penanggung Jawab</th>
+                <th scope="col" className="py-3 px-3">Prioritas Risiko</th>
+                <th scope="col" className="py-3 px-3">Status Berkas</th>
+                <th scope="col" className="py-3 px-3">Tanggal Masuk</th>
+                <th scope="col" className="py-3 px-3">Batas SLA (10 HK)</th>
+                <th scope="col" className="py-3 px-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#2d3748]/60 text-xs">
@@ -765,6 +740,9 @@ export default function CasesManagementView({ onNavigateTab, onInspectCase, onSe
       {/* Modal Rincian & Penugasan Berkas Klaim */}
       {selectedCase && typeof document !== 'undefined' && createPortal(
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Rincian berkas klaim ${selectedCase.id || ''}`.trim()}
           className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setSelectedCase(null)}
         >

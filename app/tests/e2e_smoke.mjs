@@ -333,6 +333,13 @@ async function run() {
       await dialog.waitFor({ state: 'hidden', timeout: 5000 });
     };
 
+    // Verify Ctrl+K Command Palette opens & dismisses with Escape
+    await page.keyboard.press('Control+k');
+    const escPalette = page.getByRole('dialog', { name: /Navigasi Cepat Portal Verifikator/i });
+    await escPalette.waitFor({ state: 'visible', timeout: 8000 });
+    await page.keyboard.press('Escape');
+    await escPalette.waitFor({ state: 'hidden', timeout: 5000 });
+
     // Ctrl+K -> Telaah Kasus (Investigasi) + Audit Klinis + Jump ke Cek 7 Dokumen RS
     await navigateViaCommandPalette('Investigasi', /Telaah Kasus/i);
     await page.getByText(/Audit Klinis & Kaidah Koding INA-CBG/i).waitFor({ state: 'visible', timeout: 10000 });
@@ -617,6 +624,17 @@ async function run() {
     for (const [qText, btnRegex] of fullTabSweep) {
       await navigateViaCommandPalette(qText, btnRegex);
       await assertCleanTabView(`Tab:${qText}`);
+      if (qText === 'Manajemen Berkas') {
+        const actionBtn = page.locator('button[aria-label^="Opsi aksi berkas"]').first();
+        if (await actionBtn.count()) {
+          await actionBtn.click();
+          await page.getByRole('button', { name: /Lihat Rincian/i }).click();
+          const caseDialog = page.locator('[role="dialog"][aria-modal="true"]').first();
+          await caseDialog.waitFor({ state: 'visible', timeout: 8000 });
+          await page.keyboard.press('Escape');
+          await caseDialog.waitFor({ state: 'hidden', timeout: 5000 });
+        }
+      }
       if (qText === 'Analitik Tren') {
         await page.locator('#query-select').selectOption('case_distribution');
         await page.getByText(/K-ANONYMITY PESERTA/i).first().waitFor({ state: 'visible', timeout: 8000 });

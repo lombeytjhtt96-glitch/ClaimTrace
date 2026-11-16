@@ -4431,11 +4431,15 @@ def list_duckdb_tables():
 @app.get("/api/v1/duckdb/describe/{table_name}")
 def describe_duckdb_table(table_name: str = "claims_warehouse"):
     """
-    Describes column schemas and types for a table or view in DuckDB.
+    Describes column schemas and types for a validated table or view in the OLAP warehouse.
     """
+    try:
+        columns = duckdb_engine.describe_table(table_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "table_name": table_name,
-        "columns": duckdb_engine.describe_table(table_name)
+        "columns": columns
     }
 
 @app.post("/api/v1/duckdb/query")
@@ -5607,7 +5611,7 @@ async def run_frista_quad_ai_audit(req: FristaAiAuditRequest):
         )
         forensic_text = (
             f"**[Analisis Forensik Biometrik FRISTA & Quad-Triangulation: {log['claim_id']}]**\n\n"
-            f"- **Faskes & Tipologi:** {log['hospital']} (SEP `{log['sep_number']}`) — {case_ctx['typology_name']}.\n"
+            f"- **Faskes & Tipologi:** {log['hospital']} (SEP `{log['sep_number']}`) - {case_ctx['typology_name']}.\n"
             f"- **Validasi Biometrik Lapis 4:** Status **{log['frista_status']}** | Metode: {log['authentication_method']} | "
             f"Face Match **{log['face_similarity_score']*100:.1f}%** (Ambang 85%) | 3D Liveness: **{log['liveness_check']}** | Terminal `{log['device_id']}`.\n"
             f"- **Rekonsiliasi 4 Lapis (Quad-Triangulation):** Lapis 1 AI Spatiotemporal (`{qt['lapis_1_spatiotemporal_ai']}`), "

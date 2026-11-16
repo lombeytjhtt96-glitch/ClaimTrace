@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -31,27 +33,7 @@ import {
  */
 
 export default function ClarificationScheduleView({ onNavigateTab, onSelectCase, isLight: propIsLight }) {
-  const [isLight, setIsLight] = useState(() => {
-    if (propIsLight !== undefined) return propIsLight;
-    if (typeof document !== 'undefined') {
-      return document.getElementById('cockpit-root')?.classList.contains('theme-light') || false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propIsLight !== undefined) {
-      setIsLight(propIsLight);
-      return;
-    }
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const obs = new MutationObserver(() => {
-      setIsLight(root.classList.contains('theme-light'));
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, [propIsLight]);
+  const isLight = useCockpitTheme(propIsLight);
 
   const normalizeScheduleItem = (s) => {
     const pic = s.faskes_pic || s.user || { name: 'Faskes PIC', email: '-', registry_code: s.claim_id };
@@ -118,6 +100,8 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
   // View state
   const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  useEscapeKey(Boolean(selectedAppointment), () => setSelectedAppointment(null));
 
   const handleRefresh = () => {
     fetchSchedules();
@@ -990,6 +974,9 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
       {/* Appointment Detail Modal */}
       {selectedAppointment && typeof document !== 'undefined' && createPortal(
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detail jadwal klarifikasi klaim"
           className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-fade-in"
           onClick={() => setSelectedAppointment(null)}
         >

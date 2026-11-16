@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Smartphone, Radio, Send, CheckCircle2, XCircle, Clock, 
@@ -18,31 +19,7 @@ export default function MobileTelemetry({
   onResetDemo,
   isLight: propIsLight
 }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof document !== 'undefined') {
-      const root = document.getElementById('cockpit-root');
-      return root ? root.classList.contains('theme-light') : false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (typeof propIsLight === 'boolean') {
-      setInternalIsLight(propIsLight);
-      return;
-    }
-    const updateTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) setInternalIsLight(root.classList.contains('theme-light'));
-    };
-    updateTheme();
-    const observer = new MutationObserver(updateTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, [propIsLight]);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -739,13 +716,13 @@ export default function MobileTelemetry({
                 : 'bg-[#00134A] text-white/70 border-white/10 font-bold'
             }`}>
               <tr>
-                <th className="py-3 px-3.5">ID Telemetri</th>
-                <th className="py-3 px-3.5">No. Klaim</th>
-                <th className="py-3 px-3.5">Peserta &amp; Hash NIK</th>
-                <th className="py-3 px-3.5">Faskes / Prosedur</th>
-                <th className="py-3 px-3.5">Waktu Kirim / Respon</th>
-                <th className="py-3 px-3.5 text-center">Status Respon</th>
-                <th className="py-3 px-3.5">ZK-Proof / Hash</th>
+                <th scope="col" className="py-3 px-3.5">ID Telemetri</th>
+                <th scope="col" className="py-3 px-3.5">No. Klaim</th>
+                <th scope="col" className="py-3 px-3.5">Peserta &amp; Hash NIK</th>
+                <th scope="col" className="py-3 px-3.5">Faskes / Prosedur</th>
+                <th scope="col" className="py-3 px-3.5">Waktu Kirim / Respon</th>
+                <th scope="col" className="py-3 px-3.5 text-center">Status Respon</th>
+                <th scope="col" className="py-3 px-3.5">ZK-Proof / Hash</th>
               </tr>
             </thead>
             <tbody className={`divide-y font-mono ${
@@ -868,6 +845,9 @@ export default function MobileTelemetry({
       <AnimatePresence>
         {showComplianceModal && (
           <div 
+            role="dialog"
+            aria-modal="true"
+            aria-label="Dokumen kepatuhan dan sertifikasi keamanan"
             onClick={(e) => { if (e.target === e.currentTarget) setShowComplianceModal(false); }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >

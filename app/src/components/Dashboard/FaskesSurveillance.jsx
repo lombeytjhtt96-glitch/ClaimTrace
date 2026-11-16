@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Hospital, Search, Filter, AlertTriangle, ShieldCheck, 
@@ -8,33 +10,15 @@ import {
 } from 'lucide-react';
 
 export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
-  const [isLight, setIsLight] = useState(() => {
-    if (propIsLight !== undefined) return propIsLight;
-    if (typeof document !== 'undefined') {
-      return document.getElementById('cockpit-root')?.classList.contains('theme-light') || false;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    if (propIsLight !== undefined) {
-      setIsLight(propIsLight);
-      return;
-    }
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const obs = new MutationObserver(() => {
-      setIsLight(root.classList.contains('theme-light'));
-    });
-    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, [propIsLight]);
+  const isLight = useCockpitTheme(propIsLight);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedFaskesDetail, setSelectedFaskesDetail] = useState(null);
   const [faskesAiAudit, setFaskesAiAudit] = useState({});
   const [faskesAiLoading, setFaskesAiLoading] = useState(false);
+
+  useEscapeKey(Boolean(selectedFaskesDetail), () => setSelectedFaskesDetail(null));
 
   const handleRunFaskesAiAudit = (faskes) => {
     if (!faskes || faskesAiLoading) return;
@@ -501,6 +485,10 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
       <AnimatePresence>
         {selectedFaskesDetail && (
           <motion.div 
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Rincian faskes ${selectedFaskesDetail.name || ''}`.trim()}
+            onClick={(e) => { if (e.target === e.currentTarget) setSelectedFaskesDetail(null); }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

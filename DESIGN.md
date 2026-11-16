@@ -20,7 +20,7 @@ ClaimTrace JKN is an institutional pre-payment audit & clinical fraud decision-s
 - **Secondary Sub-Surface / Inset**: `#F3F5F8`
 - **Primary Ink**: `#061B31`
 - **Secondary Ink**: `#475569`
-- **Muted / Metadata Ink**: `#64748B`
+- **Muted / Metadata Ink**: `#526175`
 - **Hairline Border**: `rgba(6, 27, 49, 0.08)` / `#E2E8F0`
 - **Primary Accent (Clinical Emerald)**: `#047857` (hover `#065F46`, soft surface `#ECFDF5`)
 - **Deep Brand Header Banner (Preserved Anchor)**: `#00134A` with white crisp typography (only inside explicit `.hero-navy-banner` institutional banners).
@@ -31,7 +31,7 @@ ClaimTrace JKN is an institutional pre-payment audit & clinical fraud decision-s
 - **Elevated / Interactive Surface**: `#161A22`
 - **Primary Ink**: `#F3F5F8`
 - **Secondary Ink**: `#9CA3AF`
-- **Muted Ink**: `#6B7280`
+- **Muted Ink**: `#8B95A5`
 - **Hairline Border**: `rgba(255, 255, 255, 0.08)`
 - **Primary Accent**: `#10B981` (text `#34D399`, soft surface `rgba(16, 185, 129, 0.12)`)
 

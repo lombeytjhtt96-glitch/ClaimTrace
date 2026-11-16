@@ -4,6 +4,28 @@ Semua perubahan terdokumentasi secara kronologis untuk platform **ClaimTrace JKN
 
 ---
 
+## [1.2.0-field-hardening] - 2026-11-16
+
+### Ringkasan Rilis
+Audit dan penguatan menyeluruh kesiapan operasional lapangan BPJS Kesehatan pada branch lokal `dev-local`: konsolidasi kode React, pengamanan RBAC & validasi identifier SQL, pemenuhan WCAG AA dan standar web modern, serta penghapusan berkas dan aset usang.
+
+### [Keamanan, RBAC, & Kebersihan Backend]
+- **Validasi Allowlist Identifier Tabel OLAP:** `DuckDbAnalyticsEngine.describe_table` dan rute `GET /api/v1/duckdb/describe/{table_name}` kini memvalidasi regex identifier serta daftar tabel/view aktual di gudang data sebelum eksekusi `DESCRIBE`, mengembalikan HTTP `400` untuk nama tabel tidak sah.
+- **Pengetatan RBAC & Guardrail Produksi:** Penegakan hak akses per rute pada `StrictSessionGateMiddleware.dispatch`, penambahan `verify_privilege` eksplisit pada endpoint aturan deteksi, Decision Receipts, Human Gate, telemetri mobile, dan mutasi operasional, serta pengendalian seed demo melalui `CLAIMTRACE_ALLOW_DEMO_ACCOUNTS`.
+- **Sanitasi CSV & Perbaikan Narasi:** Netralisasi injeksi formula CSV pada `generate_dossier_csv_report` (`_escape_csv_cell`), perbaikan unpacking token 3-tuple `_resolve_actor`, dan penghapusan karakter em-dash pada keluaran narasi biometrik backend.
+
+### [Modern Web, Aksesibilitas WCAG AA, & Konsolidasi Frontend]
+- **Kontras WCAG AA & Standardisasi CSS:** Penyesuaian token warna `--ct-ink-muted` di `DESIGN.md` dan `app/src/styles/clinical-precision.css` (`#526175` untuk mode terang, `#8B95A5` untuk mode gelap, lulus rasio >= 4.5:1), migrasi styling scrollbar standar `scrollbar-width` / `scrollbar-color` dengan fallback `@supports not (scrollbar-color: auto)`, serta `overscroll-behavior: contain` pada modal.
+- **Konsolidasi Hooks & Utilitas Terpadu:** Ekstraksi `app/src/hooks/useCockpitTheme.js` (menghapus 22 duplikasi `MutationObserver`), `app/src/hooks/useEscapeKey.js`, serta `app/src/utils/exportCsv.js` untuk seluruh 10 ekspor CSV Dashboard yang tersanitasi.
+- **Kepatuhan Keyboard, Dialog, & Tabel Semantik:** Penambahan `role="dialog"`, `aria-modal="true"`, serta penutupan `Escape` pada seluruh modal/drawer Dashboard, pengamanan IME (`isComposing` / `keyCode === 229`) pada handler `Enter`, `autoComplete` form autentikasi, `aria-label` lengkap pada tombol ikon/switch, dan `scope="col"` pada header kolom tabel utama.
+- **Pembersihan Aset & Dependensi:** Penghapusan 266 gambar tidak terpakai, 18 berkas font `Montserrat`, 9 berkas Lottie, 11 skrip uji lama, dan 37 paket npm usang; build produksi Vite dan Service Worker v1.4.0 bebas caching JSON `/api/` maupun `/fhir`.
+
+### [Verifikasi Akhir]
+- **Backend & API Pytest:** `426 passed` (`backend/tests` + `tests_e2e`), termasuk uji penolakan injeksi `describe_table`, RBAC, dan CSV escaping.
+- **Frontend & E2E Browser:** `modern-web-guidance legacy-scan` menunjukkan `0` temuan, `npm audit --omit=dev` menunjukkan `0 vulnerabilities`, `npm run build` lulus (`3016` modul), `verify_claimtrace_stack.py` lulus (`16/16`), dan `npm run test:e2e` lulus penuh pada mode terang/gelap desktop dan mobile `360px`.
+
+---
+
 ## [1.1.0-final-defense] - 2026-11-15
 
 ### Ringkasan Rilis

@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -37,25 +39,7 @@ import {
 
 // Realistic JKN / BPJS Kesehatan Intervention Plans
 export default function InterventionsView({ onSelectCase, isLight: propIsLight }) {
-  // Theme Detection Fallback
-  const [domIsLight, setDomIsLight] = useState(false);
-  useEffect(() => {
-    const checkTheme = () => {
-      const root = document.getElementById('cockpit-root');
-      if (root) {
-        setDomIsLight(root.classList.contains('theme-light'));
-      }
-    };
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    const root = document.getElementById('cockpit-root');
-    if (root) {
-      observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    }
-    return () => observer.disconnect();
-  }, []);
-
-  const isLight = propIsLight !== undefined ? propIsLight : domIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   // 4 Tabs: 'dashboard' | 'queue' | 'plans' | 'users'
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -71,6 +55,10 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     type: 'approve', // 'approve' | 'reject'
     note: '',
   });
+
+  useEscapeKey(reviewNoteModal.isOpen, () =>
+    setReviewNoteModal({ isOpen: false, planId: null, type: 'approve', note: '' })
+  );
 
   const fetchInterventions = useCallback(async (forceRefresh = false) => {
     setIsRefreshing(true);
@@ -1233,7 +1221,12 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
 
       {/* Review Modal Dialog */}
       {reviewNoteModal.isOpen && typeof document !== 'undefined' && createPortal(
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 ${
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={reviewNoteModal.type === 'approve' ? 'Setujui rencana intervensi' : 'Tolak rencana intervensi'}
+          onClick={(e) => { if (e.target === e.currentTarget) setReviewNoteModal({ isOpen: false, planId: null, type: 'approve', note: '' }); }}
+          className={`fixed inset-0 z-[100] flex items-center justify-center p-4 ${
           isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
         }`}>
           <div className={`w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl border ${

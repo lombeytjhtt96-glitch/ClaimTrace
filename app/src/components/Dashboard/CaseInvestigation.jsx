@@ -1411,12 +1411,12 @@ export default function CaseInvestigation({
             <table className={`min-w-full divide-y text-left text-xs ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
               <thead className={isLight ? 'bg-slate-100' : 'bg-black/30'}>
                 <tr>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Lapis Analisis</th>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Indikator yang Diuji</th>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Hasil Evaluasi</th>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Tingkat Risiko</th>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Kategori Pengawasan</th>
-                  <th className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Rujukan Regulasi</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Lapis Analisis</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Indikator yang Diuji</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Hasil Evaluasi</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Tingkat Risiko</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Kategori Pengawasan</th>
+                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Rujukan Regulasi</th>
                 </tr>
               </thead>
               <tbody className={`divide-y text-[11px] ${isLight ? 'divide-slate-100' : 'divide-white/10'}`}>
@@ -1580,11 +1580,11 @@ export default function CaseInvestigation({
                 <table className="w-full text-left text-xs">
                   <thead className={`text-[10px] uppercase font-bold ${isLight ? 'bg-slate-100 text-slate-700' : 'bg-black/30 text-white/65'}`}>
                     <tr>
-                      <th className="py-2 px-3">Tanggal</th>
-                      <th className="py-2 px-3">No. SEP / Rujukan</th>
-                      <th className="py-2 px-3">Faskes &amp; Tingkat Layanan</th>
-                      <th className="py-2 px-3">ICD-10 &amp; DPJP</th>
-                      <th className="py-2 px-3">Catatan Kontrol i-Care</th>
+                      <th scope="col" className="py-2 px-3">Tanggal</th>
+                      <th scope="col" className="py-2 px-3">No. SEP / Rujukan</th>
+                      <th scope="col" className="py-2 px-3">Faskes &amp; Tingkat Layanan</th>
+                      <th scope="col" className="py-2 px-3">ICD-10 &amp; DPJP</th>
+                      <th scope="col" className="py-2 px-3">Catatan Kontrol i-Care</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/85'}`}>

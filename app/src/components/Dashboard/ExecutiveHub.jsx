@@ -63,6 +63,7 @@ import {
   generateClaimTraceExecutiveReport,
   generateClaimTraceInterventionCampaign,
 } from '../../services/claimtraceOrchestratorService';
+import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 
 const PIE_COLORS = ['#00733B', '#f59e0b', '#f97316', '#ef4444'];
 
@@ -710,12 +711,12 @@ function MicroTrendsGrid({ trends, sentimentValue, avgResolutionHours, activeUse
                 <tr className={`border-b font-mono uppercase text-[10px] ${
                   isLight ? 'border-slate-200 text-slate-500 bg-slate-50' : 'border-white/10 text-white/50 bg-white/5'
                 }`}>
-                  <th className="py-2 px-3">Periode / Kohort</th>
-                  <th className="py-2 px-3 text-right">FKRTL / Peserta</th>
-                  <th className="py-2 px-3 text-right">Permintaan Klaim Masuk</th>
-                  <th className="py-2 px-3 text-right">Rasio Disetujui</th>
-                  <th className="py-2 px-3 text-right">Latensi SIMD</th>
-                  <th className="py-2 px-3">Rincian Data Transaksi Terverifikasi</th>
+                  <th scope="col" className="py-2 px-3">Periode / Kohort</th>
+                  <th scope="col" className="py-2 px-3 text-right">FKRTL / Peserta</th>
+                  <th scope="col" className="py-2 px-3 text-right">Permintaan Klaim Masuk</th>
+                  <th scope="col" className="py-2 px-3 text-right">Rasio Disetujui</th>
+                  <th scope="col" className="py-2 px-3 text-right">Latensi SIMD</th>
+                  <th scope="col" className="py-2 px-3">Rincian Data Transaksi Terverifikasi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-mono">
@@ -1627,28 +1628,7 @@ export default function ExecutiveHub({
   onSelectCriticalCase,
   isLight: propIsLight,
 }) {
-  const [internalIsLight, setInternalIsLight] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      if (sp.get('theme') === 'light') return true;
-      const root = document.getElementById('cockpit-root');
-      if (root?.classList.contains('theme-light')) return true;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    const root = document.getElementById('cockpit-root');
-    if (!root) return;
-    const observer = new MutationObserver(() => {
-      const isLightMode = root.classList.contains('theme-light');
-      setInternalIsLight(isLightMode);
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const isLight = typeof propIsLight === 'boolean' ? propIsLight : internalIsLight;
+  const isLight = useCockpitTheme(propIsLight);
 
   const [overview, setOverview] = useState(INITIAL_OVERVIEW);
   const [trends] = useState(INITIAL_TRENDS);
@@ -2168,6 +2148,9 @@ export default function ExecutiveHub({
       <AnimatePresence>
         {isReportModalOpen && (
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Unduh dan generator laporan eksekutif"
             onClick={() => setIsReportModalOpen(false)}
             className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
               isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
@@ -2302,6 +2285,9 @@ export default function ExecutiveHub({
       <AnimatePresence>
         {isCampaignModalOpen && (
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Kampanye intervensi pengawasan JKN"
             onClick={() => setIsCampaignModalOpen(false)}
             className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
               isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'

@@ -353,3 +353,19 @@ def test_demo_accounts_flag_disables_seeds_outside_pytest(monkeypatch):
     assert app_main._demo_accounts_enabled() is False
     monkeypatch.setenv("CLAIMTRACE_ALLOW_DEMO_ACCOUNTS", "1")
     assert app_main._demo_accounts_enabled() is True
+
+
+def test_duckdb_describe_table_rejects_injection_and_unknown_tables(monkeypatch):
+    """Verify /api/v1/duckdb/describe/{table_name} validates table identifier allowlist."""
+    monkeypatch.setenv("CLAIMTRACE_STRICT_API_AUTH", "0")
+    client = TestClient(app)
+
+    res_valid = client.get("/api/v1/duckdb/describe/claims_warehouse")
+    assert res_valid.status_code == 200
+    assert res_valid.json()["table_name"] == "claims_warehouse"
+
+    res_inject = client.get("/api/v1/duckdb/describe/claims_warehouse;DROP TABLE claims_warehouse")
+    assert res_inject.status_code == 400
+
+    res_unknown = client.get("/api/v1/duckdb/describe/nonexistent_table_xyz")
+    assert res_unknown.status_code == 400
