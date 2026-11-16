@@ -46,6 +46,21 @@ function fetchResetTokenValidationOnce(url) {
   return reqPromise;
 }
 
+const AUTH_MODE_COPY = {
+  login: {
+    title: 'Masuk ClaimTrace',
+    subtitle: 'Masukkan Username, Email, NIP, dan Password Anda untuk mengakses portal.',
+  },
+  forgot: {
+    title: 'Lupa Password',
+    subtitle: 'Masukkan Username, Email, dan NIP akun terdaftar untuk menerima tautan ubah password.',
+  },
+  reset: {
+    title: 'Ubah Password',
+    subtitle: 'Tetapkan password baru untuk akun Anda.',
+  },
+};
+
 export default function SignInPage({
   onLoginSuccess,
   sessionNotice,
@@ -603,6 +618,8 @@ export default function SignInPage({
     );
   };
 
+  const activeCopy = AUTH_MODE_COPY[mode] || AUTH_MODE_COPY.login;
+
   return (
     <div className="flex-1 flex flex-col justify-center items-center px-4 py-8 bg-[#F7F8FA] text-[#061B31]">
       <motion.div
@@ -611,24 +628,13 @@ export default function SignInPage({
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="w-full max-w-[430px] space-y-5 relative z-10"
       >
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-1.5">
           <h1 className="text-2xl font-bold tracking-tight text-[#061B31]">
-            {mode === 'login'
-              ? 'Masuk ClaimTrace'
-              : mode === 'forgot'
-              ? 'Lupa Password'
-              : 'Ubah Password'}
+            {activeCopy.title}
           </h1>
-          {mode === 'forgot' && (
-            <p className="text-xs text-slate-600">
-              Masukkan Username, Email, dan NIP akun terdaftar.
-            </p>
-          )}
-          {mode === 'reset' && (
-            <p className="text-xs text-slate-600">
-              Tetapkan password baru untuk akun Anda.
-            </p>
-          )}
+          <p className="text-xs leading-relaxed text-slate-600">
+            {activeCopy.subtitle}
+          </p>
         </div>
 
         <div className={`rounded-2xl border p-4 sm:p-7 space-y-4 ${cardSurface}`}>

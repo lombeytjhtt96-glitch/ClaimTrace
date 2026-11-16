@@ -199,6 +199,7 @@ async function run() {
     const authPage = await authCtx.newPage();
     await authPage.goto(`${FRONTEND_URL}/?view=login`, { waitUntil: 'networkidle' });
     await authPage.locator('#login-password').waitFor({ state: 'visible', timeout: 10000 });
+    await authPage.getByText('Masukkan Username, Email, NIP, dan Password Anda untuk mengakses portal.').waitFor({ state: 'visible', timeout: 5000 });
     await assertNoDarkThemeToggle(authPage, 'SignIn Desktop');
     await assertNoHorizontalOverflow(authPage, 'SignIn Desktop');
 
@@ -231,6 +232,7 @@ async function run() {
 
     await authPage.getByRole('button', { name: /Lupa Password\?/i }).click();
     await authPage.locator('#forgot-username').waitFor({ state: 'visible', timeout: 8000 });
+    await authPage.getByText('Masukkan Username, Email, dan NIP akun terdaftar untuk menerima tautan ubah password.').waitFor({ state: 'visible', timeout: 5000 });
     await assertNoDarkThemeToggle(authPage, 'Forgot Password Desktop');
     await assertNoHorizontalOverflow(authPage, 'Forgot Password Desktop');
 
