@@ -719,14 +719,16 @@ export default function SignInPage({
                     }}
                     className={`w-full pl-3.5 pr-11 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
-                    aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <div className="absolute inset-y-0 right-1.5 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -903,7 +905,7 @@ export default function SignInPage({
                         id="reset-new-password"
                         type={showNewPassword ? 'text' : 'password'}
                         autoComplete="new-password"
-                        placeholder="Minimal 10 karakter"
+                        placeholder="Masukkan Password baru"
                         value={newPassword}
                         onChange={(e) => {
                           setNewPassword(e.target.value);
@@ -911,14 +913,16 @@ export default function SignInPage({
                         }}
                         className={`w-full pl-3.5 pr-11 py-2.5 rounded-xl border text-sm focus:outline-none transition ${inputSurface}`}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword((prev) => !prev)}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
-                        aria-label={showNewPassword ? 'Sembunyikan password' : 'Lihat password'}
-                      >
-                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                      <div className="absolute inset-y-0 right-1.5 flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          className="p-2 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                          aria-label={showNewPassword ? 'Sembunyikan password' : 'Lihat password'}
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

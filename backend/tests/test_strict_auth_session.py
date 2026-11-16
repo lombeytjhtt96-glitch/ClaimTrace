@@ -911,6 +911,10 @@ def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path, caplog)
     assert otp_req["json"]["from"] == {"email": "onboarding@messagebird.dev", "name": "ClaimTrace JKN Test"}
     assert otp_req["json"]["to"] == [acct["email"]]
     assert otp_req["json"]["category"] == "transactional"
+    assert otp_req["json"]["track_opens"] is False
+    assert otp_req["json"]["track_clicks"] is False
+    assert "<!DOCTYPE html>" in otp_req["json"]["html"]
+    assert "text-transform:uppercase" not in otp_req["json"]["html"].lower()
     otp_entries = json.loads(otp_spool.read_text(encoding="utf-8"))
     assert otp_entries[-1]["bird_sent"] is True
     assert otp_entries[-1]["otp"] in otp_req["json"]["html"]
@@ -929,6 +933,9 @@ def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path, caplog)
     assert len(bird_calls) == 2
     rst_req = bird_calls[1]
     assert rst_req["url"] == "https://eu1.platform.bird.com/v1/email/messages"
+    assert rst_req["json"]["track_opens"] is False
+    assert rst_req["json"]["track_clicks"] is False
+    assert "<!DOCTYPE html>" in rst_req["json"]["html"]
     assert "/?view=reset_password&amp;token=ctrst." in rst_req["json"]["html"]
     assert "/?view=reset_password&token=ctrst." in rst_req["json"]["text"]
     rst_entries = json.loads(reset_spool.read_text(encoding="utf-8"))

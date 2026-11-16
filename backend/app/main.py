@@ -664,6 +664,25 @@ def _resolve_bird_base_url(api_key: str) -> str:
     return "https://platform.bird.com"
 
 
+def _wrap_email_document(title: str, inner_html: str) -> str:
+    """Wrap email markup in a standards-compliant HTML5 email document."""
+    safe_title = _html.escape(title)
+    return (
+        "<!DOCTYPE html>"
+        "<html lang=\"id\">"
+        "<head>"
+        "<meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">"
+        f"<title>{safe_title}</title>"
+        "</head>"
+        "<body style=\"margin:0;padding:24px 16px;background-color:#f8fafc;"
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#0f172a;\">"
+        f"{inner_html}"
+        "</body>"
+        "</html>"
+    )
+
+
 def _render_auth_email_html(
     *,
     heading: str,
@@ -679,23 +698,29 @@ def _render_auth_email_html(
     safe_intro = _html.escape(intro)
     safe_badge = _html.escape(badge_label)
     safe_note = _html.escape(footnote)
-    return (
-        "<div style=\"font-family:Inter,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;"
-        "padding:24px;background:#f8fafc;color:#0f172a;border-radius:16px;border:1px solid #cbd5e1;\">"
-        "<div style=\"margin-bottom:16px;\">"
-        "<span style=\"display:inline-block;padding:4px 10px;border-radius:999px;background:#ecfdf5;"
-        "color:#065f46;font-size:11px;font-weight:700;letter-spacing:0.04em;\">CLAIMTRACE JKN · BPJS KESEHATAN</span>"
-        "</div>"
-        f"<h2 style=\"margin:0 0 12px;font-size:18px;color:#061b31;\">{safe_heading}</h2>"
-        f"<p style=\"margin:0 0 10px;font-size:14px;line-height:1.5;\">Yth. <strong>{safe_name}</strong>,</p>"
-        f"<p style=\"margin:0 0 16px;font-size:14px;line-height:1.5;color:#334155;\">{safe_intro}</p>"
-        "<div style=\"background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;\">"
-        f"<div style=\"font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:8px;\">{safe_badge}</div>"
+    from_email = os.getenv("BIRD_FROM_EMAIL", "").strip().lower()
+    configured_name = os.getenv("BIRD_FROM_NAME", "").strip()
+    brand_label = (
+        "ClaimTrace Portal"
+        if (not from_email or from_email.endswith("@messagebird.dev"))
+        else (configured_name or "ClaimTrace Portal")
+    )
+    safe_brand = _html.escape(brand_label)
+    card_html = (
+        "<div style=\"max-width:560px;margin:0 auto;padding:24px;background:#ffffff;"
+        "color:#0f172a;border-radius:12px;border:1px solid #e2e8f0;\">"
+        f"<p style=\"margin:0 0 10px;font-size:12px;font-weight:600;color:#047857;\">{safe_brand}</p>"
+        f"<h2 style=\"margin:0 0 12px;font-size:18px;line-height:1.35;color:#0f172a;\">{safe_heading}</h2>"
+        f"<p style=\"margin:0 0 10px;font-size:14px;line-height:1.6;\">Halo <strong>{safe_name}</strong>,</p>"
+        f"<p style=\"margin:0 0 16px;font-size:14px;line-height:1.6;color:#334155;\">{safe_intro}</p>"
+        "<div style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;\">"
+        f"<div style=\"font-size:12px;font-weight:600;color:#475569;margin-bottom:8px;\">{safe_badge}</div>"
         f"{highlight_html}"
         "</div>"
         f"<p style=\"margin:0;font-size:12px;line-height:1.5;color:#64748b;\">{safe_note}</p>"
         "</div>"
     )
+    return _wrap_email_document(heading, card_html)
 
 
 def _send_via_bird_api(
@@ -714,13 +739,14 @@ def _send_via_bird_api(
         return False, None, None
 
     from_email = os.getenv("BIRD_FROM_EMAIL", "").strip() or "onboarding@messagebird.dev"
-    from_name = os.getenv("BIRD_FROM_NAME", "").strip() or "ClaimTrace JKN BPJS Kesehatan"
+    from_name = os.getenv("BIRD_FROM_NAME", "").strip() or "ClaimTrace Portal"
     endpoint = f"{_resolve_bird_base_url(bird_api_key)}/v1/email/messages"
-    fallback_html = "".join(
+    fallback_body = "".join(
         f"<p style=\"margin:0 0 10px;\">{_html.escape(line)}</p>"
         for line in body_text.splitlines()
         if line.strip()
     )
+    fallback_html = _wrap_email_document(subject, fallback_body)
     payload = {
         "from": {"email": from_email, "name": from_name},
         "to": [to_email],
@@ -728,6 +754,8 @@ def _send_via_bird_api(
         "html": body_html or fallback_html,
         "text": body_text,
         "category": "transactional",
+        "track_opens": False,
+        "track_clicks": False,
     }
 
     try:
@@ -898,20 +926,20 @@ def _dispatch_otp_and_spool(account: Dict[str, Any], reason: str = "MFA_STEP_2")
     otp_html = _render_auth_email_html(
         heading="Kode Verifikasi OTP Masuk Portal",
         greeting_name=account["name"],
-        intro="Gunakan kode OTP sekali pakai di bawah ini untuk menyelesaikan autentikasi Multi-Factor Authentication (MFA) pada Portal ClaimTrace JKN.",
-        badge_label="Kode OTP 6 Digit (Berlaku 3 Menit)",
+        intro="Gunakan kode verifikasi sekali pakai di bawah ini untuk menyelesaikan proses masuk pada Portal ClaimTrace.",
+        badge_label="Kode Verifikasi (Berlaku 3 Menit)",
         highlight_html=(
             f"<div style=\"font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:28px;"
-            f"font-weight:800;letter-spacing:0.25em;color:#047857;text-align:center;padding:8px 0;\">"
+            f"font-weight:700;letter-spacing:0.2em;color:#047857;text-align:center;padding:8px 0;\">"
             f"{_html.escape(generated_otp)}</div>"
         ),
-        footnote="Demi keamanan akun BPJS Kesehatan Anda, jangan pernah membagikan kode OTP ini kepada siapa pun termasuk petugas TI.",
+        footnote="Demi keamanan akun Portal ClaimTrace Anda, jangan membagikan kode OTP ini kepada siapa pun.",
     )
     _send_email_or_spool(
         to_email=account["email"],
-        subject="ClaimTrace JKN - Kode Verifikasi OTP",
+        subject="ClaimTrace - Kode Verifikasi OTP",
         body_text=(
-            f"Yth. {account['name']},\n\n"
+            f"Halo {account['name']},\n\n"
             f"Kode OTP verifikasi masuk Anda: {generated_otp}\n"
             "Berlaku selama 3 menit. Jangan bagikan kode ini kepada siapa pun."
         ),
@@ -1893,23 +1921,26 @@ def forgot_password_request(payload: ForgotPasswordRequest, request: Request, re
             reset_html = _render_auth_email_html(
                 heading="Tautan Ubah Password Akun",
                 greeting_name=account["name"],
-                intro="Kami menerima permintaan ubah password untuk akun Portal ClaimTrace JKN Anda. Klik tombol di bawah ini untuk mengatur ulang kata sandi.",
-                badge_label="Tautan Pemulihan (Berlaku 15 Menit, Sekali Pakai)",
+                intro="Kami menerima permintaan ubah password untuk akun Portal ClaimTrace Anda. Klik tombol di bawah ini untuk mengatur ulang kata sandi.",
+                badge_label="Konfirmasi Ubah Password (Berlaku 15 Menit)",
                 highlight_html=(
                     "<div style=\"text-align:center;margin:8px 0 12px;\">"
                     f"<a href=\"{safe_reset_url}\" style=\"display:inline-block;padding:11px 22px;"
                     "border-radius:10px;background:#047857;color:#ffffff;font-size:13px;font-weight:700;"
                     "text-decoration:none;\">Atur Ulang Password</a></div>"
-                    f"<div style=\"font-size:11px;color:#475569;word-break:break-all;\">{safe_reset_url}</div>"
+                    "<p style=\"margin:10px 0 0;font-size:11px;line-height:1.5;color:#475569;word-break:break-all;\">"
+                    "Jika tombol tidak berfungsi, salin dan buka tautan berikut di browser Anda:<br>"
+                    f"<span style=\"font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#334155;\">{safe_reset_url}</span>"
+                    "</p>"
                 ),
                 footnote="Jika Anda tidak mengajukan permintaan ini, abaikan email ini. Tautan hanya berlaku satu kali selama 15 menit.",
             )
             _send_email_or_spool(
                 to_email=account["email"],
-                subject="ClaimTrace JKN - Tautan Ubah Password",
+                subject="ClaimTrace - Tautan Ubah Password",
                 body_text=(
-                    f"Yth. {account['name']},\n\n"
-                    "Kami menerima permintaan ubah password untuk akun ClaimTrace Anda.\n"
+                    f"Halo {account['name']},\n\n"
+                    "Kami menerima permintaan ubah password untuk akun Portal ClaimTrace Anda.\n"
                     f"Buka tautan berikut (berlaku 15 menit, sekali pakai):\n{reset_link}\n\n"
                     "Jika Anda tidak mengajukan permintaan ini, abaikan email ini."
                 ),

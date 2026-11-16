@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -200,6 +201,33 @@ async function run() {
     await authPage.locator('#login-password').waitFor({ state: 'visible', timeout: 10000 });
     await assertNoDarkThemeToggle(authPage, 'SignIn Desktop');
     await assertNoHorizontalOverflow(authPage, 'SignIn Desktop');
+
+    // Verify show/hide password eye button stays vertically centered while pressed (:active) and toggled
+    const pwdInput = authPage.locator('#login-password');
+    const toggleBtn = authPage.getByRole('button', { name: 'Lihat password' });
+    const pwdBox = await pwdInput.boundingBox();
+    const btnBefore = await toggleBtn.boundingBox();
+    assert(pwdBox && btnBefore, 'Expected bounding boxes for #login-password and eye toggle button');
+    const inputCenterY = pwdBox.y + pwdBox.height / 2;
+    const btnBeforeCenterY = btnBefore.y + btnBefore.height / 2;
+    assert(
+      Math.abs(btnBeforeCenterY - inputCenterY) <= 2.5,
+      `Eye toggle button not centered before click: delta=${(btnBeforeCenterY - inputCenterY).toFixed(2)}px`,
+    );
+    await authPage.mouse.move(btnBefore.x + btnBefore.width / 2, btnBefore.y + btnBefore.height / 2);
+    await authPage.mouse.down();
+    const btnActive = await toggleBtn.boundingBox();
+    assert(btnActive, 'Expected active eye toggle bounding box');
+    const btnActiveCenterY = btnActive.y + btnActive.height / 2;
+    assert(
+      Math.abs(btnActiveCenterY - btnBeforeCenterY) <= 1.5,
+      `Eye toggle button jumped vertically during :active press: delta=${(btnActiveCenterY - btnBeforeCenterY).toFixed(2)}px`,
+    );
+    await authPage.mouse.up();
+    await authPage.getByRole('button', { name: 'Sembunyikan password' }).waitFor({ state: 'visible', timeout: 3000 });
+    assert((await pwdInput.getAttribute('type')) === 'text', 'Expected #login-password type to toggle to text');
+    const btnAfter = await authPage.getByRole('button', { name: 'Sembunyikan password' }).boundingBox();
+    assert(btnAfter && Math.abs((btnAfter.y + btnAfter.height / 2) - inputCenterY) <= 2.5, 'Eye toggle drifted after toggle');
 
     await authPage.getByRole('button', { name: /Lupa Password\?/i }).click();
     await authPage.locator('#forgot-username').waitFor({ state: 'visible', timeout: 8000 });

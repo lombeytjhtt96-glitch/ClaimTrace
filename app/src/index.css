@@ -62,10 +62,10 @@
     font-feature-settings: "tnum" 1, "zero" 0;
   }
 
-  /* Tactile active affordance for actionable controls */
+  /* Tactile active affordance using independent CSS scale so positioned transforms stay centered */
   button:active:not(:disabled),
   [role="button"]:active:not([aria-disabled="true"]) {
-    transform: scale(0.985) translateY(0.5px);
+    scale: 0.985;
   }
 
   /* Clean subtle micro-label spacing */
