@@ -850,7 +850,7 @@ def test_recaptcha_v2_and_invisible_v3_enforced_without_enterprise(monkeypatch, 
     assert len(forgot_calls) == 2
 
 
-def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path):
+def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path, caplog):
     monkeypatch.setenv("BIRD_API_BASE_URL", "")
     assert main_mod._resolve_bird_base_url("bk_eu1_dummy") == "https://eu1.platform.bird.com"
     assert main_mod._resolve_bird_base_url("bk_us1_dummy") == "https://us1.platform.bird.com"
@@ -935,15 +935,17 @@ def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path):
     assert rst_entries[-1]["bird_sent"] is True
     assert rst_entries[-1]["bird_message_id"] == "msg_2"
 
-    # Graceful fallback when Bird rejects with HTTP 422
+    # Graceful fallback when Bird rejects with nested HTTP 422 error payload
     class _FailingBirdClient(_RoutingHttpClient):
         def post(self, url, headers=None, json=None, data=None):
             if "/v1/email/messages" in url:
-                return _FakeResp(422, {"code": "E04001", "message": "sender domain unverified"})
+                return _FakeResp(422, {"error": {"code": "E04009", "message": "OnboardingRecipientNotAllowed"}})
             return super().post(url, headers=headers, json=json, data=data)
 
     monkeypatch.setattr(main_mod.httpx, "Client", _FailingBirdClient)
-    main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_BIRD_FALLBACK")
+    with caplog.at_level("WARNING", logger="claimtrace"):
+        main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_BIRD_FALLBACK")
     otp_entries_after = json.loads(otp_spool.read_text(encoding="utf-8"))
     assert otp_entries_after[-1]["bird_sent"] is False
     assert otp_entries_after[-1]["smtp_sent"] is False
+    assert "E04009" in caplog.text

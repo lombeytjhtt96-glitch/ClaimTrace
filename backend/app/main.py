@@ -758,8 +758,9 @@ def _send_via_bird_api(
         try:
             err_body = resp.json()
             if isinstance(err_body, dict):
-                code = err_body.get("code") or err_body.get("type")
-                detail = err_body.get("message") or err_body.get("detail")
+                err_obj = err_body.get("error") if isinstance(err_body.get("error"), dict) else err_body
+                code = err_obj.get("code") or err_obj.get("name") or err_obj.get("type")
+                detail = err_obj.get("message") or err_obj.get("detail")
                 if code or detail:
                     err_summary = f"HTTP {resp.status_code} ({code}: {detail})"
         except Exception:
