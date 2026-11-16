@@ -886,6 +886,7 @@ def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path, caplog)
             return _FakeResp(404, {"message": "not found"})
 
     monkeypatch.setenv("CLAIMTRACE_ENABLE_BIRD_IN_TEST", "1")
+    monkeypatch.setenv("SENDCOREX_API_KEY", "")
     monkeypatch.setenv("BIRD_API_KEY", "bk_eu1_test_workspace_key")
     monkeypatch.setenv("BIRD_API_BASE_URL", "")
     monkeypatch.setenv("BIRD_FROM_EMAIL", "onboarding@messagebird.dev")
@@ -956,3 +957,119 @@ def test_bird_api_otp_and_password_reset_dispatch(monkeypatch, tmp_path, caplog)
     assert otp_entries_after[-1]["bird_sent"] is False
     assert otp_entries_after[-1]["smtp_sent"] is False
     assert "E04009" in caplog.text
+
+
+def test_sendcorex_primary_and_bird_fallback_dispatch(monkeypatch, tmp_path, caplog):
+    mail_calls = []
+
+    class _FakeResp:
+        def __init__(self, status_code, body):
+            self.status_code = status_code
+            self._body = body
+
+        def json(self):
+            return self._body
+
+    class _RoutingMailClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def post(self, url, headers=None, json=None, data=None):
+            if "siteverify" in url:
+                return _FakeResp(200, {"success": True, "score": 0.9, "action": (data or {}).get("action", "forgot_password")})
+            if "/v3.0/send" in url:
+                mail_calls.append({"provider": "sendcorex", "url": url, "headers": headers or {}, "json": json or {}})
+                return _FakeResp(
+                    200,
+                    {
+                        "success": True,
+                        "message": "Email queued successfully",
+                        "code": "EMAIL_QUEUED_SUCCESS",
+                        "id": f"scx_{len(mail_calls)}",
+                        "recipients": 1,
+                    },
+                )
+            if "/v1/email/messages" in url:
+                mail_calls.append({"provider": "bird", "url": url, "headers": headers or {}, "json": json or {}})
+                return _FakeResp(202, {"id": f"bird_{len(mail_calls)}", "status": "accepted"})
+            return _FakeResp(404, {"message": "not found"})
+
+    monkeypatch.setenv("CLAIMTRACE_ENABLE_SENDCOREX_IN_TEST", "1")
+    monkeypatch.setenv("CLAIMTRACE_ENABLE_BIRD_IN_TEST", "1")
+    monkeypatch.setenv("SENDCOREX_API_KEY", "S.C.X.test_key")
+    monkeypatch.setenv("SENDCOREX_API_URL", "https://mail.sendcorex.com/v3.0/send")
+    monkeypatch.setenv("SENDCOREX_FROM_EMAIL", "claimtrace-portal@corexsend.com")
+    monkeypatch.setenv("SENDCOREX_FROM_NAME", "ClaimTrace Portal")
+    monkeypatch.setenv("SENDCOREX_REPLY_TO", "lombeytjhtt96@gmail.com")
+    monkeypatch.setenv("BIRD_API_KEY", "bk_eu1_fallback_key")
+    monkeypatch.setenv("BIRD_FROM_EMAIL", "onboarding@messagebird.dev")
+    monkeypatch.setenv("BIRD_FROM_NAME", "ClaimTrace Portal")
+    monkeypatch.setenv("RECAPTCHA_ENFORCE_ALL_LAYERS", "false")
+    monkeypatch.setenv("RECAPTCHA_SECRET_KEY", "test-recaptcha-secret")
+    monkeypatch.setenv("CLAIMTRACE_PUBLIC_URL", "http://localhost:3000")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setattr(main_mod.httpx, "Client", _RoutingMailClient)
+
+    otp_spool = tmp_path / "otp_spool_scx.json"
+    reset_spool = tmp_path / "reset_spool_scx.json"
+    monkeypatch.setattr(main_mod, "OTP_MAIL_SPOOL_FILE", otp_spool)
+    monkeypatch.setattr(main_mod, "PASSWORD_RESET_SPOOL_FILE", reset_spool)
+
+    acct = VERIFICATOR_DIRECTORY["198704202011012001"]
+    main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_SCX_OTP")
+
+    # Primary Sendcorex succeeds -> Bird fallback NOT called
+    assert len(mail_calls) == 1
+    scx_otp = mail_calls[0]
+    assert scx_otp["provider"] == "sendcorex"
+    assert scx_otp["url"] == "https://mail.sendcorex.com/v3.0/send"
+    assert scx_otp["headers"]["Authorization"] == "Bearer S.C.X.test_key"
+    assert scx_otp["headers"]["Idempotency-Key"]
+    assert scx_otp["json"]["from"] == "claimtrace-portal@corexsend.com"
+    assert scx_otp["json"]["senderName"] == "ClaimTrace Portal"
+    assert scx_otp["json"]["replyTo"] == "lombeytjhtt96@gmail.com"
+    assert scx_otp["json"]["to"] == acct["email"]
+    assert scx_otp["json"]["transactional"] is True
+    assert "<!DOCTYPE html>" in scx_otp["json"]["body"]
+    otp_entries = json.loads(otp_spool.read_text(encoding="utf-8"))
+    assert otp_entries[-1]["sendcorex_sent"] is True
+    assert otp_entries[-1]["sendcorex_message_id"] == "scx_1"
+    assert otp_entries[-1]["bird_sent"] is False
+
+    # Password reset via Sendcorex primary
+    forgot_res = client.post(
+        "/api/v1/auth/forgot-password",
+        json={
+            "username": acct["username"],
+            "email": acct["email"],
+            "nip": acct["nip"],
+            "recaptcha_token": "valid-google-token",
+        },
+    )
+    assert forgot_res.status_code == 200
+    assert len(mail_calls) == 2
+    assert mail_calls[1]["provider"] == "sendcorex"
+    assert "/?view=reset_password&amp;token=ctrst." in mail_calls[1]["json"]["body"]
+
+    # Automatic fallback to Bird when Sendcorex fails
+    class _SendcorexDownClient(_RoutingMailClient):
+        def post(self, url, headers=None, json=None, data=None):
+            if "/v3.0/send" in url:
+                return _FakeResp(503, {"success": False, "code": "UPSTREAM_UNAVAILABLE", "message": "Temporary outage"})
+            return super().post(url, headers=headers, json=json, data=data)
+
+    monkeypatch.setattr(main_mod.httpx, "Client", _SendcorexDownClient)
+    with caplog.at_level("WARNING", logger="claimtrace"):
+        main_mod._dispatch_otp_and_spool(acct, reason="UNIT_TEST_SCX_FALLBACK")
+    assert len(mail_calls) == 3
+    assert mail_calls[2]["provider"] == "bird"
+    otp_entries_fallback = json.loads(otp_spool.read_text(encoding="utf-8"))
+    assert otp_entries_fallback[-1]["sendcorex_sent"] is False
+    assert otp_entries_fallback[-1]["bird_sent"] is True
+    assert "UPSTREAM_UNAVAILABLE" in caplog.text
