@@ -2509,6 +2509,21 @@ export default function ExecutiveHub({
                 onInspectCase={onInspectCase}
                 onNavigateToQueue={onNavigateToQueue}
               />
+
+              <SegmentedRadialHighlightCard
+                title="Kapasitas & Validasi Pra-Bayar"
+                percentage={approvalPct}
+                centerPrimary={`${approvalPct.toFixed(1).replace('.', ',')}%`}
+                centerSub="Bebas Blokir"
+                tone="emerald-blue"
+                ctaLabel="Buka antrean penapisan"
+                onCtaClick={onNavigateToQueue}
+                breakdownRows={[
+                  { id: 'dup', metric: '4.876 Pasang', label: 'Klaim Ganda Tercegah' },
+                  { id: 'corr', metric: '1.631 Berkas', label: 'Koreksi Tarif Langsung' },
+                  { id: 'z3', metric: '148.890 Klaim', label: 'Pantau Rehabilitasi Z-3' },
+                ]}
+              />
             </div>
 
             <div className="xl:col-span-4 space-y-5 min-w-0">
@@ -2532,21 +2547,6 @@ export default function ExecutiveHub({
                 onDismissWarning={() => setComplianceAlertDismissed(true)}
                 actionLabel="Buka verifikasi 7 dokumen RS"
                 onActionClick={() => onNavigateTab?.('document_checker')}
-              />
-
-              <SegmentedRadialHighlightCard
-                title="Kapasitas & Validasi Pra-Bayar"
-                percentage={approvalPct}
-                centerPrimary={`${approvalPct.toFixed(1).replace('.', ',')}%`}
-                centerSub="Bebas Blokir"
-                tone="emerald-blue"
-                ctaLabel="Buka antrean penapisan"
-                onCtaClick={onNavigateToQueue}
-                breakdownRows={[
-                  { id: 'dup', metric: '4.876 Pasang', label: 'Klaim Ganda Tercegah' },
-                  { id: 'corr', metric: '1.631 Berkas', label: 'Koreksi Tarif Langsung' },
-                  { id: 'z3', metric: '148.890 Klaim', label: 'Pantau Rehabilitasi Z-3' },
-                ]}
               />
 
               <FaskesPerformanceCard
