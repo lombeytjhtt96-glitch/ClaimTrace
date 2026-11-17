@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import SanggahanAppealsPanel from './SanggahanAppealsPanel';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
-import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
@@ -509,19 +508,6 @@ export default function DecisionConsole({
 
   return (
     <div ref={consoleRef} className={`space-y-4 font-sans ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>
-      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
-      <WorkflowPipelineBanner
-        activeStep={3}
-        onNavigateTab={(tab) => {
-          if (tab === 'queue') onBackToQueue();
-          else if (tab === 'investigation') onBackToInvestigation();
-          else if (onNavigateTab) onNavigateTab(tab);
-        }}
-        onOpenWorkflowMap={onOpenWorkflowMap}
-        isLight={isLight}
-        customNote="Tahap 3: Verifikator Medis (dr. Siti Rahma, Sp.PK) menetapkan putusan pra-bayar (Setuju, Pending, Koreksi, atau Tolak Fraud), mediasi TKMKB, dan pencetakan Berita Acara bersegel HMAC-SHA256."
-      />
-
       {/* HEADER BANNER */}
       <div className={`w-full px-5 py-4 rounded-xl border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         isLight
