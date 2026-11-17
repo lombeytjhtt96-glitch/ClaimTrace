@@ -772,6 +772,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="label" width={135} interval={0} tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }} axisLine={false} tickLine={false} />
                   <Tooltip
+                    cursor={false}
                     formatter={(val) => [`${val} blok`, 'Jumlah Event']}
                     contentStyle={{
                       backgroundColor: isLight ? '#ffffff' : '#0b1936',

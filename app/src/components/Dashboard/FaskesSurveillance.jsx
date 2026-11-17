@@ -337,6 +337,7 @@ export default function FaskesSurveillance({
                     }
                   />
                   <Tooltip
+                    cursor={false}
                     formatter={(val, _name, item) => [`${val} / 100 (${item?.payload?.anomalyCount || 0} anomali)`, 'Skor FRI']}
                     labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullName || ''}
                     contentStyle={{

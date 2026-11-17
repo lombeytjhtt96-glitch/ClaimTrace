@@ -1217,7 +1217,7 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                       <CartesianGrid strokeDasharray="3 3" stroke={isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'} />
                       <XAxis dataKey="digit" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
                       <YAxis unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
-                      <Tooltip />
+                      <Tooltip cursor={false} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Bar dataKey="aktual" name="Aktual Tagihan (%)" fill="#059669" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="teoretis" name="Teoretis Benford (%)" fill="#94a3b8" radius={[4, 4, 0, 0]} />
@@ -1246,10 +1246,10 @@ export default function EmpiricalForensics({ onInspectCase, isLight: propIsLight
                       <CartesianGrid strokeDasharray="3 3" stroke={isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)'} />
                       <XAxis dataKey="populasi" unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
                       <YAxis unit="%" tick={{ fontSize: 11, fill: isLight ? '#475569' : '#cbd5e1' }} />
-                      <Tooltip />
+                      <Tooltip cursor={false} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <Line type="monotone" dataKey="nilaiAktual" name="Kumulatif Nilai Klaim (%)" stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3 }} />
-                      <Line type="linear" dataKey="pemerataan" name="Pemerataan Sempurna (%)" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
+                      <Line type="monotone" dataKey="nilaiAktual" name="Kumulatif Nilai Klaim (%)" stroke="#e11d48" strokeWidth={2.5} dot={false} activeDot={false} />
+                      <Line type="linear" dataKey="pemerataan" name="Pemerataan Sempurna (%)" stroke="#94a3b8" strokeDasharray="5 5" dot={false} activeDot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

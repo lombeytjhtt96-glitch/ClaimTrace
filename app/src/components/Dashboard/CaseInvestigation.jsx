@@ -865,7 +865,7 @@ export default function CaseInvestigation({
                   tick={{ fontSize: 11, fill: isLight ? '#334155' : '#cbd5e1', fontWeight: 600 }}
                 />
                 <Tooltip
-                  cursor={{ fill: isLight ? 'rgba(15,23,42,0.04)' : 'rgba(255,255,255,0.04)' }}
+                  cursor={false}
                   formatter={(v) => [`${v} / 100`, 'Skor Anomali']}
                   contentStyle={{
                     borderRadius: 10,

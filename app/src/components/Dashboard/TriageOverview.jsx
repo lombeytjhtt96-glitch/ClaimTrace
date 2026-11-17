@@ -891,6 +891,7 @@ export default function TriageOverview({
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: isLight ? '#475569' : '#94a3b8' }} axisLine={false} tickLine={false} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
                   <Tooltip
+                    cursor={false}
                     formatter={(v) => [`${v} / 100`, 'Skor Anomali']}
                     contentStyle={{
                       borderRadius: 8,

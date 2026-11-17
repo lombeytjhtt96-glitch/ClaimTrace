@@ -332,6 +332,7 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                     }
                   />
                   <Tooltip
+                    cursor={false}
                     formatter={(val, _name, item) => [
                       `${val} px/hari (Batas ${item?.payload?.workloadLimit || 40})`,
                       'Beban Praktik',

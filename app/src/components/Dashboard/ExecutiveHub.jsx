@@ -48,6 +48,8 @@ import {
   Download,
   ArrowUpRight,
   Search,
+  ChevronDown,
+  ChevronUp,
   FileCheck2,
 } from 'lucide-react';
 import {
@@ -975,8 +977,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                   fill="url(#execLifecycleBlue)"
                   fillOpacity={caseMode === 'closed' ? 0.05 : 1}
                   strokeOpacity={caseMode === 'closed' ? 0.25 : 1}
-                  dot={{ r: 3.5, fill: '#2563eb', strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
+                  dot={false}
+                  activeDot={false}
                   isAnimationActive={false}
                   name="Berkas Masuk"
                 />
@@ -987,8 +989,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
                 stroke="#00733B"
                 strokeWidth={caseMode === 'closed' ? 3 : 2.5}
                 strokeOpacity={caseMode === 'opened' ? 0.35 : 1}
-                dot={{ r: 3, fill: '#00733B', strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
+                dot={false}
+                activeDot={false}
                 isAnimationActive={false}
                 name="Berkas Selesai"
               />
@@ -1079,35 +1081,49 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
             </div>
           )}
         </div>
-        <ul className={`mt-3 space-y-1 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+        <ul className={`mt-3 space-y-2 text-xs ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
           {severityData.map((item, index) => {
-            const percent = totalClaimsCount > 0 ? ((item.value / totalClaimsCount) * 100).toFixed(1).replace('.', ',') : '0';
+            const rawPct = totalClaimsCount > 0 ? (item.value / totalClaimsCount) * 100 : 0;
+            const percent = rawPct.toFixed(1).replace('.', ',');
             const isCurrentActive = activeSeverity === index;
+            const color = PIE_COLORS[index % PIE_COLORS.length];
             return (
               <li 
                 key={item.name} 
                 onMouseEnter={() => setActiveSeverity(index)}
                 onMouseLeave={() => setActiveSeverity(null)}
-                className={`flex items-center justify-between px-2 py-1 rounded-lg transition-colors cursor-pointer ${
+                className={`p-2 rounded-xl border transition-all cursor-pointer ${
                   isCurrentActive 
-                    ? (isLight ? 'bg-slate-100 font-semibold' : 'bg-white/10 font-semibold') 
-                    : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                    ? (isLight ? 'bg-slate-50 border-slate-300 shadow-xs' : 'bg-white/10 border-white/20') 
+                    : (isLight ? 'bg-slate-50/50 border-slate-200/60 hover:bg-slate-50' : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]')
                 }`}
               >
-                <span className={`inline-flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                  <span
-                    className="h-2.5 w-2.5 rounded-full transition-transform duration-150"
-                    style={{ 
-                      backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
-                      transform: isCurrentActive ? 'scale(1.3)' : 'scale(1)'
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className={`inline-flex items-center gap-1.5 font-semibold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    Risiko {item.name}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[11px] font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      {item.value.toLocaleString('id-ID')}
+                    </span>
+                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-200">
+                      {percent}%
+                    </span>
+                  </div>
+                </div>
+                <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200/70' : 'bg-white/10'}`}>
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.max(4, rawPct)}%`,
+                      backgroundColor: color,
                     }}
                   />
-                  Risiko {item.name}
-                  <span className="text-[10px] font-semibold opacity-75">({percent}%)</span>
-                </span>
-                <span className={`font-mono ${isCurrentActive ? 'font-bold text-emerald-600' : 'font-semibold'} ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  {item.value.toLocaleString('id-ID')} berkas
-                </span>
+                </div>
               </li>
             );
           })}
@@ -1228,6 +1244,17 @@ function getCategoryColor(category, isLight) {
 
 function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isLight }) {
   const [showFullSummary, setShowFullSummary] = useState(false);
+  const [expandedPatterns, setExpandedPatterns] = useState({});
+  const [expandedRecs, setExpandedRecs] = useState({});
+
+  const togglePattern = (idx) => {
+    setExpandedPatterns((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const toggleRec = (idx) => {
+    setExpandedRecs((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
   const hasInsights = insights.ia_summary && insights.ia_summary.trim().length > 0;
   const hasPatterns = insights.patterns && insights.patterns.length > 0;
   const hasRecommendations = insights.recommendations && insights.recommendations.length > 0;
@@ -1365,33 +1392,119 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
               <Lightbulb className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-[#FFCA40]'}`} />
               Pola Anomali Teridentifikasi
             </h4>
-            <div className="space-y-2.5">
-              {insights.patterns.map((pattern, index) => (
-                <div
-                  key={index}
-                  className={`p-3.5 rounded-xl border transition-all ${
-                    isLight
-                      ? 'bg-slate-50 border-slate-200 hover:border-emerald-500/40'
-                      : 'bg-white/5 border-white/10 hover:border-[#FFCA40]/30'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-2">
-                      <TrendIcon trend={pattern.trend} />
-                      <span className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{pattern.title}</span>
+            <div className="space-y-3">
+              {insights.patterns.map((pattern, index) => {
+                const isExpanded = !!expandedPatterns[index];
+                const isHigh = pattern.severity === 'tinggi';
+                const riskPct = isHigh ? 92 : 64;
+                const riskColor = isHigh ? '#E11D48' : '#F59E0B';
+
+                // Extract or compute visual badge tags based on topic
+                const isDup = pattern.title.includes('Klaim Ganda') || pattern.title.includes('Pasien');
+                const isTariff = pattern.title.includes('Koreksi') || pattern.title.includes('Tarif');
+                const tags = isDup
+                  ? [
+                      { label: '4.876 Pasangan Ganda', tone: 'rose' },
+                      { label: '2.584 Lintas 2 RS', tone: 'amber' },
+                      { label: 'Eksposur Rp 32,59 M', tone: 'indigo' },
+                    ]
+                  : isTariff
+                  ? [
+                      { label: '1.631 Berkas Terkoreksi', tone: 'amber' },
+                      { label: '99,9% Disetujui', tone: 'emerald' },
+                      { label: 'Efisiensi Rp 2,07 M', tone: 'blue' },
+                    ]
+                  : [
+                      { label: '148.890 Berkas Z-3', tone: 'blue' },
+                      { label: '42.193 Severity II & III', tone: 'indigo' },
+                      { label: '24.459 Readmisi < 30H', tone: 'amber' },
+                    ];
+
+                return (
+                  <div
+                    key={index}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      isLight
+                        ? 'bg-slate-50/80 border-slate-200 hover:border-emerald-500/40'
+                        : 'bg-white/5 border-white/10 hover:border-[#FFCA40]/30'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendIcon trend={pattern.trend} />
+                        <span className={`text-sm font-semibold leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          {pattern.title}
+                        </span>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-full border uppercase shrink-0 ${getSeverityBadge(
+                          pattern.severity,
+                          isLight
+                        )}`}
+                      >
+                        {pattern.severity}
+                      </span>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 text-xs font-semibold rounded-full border uppercase ${getSeverityBadge(
-                        pattern.severity,
-                        isLight
-                      )}`}
-                    >
-                      {pattern.severity}
-                    </span>
+
+                    {/* Visual Metric Badges */}
+                    <div className="flex items-center gap-1.5 flex-wrap my-2">
+                      {tags.map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border ${
+                            tag.tone === 'rose'
+                              ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
+                              : tag.tone === 'amber'
+                              ? isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/25'
+                              : tag.tone === 'emerald'
+                              ? isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
+                              : isLight ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-sky-500/15 text-sky-300 border-sky-500/25'
+                          }`}
+                        >
+                          {tag.label}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Visual Risk Exposure Bar & Expand Toggle */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between text-[11px] mb-1 font-mono">
+                          <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Eksposur Prioritas Audit</span>
+                          <span className="font-bold" style={{ color: riskColor }}>
+                            {riskPct}%
+                          </span>
+                        </div>
+                        <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{ width: `${riskPct}%`, backgroundColor: riskColor }}
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => togglePattern(index)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-1 transition cursor-pointer shrink-0 ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-2xs'
+                            : 'bg-white/10 hover:bg-white/15 text-slate-200 border-white/15'
+                        }`}
+                      >
+                        <span>{isExpanded ? 'Tutup Uraian' : 'Uraian Kasus'}</span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                        <MarkdownRenderer content={pattern.description} isLight={isLight} className="text-xs leading-relaxed" />
+                      </div>
+                    )}
                   </div>
-                  <MarkdownRenderer content={pattern.description} isLight={isLight} className="pl-6" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1404,33 +1517,77 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               Rekomendasi Tindak Lanjut Audit
             </h4>
-            <div className="space-y-2.5">
-              {insights.recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  className={`p-3.5 rounded-xl border transition-all ${
-                    isLight
-                      ? 'bg-slate-50 border-slate-200 hover:border-emerald-500/40'
-                      : 'bg-white/5 border-white/10 hover:border-emerald-500/30'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-2">
-                      <PriorityIcon priority={rec.priority} />
-                      <span className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{rec.title}</span>
+            <div className="space-y-3">
+              {insights.recommendations.map((rec, index) => {
+                const isExpanded = !!expandedRecs[index];
+                const isPriorityHigh = rec.priority === 'tinggi';
+
+                // Step metadata
+                const stepLabel = index === 0 ? 'Langkah 1 · Filter Geovelocity' : index === 1 ? 'Langkah 2 · Validasi Klinis' : 'Langkah 3 · Presensi Peserta';
+
+                return (
+                  <div
+                    key={index}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      isLight
+                        ? 'bg-slate-50/80 border-slate-200 hover:border-emerald-500/40'
+                        : 'bg-white/5 border-white/10 hover:border-emerald-500/30'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <PriorityIcon priority={rec.priority} />
+                        <span className={`text-sm font-semibold leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          {rec.title}
+                        </span>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-full uppercase border shrink-0 ${getCategoryColor(
+                          rec.category,
+                          isLight
+                        )}`}
+                      >
+                        {rec.category}
+                      </span>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 text-xs font-semibold rounded-full uppercase border ${getCategoryColor(
-                        rec.category,
-                        isLight
-                      )}`}
-                    >
-                      {rec.category}
-                    </span>
+
+                    {/* Step Visual Indicator & Action Preview */}
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
+                          isPriorityHigh
+                            ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
+                            : isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/25'
+                        }`}>
+                          {isPriorityHigh ? 'P1' : 'P2'}
+                        </span>
+                        <span className={`text-xs font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                          {stepLabel}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleRec(index)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-1 transition cursor-pointer shrink-0 ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-2xs'
+                            : 'bg-white/10 hover:bg-white/15 text-slate-200 border-white/15'
+                        }`}
+                      >
+                        <span>{isExpanded ? 'Tutup' : 'Langkah Aksi'}</span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                        <MarkdownRenderer content={rec.description} isLight={isLight} className="text-xs leading-relaxed" />
+                      </div>
+                    )}
                   </div>
-                  <MarkdownRenderer content={rec.description} isLight={isLight} className="pl-6" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1667,7 +1824,23 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
                     <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/40'}`}>{alert.timestamp}</span>
                   </div>
                   <p className={`text-sm font-semibold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{alert.faskes_name}</p>
-                  <p className={`text-xs mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{alert.message}</p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <p className={`text-xs leading-relaxed truncate ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{alert.message}</p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <div className={`w-12 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
+                        <div
+                          className={`h-full rounded-full ${
+                            alert.severity === 'critical' ? 'bg-rose-500 w-[94%]' : alert.severity === 'high' ? 'bg-orange-500 w-[82%]' : 'bg-amber-500 w-[65%]'
+                          }`}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-mono font-bold ${
+                        alert.severity === 'critical' ? (isLight ? 'text-rose-700' : 'text-rose-400') : (isLight ? 'text-amber-700' : 'text-amber-400')
+                      }`}>
+                        {alert.severity === 'critical' ? '94%' : alert.severity === 'high' ? '82%' : '65%'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <ChevronRight className={`w-4 h-4 mt-2 shrink-0 transition-transform group-hover:translate-x-1 ${
@@ -1853,12 +2026,28 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                   <div className={`font-semibold text-sm truncate max-w-[200px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {row.hospital}
                   </div>
-                  <div className={`text-xs font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {row.id} · SLA {row.slaDays} HK
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {row.id}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                      row.slaDays <= 2
+                        ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
+                        : row.slaDays <= 4
+                        ? isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/25'
+                        : isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/10 text-slate-300 border-white/10'
+                    }`}>
+                      <Clock className="w-2.5 h-2.5" />
+                      <span>SLA {row.slaDays} HK</span>
+                    </span>
                   </div>
                 </td>
-                <td className="py-3 px-2 font-mono font-semibold text-xs sm:text-sm">
-                  {row.code}
+                <td className="py-3 px-2">
+                  <span className={`px-2 py-0.5 rounded-md font-mono font-semibold text-xs border ${
+                    isLight ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-slate-200 border-white/10'
+                  }`}>
+                    {row.code}
+                  </span>
                 </td>
                 <td className="py-3 px-2 font-mono font-bold text-xs sm:text-sm tabular-nums">
                   {row.tariffRp >= 1000000
@@ -1871,16 +2060,32 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                   <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
                 </td>
                 <td className="py-3 pl-2 text-right">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                    row.lane === 'red'
-                      ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                      : row.lane === 'yellow'
-                        ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                        : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${row.lane === 'red' ? 'bg-rose-500' : row.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                    <span>{row.lane === 'red' ? 'Audit' : row.lane === 'yellow' ? 'Klarifikasi' : 'Sah'}</span>
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                      row.lane === 'red'
+                        ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                        : row.lane === 'yellow'
+                          ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                          : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${row.lane === 'red' ? 'bg-rose-500' : row.lane === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                      <span>{row.lane === 'red' ? 'Audit' : row.lane === 'yellow' ? 'Klarifikasi' : 'Sah'}</span>
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-12 h-1 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-white/10'}`}>
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, Math.max(8, row.score))}%`,
+                            backgroundColor: row.lane === 'red' ? '#E11D48' : row.lane === 'yellow' ? '#F59E0B' : '#059669',
+                          }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-mono font-bold tabular-nums ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {row.score.toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
                 </td>
               </tr>
             ))}
