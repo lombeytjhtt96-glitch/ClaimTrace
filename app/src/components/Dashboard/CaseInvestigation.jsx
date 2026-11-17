@@ -766,7 +766,7 @@ export default function CaseInvestigation({
           {/* Right Action: Clean Refined Score Badge & Primary CTA */}
           <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
             <div className={`relative overflow-hidden rounded-2xl px-4 py-2 text-center backdrop-blur border ${isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-white/5 border-white/10 shadow-md'}`}>
-              <span className={`text-[9.5px] font-bold uppercase tracking-widest block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+              <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 Skor Anomali
               </span>
               <div className="flex items-baseline justify-center gap-1 mt-0.5">
@@ -927,7 +927,7 @@ export default function CaseInvestigation({
                 <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Lapis 1 · Radar Pola Tagihan
                 </span>
-                <span className={`text-[9.5px] font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                <span className={`text-xs font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                   Pola Frekuensi &amp; Episode Klaim (Permenkes 26/2021)
                 </span>
               </div>
@@ -1188,7 +1188,7 @@ export default function CaseInvestigation({
                 <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Lapis 2 · Validasi SDMK
                 </span>
-                <span className={`text-[9.5px] font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                <span className={`text-xs font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                   Status Izin Praktik DPJP (SATUSEHAT SDMK)
                 </span>
               </div>
@@ -1272,7 +1272,7 @@ export default function CaseInvestigation({
                 <span className={`text-xs font-bold uppercase tracking-wider block ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Lapis 3 · Konfirmasi Peserta
                 </span>
-                <span className={`text-[9.5px] font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                <span className={`text-xs font-medium block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                   Presensi Pasien (Mobile JKN &amp; Biometrik FRISTA)
                 </span>
               </div>
@@ -1467,23 +1467,23 @@ export default function CaseInvestigation({
             <table className={`min-w-full divide-y text-left text-xs ${isLight ? 'divide-slate-200' : 'divide-white/10'}`}>
               <thead className={isLight ? 'bg-slate-100' : 'bg-black/30'}>
                 <tr>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Lapis Analisis</th>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Indikator yang Diuji</th>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Hasil Evaluasi</th>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Tingkat Risiko</th>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Kategori Pengawasan</th>
-                  <th scope="col" className={`py-2.5 px-3 text-[10px] uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Rujukan Regulasi</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Lapis Analisis</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Indikator yang Diuji</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Hasil Evaluasi</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Tingkat Risiko</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Kategori Pengawasan</th>
+                  <th scope="col" className={`py-2.5 px-3 text-xs uppercase font-bold tracking-wider ${isLight ? 'text-slate-800' : 'text-white/70'}`}>Rujukan Regulasi</th>
                 </tr>
               </thead>
-              <tbody className={`divide-y text-[11px] ${isLight ? 'divide-slate-100' : 'divide-white/10'}`}>
+              <tbody className={`divide-y text-xs ${isLight ? 'divide-slate-100' : 'divide-white/10'}`}>
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
                   <td className={`py-2.5 px-3 font-bold ${isLight ? 'text-emerald-800' : 'text-emerald-400'}`}>Lapis 1 (Pola)</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Analisis Klaster &amp; Repeat Billing</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{clusterVolume} klaim ({spikeRatio.toFixed(1)}x baseline) · S1={effS1}</td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${effS1 >= 70 ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{effS1 >= 70 ? 'TINGGI' : effS1 >= 45 ? 'SEDANG' : 'WAJAR'}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${effS1 >= 70 ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{effS1 >= 70 ? 'TINGGI' : effS1 >= 45 ? 'SEDANG' : 'WAJAR'}</span>
                   </td>
-                  <td className={`py-2.5 px-3 font-medium text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Volume &amp; Episode</td>
+                  <td className={`py-2.5 px-3 font-medium text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Volume &amp; Episode</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/60'}`}>Permenkes 26/2021</td>
                 </tr>
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
@@ -1491,9 +1491,9 @@ export default function CaseInvestigation({
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Validasi SATUSEHAT &amp; Beban Kerja</td>
                   <td className={`py-2.5 px-3 font-semibold font-mono ${isLight ? 'text-slate-800' : 'text-white/90'}`}>SIP {sipStatus}</td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${sipStatus === 'EXPIRED' ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : sipStatus === 'UNSYNCED' ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{sipStatus === 'EXPIRED' ? 'HARD-TRIGGER' : sipStatus === 'UNSYNCED' ? 'KLARIFIKASI' : 'VALID'}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${sipStatus === 'EXPIRED' ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30') : sipStatus === 'UNSYNCED' ? (isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-300 border-amber-500/30') : (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')}`}>{sipStatus === 'EXPIRED' ? 'HARD-TRIGGER' : sipStatus === 'UNSYNCED' ? 'KLARIFIKASI' : 'VALID'}</span>
                   </td>
-                  <td className={`py-2.5 px-3 font-medium text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Izin Praktik DPJP</td>
+                  <td className={`py-2.5 px-3 font-medium text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Izin Praktik DPJP</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>Permenkes No. 14/2021</td>
                 </tr>
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
@@ -1505,7 +1505,7 @@ export default function CaseInvestigation({
                       : `${currentCase.deniedCount} dari ${currentCase.sampleCount} peserta menyangkal`}
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                       currentCase.deniedCount === 0
                         ? (isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                         : (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
@@ -1513,7 +1513,7 @@ export default function CaseInvestigation({
                       {currentCase.deniedCount === 0 ? 'HADIR SAH' : 'KONFIRMATIF'}
                     </span>
                   </td>
-                  <td className={`py-2.5 px-3 font-medium text-[10px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Presensi Peserta</td>
+                  <td className={`py-2.5 px-3 font-medium text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Kaidah Presensi Peserta</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>UU PDP No. 27/2022</td>
                 </tr>
                 <tr className={`${isLight ? 'hover:bg-slate-100/50' : 'hover:bg-white/5'} transition-colors`}>
@@ -1527,7 +1527,7 @@ export default function CaseInvestigation({
                       : `Biometrik FRISTA 3D Liveness & tarif ${currentCase.code} tervalidasi`}
                   </td>
                   <td className="py-2.5 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold border ${
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                       effectiveLane === 'MERAH'
                         ? (isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
                         : effectiveLane === 'KUNING'
@@ -1537,7 +1537,7 @@ export default function CaseInvestigation({
                       {effectiveLane === 'MERAH' ? 'BIOMETRIC FAIL' : effectiveLane === 'KUNING' ? 'VERIFIKASI ULANG' : 'TERVERIFIKASI'}
                     </span>
                   </td>
-                  <td className={`py-2.5 px-3 font-mono text-[10px] font-bold ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>Kaidah Biometrik FRISTA</td>
+                  <td className={`py-2.5 px-3 font-mono text-xs font-bold ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>Kaidah Biometrik FRISTA</td>
                   <td className={`py-2.5 px-3 font-semibold ${isLight ? 'text-slate-800' : 'text-white/60'}`}>SE BPJS FRISTA 2024</td>
                 </tr>
               </tbody>
@@ -1600,10 +1600,10 @@ export default function CaseInvestigation({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{doc.doc_code}</span>
+                      <span className={`text-xs font-mono font-bold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{doc.doc_code}</span>
                       <div className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{doc.title}</div>
                     </div>
-                    <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold shrink-0 border ${
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-bold shrink-0 border ${
                       doc.status === 'LENGKAP_VALID'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35')
                         : doc.status === 'TIDAK_KONSISTEN'
@@ -1613,12 +1613,12 @@ export default function CaseInvestigation({
                       {doc.status}
                     </span>
                   </div>
-                  <ul className={`text-[10.5px] space-y-0.5 ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
+                  <ul className={`text-xs space-y-0.5 ${isLight ? 'text-slate-700' : 'text-white/75'}`}>
                     {(doc.highlights || []).map((hl, hIdx) => (
                       <li key={hIdx}>• {hl}</li>
                     ))}
                   </ul>
-                  <div className={`text-[9.5px] font-mono pt-1 border-t truncate ${isLight ? 'border-slate-200/70 text-slate-500' : 'border-white/10 text-white/45'}`}>
+                  <div className={`text-xs font-mono pt-1 border-t truncate ${isLight ? 'border-slate-200/70 text-slate-500' : 'border-white/10 text-white/45'}`}>
                     {doc.signed_by} · SHA: {doc.hash_sha256}
                   </div>
                 </div>

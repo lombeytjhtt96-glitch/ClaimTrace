@@ -53,7 +53,7 @@ export function SegmentedComplianceBar({
 
       {/* Percentage markers + segmented bar */}
       <div className="space-y-2">
-        <div className="flex items-end gap-1 text-[11px] font-mono font-bold tabular-nums">
+        <div className="flex items-end gap-1 text-xs font-mono font-bold tabular-nums">
           {normalized.map((seg) => (
             <div
               key={seg.id}
@@ -100,7 +100,7 @@ export function SegmentedComplianceBar({
                 {Number(seg.count || 0).toLocaleString('id-ID')}
               </span>
             </div>
-            <p className={`text-[10.5px] font-medium truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`text-xs font-medium truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               {seg.label}
             </p>
           </div>
@@ -139,7 +139,7 @@ export function SegmentedComplianceBar({
           }`}
         >
           <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
-          <p className="flex-1 text-[11.5px] leading-relaxed font-medium">{warningText}</p>
+          <p className="flex-1 text-xs leading-relaxed font-medium">{warningText}</p>
           {onDismissWarning && (
             <button
               type="button"
@@ -220,13 +220,13 @@ export function SegmentedRadialHighlightCard({
                     <span className="text-lg font-display font-bold tabular-nums text-white">{tile.value}</span>
                     {Icon && <Icon className="w-4 h-4 text-white/85 group-hover:scale-110 transition-transform" />}
                   </div>
-                  <p className="text-[11px] font-medium text-white/85 truncate mt-0.5">{tile.label}</p>
+                  <p className="text-xs font-medium text-white/90 truncate mt-0.5">{tile.label}</p>
                 </button>
               );
             })}
           </div>
           {footerNote && (
-            <div className="rounded-xl bg-white/[0.12] border border-white/15 px-3 py-2 flex items-center gap-2 text-[11px] text-white/95">
+            <div className="rounded-xl bg-white/[0.12] border border-white/15 px-3 py-2 flex items-center gap-2 text-xs text-white/95">
               <Info className="w-3.5 h-3.5 shrink-0 text-white" />
               <span className="leading-snug">{footerNote}</span>
             </div>
@@ -263,7 +263,7 @@ export function SegmentedRadialHighlightCard({
                 <span className="text-xl font-display font-bold tabular-nums leading-none text-white">
                   {centerPrimary}
                 </span>
-                <span className="text-[10px] font-medium text-white/80 mt-1 leading-tight">
+                <span className="text-xs font-semibold text-white/90 mt-1 leading-tight">
                   {centerSub}
                 </span>
               </div>
@@ -278,8 +278,8 @@ export function SegmentedRadialHighlightCard({
                 className="rounded-xl bg-white/[0.14] border border-white/15 px-3 py-2 flex items-center justify-between gap-2"
               >
                 <div className="min-w-0">
-                  <div className="text-xs font-mono font-bold text-white tabular-nums">{row.metric}</div>
-                  <div className="text-[11px] text-white/80 truncate">{row.label}</div>
+                  <div className="text-sm font-mono font-bold text-white tabular-nums">{row.metric}</div>
+                  <div className="text-xs text-white/90 truncate">{row.label}</div>
                 </div>
                 <CheckCircle2 className="w-3.5 h-3.5 text-white/85 shrink-0" />
               </div>

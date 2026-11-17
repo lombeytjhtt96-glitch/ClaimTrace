@@ -550,7 +550,7 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
               {direction === 'flat' ? 'Stabil' : `${delta.toFixed(1)}%`}
             </div>
             {statSummary && (
-              <span className={`text-[9px] font-mono font-medium whitespace-nowrap ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+              <span className={`text-xs font-mono font-medium whitespace-nowrap ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
                 {statSummary}
               </span>
             )}
@@ -1041,7 +1041,7 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
             <span className={`text-lg font-bold tabular-nums tracking-tight leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>
               {totalClaimsCount.toLocaleString('id-ID')}
             </span>
-            <span className={`text-[9px] font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider text-center mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
               {timeRange === 'all' ? 'SELURUH DATA' : `${timeRange} HARI TERAKHIR`}
             </span>
           </div>
@@ -1830,7 +1830,7 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs min-w-[540px]">
           <thead>
-            <tr className={`border-b text-[11px] font-semibold ${
+            <tr className={`border-b text-xs font-bold uppercase tracking-wider ${
               isLight ? 'border-slate-100 text-slate-500' : 'border-white/[0.07] text-slate-400'
             }`}>
               <th scope="col" className="py-2.5 pr-3">Faskes &amp; Klaim</th>
@@ -1850,28 +1850,28 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                 }`}
               >
                 <td className="py-3 pr-3">
-                  <div className={`font-semibold truncate max-w-[200px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <div className={`font-semibold text-sm truncate max-w-[200px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {row.hospital}
                   </div>
-                  <div className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <div className={`text-xs font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     {row.id} · SLA {row.slaDays} HK
                   </div>
                 </td>
-                <td className="py-3 px-2 font-mono font-semibold text-xs">
+                <td className="py-3 px-2 font-mono font-semibold text-xs sm:text-sm">
                   {row.code}
                 </td>
-                <td className="py-3 px-2 font-mono font-semibold tabular-nums">
+                <td className="py-3 px-2 font-mono font-bold text-xs sm:text-sm tabular-nums">
                   {row.tariffRp >= 1000000
                     ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt`
                     : row.tariffRp > 0
                     ? `Rp ${row.tariffRp.toLocaleString('id-ID')}`
                     : '-'}
                 </td>
-                <td className="py-3 px-2 truncate max-w-[140px]">
+                <td className="py-3 px-2 text-xs sm:text-sm truncate max-w-[140px]">
                   <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
                 </td>
                 <td className="py-3 pl-2 text-right">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
                     row.lane === 'red'
                       ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                       : row.lane === 'yellow'
@@ -1942,21 +1942,21 @@ function FaskesPerformanceCard({ isLight, onInspectCase, onNavigateTab }) {
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                 isLight ? 'bg-slate-100 text-slate-700' : 'bg-white/10 text-slate-200'
               }`}>
                 {item.initials}
               </div>
               <div className="min-w-0">
-                <div className={`text-xs font-semibold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                <div className={`text-sm font-semibold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   {item.name}
                 </div>
-                <div className={`text-[11px] truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                <div className={`text-xs truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                   {item.sub}
                 </div>
               </div>
             </div>
-            <span className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold border shrink-0 ${
+            <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border shrink-0 ${
               item.tone === 'rose'
                 ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                 : item.tone === 'amber'

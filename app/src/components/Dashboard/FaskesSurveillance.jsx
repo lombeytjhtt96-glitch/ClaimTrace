@@ -209,58 +209,58 @@ export default function FaskesSurveillance({
 
           {/* 4 KPI METRIC BANNER */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
-            <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
+            <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 Total Faskes Terpantau
               </div>
-              <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className={`text-base font-bold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {Number(nationalSummary?.distinct_fkrtl_facilities || 2091).toLocaleString('id-ID')} FKRTL Terpantau
               </div>
-              <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-normal mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 {Number(nationalSummary?.kabupaten_kota_coverage || 496).toLocaleString('id-ID')} Kab/Kota ({liveFaskes.length} Audit Prioritas)
               </div>
             </div>
 
-            <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
+            <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <div className={`text-[10px] font-medium uppercase tracking-wider flex items-center gap-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 <AlertOctagon className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Risiko Kritis (FRI ≥ 70)
               </div>
-              <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className={`text-base font-bold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {criticalFaskesList.length} RS Kritis
               </div>
-              <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-normal mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 {criticalFaskesList[0] ? `${criticalFaskesList[0].name} (Skor ${criticalFaskesList[0].friScore})` : 'Memuat evaluasi...'}
               </div>
             </div>
 
-            <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
+            <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 Pengawasan Khusus (40-70)
               </div>
-              <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className={`text-base font-bold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {mediumFaskesList.length} RS Sedang
               </div>
-              <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-normal mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 {mediumFaskesList.length > 0 ? mediumFaskesList.slice(0, 2).map(x => x.name).join(' & ') : 'Pantauan berkala aktif'}
               </div>
             </div>
 
-            <div className={`p-2.5 rounded-xl border relative overflow-hidden transition-all ${
+            <div className={`p-3 rounded-xl border relative overflow-hidden transition-all ${
               isLight ? 'bg-slate-50 border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
             }`}>
-              <div className={`text-[10px] font-medium uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                 Kepatuhan Terverifikasi
               </div>
-              <div className={`text-sm font-semibold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className={`text-base font-bold tabular-nums mt-0.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {safeFaskesList.length} RS Terakreditasi
               </div>
-              <div className={`text-[9.5px] font-normal ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+              <div className={`text-xs font-normal mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                 Skor FRI Rendah (&lt; 40)
               </div>
             </div>
@@ -314,6 +314,7 @@ export default function FaskesSurveillance({
                   <XAxis
                     type="number"
                     domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
                     tick={{ fontSize: 11, fill: isLight ? '#64748b' : '#94a3b8' }}
                     axisLine={false}
                     tickLine={false}
@@ -504,11 +505,11 @@ export default function FaskesSurveillance({
                           <Building2 className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <span className={`text-[9.5px] font-mono font-bold block ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{faskes.id}</span>
+                          <span className={`text-xs font-mono font-bold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{faskes.id}</span>
                           <h3 className={`text-sm font-bold tracking-tight truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title={faskes.name}>
                             {faskes.name}
                           </h3>
-                          <span className={`text-[10.5px] font-medium block ${isLight ? 'text-slate-600' : 'text-white/50'}`}>
+                          <span className={`text-xs font-medium block ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                             {faskes.type} · {faskes.city}
                           </span>
                         </div>
@@ -521,17 +522,17 @@ export default function FaskesSurveillance({
                           ? isLight ? 'bg-amber-100 text-amber-950 border-amber-300 font-bold' : 'bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold'
                           : isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300 font-bold' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 font-bold'
                       }`}>
-                        <span className="text-[8px] uppercase block font-bold">Skor FRI</span>
+                        <span className="text-[10px] uppercase block font-bold tracking-wider">Skor FRI</span>
                         <span className="text-sm font-bold leading-none">{faskes.friScore}</span>
                       </div>
                     </div>
 
-                    <div className={`space-y-1 text-xs p-2.5 rounded-xl border ${
+                    <div className={`space-y-1.5 text-xs p-3 rounded-xl border ${
                       isLight ? 'bg-white border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
                     }`}>
                       <div className="flex justify-between items-center">
-                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Status Risiko:</span>
-                        <span className={`font-bold text-[11px] px-2 py-0.5 rounded-full border ${
+                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Status Risiko:</span>
+                        <span className={`font-bold text-xs px-2.5 py-0.5 rounded-full border ${
                           isCritical 
                             ? isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                             : isMedium 
@@ -542,39 +543,39 @@ export default function FaskesSurveillance({
                         </span>
                       </div>
                       <div className="flex justify-between items-center pt-0.5">
-                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Klaim Bulan Ini:</span>
-                        <span className={`font-mono font-bold text-[11px] ${isLight ? 'text-slate-900' : 'text-white'}`}>{faskes.totalClaimsMonth} klaim</span>
+                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Klaim Bulan Ini:</span>
+                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{faskes.totalClaimsMonth} klaim</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Anomali Terdeteksi:</span>
-                        <span className={`font-mono font-bold text-[11px] ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>{faskes.anomalyCount} klaim ({faskes.spikeRatio})</span>
+                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Anomali Terdeteksi:</span>
+                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>{faskes.anomalyCount} klaim ({faskes.spikeRatio})</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Validasi FRISTA:</span>
-                        <span className={`font-mono font-bold text-[11px] ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{faskes.fristaStatus}</span>
+                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Validasi FRISTA:</span>
+                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{faskes.fristaStatus}</span>
                       </div>
                     </div>
 
-                    <p className={`text-[11px] line-clamp-2 leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
+                    <p className={`text-xs line-clamp-2 leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
                       <strong className={isLight ? 'text-slate-900 font-bold' : 'text-white'}>Temuan Utama:</strong> {faskes.primaryFinding}
                     </p>
 
                     {isCritical && (
-                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
+                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
                         isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                       }`}>
                         Prioritas Audit Kredensial &amp; SIP DPJP
                       </div>
                     )}
                     {isMedium && (
-                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
+                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
                         isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                       }`}>
                         Indikasi Pemecahan Klaim (Unbundling)
                       </div>
                     )}
                     {!isCritical && !isMedium && (
-                      <div className={`text-[9.5px] font-semibold px-2 py-0.5 rounded border ${
+                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
                         isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                       }`}>
                         Kepatuhan Terverifikasi
@@ -598,7 +599,7 @@ export default function FaskesSurveillance({
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onSelectFaskesCase && onSelectFaskesCase(faskes.linkedClaimId || 'CLM-2026-8801')}
-                        className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-xs font-mono cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs font-mono cursor-pointer"
                       >
                         Telaah Kasus Kritis &rarr;
                       </motion.button>
@@ -639,14 +640,14 @@ export default function FaskesSurveillance({
                 isLight ? 'border-slate-200' : 'border-white/10'
               }`}>
                 <div>
-                  <span className={`text-[10px] font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{selectedFaskesDetail.id}</span>
+                  <span className={`text-xs font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{selectedFaskesDetail.id}</span>
                   <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedFaskesDetail.name}</h3>
                   <span className={`text-xs font-bold ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>{selectedFaskesDetail.type} · {selectedFaskesDetail.city}</span>
                 </div>
                 <button type="button"
                   onClick={() => setSelectedFaskesDetail(null)}
                   aria-label="Tutup detail faskes"
-                  className={`p-1 rounded-lg cursor-pointer ${
+                  className={`p-1.5 rounded-lg cursor-pointer ${
                     isLight ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-100' : 'text-white/50 hover:text-white hover:bg-white/10'
                   }`}
                 >
@@ -658,22 +659,22 @@ export default function FaskesSurveillance({
                 <div className={`p-3 rounded-lg border space-y-1 ${
                   isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
                 }`}>
-                  <span className={`text-[10px] font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Rekam Jejak Pengawasan AAK &amp; VPK</span>
-                  <p className={`leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>{selectedFaskesDetail.historyAudit}</p>
+                  <span className={`text-xs font-mono uppercase font-bold ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Rekam Jejak Pengawasan AAK &amp; VPK</span>
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>{selectedFaskesDetail.historyAudit}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className={`p-2.5 rounded-lg border ${
                     isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
                   }`}>
-                    <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Direktur Faskes</span>
-                    <span className={`font-bold mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedFaskesDetail.director}</span>
+                    <span className={`text-xs block font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Direktur Faskes</span>
+                    <span className={`text-sm font-bold mt-0.5 block ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedFaskesDetail.director}</span>
                   </div>
                   <div className={`p-2.5 rounded-lg border ${
                     isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
                   }`}>
-                    <span className={`text-[10px] block font-medium ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Total Pembayaran Bulan Ini</span>
-                    <span className={`font-bold font-mono mt-0.5 block ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{selectedFaskesDetail.totalRupiahMonth}</span>
+                    <span className={`text-xs block font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Total Pembayaran Bulan Ini</span>
+                    <span className={`text-sm font-bold font-mono mt-0.5 block ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{selectedFaskesDetail.totalRupiahMonth}</span>
                   </div>
                 </div>
 
@@ -682,23 +683,23 @@ export default function FaskesSurveillance({
                   isLight ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white/5 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[11px] font-bold flex items-center gap-1.5 ${
+                    <span className={`text-xs font-bold flex items-center gap-1.5 ${
                       isLight ? 'text-emerald-800' : 'text-[#FFCA40]'
                     }`}>
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <ShieldCheck className="w-4 h-4" />
                       <span>Matriks Evaluasi Kepatuhan Faskes (Rule Engine)</span>
                     </span>
                     <button
                       type="button"
                       disabled={faskesAiLoading}
                       onClick={() => handleRunFaskesAiAudit(selectedFaskesDetail)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-50 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 ${
                         isLight
                           ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                           : 'bg-[#FFCA40] hover:bg-[#FFD700] text-[#000c24]'
                       }`}
                     >
-                      <ShieldCheck className="w-3 h-3" />
+                      <ShieldCheck className="w-3.5 h-3.5" />
                       <span>{faskesAiLoading ? 'Mengevaluasi...' : 'Evaluasi Matriks Intervensi Faskes'}</span>
                     </button>
                   </div>
@@ -711,20 +712,20 @@ export default function FaskesSurveillance({
                           {faskesAiAudit[selectedFaskesDetail.id].findings.map((item, idx) => (
                             <div
                               key={idx}
-                              className={`p-2 rounded-lg border flex flex-col gap-0.5 ${
+                              className={`p-2.5 rounded-lg border flex flex-col gap-1 ${
                                 isLight ? 'bg-white border-emerald-100' : 'bg-[#000c24]/70 border-white/10'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className={`font-bold text-[11px] ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                <span className={`font-bold text-xs ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                                   {item.label}
                                 </span>
-                                <span className={`font-mono font-bold text-[11px] ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
+                                <span className={`font-mono font-bold text-xs ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
                                   {item.value}
                                 </span>
                               </div>
                               {item.rule && (
-                                <span className={`text-[10.5px] ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                                <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
                                   Dasar Aturan: {item.rule}
                                 </span>
                               )}
@@ -733,7 +734,7 @@ export default function FaskesSurveillance({
                         </div>
                       )}
                       {faskesAiAudit[selectedFaskesDetail.id].recommendedStep && (
-                        <div className={`p-2 rounded-lg border ${
+                        <div className={`p-2.5 rounded-lg border text-xs ${
                           isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
                         }`}>
                           <span className="font-bold">Langkah Intervensi: </span>
@@ -741,16 +742,16 @@ export default function FaskesSurveillance({
                         </div>
                       )}
                       {faskesAiAudit[selectedFaskesDetail.id].historyAudit && (
-                        <div className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/75'}`}>
+                        <div className={`text-xs ${isLight ? 'text-slate-600' : 'text-white/75'}`}>
                           <span className="font-semibold">Jejak Audit Faskes: </span>
                           <span>{faskesAiAudit[selectedFaskesDetail.id].historyAudit}</span>
                         </div>
                       )}
                       {faskesAiAudit[selectedFaskesDetail.id].humanGate && (
-                        <div className={`p-2 rounded-lg border text-[11px] font-semibold flex items-start gap-1.5 ${
+                        <div className={`p-2.5 rounded-lg border text-xs font-semibold flex items-start gap-1.5 ${
                           isLight ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
                         }`}>
-                          <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
                           <span>{faskesAiAudit[selectedFaskesDetail.id].humanGate}</span>
                         </div>
                       )}

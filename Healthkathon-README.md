@@ -49,6 +49,30 @@ We designed, engineered, benchmarked, and production-hardened a full-stack, ente
 
 ---
 
+## Post-Coaching Transformation (Fokus Masukan Mentor)
+
+Sesuai arahan sesi mentoring dan coaching bersama mentor internal BPJS Kesehatan (per 15 November 2026), arsitektur ClaimTrace ditransformasikan secara nyata:
+
+1. **Masukan Mentor Internal BPJS Kesehatan:**  
+   > *"Evaluasi pemakaian Generative AI publik (Gemini) pada interpretasi hasil & ketergantungan library GitHub, dengan saran fokus pada penyelesaian Klaim Triase sebagai solusi anti-fraud."*  
+   Mentor menekankan bahwa ketergantungan API cloud publik membahayakan kerahasiaan data medis pasien (UU PDP No. 27/2022), menyebabkan latensi tinggi (> 4.000 ms) yang melanggar SLA verifikasi 10 hari kerja, dan dependensi pustaka luar GitHub rentan terhadap risiko supply chain. Solusi diarahkan untuk difokuskan penuh pada penyelesaian **Klaim Triase** secara cepat, deterministik, dan berkekuatan hukum pembuktian.
+
+2. **Tindakan Teknis Nyata yang Dibangun:**  
+   - **Eliminasi Cloud GenAI & Library Luar:** Menghapus ketergantungan Gemini API eksternal dan menggantikannya dengan 100% on-premise AI pipeline (model risiko `.pkl`, Isolation Forest, dan Clinical NLP `all-MiniLM-L6-v2`) serta arsitektur Sidecar BEA C03.04 mandiri tanpa dependensi GitHub liar.  
+   - **Fokus Penuh Klaim Triase:** Memperkuat antrean triase 3-jalur (Hijau, Kuning, Merah), Lapis 4 RME-TTE BSrE & Biometrik FRISTA, FairGuard Z49.1 (0,0% FPR kasus sah HD/Thalasemia), Cek Dokumen RS, Peringkat Risiko Faskes, Berita Acara Kelengkapan Berkas (BAKB) berstempel QR SHA-256, dan Auth Fail-Closed + 3-Lapis Google reCAPTCHA Enterprise.
+
+3. **Hasil & Bukti Terukur:**  
+   - **Latensi Evaluasi:** Turun dari `> 4.000 ms` menjadi **11,90 ms API live** (`< 15 ms` core on-premise).  
+   - **Kedaulatan Data:** **0% transfer data PII/PHI ke cloud eksternal** (100% on-premise compliant UU PDP).  
+   - **Perlindungan Faskes Patuh:** **0,0% False Positive Rate** pada 512 kasus terapi kronis sah FairGuard.  
+   - **Kesiapan Rekayasa:** **300/300 uji backend lulus 100%**, 197 endpoint API FastAPI aktif, dan 112 skenario E2E lulus.
+
+4. **Keterbukaan Ilmiah (Hal yang Belum Sempat Dikerjakan):**  
+   - Koneksi sandbox/produksi live SATUSEHAT, FRISTA, BSrE & API Key produksi reCAPTCHA menunggu penerbitan kredensial resmi BPJS.  
+   - Kalibrasi hold-out Unbundling (66,7%) & Prolonged LOS (0,0%) dijadwalkan pada Fase Pilot 12 RS.
+
+---
+
 ## System Architecture
 
 ```

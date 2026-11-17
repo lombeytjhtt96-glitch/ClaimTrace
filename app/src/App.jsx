@@ -1979,7 +1979,7 @@ export default function App() {
         </motion.aside>
 
         {/* WORKSPACE AREA (COCKPIT LAYOUT) */}
-        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto px-3.5 sm:px-6 lg:px-7 py-3 lg:py-5 pb-28 min-h-0 transition-colors duration-300 ${
+        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-6 lg:px-7 py-3 lg:py-5 pb-28 min-h-0 transition-colors duration-300 ${
           isLight ? 'bg-[#F7F8FA] text-slate-900' : 'bg-[#0B0F17] text-slate-100'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${

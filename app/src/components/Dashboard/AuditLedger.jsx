@@ -804,7 +804,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               : 'bg-[#00153A]/85 border-white/10 text-white shadow-2xl'
           }`}>
             <table className="w-full min-w-[660px] text-left text-xs font-sans">
-              <thead className={`font-bold uppercase text-[9.5px] tracking-wider border-b ${
+              <thead className={`font-bold uppercase text-xs tracking-wider border-b ${
                 isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-black/40 text-white/70 border-white/10'
               }`}>
                 <tr>
@@ -865,84 +865,84 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     <td className="py-3 px-3.5 font-sans">
                       <div className="flex items-center space-x-1.5">
                         {b.action.includes('REJECTED') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                           }`}>
                             TOLAK KLAIM
                           </span>
                         )}
                         {b.action.includes('APPROVED') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                           }`}>
                             SETUJUI KLAIM
                           </span>
                         )}
                         {b.action.includes('WASRIK') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                           }`}>
                             WASRIK FLAG
                           </span>
                         )}
                         {b.action.includes('MOBILE') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                           }`}>
                             MOBILE JKN
                           </span>
                         )}
                         {b.action.includes('TRIAGE') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                           }`}>
                             TRIASE AI
                           </span>
                         )}
                         {b.action.includes('AUDIT_LOG') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                           }`}>
                             AKSES DATA
                           </span>
                         )}
                         {b.action.includes('BERITA_ACARA') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                           }`}>
                             BERITA ACARA
                           </span>
                         )}
                         {b.action.includes('HUMAN_IN_THE_LOOP') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                           }`}>
                             OTORISASI HITL
                           </span>
                         )}
                         {b.action.includes('VERIFIER_DECISION') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                           }`}>
                             KETETAPAN AUDIT
                           </span>
                         )}
                         {b.action.includes('PATIENT_PRESENCE') && (
-                          <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                           }`}>
                             RESPONS PESERTA
                           </span>
                         )}
                       </div>
-                      <span className={`text-[9.5px] block mt-0.5 font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                      <span className={`text-xs block mt-0.5 font-mono ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                         {formatWibTimestamp(b.timestamp)}
                       </span>
                     </td>
 
                     <td className="py-3 px-3.5 font-sans">
-                      <span className={`font-bold block truncate max-w-[160px] text-[11px] ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
-                      <span className={`text-[9.5px] block truncate max-w-[160px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
+                      <span className={`font-bold block truncate max-w-[160px] text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
+                      <span className={`text-xs block truncate max-w-[160px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
                     </td>
 
                     <td className="py-3 px-3.5">

@@ -94,9 +94,9 @@ export default function WorkflowPipelineBanner({
                     }`}
                   />
                   <div className="text-left">
-                    <span className="block leading-tight font-display">{item.label}</span>
+                    <span className="block leading-tight font-display text-xs sm:text-sm font-semibold">{item.label}</span>
                     <span
-                      className={`text-[9.5px] hidden sm:block ${
+                      className={`text-[11px] sm:text-xs hidden sm:block ${
                         isCurrent
                           ? 'text-emerald-100'
                           : isLight
@@ -124,12 +124,12 @@ export default function WorkflowPipelineBanner({
         {/* Action Info & Map Trigger */}
         <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-white/10">
           {customNote ? (
-            <p className={`text-[11px] leading-tight ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+            <p className={`text-xs leading-normal ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
               {customNote}
             </p>
           ) : (
             <span
-              className={`text-[11px] font-mono px-2 py-0.5 rounded-md border ${
+              className={`text-xs font-mono font-medium px-2.5 py-1 rounded-md border ${
                 isLight
                   ? 'bg-emerald-100/60 text-emerald-900 border-emerald-300/80'
                   : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'

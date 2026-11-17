@@ -164,7 +164,7 @@ def build_coaching_before_after() -> Path:
         (
             "Verifikasi Otomatis Backend",
             "Pengujian Parsial",
-            "299 Uji Backend + 16/16 Stack",
+            "300 Uji Backend + 16/16 Stack",
             35,
             100,
         ),

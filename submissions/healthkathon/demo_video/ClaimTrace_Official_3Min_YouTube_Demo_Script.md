@@ -42,16 +42,16 @@ Verifikator di lapangan menghadapi batas ketat 10 hari kerja sesuai Perpres No. 
 ---
 
 ### [00:25 - 00:55] SEGMEN 2: SOLUSI INOVASI — CLAIMTRACE QUAD-TRIANGULATION
-**Tampilan Layar:** Slide 5 (Arsitektur Quad-Triangulation).
+**Tampilan Layar:** Slide 3 (Fokus Coaching) lalu Slide 4 (Solusi & Alur Arsitektur).
 
 *(Gaudiansyah Abiyu Mahya - Nada Cepat, Terstruktur, Percaya Diri)*:
-"Untuk memecahkan masalah ini tanpa menghambat faskes yang patuh, kami mempersembahkan **ClaimTrace**: Sistem Pendukung Keputusan Verifikator Klaim JKN berbasis Triase Multi-Sinyal Independen.
+"Menindaklanjuti evaluasi coaching mentor BPJS terkait pemakaian Generative AI publik (Gemini) dan ketergantungan library eksternal, kami mengeliminasi 100% LLM cloud asing demi kepatuhan mutlak UU PDP dan latensi super cepat. Kami memusatkan solusi sepenuhnya pada **Klaim Triase Anti-Fraud Pra-Bayar On-Premise (< 15 ms)**:
 
-ClaimTrace bekerja di gerbang pra-bayar melalui 4 sinyal independen:
-Pertama, **Analitik Klinis & Upcoding**, mendeteksi anomali rasio prosedur dan inflasi keparahan INA-CBG dengan filter pengecualian obat kronis PRB.
+ClaimTrace bekerja sebagai Sidecar BEA C03.04 melalui 4 sinyal independen:
+Pertama, **Analitik Pola & Upcoding**, mendeteksi lonjakan klaim fiktif dan inflasi keparahan INA-CBG dengan perlindungan FairGuard Z49.1 (0,0% FPR).
 Kedua, **SATUSEHAT SDMK & OSRM Geovelocity**, memverifikasi keaktifan SIP dokter dan mendeteksi dokter tercatat melayani di dua kota pada jam yang sama.
 Ketiga, **Telemetri Mobile JKN Out-of-Band**, konfirmasi kehadiran langsung ke gawai peserta dengan prinsip Zero-PHI patuh UU PDP.
-Keempat, **Biometrik Terminal FRISTA**, validasi presensi fisik wajah peserta di faskes."
+Keempat, **Verifikasi RME-TTE BSrE & Biometrik FRISTA**, validasi presensi fisik dan keabsahan berkas rumah sakit."
 
 ---
 

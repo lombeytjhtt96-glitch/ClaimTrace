@@ -918,12 +918,12 @@ export default function DecisionConsole({
                       1. Layak Bayar (Setujui FPK &amp; Proses Pencairan Pra-Bayar)
                     </span>
                     {(verificatorAction === 'LAYAK_BAYAR' || verificatorAction === 'override') && (
-                      <span className="action-active-indicator text-[9.5px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator text-xs bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  <p className={`text-xs mt-1 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                     Seluruh 6 kaidah administrasi &amp; klinis terpenuhi. Klaim disahkan masuk rekapitulasi BAHV Layak Bayar ({currentCase.tariff}).
                   </p>
                 </div>
@@ -956,12 +956,12 @@ export default function DecisionConsole({
                       2. Pending / Dikembalikan (Klarifikasi Faskes Maks 10 HK)
                     </span>
                     {(verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification') && (
-                      <span className="action-active-indicator text-[9.5px] bg-amber-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator text-xs bg-amber-600 text-white px-2.5 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  <p className={`text-xs mt-1 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                     Menahan pembayaran sementara untuk perbaikan kelengkapan resume medis, SIP SATUSEHAT, atau bukti penunjang sesuai Perpres 82/2018 Pasal 76.
                   </p>
                 </div>
@@ -994,12 +994,12 @@ export default function DecisionConsole({
                       3. Sengketa / Dispute Klinis (Eskalasi TKMKB &amp; BA Sengketa)
                     </span>
                     {verificatorAction === 'DISPUTE_TKMKB' && (
-                      <span className="action-active-indicator text-[9.5px] bg-purple-700 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator text-xs bg-purple-700 text-white px-2.5 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  <p className={`text-xs mt-1 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                     Ketidaksepakatan kaidah koding INA-CBG, severity level, atau urgensi medik antara Verifikator &amp; RS guna sidang mediasi TKMKB.
                   </p>
                 </div>
@@ -1032,12 +1032,12 @@ export default function DecisionConsole({
                       4. Tidak Layak Bayar / Audit VPK (Tolak Indikasi Kecurangan JKN)
                     </span>
                     {(verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit') && (
-                      <span className="action-active-indicator text-[9.5px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-mono font-bold shrink-0">
+                      <span className="action-active-indicator text-xs bg-rose-600 text-white px-2.5 py-0.5 rounded-full font-mono font-bold shrink-0">
                         AKTIF
                       </span>
                     )}
                   </div>
-                  <p className={`text-[11px] mt-0.5 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                  <p className={`text-xs mt-1 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
                     Membekukan pencairan {currentCase.tariff} dan menerbitkan SP-1 + penjadwalan audit faktual Tim Pencegahan Kecurangan ke {currentCase.hospital}.
                   </p>
                 </div>
@@ -1401,18 +1401,18 @@ export default function DecisionConsole({
                 : 'bg-[#000c24]/90 border-white/10 text-white/70'
             }`}>
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>WAKTU PENETAPAN PUTUSAN:</span>
-                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold`}>{sealTimestamp || 'Menunggu penetapan putusan'}</span>
+                <span className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>WAKTU PENETAPAN PUTUSAN:</span>
+                <span className={`${isLight ? 'text-emerald-700' : 'text-emerald-400'} font-bold text-xs`}>{sealTimestamp || 'Menunggu penetapan putusan'}</span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>VERIFIKATOR MEDIS RESMI:</span>
-                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block`}>{verifierInfo.nip} ({verifierInfo.name})</span>
+                <span className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>VERIFIKATOR MEDIS RESMI:</span>
+                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold block text-xs`}>{verifierInfo.nip} ({verifierInfo.name})</span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>STATUS DISPOSISI:</span>
-                <span className={`verdict-status-badge will-change-transform font-bold block ${
+                <span className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>STATUS DISPOSISI:</span>
+                <span className={`verdict-status-badge will-change-transform font-bold block text-xs ${
                   (verificatorAction === 'TIDAK_LAYAK_FRAUD' || verificatorAction === 'audit') ? 'text-rose-600'
                   : (verificatorAction === 'PENDING_KLARIFIKASI' || verificatorAction === 'clarification') ? 'text-amber-600'
                   : verificatorAction === 'DISPUTE_TKMKB' ? 'text-purple-600'
@@ -1431,21 +1431,21 @@ export default function DecisionConsole({
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>NOMOR BERITA ACARA RESMI:</span>
-                <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-[10px]`}>
+                <span className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>NOMOR BERITA ACARA RESMI:</span>
+                <span className={`verdict-crypto-seal will-change-transform block ${isLight ? 'text-slate-700' : 'text-emerald-300'} font-bold text-xs font-mono`}>
                   BAHV/2026/10/{currentCase.id || 'CLM-2026-8801'}
                 </span>
               </div>
 
               <div>
-                <span className={`block text-[9px] ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>SERTIFIKASI DIGITAL:</span>
-                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold flex items-center space-x-1`}>
-                  <Check className="w-3 h-3 text-emerald-600" />
+                <span className={`block text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>SERTIFIKASI DIGITAL:</span>
+                <span className={`${isLight ? 'text-emerald-800' : 'text-emerald-300'} font-bold flex items-center space-x-1 text-xs`}>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
                   <span>TERDAFTAR &amp; SAH BSrE - BSSN BPJS KESEHATAN</span>
                 </span>
               </div>
 
-              <div className={`pt-2 border-t flex flex-wrap gap-1 text-[9.5px] ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+              <div className={`pt-2 border-t flex flex-wrap gap-1 text-xs ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
                 <span className={`px-2 py-0.5 rounded font-semibold border ${isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white/80 border-white/15'}`}>
                   Perpres No. 82/2018 (Pasal 76)
                 </span>

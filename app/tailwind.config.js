@@ -106,10 +106,10 @@ export default {
         "on-error-container": "#9F1239",
       },
       fontFamily: {
-        display: ['"Geist"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
-        sans: ['"Inter"', '"Geist"', 'system-ui', '-apple-system', 'sans-serif'],
-        inter: ['"Inter"', '"Geist"', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['"Geist Mono"', '"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        display: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+        inter: ['"Inter"', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
         serif: ['"IBM Plex Serif"', 'Georgia', 'serif'],
       }
     },

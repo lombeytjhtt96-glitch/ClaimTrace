@@ -52,8 +52,6 @@ BANNED_SUBSTRINGS = (
     "\u2022",  # literal bullet character in PPTX strings
     "DuckDB",
     "duckdb",
-    "Gemini",
-    "gemini",
     "Claude",
     "OpenAI",
 )
@@ -199,16 +197,16 @@ SLIDES: list[dict[str, Any]] = [
         ],
         "rows": [
             [
-                "1. Penyelarasan BEA",
+                "1. GenAI Cloud & Lib GitHub",
+                "Evaluasi pemakaian Generative AI publik (Gemini) pada interpretasi hasil & ketergantungan library GitHub, dengan saran fokus pada penyelesaian Klaim Triase sebagai solusi anti-fraud.",
+                "Eliminasi total LLM cloud publik; migrasi penuh ke AI lokal on-premise (.pkl & all-MiniLM-L6-v2), sidecar BEA C03.04 mandiri tanpa lib GitHub liar, dan fokus pada Klaim Triase.",
+                "Latensi > 4.000 ms turun ke 11,90 ms API live (< 15 ms core), 0% transfer PII ke cloud (UU PDP), 0,0% FPR (512 kasus), 300/300 tes lulus.",
+            ],
+            [
+                "2. Penyelarasan BEA",
                 "Petakan posisi ClaimTrace di proses resmi BEA (C01-S06), jangan mengganti VClaim.",
                 "Menempatkan ClaimTrace sebagai sidecar C03.04 antara C03 & S06, mendampingi Smart Vedika/VIDI.",
                 "Tab Arsitektur BEA live; zero perubahan skema VClaim; 3 jalur SLA <= 10 HK.",
-            ],
-            [
-                "2. Kedaulatan Data AI",
-                "Hilangkan ketergantungan API LLM cloud asing demi kepatuhan UU PDP & biaya nasional.",
-                "Migrasi penuh ke 3 model ML (.pkl), Rule Engine, & Clinical NLP (all-MiniLM-L6-v2) on-premise.",
-                "Latensi 11,90 ms API live (< 15 ms core), HTTP 200, Rp 0 biaya token/API.",
             ],
             [
                 "3. Lapis 4 & RS Jujur",
@@ -226,7 +224,7 @@ SLIDES: list[dict[str, Any]] = [
                 "5. UI Klinis & Regresi",
                 "Sederhanakan antarmuka padat agar efisien bagi Verifikator dan teruji menyeluruh.",
                 "Refaktor 9 modul bertema Clinical Precision (termasuk Cek Dokumen & Peringkat Risiko).",
-                "299 uji backend lolos, 189 endpoint API, 112 skenario E2E, & 16/16 stack OK.",
+                "300 uji backend lolos, 197 endpoint API, 112 skenario E2E, & 16/16 stack OK.",
             ],
         ],
     },

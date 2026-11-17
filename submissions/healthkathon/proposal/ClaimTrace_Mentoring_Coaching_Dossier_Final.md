@@ -46,6 +46,33 @@
 
 ---
 
+## 0.1 TRANSFORMASI PASCA-COACHING: EVALUASI MENTOR & RESPONS ARSITEKTUR
+
+1. **Masukan Mentor Internal BPJS Kesehatan:**
+   > *"Evaluasi pemakaian Generative AI publik (Gemini) pada interpretasi hasil & ketergantungan library GitHub, dengan saran fokus pada penyelesaian Klaim Triase sebagai solusi anti-fraud."*
+   - Mentor menggarisbawahi tiga risiko mendasar:
+     - **Kedaulatan Data & UU PDP:** Ketergantungan API LLM cloud publik berisiko mentransfer data medis pasien (PHI) ke cloud eksternal/asing yang bertentangan dengan Pasal 34 UU PDP No. 27/2022.
+     - **Latensi Tinggi vs SLA 10 Hari Kerja:** Latensi inferensi cloud publik (> 4.000 ms) tidak scalable untuk melayani 4,5 juta klaim bulanan dan membahayakan tenggat SLA verifikasi Perpres No. 82/2018.
+     - **Risiko Rantai Pasok Library GitHub:** Ketergantungan pada library pihak ketiga GitHub yang tidak terverifikasi berpotensi menimbulkan kerentanan keamanan dan audit failure.
+     - **Fokus Strategis:** Mengarahkan tim untuk memusatkan daya pada **Klaim Triase Pra-Bayar** yang cepat, deterministik, dan berkekuatan hukum pembuktian.
+
+2. **Tindakan Teknis Nyata yang Dibangun:**
+   - **Eliminasi Total Cloud LLM:** Menghilangkan ketergantungan Gemini API dan memigrasikan seluruh inferensi ke **AI lokal on-premise** (model risiko `.pkl`, Isolation Forest) dan Clinical NLP lokal (`all-MiniLM-L6-v2`) yang berjalan in-memory dengan latensi inferensi `< 15 ms`.
+   - **Arsitektur Mandiri Sidecar BEA C03.04:** Memposisikan ClaimTrace sebagai sidecar mandiri tanpa dependensi GitHub eksternal yang mendampingi VClaim dan Smart Vedika sebelum berkas masuk ke pembayaran S06.
+   - **Fokus Penuh pada Klaim Triase Anti-Fraud:** Memperkuat 4-Lapis Triangulasi, Lapis 4 RME-TTE BSrE & Biometrik FRISTA, 5 aturan perlindungan FairGuard Z49.1 (0,0% FPR kasus sah HD/Thalasemia), modul Cek Dokumen RS (7 berkas wajib & deteksi inversi waktu), Peringkat Risiko Faskes, Berita Acara Kelengkapan Berkas (BAKB) berstempel QR SHA-256, serta Otentikasi Fail-Closed + 3-Lapis Google reCAPTCHA Enterprise.
+
+3. **Hasil & Bukti Terukur:**
+   - **Latensi:** Turun drastis dari `> 4.000 ms` ke **11,90 ms API live** (`< 15 ms` core on-premise).
+   - **Kedaulatan Data:** **0% transfer data PII/PHI ke cloud** (100% On-Premise, patuh UU PDP No. 27/2022).
+   - **Keadilan Faskes Patuh:** **0,0% False Positive Rate** pada 512 kasus kronis FairGuard.
+   - **Stabilitas Rekayasa:** **300/300 uji backend lulus 100%**, 197 endpoint API FastAPI aktif, dan 112 skenario uji E2E lulus.
+
+4. **Keterbukaan Ilmiah (Hal yang Belum Sempat Dikerjakan):**
+   - Koneksi sandbox/produksi live SATUSEHAT, FRISTA, BSrE & API Key produksi reCAPTCHA menunggu penerbitan kredensial resmi BPJS Kesehatan.
+   - Kalibrasi aturan hold-out *Unbundling* (`66,7%`) dan *Prolonged LOS* (`0,0%`) dijadwalkan pada Fase Pilot 12 RS.
+
+---
+
 ## 1. RINGKASAN EKSEKUTIF & VALUE PROPOSITION
 
 ### 1.1 Pernyataan Nilai Utama
@@ -193,6 +220,15 @@ Eksekusi mesin kolumnar OLAP in-memory pada dataset terintegrasi (`6.264.346` to
 ---
 
 ## 7. LEMBAR JAWABAN PERTANYAAN KRITIS SESI MENTORING
+
+### Q0: "Mengapa sistem mengevaluasi dan mengeliminasi pemakaian Generative AI publik (seperti Gemini) serta library eksternal GitHub, lalu memusatkan seluruh daya pada Klaim Triase?"
+**Jawaban Defensif:**
+"Evaluasi ini langsung bersumber dari masukan kritis mentor BPJS Kesehatan saat sesi coaching:
+1. **Kepatuhan Regulasi & Kedaulatan Data Medis (UU PDP No. 27/2022):** Pemanggilan API Generative AI publik (seperti Google Gemini Cloud) berisiko membocorkan Protected Health Information (PHI) ke infrastruktur pihak ketiga di luar kendali BPJS Kesehatan.
+2. **Kendala Latensi terhadap SLA 10 Hari Kerja:** Panggilan API cloud publik membutuhkan waktu > 4.000 ms per evaluasi, yang tidak mungkin diterapkan untuk memproses 4,5 juta klaim per bulan tanpa menyebabkan antrean macet dan risiko denda keterlambatan 1% (Perpres No. 82/2018 Pasal 76).
+3. **Keamanan Rantai Pasok (Software Supply Chain):** Ketergantungan pada pustaka pihak ketiga GitHub yang tidak terstandarisasi menimbulkan risiko celah keamanan dan inkonsistensi dependensi saat audit BPK/KPK.
+4. **Fokus Inti Solusi:** Mentor mengarahkan agar fokus tunggal kami adalah **Klaim Triase Pra-Bayar**.
+Oleh karena itu, kami mengganti GenAI publik dengan **100% On-Premise AI & Deterministic Rule Engine** (model risiko .pkl, Isolation Forest, dan Clinical NLP all-MiniLM-L6-v2) sebagai Sidecar BEA C03.04 mandiri. Hasilnya: latensi turun ke 11,90 ms API live (< 15 ms core), 0% transfer data ke cloud, Rp 0 biaya token, dan 0,0% False Positive Rate pada klaim kronis sah."
 
 ### Q1: "Apakah ClaimTrace memperlambat waktu verifikasi klaim faskes sehingga membahayakan SLA 10 hari kerja BPJS Kesehatan?"
 **Jawaban Defensif:**

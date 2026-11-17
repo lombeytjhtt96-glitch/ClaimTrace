@@ -743,10 +743,10 @@ export default function TriageOverview({
             : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Total Antrean
             </span>
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border font-bold ${
+            <span className={`text-xs font-mono px-2.5 py-0.5 rounded-full border font-bold ${
               isLight ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
             }`}>
               Aktif
@@ -755,7 +755,7 @@ export default function TriageOverview({
           <div className="text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight">
             {totalQueueCount.toLocaleString('id-ID')}
           </div>
-          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
             Berkas klaim siap diproses verifikator
           </p>
         </div>
@@ -767,17 +767,17 @@ export default function TriageOverview({
             : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
               Jalur Merah (Risiko Tinggi)
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
+            <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border tabular-nums ${
               isLight ? 'bg-rose-50 text-rose-700 border-rose-300' : 'text-rose-300 bg-rose-500/20 border-rose-500/30'
             }`}>{redPct}%</span>
           </div>
           <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-rose-600' : 'text-rose-400'}`}>
             {redCount.toLocaleString('id-ID')}
           </div>
-          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
             Indikasi anomali berat &amp; wajib telaah
           </p>
         </div>
@@ -789,17 +789,17 @@ export default function TriageOverview({
             : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
               Jalur Kuning (Klarifikasi)
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
+            <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border tabular-nums ${
               isLight ? 'bg-amber-50 text-amber-800 border-amber-300' : 'text-amber-300 bg-amber-500/20 border-amber-500/30'
             }`}>{yellowPct}%</span>
           </div>
           <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>
             {yellowCount.toLocaleString('id-ID')}
           </div>
-          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
             Konfirmasi dokumen penunjang faskes
           </p>
         </div>
@@ -811,17 +811,17 @@ export default function TriageOverview({
             : 'bg-[#1e2530] border-[#2d3748] text-white shadow-xl'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
               Jalur Hijau (Layak Lolos)
             </span>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border tabular-nums ${
+            <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border tabular-nums ${
               isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'text-emerald-300 bg-emerald-500/20 border-emerald-500/30'
             }`}>{greenPct}%</span>
           </div>
           <div className={`text-3xl font-extrabold mt-1.5 tabular-nums tracking-tight ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>
             {greenCount.toLocaleString('id-ID')}
           </div>
-          <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
             Klaim wajar tanpa indikasi kecurangan
           </p>
         </div>
@@ -1342,8 +1342,8 @@ export default function TriageOverview({
                       </div>
 
                       <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Batas SLA</span>
-                        <span className={`px-2 py-0.5 rounded-md font-mono font-bold text-[10.5px] border tabular-nums ${
+                        <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Batas SLA</span>
+                        <span className={`px-2.5 py-0.5 rounded-md font-mono font-bold text-xs border tabular-nums ${
                           c.slaDays <= 2
                             ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                             : c.slaDays <= 5
@@ -1355,21 +1355,21 @@ export default function TriageOverview({
                       </div>
 
                       <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>DPJP</span>
+                        <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>DPJP</span>
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`w-5 h-5 rounded-full text-[9.5px] font-bold flex items-center justify-center shrink-0 ${
+                          <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 ${
                             isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300'
                           }`}>
                             {dpjpInitials}
                           </span>
-                          <span className={`font-medium truncate ${isLight ? 'text-slate-800' : 'text-slate-200'}`} title={c.dpjp}>
+                          <span className={`text-xs font-semibold truncate ${isLight ? 'text-slate-800' : 'text-slate-200'}`} title={c.dpjp}>
                             {c.dpjp}
                           </span>
                         </div>
                       </div>
 
                       <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-[11px] truncate max-w-[120px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`} title={c.hospital}>
+                        <span className={`text-xs truncate max-w-[120px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`} title={c.hospital}>
                           {c.hospital}
                         </span>
                         <span className={`font-mono font-bold tabular-nums shrink-0 ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -1449,7 +1449,7 @@ export default function TriageOverview({
       }`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs table-fixed min-w-[920px]">
-            <thead className={`text-[10px] uppercase font-semibold tracking-wider border-b ${
+            <thead className={`text-xs uppercase font-bold tracking-wider border-b ${
               isLight
                 ? 'bg-[#F3F5F8] text-slate-600 border-[#061B31]/[0.08]'
                 : 'bg-[#161A22] text-slate-400 border-white/[0.08]'
@@ -1586,21 +1586,21 @@ export default function TriageOverview({
                         {c.code}
                       </span>
                       {c.lane === 'red' && (
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
                           isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                         }`}>
                           {c.flags.includes('SIP_EXPIRED') ? 'SIP Kedaluwarsa' : c.flags.includes('MOBILE_DENIED') ? 'Sangkalan Pasien' : c.flags.includes('REPEAT_BILLING') ? 'Klaim Berulang' : 'Anomali Berat'}
                         </span>
                       )}
                       {c.lane === 'yellow' && (
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
                           isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                         }`}>
                           Klarifikasi Dokumen
                         </span>
                       )}
                     </div>
-                    <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`} title={c.description}>
+                    <p className={`text-xs truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/60'}`} title={c.description}>
                       {c.description}
                     </p>
                   </td>
@@ -1642,7 +1642,7 @@ export default function TriageOverview({
 
                   {/* 7. Status & SLA */}
                   <td className="py-3.5 px-3">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                       statusBadge.tone === 'green'
                         ? (isLight ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
                         : statusBadge.tone === 'amber'
@@ -1653,7 +1653,7 @@ export default function TriageOverview({
                     }`}>
                       {statusBadge.label}
                     </span>
-                    <div className={`text-[10px] font-mono mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    <div className={`text-xs font-mono font-medium mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                       SLA {c.slaDays} HK
                     </div>
                   </td>

@@ -61,14 +61,21 @@
 **Tampilan Layar:** Slide 3 (`FOKUS: COACHING` + grafik `Transformasi Pasca-Coaching`).
 
 **Khalaf Faith Pradyatama:**
-> "Pasca sesi mentoring dan coaching bersama pembina BPJS Kesehatan, kami mengeksekusi lima transformasi kode nyata di sistem produksi:
-> Pertama, menyelaraskan posisi ClaimTrace sebagai **sidecar BEA di titik C03.04** antara C03 dan S06 tanpa mengubah skema VClaim maupun Smart Vedika.
-> Kedua, menghilangkan 100% ketergantungan API LLM cloud publik demi kepatuhan **UU PDP No. 27 Tahun 2022** — memigrasikan seluruh model RandomForest/IsolationForest (`.pkl`) dan Clinical NLP `all-MiniLM-L6-v2` secara **on-premise** sehingga latensi API live turun drastis dari di atas 4.000 ms menjadi **11,90 ms** (`< 15 ms` core) dengan **Rp 0 biaya token eksternal**."
+> "Pada sesi coaching bersama mentor internal BPJS Kesehatan, kami menerima evaluasi dan masukan kritis yang menjadi titik balik arsitektur kami:
+> **1. Masukan Utama Mentor:** Yaitu evaluasi atas pemakaian Generative AI publik (seperti Google Gemini) pada interpretasi hasil klinis dan ketergantungan pada library GitHub eksternal, dengan arahan tegas untuk **fokus pada penyelesaian Klaim Triase sebagai solusi anti-fraud pra-bayar** yang cepat, deterministik, aman secara regulasi, dan berdaulat penuh di infrastruktur BPJS.
+> **2. Tindakan Teknis yang Kami Bangun:**
+> - Pertama, mengeliminasi 100% pemanggilan LLM cloud publik (Gemini) dari jalur kritis dan menghapus dependensi GitHub yang tidak terverifikasi demi kepatuhan mutlak terhadap **UU PDP No. 27 Tahun 2022**.
+> - Kedua, memigrasikan seluruh inferensi ke **AI lokal on-premise** (model risiko `.pkl`, Isolation Forest, dan Clinical NLP `all-MiniLM-L6-v2`) serta menempatkan ClaimTrace sebagai **Sidecar BEA C03.04** mandiri yang mendampingi VClaim dan Smart Vedika sebelum berkas diteruskan ke pembayaran S06."
 
 **Gaudiansyah Abiyu Mahya:**
-> "Ketiga, kami memperkuat Lapis 4 melalui verifikasi dokumen **RME-TTE BSrE & FRISTA**, menambah modul **Cek Dokumen RS** dan **Peringkat Risiko Faskes**, serta menanamkan 5 aturan **FairGuard Z49.1** sehingga **0,0% False Positive Rate** pada 512 klaim sah terapi kronis seperti hemodialisis.
-> Keempat, pengamanan otentikasi **Fail-Closed 4-Field + 3-Lapis Google reCAPTCHA Enterprise**, putusan 2-Tier Human-in-the-Loop, dan **BAHV kolektif bersegel QR SHA-256**.
-> Dan secara jujur kami sampaikan poin yang belum dikerjakan di sandbox publik: koneksi API produksi live SATUSEHAT, FRISTA, BSrE, dan key produksi reCAPTCHA menunggu kredensial resmi BPJS, sementara kalibrasi aturan hold-out *Unbundling* (`66,7%`) dan *Prolonged LOS* (`0,0%`) kami jadwalkan pada Tahap 1 Pilot 12 RS."
+> "Untuk menjawab arahan fokus pada penyelesaian **Klaim Triase Anti-Fraud**:
+> - Kami memperkuat **Lapis 4 Verifikasi RME-TTE BSrE & presensi biometrik FRISTA**, membangun modul **Cek Dokumen RS** (7 berkas wajib & deteksi inversi kronologis waktu) dan **Peringkat Risiko Faskes**, menanamkan 5 aturan perlindungan **FairGuard Z49.1**, menerbitkan **BAHV digital berstempel QR SHA-256**, serta mengamankan gerbang masuk verifikator dengan **Auth Fail-Closed + 3-Lapis Google reCAPTCHA Enterprise**.
+> **3. Hasil & Bukti Terukur:**
+> - Latensi evaluasi dari sebelumnya di atas 4.000 ms turun drastis ke **11,90 ms API live** (`< 15 ms` core on-premise).
+> - **0% transfer data PII/PHI ke cloud asing** (100% on-premise patuh UU PDP).
+> - **0,0% False Positive Rate** pada 512 kasus terapi kronis sah FairGuard (Hemodialisis `Z49.1` & Thalasemia).
+> - Seluruh **300 dari 300 uji backend lulus 100%** across 197 endpoint FastAPI aktif dan 112 skenario E2E.
+> **Dan secara jujur poin yang belum sempat dikerjakan:** Koneksi sandbox/produksi live SATUSEHAT, FRISTA, BSrE, dan API Key produksi reCAPTCHA menunggu kredensial resmi BPJS; sementara kalibrasi aturan hold-out *Unbundling* (`66,7%`) dan *Prolonged LOS* (`0,0%`) dijadwalkan pada Fase Pilot 12 RS."
 
 ---
 
