@@ -509,7 +509,7 @@ export default function SignInPage({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.token || !data.user) {
-        setErrorMsg(data.detail || 'Gagal memulai sesi Administrator Verifikator.');
+        setErrorMsg(data.detail || 'Gagal memulai sesi Akun Demo Administrator.');
         return;
       }
       saveAuthenticatedSession(data.token, data.user);
@@ -710,15 +710,15 @@ export default function SignInPage({
             <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 border border-emerald-600/35 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Akses Cepat Pengawas & Verifikator Eksekutif JKN</span>
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Akses Demo Administrator</span>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-600/15 text-emerald-800 border border-emerald-600/20">
-                  Akses Terverifikasi
+                  Mode Demo
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 leading-snug">
-                Autentikasi terpadu untuk pengawas kedeputian dan verifikator eksekutif dengan hak uji tervalidasi.
+                Masuk instan menggunakan akun demo administrator tanpa pengisian kredensial manual untuk eksplorasi seluruh fitur ClaimTrace.
               </p>
               <button
                 type="button"
@@ -732,7 +732,7 @@ export default function SignInPage({
                   <ArrowRight className="w-3.5 h-3.5" />
                 )}
                 <span>
-                  {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Sebagai Verifikator Eksekutif'}
+                  {isJurySubmitting ? 'Membuka Sesi Demo...' : 'Masuk Akun Demo (1-Klik)'}
                 </span>
               </button>
             </div>
