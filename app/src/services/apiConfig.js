@@ -294,6 +294,16 @@ export const authFetch = async (url, options = {}) => {
   const deviceFingerprint = getDeviceFingerprint();
   const sandboxMode = isSandboxDemoToken(token);
 
+  // In Sandbox Demo Mode (activated when remote backend is outdated/unreachable),
+  // serve known endpoints instantaneously from the verified snapshot to avoid slow/stale upstream proxies.
+  if (sandboxMode) {
+    const { trySandboxApiFallback } = await import('./sandboxApiFallback');
+    const instantRes = await trySandboxApiFallback(url, options);
+    if (instantRes) {
+      return instantRes;
+    }
+  }
+
   const headers = {
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}`, 'X-BPJS-Token': token } : {}),

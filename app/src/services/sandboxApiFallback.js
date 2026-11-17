@@ -143,6 +143,27 @@ export async function trySandboxApiFallback(url, options = {}) {
       }
     }
 
+    if (path === '/api/v1/terminology/icd10/search') {
+      const u = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+      const q = (u.searchParams.get('q') || '').trim().toLowerCase();
+      const catalog = [
+        { code: 'A41.9', display: 'Sepsis, unspecified', chapter: 'I', severity: 'High' },
+        { code: 'I21.9', display: 'Acute myocardial infarction, unspecified', chapter: 'IX', severity: 'High' },
+        { code: 'E11.9', display: 'Type 2 diabetes mellitus without complications', chapter: 'IV', severity: 'Medium' },
+        { code: 'M54.5', display: 'Low back pain', chapter: 'XIII', severity: 'Low' },
+        { code: 'N18.5', display: 'Chronic kidney disease, stage 5', chapter: 'XIV', severity: 'High' },
+        { code: 'R50.9', display: 'Fever, unspecified (Gejala - Cek MB1/MB2)', chapter: 'XVIII', severity: 'Low' },
+        { code: 'H25.9', display: 'Age-related cataract, unspecified', chapter: 'VII', severity: 'Medium' },
+        { code: 'A09.9', display: 'Gastroenteritis and colitis of unspecified origin', chapter: 'I', severity: 'Low' },
+        { code: 'J18.9', display: 'Pneumonia, unspecified organism', chapter: 'X', severity: 'Medium' },
+        { code: 'Z49.1', display: 'Extracorporeal dialysis (FairGuard Rutin)', chapter: 'XXI', severity: 'Routine' },
+      ];
+      const results = q
+        ? catalog.filter((item) => item.code.toLowerCase().includes(q) || item.display.toLowerCase().includes(q))
+        : catalog.slice(0, 8);
+      return jsonResponse({ status: 'success', query: q, count: results.length, results });
+    }
+
     // Printable reports / DuckDB table describe / misc GETs
     if (path.startsWith('/api/v1/duckdb/describe/')) {
       return jsonResponse({

@@ -136,7 +136,10 @@ export default function SignInPage({
   useEffect(() => {
     if (mode !== 'login') return undefined;
     let active = true;
-    fetch(`${API_BASE_URL}/api/v1/auth/jury-demo-status`, { cache: 'no-store' })
+    fetch(`${API_BASE_URL}/api/v1/auth/jury-demo-status`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (active && data && typeof data.enabled === 'boolean') {
@@ -524,6 +527,7 @@ export default function SignInPage({
           'X-Device-Fingerprint': deviceFingerprint,
         },
         body: JSON.stringify({ device_fingerprint: deviceFingerprint }),
+        signal: AbortSignal.timeout(4000),
       });
       if (response.status === 404 || response.status >= 500) {
         enterSandboxDemoSession();
