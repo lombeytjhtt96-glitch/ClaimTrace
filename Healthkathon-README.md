@@ -93,7 +93,7 @@ We designed, engineered, benchmarked, and production-hardened a full-stack, ente
 
 ### C4 Context Diagram
 
-Illustrates the organizational boundaries of ClaimTrace, showing how BPJS Health verifiers, healthcare facilities (FKRTL), JKN patients, and hackathon judges interact with the system, and how external government services (Kemenkes SISDMK) and internal BPJS services (V-Claim, FRISTA, Mobile JKN) connect seamlessly.
+Illustrates the organizational boundaries of ClaimTrace, showing how BPJS Health verifiers, healthcare facilities (FKRTL), JKN patients, and Healthkathon judges interact with the system, and how external government services (Kemenkes SISDMK) and internal BPJS services (V-Claim, FRISTA, Mobile JKN) connect seamlessly.
 
 ```mermaid
 C4Context

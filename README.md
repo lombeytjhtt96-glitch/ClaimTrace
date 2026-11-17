@@ -9,8 +9,8 @@
 - **Khalaf Faith Pradyatama** (*Ketua Tim · Lead Systems Architect & AppSec Engineer*)
 - **Gaudiansyah Abiyu Mahya** (*Anggota Tim · AI/ML Engineer & Healthcare Data Analyst*)
 
-> 🏆 **Healthkathon 2026 Submission Showcase & Panduan Juri:**  
-> **[Baca Dossier Lengkap Healthkathon: Hackathon-README.md](Hackathon-README.md)**  
+> 🏆 **BPJS Kesehatan Healthkathon 2026 Submission Showcase & Panduan Juri:**  
+> **[Baca Dossier Lengkap Healthkathon: Healthkathon-README.md](Healthkathon-README.md)**  
 > **Live Cockpit:** `http://localhost:3000` | **Dokumentasi API Swagger:** `http://localhost:8000/docs` | **Mode Juri 1-Klik:** Aktif di Halaman Masuk
 
 ---
