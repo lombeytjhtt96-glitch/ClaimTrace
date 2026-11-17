@@ -606,13 +606,15 @@ export default function FaskesSurveillance({
       </div>
 
       {/* DETAIL MODAL DRAWER WITH MOTION */}
-      <AnimatePresence>
-        {selectedFaskesDetail && typeof document !== 'undefined' && createPortal(
-          <motion.div 
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Rincian faskes ${selectedFaskesDetail.name || ''}`.trim()}
-            onClick={(e) => { if (e.target === e.currentTarget) setSelectedFaskesDetail(null); }}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedFaskesDetail && (
+            <motion.div 
+              key="faskes-detail-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Rincian faskes ${selectedFaskesDetail.name || ''}`.trim()}
+              onClick={(e) => { if (e.target === e.currentTarget) setSelectedFaskesDetail(null); }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -763,10 +765,11 @@ export default function FaskesSurveillance({
                 </motion.button>
               </div>
             </motion.div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

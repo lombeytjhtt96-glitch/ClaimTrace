@@ -4363,7 +4363,9 @@ def get_claim_nlp_ml_audit(claim_id: str):
         "nilai_klaim_rp": c.nilai_klaim_rp if c else 15300000.0,
         "nama_faskes": c.nama_faskes if c else "RS Khusus Mitra Husada",
     }
-    return ml_claim_auditor.evaluate_claim_ai(claim_dict)
+    audit_res = ml_claim_auditor.evaluate_claim_ai(claim_dict)
+    audit_res["resume_text"] = matched_resume
+    return audit_res
 
 
 @app.get("/api/v1/graph/cypher-export")

@@ -651,27 +651,51 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
               </div>
 
               {/* ACTION BUTTONS */}
+              {actionSuccessMessage && (
+                <div role="status" className="mt-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{actionSuccessMessage}</span>
+                  </div>
+                  <button type="button" onClick={() => setActionSuccessMessage('')} className="text-emerald-700 hover:text-emerald-900 font-bold cursor-pointer">×</button>
+                </div>
+              )}
+              {actionErrorMessage && (
+                <div role="alert" className="mt-3 p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-900 text-xs font-semibold flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{actionErrorMessage}</span>
+                  </div>
+                  <button type="button" onClick={() => setActionErrorMessage('')} className="text-rose-700 hover:text-rose-900 font-bold cursor-pointer">×</button>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-end gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
+                  type="button"
+                  disabled={submittingAction}
                   onClick={() => handleAction('hold')}
-                  className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100 disabled:opacity-60 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
                 >
                   <Clock className="w-3.5 h-3.5" />
-                  <span>Terbitkan BAPK (Pending Berkas)</span>
+                  <span>{submittingAction ? 'Menyimpan...' : 'Terbitkan BAPK (Pending Berkas)'}</span>
                 </button>
                 <button
+                  type="button"
+                  disabled={submittingAction}
                   onClick={() => handleAction('reject')}
-                  className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-800 bg-rose-50 hover:bg-rose-100 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-rose-300 text-rose-800 bg-rose-50 hover:bg-rose-100 disabled:opacity-60 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
                 >
                   <XCircle className="w-3.5 h-3.5" />
-                  <span>Tolak Berkas (Diskrepansi)</span>
+                  <span>{submittingAction ? 'Menyimpan...' : 'Tolak Berkas (Diskrepansi)'}</span>
                 </button>
                 <button
+                  type="button"
+                  disabled={submittingAction}
                   onClick={() => handleAction('approve')}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Verifikasi Sah (Loloskan ke Tier 2)</span>
+                  <span>{submittingAction ? 'Menyimpan...' : 'Verifikasi Sah (Loloskan ke Tier 2)'}</span>
                 </button>
               </div>
             </div>
@@ -898,15 +922,17 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
       />
 
       {/* POLICYPILOT 4-STEP DOCUMENT VALIDATION & AI SCAN MODAL */}
-      <AnimatePresence>
-        {showUploadScanModal && typeof document !== 'undefined' && createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Unggah dan pemindaian AI dokumen klaim"
-            onClick={(e) => { if (e.target === e.currentTarget) setShowUploadScanModal(false); }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/75 backdrop-blur-md"
-          >
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showUploadScanModal && (
+            <div
+              key="upload-scan-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Unggah dan pemindaian AI dokumen klaim"
+              onClick={(e) => { if (e.target === e.currentTarget) setShowUploadScanModal(false); }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/75 backdrop-blur-md"
+            >
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1220,10 +1246,11 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
                 </div>
               </div>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

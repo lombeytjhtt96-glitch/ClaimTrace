@@ -627,13 +627,15 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
       </div>
 
       {/* Session Detail Drilldown Modal */}
-      <AnimatePresence>
-        {selectedSession && typeof document !== 'undefined' && createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Transkrip sesi audit ${selectedSession.session_id || ''}`.trim()}
-            onClick={(e) => { if (e.target === e.currentTarget) setSelectedSession(null); }}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {selectedSession && (
+            <div
+              key="conversation-detail-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Transkrip sesi audit ${selectedSession.session_id || ''}`.trim()}
+              onClick={(e) => { if (e.target === e.currentTarget) setSelectedSession(null); }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/75 backdrop-blur-md"
           >
             <motion.div
@@ -894,10 +896,11 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                 </div>
               </div>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Flag Reason Dialog Modal */}
       {flagModalOpen && selectedSession && typeof document !== 'undefined' && createPortal(

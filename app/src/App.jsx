@@ -3065,15 +3065,17 @@ export default function App() {
       </div>
 
       {/* PALET PERINTAH NAVIGASI PORTAL (CTRL+K) */}
-      <AnimatePresence>
-        {commandPaletteOpen && typeof document !== 'undefined' && createPortal(
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setCommandPaletteOpen(false)}
-            className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 px-4"
-          >
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {commandPaletteOpen && (
+            <motion.div
+              key="command-palette-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCommandPaletteOpen(false)}
+              className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 px-4"
+            >
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -3185,10 +3187,11 @@ export default function App() {
                 })}
               </div>
             </motion.div>
-          </motion.div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* FOOTER (CLEAN SINGLE-ROW ENTERPRISE STATUS STRIP) */}
       <footer className={`py-2 px-4 flex flex-col lg:flex-row items-center justify-between text-[11px] gap-2 shrink-0 z-20 select-none transition-colors ${

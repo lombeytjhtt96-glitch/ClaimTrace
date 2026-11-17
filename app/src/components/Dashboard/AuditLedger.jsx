@@ -1251,13 +1251,15 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
       </div>
 
       {/* DECISION RECEIPTS & HUMAN GATE MODAL */}
-      <AnimatePresence>
-        {showReceiptsModal && typeof document !== 'undefined' && createPortal(
-          <div 
-            role="dialog"
-            aria-modal="true"
-            aria-label="Konsol Tanda Terima Putusan Audit dan Human Gate"
-            onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showReceiptsModal && (
+            <div 
+              key="decision-receipts-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Konsol Tanda Terima Putusan Audit dan Human Gate"
+              onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
           >
             <motion.div
@@ -1654,10 +1656,11 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

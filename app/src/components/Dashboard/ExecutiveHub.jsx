@@ -2781,13 +2781,15 @@ export default function ExecutiveHub({
       </section>
 
       {/* Generate Report Modal */}
-      <AnimatePresence>
-        {isReportModalOpen && typeof document !== 'undefined' && createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Unduh dan generator laporan eksekutif"
-            onClick={() => setIsReportModalOpen(false)}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isReportModalOpen && (
+            <div
+              key="executive-report-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Unduh dan generator laporan eksekutif"
+              onClick={() => setIsReportModalOpen(false)}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 cursor-pointer bg-black/75 backdrop-blur-md"
           >
             <motion.div
@@ -2911,19 +2913,22 @@ export default function ExecutiveHub({
                 </div>
               </form>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Insights Campaign Modal */}
-      <AnimatePresence>
-        {isCampaignModalOpen && typeof document !== 'undefined' && createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Kampanye intervensi pengawasan JKN"
-            onClick={() => setIsCampaignModalOpen(false)}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isCampaignModalOpen && (
+            <div
+              key="executive-campaign-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Kampanye intervensi pengawasan JKN"
+              onClick={() => setIsCampaignModalOpen(false)}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 cursor-pointer bg-black/75 backdrop-blur-md"
           >
             <motion.div
@@ -3044,10 +3049,11 @@ export default function ExecutiveHub({
                 )}
               </div>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

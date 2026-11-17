@@ -173,27 +173,64 @@ export default function ClinicalNlpPanel({
   const renderAnnotatedResume = (text, entityList, negationList) => {
     if (!text) return <span className="opacity-60 italic">Tidak ada narasi rekam medis tersimpan.</span>;
 
-    // Build segments
+    // Build segments with offset verification against actual narrative text
     const sortedTokens = [];
+    const lowerText = text.toLowerCase();
 
     // Add entities
     entityList.forEach((ent) => {
-      sortedTokens.push({
-        start: ent.start,
-        end: ent.end,
-        type: 'ENTITY',
-        data: ent,
-      });
+      let start = Number(ent.start);
+      let end = Number(ent.end);
+      const needle = String(ent.text || '').trim();
+      const sliceMatches =
+        needle &&
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start >= 0 &&
+        end <= text.length &&
+        text.slice(start, end).toLowerCase() === needle.toLowerCase();
+
+      if (!sliceMatches && needle) {
+        const foundAt = lowerText.indexOf(needle.toLowerCase());
+        if (foundAt !== -1) {
+          start = foundAt;
+          end = foundAt + needle.length;
+        } else {
+          return;
+        }
+      }
+      if (start >= 0 && end > start && end <= text.length) {
+        sortedTokens.push({
+          start,
+          end,
+          type: 'ENTITY',
+          data: ent,
+        });
+      }
     });
 
     // Add negations
     negationList.forEach((neg) => {
-      sortedTokens.push({
-        start: neg.start,
-        end: neg.start + (neg.trigger ? neg.trigger.length : 10),
-        type: 'NEGATION',
-        data: neg,
-      });
+      let start = Number(neg.start);
+      const triggerLen = neg.trigger ? neg.trigger.length : 10;
+      let end = start + triggerLen;
+      if (neg.trigger && text.slice(start, end).toLowerCase() !== neg.trigger.toLowerCase()) {
+        const foundAt = lowerText.indexOf(neg.trigger.toLowerCase());
+        if (foundAt !== -1) {
+          start = foundAt;
+          end = foundAt + neg.trigger.length;
+        } else {
+          return;
+        }
+      }
+      if (start >= 0 && end > start && end <= text.length) {
+        sortedTokens.push({
+          start,
+          end,
+          type: 'NEGATION',
+          data: neg,
+        });
+      }
     });
 
     sortedTokens.sort((a, b) => a.start - b.start);
@@ -417,7 +454,7 @@ export default function ClinicalNlpPanel({
                 isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#00102b]/60 border-white/10 text-slate-200'
               }`}>
                 {renderAnnotatedResume(
-                  currentCase?.rawClaim?.resume_text || currentCase?.description || (auditData ? 'Memuat naskah rekam medis...' : ''),
+                  auditData?.resume_text || currentCase?.rawClaim?.resume_text || currentCase?.description || (auditData ? 'Memuat naskah rekam medis...' : ''),
                   filteredEntities,
                   selectedCategory === 'ALL' || selectedCategory === 'NEGATION' ? negations : []
                 )}
