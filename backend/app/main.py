@@ -4272,6 +4272,74 @@ def ai_model_telemetry():
         ]
     }
 
+
+class ClinicalNLPRequest(BaseModel):
+    text: str
+    billed_icd10: Optional[str] = "M54.5"
+    billed_cbg: Optional[str] = "Z-3-12-0"
+    procedure_code: Optional[str] = "93.39"
+    secondary_codes: Optional[List[str]] = None
+
+
+@app.post("/api/v1/nlp/analyze-clinical-note")
+def nlp_analyze_clinical_note(payload: ClinicalNLPRequest):
+    """
+    Pemrosesan Bahasa Alami (NLP) Rekam Medis:
+    Ekstraksi entitas medis (NER), deteksi negasi NegEx, keselarasan dokumen klinis,
+    dan analisis stilometri leksikal untuk deteksi template fabrikasi.
+    """
+    from app.engine.clinical_nlp import clinical_nlp_engine
+    entities = clinical_nlp_engine.extract_entities(payload.text)
+    negations = clinical_nlp_engine.detect_negations(payload.text)
+    alignment = clinical_nlp_engine.evaluate_clinical_alignment(
+        resume_text=payload.text,
+        billed_icd10=payload.billed_icd10 or "M54.5",
+        billed_cbg=payload.billed_cbg or "Z-3-12-0",
+        procedure_code=payload.procedure_code,
+        secondary_codes=payload.secondary_codes,
+    )
+    stylometry = clinical_nlp_engine.compute_stylometric_metrics(payload.text)
+    return {
+        "status": "success",
+        "entities_count": len(entities),
+        "entities": entities,
+        "negations": negations,
+        "alignment": alignment,
+        "stylometry": stylometry,
+    }
+
+
+@app.get("/api/v1/nlp/claim-audit/{claim_id}")
+def get_claim_nlp_ml_audit(claim_id: str):
+    """
+    Audit komprehensif berbasis NLP dan Machine Learning untuk satu berkas klaim.
+    Menggabungkan ekstraksi entitas naratif rekam medis, keselarasan klinis koding CBG,
+    vektor embedding kesamaan semantik ChromaDB, dan skor anomali Isolation Forest.
+    """
+    from app.engine.clinical_nlp import ml_claim_auditor
+    from app.engine.chroma_semantic import INITIAL_CLINICAL_RESUMES
+    enrich_claims_map(SYNTHETIC_CLAIMS_DATABASE)
+    c = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+
+    matched_resume = next((r["resume_text"] for r in INITIAL_CLINICAL_RESUMES if r["claim_id"] == claim_id), None)
+    if not matched_resume and c:
+        matched_resume = f"Pasien terdaftar di {c.nama_faskes} dengan diagnosa utama {c.icd10_primary}. Prosedur: {c.icd9cm_procedure or 'Konsultasi Evaluasi'}. Nilai penjaminan Rp {c.nilai_klaim_rp:,.0f}."
+    elif not matched_resume:
+        matched_resume = "Resume klinis ringkas verifikasi klaim pasien."
+
+    claim_dict = {
+        "claim_id": claim_id,
+        "id": claim_id,
+        "resume_text": matched_resume,
+        "icd10_primary": c.icd10_primary if c else "M54.5",
+        "ina_cbg_code": c.ina_cbg_code if c else "Z-3-12-0",
+        "icd9cm_procedure": c.icd9cm_procedure if c else "93.39",
+        "nilai_klaim_rp": c.nilai_klaim_rp if c else 15300000.0,
+        "nama_faskes": c.nama_faskes if c else "RS Khusus Mitra Husada",
+    }
+    return ml_claim_auditor.evaluate_claim_ai(claim_dict)
+
+
 @app.get("/api/v1/graph/cypher-export")
 def export_neo4j_cypher_script():
     """

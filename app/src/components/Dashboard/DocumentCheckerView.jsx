@@ -68,6 +68,8 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [hideModalAlert, setHideModalAlert] = useState(false);
   const [hideComplianceBanner, setHideComplianceBanner] = useState(false);
+  const [nlpAnalysis, setNlpAnalysis] = useState(null);
+  const [showNlpView, setShowNlpView] = useState(false);
 
   useEscapeKey(showUploadScanModal, () => setShowUploadScanModal(false));
 
@@ -159,6 +161,13 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
       if (data.documents && data.documents.length > 0) {
         setSelectedDocType(data.documents[0].doc_type);
       }
+      cachedAuthGetJson(`${API_BASE_URL}/api/v1/nlp/claim-audit/${encodeURIComponent(claimId)}`)
+        .then((nlpRes) => {
+          if (nlpRes && nlpRes.status === 'success') {
+            setNlpAnalysis(nlpRes);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       setActionErrorMessage(err?.message || 'Gagal memuat audit kelengkapan berkas RS dari server.');
     } finally {
@@ -569,6 +578,75 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
                   </span>
                   <span>Kerahasiaan Medis Dijamin UU PDP No. 27/2022</span>
                 </div>
+
+                {/* INLINE CLINICAL NLP & MACHINE LEARNING INSPECTOR */}
+                {activeDoc.doc_type === 'RESUME_MEDIS' && (
+                  <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowNlpView(!showNlpView)}
+                      className={`w-full py-1.5 px-3 rounded-lg border text-xs font-bold flex items-center justify-between transition cursor-pointer ${
+                        showNlpView
+                          ? (isLight ? 'bg-cyan-50 border-cyan-300 text-cyan-900' : 'bg-cyan-500/20 border-cyan-500/40 text-cyan-200')
+                          : (isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80')
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                        <span>Analisis Forensik NLP &amp; Keselarasan Klinis (NER, NegEx, ChromaDB)</span>
+                      </span>
+                      <span className="text-[10px] font-mono">
+                        {showNlpView ? 'Sembunyikan ▲' : 'Tampilkan Telaah AI ▼'}
+                      </span>
+                    </button>
+
+                    {showNlpView && nlpAnalysis && (
+                      <div className={`mt-2 p-3 rounded-lg border text-xs space-y-2.5 ${
+                        isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#00102b] border-white/10'
+                      }`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-white/10 pb-2">
+                          <span className="font-bold">
+                            Keselarasan Narasi: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{nlpAnalysis.nlp_analysis?.alignment_evaluation?.alignment_score_pct}%</strong> ({nlpAnalysis.nlp_analysis?.alignment_evaluation?.status})
+                          </span>
+                          <span className="font-mono text-[10.5px]">
+                            ChromaDB Vektor: <strong className={nlpAnalysis.vector_semantic_embedding?.is_semantic_plagiarized ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'}>{nlpAnalysis.vector_semantic_embedding?.similarity_score_pct}% Mirip</strong>
+                          </span>
+                        </div>
+
+                        {/* Extracted Entities Pills */}
+                        <div>
+                          <span className="text-[10px] uppercase font-bold opacity-60 block mb-1">Entitas Klinis Terdeteksi ({nlpAnalysis.nlp_analysis?.entities?.length || 0}):</span>
+                          <div className="flex flex-wrap gap-1">
+                            {(nlpAnalysis.nlp_analysis?.entities || []).map((ent, i) => (
+                              <span
+                                key={i}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                                  ent.category === 'DIAGNOSIS'
+                                    ? 'bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-300'
+                                    : ent.category === 'PROCEDURE'
+                                    ? 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-300'
+                                    : ent.category === 'MEDICATION'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300'
+                                    : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300'
+                                }`}
+                              >
+                                {ent.text} <span className="opacity-60">[{ent.code_hint || ent.category.slice(0, 4)}]</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Negations if any */}
+                        {Array.isArray(nlpAnalysis.nlp_analysis?.negations_detected) && nlpAnalysis.nlp_analysis.negations_detected.length > 0 && (
+                          <div className="p-2 rounded bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-[11px] text-rose-800 dark:text-rose-200">
+                            <strong>Penyangkalan Gejala (NegEx): </strong>
+                            {nlpAnalysis.nlp_analysis.negations_detected.map((n) => `"${n.trigger}"`).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* ACTION BUTTONS */}

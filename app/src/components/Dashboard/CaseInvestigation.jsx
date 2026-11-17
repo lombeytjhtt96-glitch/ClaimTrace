@@ -3,6 +3,7 @@ import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '.
 import { motion, AnimatePresence } from 'motion/react';
 import TemporalAlertCard from './TemporalAlertCard';
 import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
+import ClinicalNlpPanel from './ClinicalNlpPanel';
 import { 
   ArrowLeft, ShieldCheck, 
   Clock, Hospital, Stethoscope, UserCheck, AlertOctagon,
@@ -2172,6 +2173,15 @@ export default function CaseInvestigation({
           )}
         </div>
       )}
+
+      {/* PANEL FORENSIK NLP (NATURAL LANGUAGE PROCESSING) & MACHINE LEARNING INFERENCE */}
+      <ClinicalNlpPanel
+        claimId={currentCase.id}
+        currentCase={currentCase}
+        rawClaim={rawClaim}
+        rawTriage={rawTriage}
+        isLight={isLight}
+      />
 
       {/* PANEL AUDIT KLINIS MENDALAM: CHARLSON CCI, UPCODING SEVERITY & KOHERENSI TEMPORAL */}
       <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#00153A]/85 border-white/10 shadow-2xl'} backdrop-blur-xl border rounded-2xl p-4 space-y-3`}>
