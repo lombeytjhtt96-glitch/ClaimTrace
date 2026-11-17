@@ -9,7 +9,6 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
-  Cpu,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
@@ -696,16 +695,6 @@ export default function SignInPage({
             <p className="text-xs leading-relaxed text-slate-600">
               {activeCopy.subtitle}
             </p>
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <Cpu className="w-3 h-3 text-emerald-600" />
-                <span>AI Lokal (On-Premise)</span>
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-semibold bg-sky-50 text-sky-800 border border-sky-200">
-                <ShieldCheck className="w-3 h-3 text-sky-600" />
-                <span>Sandbox Evaluasi Terisolasi</span>
-              </span>
-            </div>
           </div>
         </div>
 

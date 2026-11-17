@@ -27,7 +27,7 @@ import {
   Printer, QrCode, CreditCard, ListFilter, Database, ShieldAlert, Key, LayoutDashboard, Building2,
   ChevronDown, LogOut, PanelLeftClose, PanelLeft, RotateCcw, Settings, X,
   Briefcase, Zap, Flag, Calendar, Users, MessageSquare, ClipboardList,
-  Sparkles, Sun, Moon, FileCheck2, Cpu
+  Sparkles, Sun, Moon, FileCheck2
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
@@ -1286,7 +1286,7 @@ export default function App() {
                 © 2026 BPJS Kesehatan · ClaimTrace
               </span>
               <span className="text-[10.5px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                AI Lokal (On-Premise) · Sandbox Evaluasi Terisolasi · UU PDP No. 27/2022
+                Seluruh Data Adalah Data Sintetis Fiktif · UU PDP No. 27/2022
               </span>
             </div>
           </footer>
@@ -1524,33 +1524,6 @@ export default function App() {
 
               {/* Center/Right: Clean Navigation Actions */}
               <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
-                {/* Lencana Status AI Lokal (On-Premise) & Sandbox Terisolasi */}
-                <div className="hidden md:flex items-center gap-1.5">
-                  <span 
-                    title="Inference Natural Language Processing (NLP) & Machine Learning berjalan lokal On-Premise tanpa transmisi data pasien ke cloud eksternal (Zero-PHI UU PDP No. 27/2022)"
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition select-none ${
-                      isLight
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
-                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                    }`}
-                  >
-                    <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>AI Lokal (On-Premise)</span>
-                  </span>
-
-                  <span 
-                    title="Lingkungan Sandbox Evaluasi Wasrik Terisolasi (Simulasi data aman tanpa memodifikasi DB Produksi Nasional)"
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition select-none ${
-                      isLight
-                        ? 'bg-sky-50 text-sky-800 border-sky-300 shadow-2xs'
-                        : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
-                    }`}
-                  >
-                    <Shield className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                    <span>Sandbox Terisolasi</span>
-                  </span>
-                </div>
-
                 {/* Dual View Toggle (Mobile Simulation) */}
                 <button
                   type="button"
@@ -3270,7 +3243,7 @@ export default function App() {
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
               : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
           }`}>
-            AI LOKAL (ON-PREMISE) · SANDBOX EVALUASI TERISOLASI · UU PDP NO. 27/2022
+            DATA SINTETIK / BENCHMARK FIKTIF · UU PDP NO. 27/2022
           </span>
         </div>
       </footer>
