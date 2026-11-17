@@ -13,6 +13,11 @@
 > **[Baca Dossier Lengkap Healthkathon: Healthkathon-README.md](Healthkathon-README.md)**  
 > **Live Cockpit:** `http://localhost:3000` | **Dokumentasi API Swagger:** `http://localhost:8000/docs` | **Mode Juri 1-Klik:** Aktif di Halaman Masuk
 
+> [!IMPORTANT]
+> **PERNYATAAN RESMI KEPATUHAN DATA PRIBADI & BENCHMARK SINTETIK (UU PDP NO. 27 TAHUN 2022):**  
+> Seluruh data yang digunakan dalam repositori dan sistem ClaimTrace ini — meliputi nama pasien, nama dokter/DPJP, nama verifikator/pejabat kedinasan, Nomor Induk Pegawai (NIP), nomor kontak/telepon, alamat, nomor Surat Izin Praktik (SIP), nomor rekam medis, hingga rincian berkas klaim dan nama fasilitas kesehatan — adalah **100% DATA SINTETIK / BENCHMARK FIKTIF**.  
+> Tidak ada satupun data pribadi riil (*Personally Identifiable Information / Protected Health Information*) atau data operasional riil dari faskes maupun peserta BPJS Kesehatan yang digunakan atau disimpan dalam repositori ini. Setiap kesamaan nama, gelar, kode, alamat, atau nomor telepon adalah murni rekayasa komputasi dan kebetulan semata.
+
 ---
 
 ## 1. Tujuan Tunggal & Cara Menyaring Klaim Anomali (Skala 0 - 100)

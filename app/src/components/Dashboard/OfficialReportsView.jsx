@@ -464,7 +464,7 @@ export default function OfficialReportsView({
                 Gedung Terpadu BPJS Kesehatan Lt. 4, Jl. Letjen Suprapto Kav. 20, Cempaka Putih, Jakarta Pusat
               </p>
               <p className="text-[11px] text-slate-500">
-                Telepon: (021) 4212938 · Fax: (021) 4212940 · Call Center: 165 · Laman: www.bpjs-kesehatan.go.id
+                Telepon: (021) 5000-0000 (Simulasi) · Call Center: 165 · Portal: claimtrace.bpjs.test · Data Berita Acara Uji Sintetis (UU PDP No. 27/2022)
               </p>
             </div>
             <div className="w-20 shrink-0 text-right">

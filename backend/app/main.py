@@ -155,7 +155,7 @@ INITIAL_WBS_REPORTS: Dict[str, Dict[str, Any]] = {
         "category": "Repeat & Split Billing",
         "faskes_name": "RS Khusus Mitra Husada",
         "location": "Kabupaten Karanganyar, Jawa Tengah",
-        "reporter_contact_masked": "0812****4321",
+        "reporter_contact_masked": "0800****0001 (Fiktif)",
         "is_anonymous": False,
         "description": "Pengulangan berkas tindakan fisioterapi dalam jendela waktu 48 jam yang diduga dipecah menjadi beberapa episode klaim terpisah.",
         "timestamp": "2026-10-25T09:30:00Z",
@@ -5045,7 +5045,7 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
             "- Konfirmasi presensi dikirimkan secara acak-terarah hanya kepada berkas klaim yang memiliki skor anomali awal pada Lapis 1 atau Lapis 2.\n"
             "- Menerapkan **prinsip minimasi data (UU PDP No. 27/2022)**: Notifikasi hanya menanyakan konfirmasi biner kehadiran sederhana (*'Apakah Bapak/Ibu benar-benar menerima tindakan medis di Rumah Sakit X pada tanggal Y?'*) tanpa mengekspos diagnosis sensitif pasien.\n\n"
             "**2. Hasil Pembuktian Kasus Klaim Katarak:**\n"
-            "- Pada klaim operasi fakoemulsifikasi katarak RSUD Medika Prima atas nama peserta *Ny. Siti Aisyah*, notifikasi Mobile JKN mencatat respons **[SANGKALAN FAKTUAL]**. Peserta menyatakan tidak pernah dirawat inap maupun dioperasi pada tanggal tersebut.\n"
+            "- Pada klaim operasi fakoemulsifikasi katarak RSUD Medika Prima atas nama peserta *Ny. S**** (Data Uji Sintetis - Token AES_4412)*, notifikasi Mobile JKN mencatat respons **[SANGKALAN FAKTUAL]**. Peserta menyatakan tidak pernah dirawat inap maupun dioperasi pada tanggal tersebut.\n"
             "- Telemetri lokasi perangkat saat konfirmasi berada di radius 22 km dari rumah sakit.\n"
             "- Secara yuridis, sangkalan langsung dari peserta ini mematahkan rekayasa tanda tangan pada berkas manual fisik dan menjadi bukti permulaan yang kuat untuk menahan klaim pra-bayar."
         )

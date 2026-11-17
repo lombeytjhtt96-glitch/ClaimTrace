@@ -11,6 +11,10 @@
 
 **Live Cockpit Demo:** http://localhost:3000 &nbsp;|&nbsp; **Swagger API Docs:** http://localhost:8000/docs &nbsp;|&nbsp; **Interactive Workflow Map:** http://localhost:3000 (Header: `[ 🧭 Peta Alur Kerja ]`) &nbsp;|&nbsp; **Jury 1-Click Access:** Active on Sign-In Page
 
+> [!IMPORTANT]
+> **PERNYATAAN RESMI KEPATUHAN UU PDP NO. 27/2022 & DATA BENCHMARK SINTETIK:**  
+> Seluruh data demonstrasi, nama pasien, nama dokter/DPJP, nama verifikator/pejabat kedinasan, NIP, nomor telepon/kontak, alamat, identitas faskes, dan berkas klaim individual yang ditampilkan dalam sistem ClaimTrace ini adalah **100% DATA SINTETIK / BENCHMARK FIKTIF**. Dataset makro berbasis pada sampel data terbuka BPJS Kesehatan yang telah dipseudonimisasi secara penuh tanpa mengekspos satupun data pribadi riil.
+
 Welcome to the official Healthkathon submission showcase of **ClaimTrace**. This dossier provides judges and evaluators with a complete technical walkthrough of our pre-payment claim triage architecture, empirical evidence from **6,264,346 rows of authentic JKN transactional data**, verifiable cryptographic audit trails, and strict compliance with Indonesian healthcare regulations.
 
 ---

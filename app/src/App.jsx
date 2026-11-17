@@ -1242,9 +1242,12 @@ export default function App() {
           />
 
           <footer className="shrink-0 bg-slate-100 border-slate-200 text-slate-600 border-t py-2.5 px-4 sm:px-8 text-xs z-20">
-            <div className="max-w-6xl mx-auto flex items-center justify-center">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <span className="font-medium text-slate-700">
                 © 2026 BPJS Kesehatan · ClaimTrace
+              </span>
+              <span className="text-[10.5px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Seluruh Data Adalah Data Sintetis Fiktif · UU PDP No. 27/2022
               </span>
             </div>
           </footer>
@@ -3235,6 +3238,14 @@ export default function App() {
             isLight ? 'text-slate-500' : 'text-white/50'
           }`}>
             · Kedeputian Pengawasan &amp; Pemeriksaan
+          </span>
+          <span className={isLight ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+            isLight
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
+          }`}>
+            DATA SINTETIK / BENCHMARK FIKTIF · UU PDP NO. 27/2022
           </span>
         </div>
       </footer>

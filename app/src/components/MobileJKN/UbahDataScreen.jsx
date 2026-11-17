@@ -9,13 +9,13 @@ export default function UbahDataScreen({ onNavigate }) {
     try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').kelas || 'Kelas 1'; } catch { return 'Kelas 1'; }
   });
   const [phone, setPhone] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').phone || '0812-****-0194'; } catch { return '0812-****-0194'; }
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').phone || '0800-****-0194'; } catch { return '0800-****-0194'; }
   });
   const [email, setEmail] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').email || 'ahmad.syafiq@peserta-jkn.id'; } catch { return 'ahmad.syafiq@peserta-jkn.id'; }
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').email || 'peserta.sintetis@jkn-simulasi.test'; } catch { return 'peserta.sintetis@jkn-simulasi.test'; }
   });
   const [address, setAddress] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').address || 'Jl. Merdeka Sejahtera No. 12, Gambir, Jakarta Pusat'; } catch { return 'Jl. Merdeka Sejahtera No. 12, Gambir, Jakarta Pusat'; }
+    try { return JSON.parse(localStorage.getItem('claimtrace_mobile_profile') || '{}').address || 'Kompleks Simulasi JKN Blok A-1, Jakarta Pusat (Data Uji Fiktif)'; } catch { return 'Kompleks Simulasi JKN Blok A-1, Jakarta Pusat (Data Uji Fiktif)'; }
   });
   const [saved, setSaved] = useState(false);
 

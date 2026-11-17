@@ -46,7 +46,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
       nip: (user?.nip || '19920815 201503 1 002').replace(/\s*\((Sintetis|Fiktif)\)/gi, ''),
       role: (user?.role || user?.roleTitle || 'Analis Forensik Digital Anti-Fraud').replace(/\s*\((Simulasi|Fiktif)\)/gi, ''),
       unit: user?.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
-      phone: (user?.phone || '+62 812-8492-0194').replace(/\s*\((Fiktif|Sintetis)\)/gi, ''),
+      phone: (user?.phone || '+62 800-0000-0194').replace(/\s*\((Fiktif|Sintetis)\)/gi, ''),
       allowEmailCheckins: true,
     };
   };
@@ -371,6 +371,23 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
         )}
       </header>
 
+      {/* Banner Kepatuhan UU PDP & Penegasan Data Sintetis */}
+      <div className={`rounded-xl border p-3.5 flex items-start gap-3 text-xs ${
+        isLight
+          ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950 shadow-xs'
+          : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+      }`}>
+        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="font-bold text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+            Penegasan Data Uji Sintetis &amp; Kepatuhan UU PDP No. 27/2022
+          </p>
+          <p className="text-[11px] leading-relaxed opacity-90">
+            Seluruh data identitas (nama personel kedinasan, NIP, nomor kontak telepon, unit kerja, serta data rekam medis faskes) dalam sistem ClaimTrace ini adalah <strong>100% data sintetis fiktif</strong> untuk keperluan benchmark kepatuhan nasional. Tidak ada data pribadi atau institusi riil yang digunakan. Kesamaan nama atau format adalah murni rekayasa uji.
+          </p>
+        </div>
+      </div>
+
       {/* Section 1: Detail Profil Verifikator */}
       <section className={`rounded-2xl border p-5 md:p-6 backdrop-blur-xl space-y-5 ${
         isLight
@@ -440,7 +457,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
                     : 'text-[#FFCA40] bg-[#FFCA40]/10 border-[#FFCA40]/30'
                 }`}>
-                  Terdaftar BKN / BPJS
+                  NIP Sintetis (Uji Fiktif)
                 </span>
               </label>
               <input
@@ -449,7 +466,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
                 type="text"
                 value={profile.nip}
                 disabled
-                title="Nomor Induk Pegawai (Identitas Tunggal Kedinasan)"
+                title="Nomor Induk Pegawai (Identitas Tunggal Kedinasan - Uji Sintetis)"
                 className={`w-full rounded-xl border px-3.5 py-2 text-xs font-mono font-bold disabled:cursor-not-allowed ${
                   isLight 
                     ? 'bg-slate-100 border-slate-300 text-slate-800 shadow-xs' 
@@ -568,11 +585,20 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
             {/* Nomor Telepon Dinas */}
             <div className="space-y-1.5">
-              <label htmlFor="admin-profile-phone" className={`text-xs font-bold flex items-center gap-1.5 ${
+              <label htmlFor="admin-profile-phone" className={`text-xs font-bold flex items-center justify-between ${
                 isLight ? 'text-slate-800' : 'text-white/80'
               }`}>
-                <Phone className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
-                Nomor Telepon / WhatsApp Dinas
+                <span className="flex items-center gap-1.5">
+                  <Phone className={`w-3.5 h-3.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`} />
+                  Nomor Telepon / Kontak Kedinasan
+                </span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${
+                  isLight 
+                    ? 'bg-slate-100 text-slate-600 border-slate-300' 
+                    : 'text-white/60 bg-white/5 border-white/10'
+                }`}>
+                  Nomor Uji Sintetis
+                </span>
               </label>
               <input
                 id="admin-profile-phone"
@@ -581,7 +607,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
                 value={profile.phone}
                 onChange={(e) => handleProfileChange('phone', e.target.value)}
                 disabled={!isEditing}
-                placeholder="+62 812-..."
+                placeholder="+62 800-0000-..."
                 className={`w-full rounded-xl border px-3.5 py-2 text-xs transition disabled:cursor-not-allowed ${
                   isLight 
                     ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-800' 

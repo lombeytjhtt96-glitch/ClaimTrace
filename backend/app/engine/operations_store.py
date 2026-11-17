@@ -155,7 +155,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "updated_at": (now - timedelta(hours=1)).isoformat(),
             "faskes_pic": {
                 "name": "RS Daerah Kartini (Kelas B) · Komite Medik",
-                "email": "komite.medik@rsdkartini.go.id",
+                "email": "komite.medik@rsdkartini.simulasi.test",
                 "registry_code": "FSK-RSDK-05 · CLM-2026-8805"
             },
             "verificator": {
@@ -178,7 +178,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "updated_at": (now - timedelta(hours=5)).isoformat(),
             "faskes_pic": {
                 "name": "RS Medika Prima (Kelas B) · Koder INA-CBG",
-                "email": "koder.jkn@rsmedikaprima.co.id",
+                "email": "koder.jkn@medikaprima.simulasi.test",
                 "registry_code": "FSK-RSMP-06 · CLM-2026-8806"
             },
             "verificator": {
@@ -199,7 +199,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "faskes_code": "FSK-RSX-01",
             "faskes_name": "RS Khusus Mitra Husada",
             "pic_name": "Koordinator Casemix Mitra Husada",
-            "pic_email": "casemix@rs-mitrahusada.co.id",
+            "pic_email": "casemix@mitrahusada.simulasi.test",
             "plan_title": "Intervensi & Rekonsiliasi Klaster Fisioterapi (CLM-2026-8801)",
             "claim_id": "CLM-2026-8801",
             "risk_level": "CRITICAL",
@@ -239,7 +239,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "faskes_code": "FSK-RSMP-06",
             "faskes_name": "RS Medika Prima (Kelas B)",
             "pic_name": "Ketua Komite Medik RS Medika Prima",
-            "pic_email": "casemix@rsmedikaprima.co.id",
+            "pic_email": "casemix@medikaprima.simulasi.test",
             "plan_title": "Klarifikasi Bukti Penunjang K-1-10-III (CLM-2026-8806)",
             "claim_id": "CLM-2026-8806",
             "risk_level": "CRITICAL",
@@ -274,7 +274,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "faskes_code": "FSK-RSY-02",
             "faskes_name": "RS Swasta As-Syifa (Kelas C)",
             "pic_name": "PIC JKN RS As-Syifa",
-            "pic_email": "jkn@rs-assyifa.co.id",
+            "pic_email": "jkn@assyifa.simulasi.test",
             "plan_title": "Rekonsiliasi Episode Berulang K-4-17-I (CLM-2026-8802)",
             "claim_id": "CLM-2026-8802",
             "risk_level": "HIGH",
@@ -311,11 +311,11 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "id": 1,
             "name": "dr. Siti Rahma, Sp.PK",
             "email": "siti.rahma@bpjs-kesehatan.go.id",
-            "phone_masked": _mask_phone("081188201999"),
+            "phone_masked": _mask_phone("080000000199"),
             "faskes": "Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik",
             "faskes_code": "KP-WASRIK-01",
             "role": "VERIFICATOR_MEDIS",
-            "role_label": "Verifikator Medis Utama",
+            "role_label": "Verifikator Medis Utama (Simulasi)",
             "is_active": True,
             "screening_risk": "LOW",
             "screening_score": 12,
@@ -332,11 +332,11 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "id": 2,
             "name": "Budi Santoso, S.Kom, M.TI",
             "email": "budi.santoso@bpjs-kesehatan.go.id",
-            "phone_masked": _mask_phone("081294827710"),
+            "phone_masked": _mask_phone("080000000710"),
             "faskes": "Kantor Pusat BPJS Kesehatan · Forensik Digital Anti-Fraud",
             "faskes_code": "KP-FORENSIK-02",
             "role": "ANALYST",
-            "role_label": "Analis Forensik Wasrik",
+            "role_label": "Analis Forensik Wasrik (Simulasi)",
             "is_active": True,
             "screening_risk": "LOW",
             "screening_score": 15,
@@ -352,12 +352,12 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         {
             "id": 3,
             "name": "dr. Hendra, Sp.KFR (PIC Klaster)",
-            "email": "dpjp.kfr@rs-mitrahusada.co.id",
-            "phone_masked": _mask_phone("081390451829"),
+            "email": "dpjp.kfr@mitrahusada.simulasi.test",
+            "phone_masked": _mask_phone("080000000829"),
             "faskes": "RS Khusus Mitra Husada",
             "faskes_code": "FSK-RSX-01",
             "role": "DPJP_SPESIALIS",
-            "role_label": "DPJP FKRTL Terpantau",
+            "role_label": "DPJP FKRTL Terpantau (Fiktif)",
             "is_active": True,
             "screening_risk": "CRITICAL",
             "screening_score": 87,
@@ -373,8 +373,8 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         {
             "id": 4,
             "name": "dr. Anton Wijanarko, Sp.B",
-            "email": "anton.spb@rsdkartini.go.id",
-            "phone_masked": _mask_phone("082138947512"),
+            "email": "anton.spb@rsdkartini.simulasi.test",
+            "phone_masked": _mask_phone("080000000512"),
             "faskes": "RS Daerah Kartini (Kelas B)",
             "faskes_code": "FSK-RSDK-05",
             "role": "DPJP_SPESIALIS",
@@ -530,9 +530,11 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         "role": "Verifikator Medis Utama · Kantor Pusat",
         "unit": "Kedeputian Bidang Pengawasan & Pemeriksaan (WASRIK)",
         "branch": "Kantor Pusat BPJS Kesehatan Jakarta",
-        "phone": "0811-8820-1999",
+        "phone": "0800-0000-0199 (Simulasi Fiktif)",
         "location": "DKI Jakarta, Indonesia",
-        "bio": "Pejabat Fungsional Verifikator Medis Senior dengan spesialisasi audit klaim FKRTL tingkat lanjut dan deteksi dini anomali koding INA-CBG berbasis bukti klinis tiga lapis."
+        "is_synthetic": True,
+        "pdp_notice": "Profil kedinasan simulasi sintetis fiktif untuk evaluasi sistem UU PDP No. 27/2022",
+        "bio": "Pejabat Fungsional Verifikator Medis Senior (Profil Simulasi Sintetis) dengan spesialisasi audit klaim FKRTL tingkat lanjut dan deteksi dini anomali koding INA-CBG berbasis bukti klinis tiga lapis."
     }
 
     return {

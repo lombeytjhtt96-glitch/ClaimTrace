@@ -22,14 +22,14 @@ os.makedirs(CHROMA_DATA_DIR, exist_ok=True)
 
 COLLECTION_NAME = "claimtrace_clinical_resumes"
 
-# Standard Indonesian Clinical Resume Corpus for Claims
+# Standard Indonesian Clinical Resume Corpus for Claims (Data Uji Sintetis Fiktif UU PDP)
 INITIAL_CLINICAL_RESUMES = [
     {
         "claim_id": "CLM-2026-8801",
         "cluster_id": "CLS-PHANTOM-85",
         "faskes_id": "FSK-RSX-01",
         "nama_faskes": "RS Khusus Mitra Husada",
-        "patient_name": "Tn. Agus Santoso (Token: AES_9f8a)",
+        "patient_name": "Tn. A.S. (Data Uji Sintetis - Token: AES_9f8a)",
         "diagnosa_primary": "M54.5 (Low Back Pain)",
         "prosedur": "93.39 (Other Physical Therapy)",
         "resume_text": (
@@ -44,7 +44,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-PHANTOM-85",
         "faskes_id": "FSK-RSX-01",
         "nama_faskes": "RS Khusus Mitra Husada",
-        "patient_name": "Tn. Bambang Supardi (Token: AES_b2c3)",
+        "patient_name": "Tn. B.S. (Data Uji Sintetis - Token: AES_b2c3)",
         "diagnosa_primary": "M54.5 (Low Back Pain)",
         "prosedur": "93.39 (Other Physical Therapy)",
         "resume_text": (
@@ -59,7 +59,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-PHANTOM-85",
         "faskes_id": "FSK-RSX-01",
         "nama_faskes": "RS Khusus Mitra Husada",
-        "patient_name": "Ny. Sri Wahyuni (Token: AES_c4d5)",
+        "patient_name": "Ny. S.W. (Data Uji Sintetis - Token: AES_c4d5)",
         "diagnosa_primary": "M54.5 (Low Back Pain)",
         "prosedur": "93.39 (Other Physical Therapy)",
         "resume_text": (
@@ -74,7 +74,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-REPEAT-11",
         "faskes_id": "FSK-RSY-02",
         "nama_faskes": "RS Swasta As-Syifa (Kelas C)",
-        "patient_name": "Ny. Siti Rahma (Token: AES_1a2b)",
+        "patient_name": "Ny. S.R. (Data Uji Sintetis - Token: AES_1a2b)",
         "diagnosa_primary": "K29.7 (Gastritis, unspecified)",
         "prosedur": "89.03 (Interview and evaluation)",
         "resume_text": (
@@ -89,7 +89,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-LEGAL-KATARAK",
         "faskes_id": "FSK-RSZ-03",
         "nama_faskes": "RS Khusus Mata Nusantara (Kelas B)",
-        "patient_name": "Tn. Mulyono (Token: AES_7c8d)",
+        "patient_name": "Tn. M.S. (Data Uji Sintetis - Token: AES_7c8d)",
         "diagnosa_primary": "H25.9 (Senile cataract, unspecified)",
         "prosedur": "13.41 (Phacoemulsification of cataract)",
         "resume_text": (
@@ -104,7 +104,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-LEGAL-KATARAK",
         "faskes_id": "FSK-RSZ-03",
         "nama_faskes": "RS Khusus Mata Nusantara (Kelas B)",
-        "patient_name": "Ny. Sumiyati (Token: AES_8d9e)",
+        "patient_name": "Ny. S.T. (Data Uji Sintetis - Token: AES_8d9e)",
         "diagnosa_primary": "H25.9 (Senile cataract, unspecified)",
         "prosedur": "13.41 (Phacoemulsification of cataract)",
         "resume_text": (
@@ -118,7 +118,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-HD-CHRONIC",
         "faskes_id": "FSK-KLN-04",
         "nama_faskes": "Klinik Pratama Hemodialisis Sehat Mandiri",
-        "patient_name": "Tn. Hendra Wijaya (Token: AES_3d4e)",
+        "patient_name": "Tn. H.W. (Data Uji Sintetis - Token: AES_3d4e)",
         "diagnosa_primary": "N18.5 (Chronic kidney disease, stage 5)",
         "prosedur": "39.95 (Hemodialysis)",
         "resume_text": (
@@ -132,7 +132,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-GEODIST-COLLISION",
         "faskes_id": "FSK-RSDK-05",
         "nama_faskes": "RS Daerah Kartini (Kelas B)",
-        "patient_name": "Nn. Ratna Sari (Token: AES_5a6b)",
+        "patient_name": "Nn. R.S. (Data Uji Sintetis - Token: AES_5a6b)",
         "diagnosa_primary": "K35.8 (Acute appendicitis, other)",
         "prosedur": "47.01 (Laparoscopic appendectomy)",
         "resume_text": (
@@ -146,7 +146,7 @@ INITIAL_CLINICAL_RESUMES = [
         "cluster_id": "CLS-UPCODING-SEVERITY",
         "faskes_id": "FSK-RSMP-06",
         "nama_faskes": "RS Medika Prima (Kelas B)",
-        "patient_name": "Tn. Dedi Irawan (Token: AES_8e9f)",
+        "patient_name": "Tn. D.I. (Data Uji Sintetis - Token: AES_8e9f)",
         "diagnosa_primary": "K92.2 (Gastrointestinal hemorrhage, unspecified)",
         "prosedur": "45.16 (Esophagogastroduodenoscopy with closed biopsy)",
         "resume_text": (
