@@ -33,6 +33,8 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
   const [doctors, setDoctors] = useState(initialDpjpList);
   const [selectedDoctor, setSelectedDoctor] = useState(() => initialDpjpList[0] || null);
   const [dpjpAiResult, setDpjpAiResult] = useState({});
@@ -458,157 +460,111 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                 Reset Filter
               </button>
             </div>
-          ) : (
-            filteredDoctors.map((doc, idx) => (
-            <motion.div
-              key={doc.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: idx * 0.04 }}
-              whileHover={{ y: -2 }}
-              onClick={() => setSelectedDoctor(doc)}
-              className={`border rounded-xl p-4 transition-all cursor-pointer shadow-xl ${
-                isLight
-                  ? selectedDoctor?.id === doc.id
-                    ? 'bg-emerald-50/60 border-emerald-500 ring-2 ring-emerald-300 text-slate-900 shadow-sky-100/50'
-                    : 'bg-white border-slate-200/90 text-slate-900 hover:border-emerald-400 hover:bg-slate-50/50 shadow-slate-200/40'
-                  : selectedDoctor?.id === doc.id 
-                    ? 'border-[#FFCA40] ring-1 ring-[#FFCA40]/40 bg-[#001D58] text-white shadow-[#00081c]/50' 
-                    : 'border-white/10 hover:border-white/30 bg-[#00153A]/85 text-white shadow-[#00081c]/50 backdrop-blur-xl'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start space-x-3">
-                  <div className={`p-2.5 rounded-xl shrink-0 mt-0.5 border ${
-                    doc.riskScore >= 75 
-                      ? isLight
-                        ? 'bg-rose-50 text-rose-800 border-rose-300 font-bold'
-                        : 'bg-rose-500/20 text-rose-300 border-rose-500/30' 
-                      : isLight
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                  }`}>
-                    <UserCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className={`text-sm font-bold transition ${
-                        isLight
-                          ? 'text-slate-900 hover:text-emerald-700'
-                          : 'text-white hover:text-[#FFCA40]'
-                      }`}>
-                        {doc.name}
-                      </h3>
-                      {doc.flagType === 'GEOVELOCITY_IMPOSSIBLE_TRAVEL' && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold border flex items-center space-x-1 ${
-                          isLight
-                            ? 'bg-rose-50 text-rose-800 border-rose-300'
-                            : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                        }`}>
-                          <Car className={`w-3 h-3 ${isLight ? 'text-rose-700' : 'text-rose-400'}`} />
-                          <span>Geovelocity Alert</span>
-                        </span>
-                      )}
-                      {doc.sipStatus === 'EXPIRED' && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
-                          isLight
-                            ? 'bg-amber-50 text-amber-800 border-amber-300'
-                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                        }`}>
-                          SIP Expired
-                        </span>
-                      )}
-                    </div>
-
-                    <p className={`text-xs font-medium mt-0.5 ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                      {doc.specialty}
-                    </p>
-
-                    <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] mt-2 font-mono ${
-                      isLight ? 'text-slate-500' : 'text-white/40'
-                    }`}>
-                      <span>ID/SDMK: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{doc.nip || doc.nip_hash}</strong></span>
-                      <span>•</span>
-                      <span>STR: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{doc.str}</strong></span>
-                    </div>
-
-                    <div className={`flex items-center space-x-1.5 text-xs mt-2 ${
-                      isLight ? 'text-slate-700' : 'text-white/80'
-                    }`}>
-                      <Hospital className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
-                      <span className="truncate">{doc.primaryHospital}</span>
-                      <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                        ({doc.hospitals.length} Faskes Terdaftar)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RISK SCORE & WORKLOAD BADGE */}
-                <div className="text-right shrink-0">
-                  <div className={`inline-block px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${
-                    doc.riskScore >= 75
-                      ? isLight
-                        ? 'bg-rose-50 text-rose-800 border-rose-300'
-                        : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                      : isLight
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                  }`}>
-                    SKOR {doc.riskScore}
-                  </div>
-
-                  <div className="mt-2 text-right">
-                    <span className={`text-[10px] block font-semibold ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      Beban Harian:
-                    </span>
-                    <span className={`text-xs font-mono font-bold ${
-                      doc.dailyWorkload > doc.workloadLimit
-                        ? isLight ? 'text-rose-700' : 'text-rose-400'
-                        : isLight ? 'text-emerald-700' : 'text-emerald-400'
-                    }`}>
-                      {doc.dailyWorkload} / {doc.workloadLimit} px
-                    </span>
-                    <div className={`w-24 h-1.5 ml-auto mt-1 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
-                      <div
-                        className={`h-full rounded-full ${doc.dailyWorkload > doc.workloadLimit ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${Math.min(100, Math.round((doc.dailyWorkload / Math.max(1, doc.workloadLimit || 40)) * 100))}%` }}
-                      />
-                    </div>
-                    {doc.dailyWorkload > doc.workloadLimit && (
-                      <span className={`text-[9px] block font-bold mt-0.5 ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
-                        +{doc.dailyWorkload - doc.workloadLimit} di atas batas
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* ACTION FOOTER */}
-              <div className={`flex items-center justify-between mt-3 pt-3 border-t text-[11px] ${
-                isLight ? 'border-slate-200' : 'border-white/10'
+          ) : (() => {
+            const totalPages = Math.max(1, Math.ceil(filteredDoctors.length / pageSize));
+            const safePage = Math.min(currentPage, totalPages);
+            const startIdx = (safePage - 1) * pageSize;
+            const pageDoctors = filteredDoctors.slice(startIdx, startIdx + pageSize);
+            return (
+              <div className={`rounded-xl overflow-hidden border ${
+                isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#11141A] border-white/10'
               }`}>
-                <div className={isLight ? 'text-slate-700' : 'text-white/70'}>
-                  {doc.casesLinked.length > 0 ? (
-                    <span className={`font-bold flex items-center space-x-1 ${
-                      isLight ? 'text-amber-800' : 'text-amber-300'
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[540px]">
+                    <thead className={`text-[10.5px] uppercase font-bold tracking-wider border-b ${
+                      isLight ? 'bg-[#F3F5F8] text-slate-600 border-slate-200' : 'bg-[#161A22] text-slate-400 border-white/10'
                     }`}>
-                      <AlertTriangle className={`w-3.5 h-3.5 ${isLight ? 'text-amber-700' : 'text-amber-400'}`} />
-                      <span>{doc.casesLinked.length} Kasus Anomali Tertaut (Rp {(doc.estimatedExposure / 1000000).toFixed(1)} Juta)</span>
-                    </span>
-                  ) : (
-                    <span className={isLight ? 'text-slate-400' : 'text-white/40'}>Tidak ada kasus anomali aktif</span>
-                  )}
+                      <tr>
+                        <th scope="col" className="py-2.5 px-3">DPJP &amp; SDMK</th>
+                        <th scope="col" className="py-2.5 px-2.5">Faskes &amp; Status SIP</th>
+                        <th scope="col" className="py-2.5 px-2.5 text-right">Beban/Hr</th>
+                        <th scope="col" className="py-2.5 px-3 text-right">Skor</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/90'}`}>
+                      {pageDoctors.map((doc) => {
+                        const isSelected = selectedDoctor?.id === doc.id;
+                        const over = doc.dailyWorkload > doc.workloadLimit;
+                        return (
+                          <tr
+                            key={doc.id}
+                            onClick={() => setSelectedDoctor(doc)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? (isLight ? 'bg-emerald-50 border-l-2 border-l-emerald-600' : 'bg-emerald-950/50 border-l-2 border-l-emerald-400')
+                                : (isLight ? 'hover:bg-slate-50' : 'hover:bg-white/[0.04]')
+                            }`}
+                          >
+                            <td className="py-2.5 px-3">
+                              <div className="font-bold text-xs truncate max-w-[190px]" title={doc.name}>{doc.name}</div>
+                              <div className="text-[10.5px] opacity-65 truncate max-w-[190px]">{doc.specialty}</div>
+                              <div className="text-[10px] font-mono opacity-55">{doc.nip || doc.nip_hash}</div>
+                            </td>
+                            <td className="py-2.5 px-2.5">
+                              <div className="text-[11px] font-medium truncate max-w-[170px]" title={doc.primaryHospital}>{doc.primaryHospital}</div>
+                              <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                                {doc.sipStatus === 'EXPIRED' ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300">SIP Expired</span>
+                                ) : (
+                                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">SIP Aktif</span>
+                                )}
+                                {doc.flagType === 'GEOVELOCITY_IMPOSSIBLE_TRAVEL' && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Geovelocity</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                              <span className={`font-bold ${over ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                                {doc.dailyWorkload}/{doc.workloadLimit}
+                              </span>
+                              <span className="block text-[9.5px] opacity-60">{doc.casesLinked.length} anomali</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border ${
+                                doc.riskScore >= 75
+                                  ? (isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                                  : (isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                              }`}>
+                                {doc.riskScore}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className={`flex items-center space-x-1 font-bold ${
-                  isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-[#FFCA40] hover:text-[#FFE08C]'
+                <div className={`px-3 py-2 border-t flex flex-wrap items-center justify-between gap-2 text-[10.5px] tabular-nums ${
+                  isLight ? 'bg-slate-50 border-slate-200 text-slate-600' : 'bg-[#000c24]/90 border-white/10 text-white/60'
                 }`}>
-                  <span>Lihat Detil Intelijen</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>{startIdx + 1}–{Math.min(startIdx + pageSize, filteredDoctors.length)} / {filteredDoctors.length} DPJP</span>
+                  <div className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={safePage <= 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className={`px-2 py-0.5 rounded border font-semibold cursor-pointer disabled:opacity-40 ${
+                        isLight ? 'bg-white border-slate-300 text-slate-700' : 'bg-white/5 border-white/15 text-white'
+                      }`}
+                    >
+                      Prev
+                    </button>
+                    <span className="px-1.5 font-mono">{safePage}/{totalPages}</span>
+                    <button
+                      type="button"
+                      disabled={safePage >= totalPages}
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      className={`px-2 py-0.5 rounded border font-semibold cursor-pointer disabled:opacity-40 ${
+                        isLight ? 'bg-white border-slate-300 text-slate-700' : 'bg-white/5 border-white/15 text-white'
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               </div>
-            </motion.div>
-          )))}
+            );
+          })()}
         </div>
 
         {/* DETAILS & GEOVELOCITY TIMELINE (6 COLS) STICKY */}

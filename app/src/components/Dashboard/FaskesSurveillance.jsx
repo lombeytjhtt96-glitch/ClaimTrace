@@ -33,6 +33,8 @@ export default function FaskesSurveillance({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedFaskesDetail, setSelectedFaskesDetail] = useState(null);
   const [faskesAiAudit, setFaskesAiAudit] = useState({});
   const [faskesAiLoading, setFaskesAiLoading] = useState(false);
@@ -458,151 +460,154 @@ export default function FaskesSurveillance({
               Reset Filter
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {filteredFaskes.map((faskes) => {
-              const isCritical = faskes.friScore >= 70;
-              const isMedium = faskes.friScore >= 40 && faskes.friScore < 70;
-              return (
-                <motion.div 
-                  key={faskes.id}
-                  initial={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -2 }}
-                  className={`p-4 rounded-2xl border transition-all space-y-3 backdrop-blur-xl flex flex-col justify-between relative overflow-hidden ${
-                    isLight
-                      ? isCritical
-                        ? 'bg-rose-50/50 border-rose-300 hover:border-rose-400 text-slate-900 shadow-xs'
-                        : isMedium
-                        ? 'bg-amber-50/50 border-amber-300 hover:border-amber-400 text-slate-900 shadow-xs'
-                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-xs'
-                      : isCritical 
-                        ? 'border-rose-500/40 hover:border-rose-400 bg-rose-500/10 text-white shadow-xl shadow-[#00081c]/50' 
-                        : isMedium 
-                        ? 'border-amber-500/40 hover:border-amber-400 bg-amber-500/10 text-white shadow-xl shadow-[#00081c]/50' 
-                        : 'border-white/10 hover:border-white/30 bg-[#00153A]/85 text-white shadow-xl shadow-[#00081c]/50'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    {/* CARD HEADER WITH PROMINENT HOSPITAL TITLE */}
-                    <div className={`flex items-start justify-between gap-2 border-b pb-2.5 ${
-                      isLight ? 'border-slate-200' : 'border-white/10'
-                    }`}>
-                      <div className="flex items-start gap-2.5 min-w-0">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
-                          isCritical
-                            ? isLight ? 'bg-rose-100 border-rose-300 text-rose-800' : 'bg-rose-500/20 border-rose-500/30 text-rose-300'
-                            : isMedium
-                            ? isLight ? 'bg-amber-100 border-amber-300 text-amber-900' : 'bg-amber-500/20 border-amber-500/30 text-amber-300'
-                            : isLight ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
-                        }`}>
-                          <Building2 className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <span className={`text-xs font-mono font-bold block ${isLight ? 'text-slate-500' : 'text-white/60'}`}>{faskes.id}</span>
-                          <h3 className={`text-sm font-bold tracking-tight truncate ${isLight ? 'text-slate-900' : 'text-white'}`} title={faskes.name}>
-                            {faskes.name}
-                          </h3>
-                          <span className={`text-xs font-medium block ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                            {faskes.type} · {faskes.city}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className={`px-2.5 py-1 rounded-xl text-center border font-mono shrink-0 ${
-                        isCritical 
-                          ? isLight ? 'bg-rose-100 text-rose-900 border-rose-300 font-bold' : 'bg-rose-500/20 text-rose-300 border-rose-500/30 font-bold'
-                          : isMedium 
-                          ? isLight ? 'bg-amber-100 text-amber-950 border-amber-300 font-bold' : 'bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold'
-                          : isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300 font-bold' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 font-bold'
-                      }`}>
-                        <span className="text-[10px] uppercase block font-bold tracking-wider">Skor FRI</span>
-                        <span className="text-sm font-bold leading-none">{faskes.friScore}</span>
-                      </div>
-                    </div>
-
-                    <div className={`space-y-1.5 text-xs p-3 rounded-xl border ${
-                      isLight ? 'bg-white border-slate-200 text-slate-800 shadow-xs' : 'bg-white/5 border-white/10 text-white'
-                    }`}>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Status Risiko:</span>
-                        <span className={`font-bold text-xs px-2.5 py-0.5 rounded-full border ${
-                          isCritical 
-                            ? isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                            : isMedium 
-                            ? isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                            : isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        }`}>
-                          {faskes.riskLevel}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center pt-0.5">
-                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Klaim Bulan Ini:</span>
-                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{faskes.totalClaimsMonth} klaim</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Anomali Terdeteksi:</span>
-                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>{faskes.anomalyCount} klaim ({faskes.spikeRatio})</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-xs font-medium ${isLight ? 'text-slate-500' : 'text-white/60'}`}>Validasi FRISTA:</span>
-                        <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{faskes.fristaStatus}</span>
-                      </div>
-                    </div>
-
-                    <p className={`text-xs line-clamp-2 leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/70'}`}>
-                      <strong className={isLight ? 'text-slate-900 font-bold' : 'text-white'}>Temuan Utama:</strong> {faskes.primaryFinding}
-                    </p>
-
-                    {isCritical && (
-                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
-                        isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                      }`}>
-                        Prioritas Audit Kredensial &amp; SIP DPJP
-                      </div>
-                    )}
-                    {isMedium && (
-                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
-                        isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                      }`}>
-                        Indikasi Pemecahan Klaim (Unbundling)
-                      </div>
-                    )}
-                    {!isCritical && !isMedium && (
-                      <div className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${
-                        isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      }`}>
-                        Kepatuhan Terverifikasi
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={`pt-2 border-t flex items-center justify-between text-xs ${
-                    isLight ? 'border-slate-200' : 'border-white/10'
+        ) : (() => {
+          const totalPages = Math.max(1, Math.ceil(filteredFaskes.length / pageSize));
+          const safePage = Math.min(currentPage, totalPages);
+          const startIdx = (safePage - 1) * pageSize;
+          const pageRows = filteredFaskes.slice(startIdx, startIdx + pageSize);
+          return (
+            <div className={`rounded-xl overflow-hidden border ${
+              isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#11141A] border-white/10'
+            }`}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs min-w-[880px]">
+                  <thead className={`text-[11px] uppercase font-bold tracking-wider border-b ${
+                    isLight ? 'bg-[#F3F5F8] text-slate-600 border-slate-200' : 'bg-[#161A22] text-slate-400 border-white/10'
                   }`}>
-                    <button type="button"
-                      onClick={() => setSelectedFaskesDetail(faskes)}
-                      className={`text-xs font-bold flex items-center space-x-1 cursor-pointer ${
-                        isLight ? 'text-emerald-700 hover:text-emerald-800' : 'text-[#FFCA40] hover:text-[#FFE08C]'
-                      }`}
-                    >
-                      <span>Lihat Riwayat Audit</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                    {isCritical && (
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => onSelectFaskesCase && onSelectFaskesCase(faskes.linkedClaimId || 'CLM-2026-8801')}
-                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs font-mono cursor-pointer"
-                      >
-                        Telaah Kasus Kritis &rarr;
-                      </motion.button>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+                    <tr>
+                      <th scope="col" className="py-3 px-4">Fasilitas Kesehatan</th>
+                      <th scope="col" className="py-3 px-3">Tipe &amp; Wilayah</th>
+                      <th scope="col" className="py-3 px-3 text-right">Klaim / Bln</th>
+                      <th scope="col" className="py-3 px-3 text-right">Anomali &amp; Rasio</th>
+                      <th scope="col" className="py-3 px-3">FRISTA &amp; Temuan</th>
+                      <th scope="col" className="py-3 px-3 text-center">Skor FRI</th>
+                      <th scope="col" className="py-3 px-4 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isLight ? 'divide-slate-200 text-slate-800' : 'divide-white/10 text-white/90'}`}>
+                    {pageRows.map((faskes) => {
+                      const isCritical = faskes.friScore >= 70;
+                      const isMedium = faskes.friScore >= 40 && faskes.friScore < 70;
+                      return (
+                        <tr
+                          key={faskes.id}
+                          onClick={() => setSelectedFaskesDetail(faskes)}
+                          className={`cursor-pointer transition-colors ${
+                            isCritical
+                              ? (isLight ? 'bg-rose-500/[0.025] hover:bg-rose-500/[0.06] border-l-2 border-l-rose-500' : 'bg-rose-500/[0.06] hover:bg-rose-500/[0.1] border-l-2 border-l-rose-500')
+                              : isMedium
+                              ? (isLight ? 'bg-amber-500/[0.025] hover:bg-amber-500/[0.06] border-l-2 border-l-amber-500' : 'bg-amber-500/[0.05] hover:bg-amber-500/[0.09] border-l-2 border-l-amber-500')
+                              : (isLight ? 'hover:bg-slate-50 border-l-2 border-l-emerald-600' : 'hover:bg-white/[0.04] border-l-2 border-l-emerald-500')
+                          }`}
+                        >
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-xs truncate max-w-[230px]" title={faskes.name}>{faskes.name}</div>
+                            <div className="text-[10.5px] font-mono opacity-60">{faskes.id}</div>
+                          </td>
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            <div className="font-medium">{faskes.type}</div>
+                            <div className="text-[10.5px] opacity-65">{faskes.city}</div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-semibold tabular-nums whitespace-nowrap">
+                            {Number(faskes.totalClaimsMonth || 0).toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono tabular-nums whitespace-nowrap">
+                            <span className={`font-bold ${isCritical ? 'text-rose-700 dark:text-rose-300' : isMedium ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                              {faskes.anomalyCount}
+                            </span>
+                            <span className="text-[10.5px] opacity-70 ml-1">({faskes.spikeRatio})</span>
+                          </td>
+                          <td className="py-3 px-3 max-w-[260px]">
+                            <div className="text-[10.5px] font-mono font-semibold">{faskes.fristaStatus}</div>
+                            <div className="text-[11px] opacity-75 truncate" title={faskes.primaryFinding}>{faskes.primaryFinding}</div>
+                          </td>
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border ${
+                              isCritical
+                                ? (isLight ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30')
+                                : isMedium
+                                ? (isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')
+                                : (isLight ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30')
+                            }`}>
+                              {faskes.friScore} · {faskes.riskLevel}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFaskesDetail(faskes)}
+                                className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
+                                  isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white hover:bg-white/10'
+                                }`}
+                              >
+                                Audit
+                              </button>
+                              {isCritical && onSelectFaskesCase && (
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectFaskesCase(faskes.linkedClaimId || 'CLM-2026-8801')}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition cursor-pointer"
+                                >
+                                  Telaah
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] tabular-nums ${
+                isLight ? 'bg-slate-50 border-slate-200 text-slate-600' : 'bg-[#000c24]/90 border-white/10 text-white/60'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <span>
+                    Menampilkan <strong className={isLight ? 'text-slate-900' : 'text-white'}>{filteredFaskes.length === 0 ? 0 : startIdx + 1}–{Math.min(startIdx + pageSize, filteredFaskes.length)}</strong> dari <strong className={isLight ? 'text-slate-900' : 'text-white'}>{filteredFaskes.length}</strong> Faskes
+                  </span>
+                  <select
+                    aria-label="Jumlah Faskes per halaman"
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className={`px-2 py-0.5 rounded border text-[11px] font-mono cursor-pointer ${
+                      isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-white/10 border-white/15 text-white'
+                    }`}
+                  >
+                    <option value={10}>10 / hal</option>
+                    <option value={25}>25 / hal</option>
+                    <option value={50}>50 / hal</option>
+                    <option value={100}>100 / hal</option>
+                  </select>
+                </div>
+                <div className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={`px-2.5 py-1 rounded border text-[11px] font-semibold cursor-pointer disabled:opacity-40 ${
+                      isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="px-2 font-mono font-semibold">Hal {safePage} / {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={`px-2.5 py-1 rounded border text-[11px] font-semibold cursor-pointer disabled:opacity-40 ${
+                      isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white'
+                    }`}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* DETAIL MODAL DRAWER WITH MOTION */}

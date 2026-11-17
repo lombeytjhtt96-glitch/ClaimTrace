@@ -7,7 +7,7 @@ import { useEscapeKey } from '../../hooks/useEscapeKey';
 import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
 import { motion } from 'motion/react';
 import {
-  AlertOctagon, ChevronRight, ArrowUpRight, LayoutGrid, List, RefreshCw, FileText,
+  AlertOctagon, ChevronRight, ArrowUpRight, RefreshCw, FileText,
   Search, ShieldCheck, CheckSquare, Square, PlusCircle, Download, Check, X,
   UserCheck, Layers
 } from 'lucide-react';
@@ -297,8 +297,8 @@ export default function TriageOverview({
   const [capacityReport, setCapacityReport] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
-  const [viewLayout, setViewLayout] = useState('cards'); // 'cards' (PolicyPilot 4-col grid) | 'table'
-  const [refreshingCardId, setRefreshingCardId] = useState(null);
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
   const [queueToast, setQueueToast] = useState(null);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [selectedFaskes, setSelectedFaskes] = useState('all');
@@ -418,8 +418,13 @@ export default function TriageOverview({
         .slice(0, capacityBudgetK)
     : filteredClaims;
 
+  const totalPages = Math.max(1, Math.ceil(displayedClaims.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const pageStartIdx = (safePage - 1) * pageSize;
+  const paginatedClaims = displayedClaims.slice(pageStartIdx, pageStartIdx + pageSize);
+
   const allVisibleSelected =
-    displayedClaims.length > 0 && displayedClaims.every((c) => selectedIds.includes(c.id));
+    paginatedClaims.length > 0 && paginatedClaims.every((c) => selectedIds.includes(c.id));
 
   const toggleSelectClaim = (claimId) => {
     setSelectedIds((prev) =>
@@ -429,10 +434,10 @@ export default function TriageOverview({
 
   const toggleSelectAllVisible = () => {
     if (allVisibleSelected) {
-      const visibleSet = new Set(displayedClaims.map((c) => c.id));
+      const visibleSet = new Set(paginatedClaims.map((c) => c.id));
       setSelectedIds((prev) => prev.filter((id) => !visibleSet.has(id)));
     } else {
-      const merged = new Set([...selectedIds, ...displayedClaims.map((c) => c.id)]);
+      const merged = new Set([...selectedIds, ...paginatedClaims.map((c) => c.id)]);
       setSelectedIds(Array.from(merged));
     }
   };
@@ -1014,39 +1019,6 @@ export default function TriageOverview({
             ))}
           </select>
 
-          <div className={`inline-flex items-center p-0.5 rounded-xl border ${
-            isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/[0.06] border-white/10'
-          }`} role="group" aria-label="Pilih tampilan antrean">
-            <button
-              type="button"
-              onClick={() => setViewLayout('cards')}
-              aria-label="Tampilan grid kartu"
-              title="Tampilan Grid Kartu"
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                viewLayout === 'cards'
-                  ? isLight ? 'bg-white text-slate-900 shadow-2xs' : 'bg-emerald-600 text-white'
-                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Kartu</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewLayout('table')}
-              aria-label="Tampilan tabel baris"
-              title="Tampilan Tabel Baris"
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                viewLayout === 'table'
-                  ? isLight ? 'bg-white text-slate-900 shadow-2xs' : 'bg-emerald-600 text-white'
-                  : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Tabel</span>
-            </button>
-          </div>
-
           <div className="relative w-full sm:w-auto sm:min-w-[220px]">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
               isLight ? 'text-slate-400' : 'text-white/40'
@@ -1215,226 +1187,7 @@ export default function TriageOverview({
         </div>
       )}
 
-      {/* TRIAGE QUEUE: POLICYPILOT 4-COLUMN CARD GRID OR TABLE VIEW */}
-      {viewLayout === 'cards' ? (
-        <div className="space-y-4">
-          {displayedClaims.length === 0 ? (
-            <div className={`rounded-2xl border py-12 px-4 text-center ${
-              isLight ? 'bg-white border-slate-200 text-slate-500' : 'bg-[#131822] border-white/[0.08] text-slate-400'
-            }`}>
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <AlertOctagon className="w-8 h-8 text-slate-400" />
-                <p className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>Tidak ada klaim yang cocok dengan kriteria filter.</p>
-                <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Silakan ubah filter jalur triase atau kata kunci pencarian Anda.</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveLane('all');
-                    setActiveModus('all');
-                    setActiveServiceLevel('all');
-                    setActiveSubmissionType('all');
-                    setActiveFpkFilter('all');
-                    setActivePlottingFilter('all');
-                    setSelectedFaskes('all');
-                    setCapacityPriorityOnly(false);
-                    setSearchQuery('');
-                  }}
-                  className={`mt-2 text-xs font-bold px-3 py-1.5 rounded-lg border transition cursor-pointer ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200'
-                      : 'text-cyan-300 hover:text-cyan-200 bg-white/5 border-white/15'
-                  }`}
-                >
-                  Reset Semua Filter
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {displayedClaims.map((c) => {
-                const isChecked = selectedIds.includes(c.id);
-                const statusBadge = formatDecisionStatus(c.statusVerifikasi, c.lane);
-                const issueLabel =
-                  c.lane === 'red'
-                    ? (c.flags.includes('SIP_EXPIRED') ? 'SIP Kedaluwarsa' : c.flags.includes('MOBILE_DENIED') ? 'Sangkalan Pasien' : c.flags.includes('REPEAT_BILLING') ? 'Klaim Berulang' : 'Anomali Klinis Berat')
-                    : c.lane === 'yellow'
-                      ? 'Klarifikasi Dokumen'
-                      : 'Sesuai Paket JKN';
-                const dpjpInitials = String(c.dpjp || 'DR')
-                  .replace(/^dr\.?\s*/i, '')
-                  .split(/\s+/)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((w) => w[0])
-                  .join('')
-                  .toUpperCase() || 'DR';
-
-                return (
-                  <article
-                    key={c.id}
-                    onClick={() => onSelectCase(c)}
-                    className={`group rounded-2xl border p-4 flex flex-col justify-between gap-3 cursor-pointer transition-all duration-200 ${
-                      isLight
-                        ? 'bg-white border-slate-200/90 hover:border-emerald-300 shadow-[0_1px_3px_rgba(6,27,49,0.04)] hover:shadow-[0_8px_22px_rgba(6,27,49,0.08)]'
-                        : 'bg-[#131822] border-white/[0.08] hover:border-emerald-500/40 shadow-md'
-                    } ${isChecked ? (isLight ? 'ring-2 ring-emerald-500/60 border-emerald-400' : 'ring-2 ring-emerald-500/50 border-emerald-400/60') : ''}`}
-                  >
-                    {/* Card Header: ID + Checkbox + Expand Arrow */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <button
-                          type="button"
-                          aria-label={`Pilih klaim ${c.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSelectClaim(c.id);
-                          }}
-                          className={`p-1 rounded border transition cursor-pointer shrink-0 ${
-                            isChecked
-                              ? 'bg-emerald-600 border-emerald-600 text-white'
-                              : (isLight ? 'border-slate-300 bg-slate-50 text-slate-400 hover:border-emerald-600' : 'border-white/20 bg-white/5 text-white/40 hover:border-emerald-400')
-                          }`}
-                        >
-                          {isChecked ? <Check className="w-3 h-3" /> : <Square className="w-3 h-3" />}
-                        </button>
-                        <span className={`text-xs font-mono font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                          {c.id}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label={`Telaah klaim ${c.id}`}
-                        title={`Telaah klaim ${c.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectCase(c);
-                        }}
-                        className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer ${
-                          isLight
-                            ? 'border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600'
-                            : 'border-white/10 bg-white/[0.05] text-slate-300 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-500'
-                        }`}
-                      >
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Structured Info Rows */}
-                    <div className={`divide-y text-xs ${isLight ? 'divide-slate-100' : 'divide-white/[0.07]'}`}>
-                      <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Temuan</span>
-                        <span className={`font-semibold truncate max-w-[170px] text-right ${
-                          c.lane === 'red'
-                            ? isLight ? 'text-rose-700' : 'text-rose-400'
-                            : c.lane === 'yellow'
-                              ? isLight ? 'text-amber-700' : 'text-amber-300'
-                              : isLight ? 'text-emerald-700' : 'text-emerald-400'
-                        }`}>
-                          {issueLabel}
-                        </span>
-                      </div>
-
-                      <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Batas SLA</span>
-                        <span className={`px-2.5 py-0.5 rounded-md font-mono font-bold text-xs border tabular-nums ${
-                          c.slaDays <= 2
-                            ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                            : c.slaDays <= 5
-                              ? isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                              : isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                        }`}>
-                          {c.date} · {c.slaDays} HK
-                        </span>
-                      </div>
-
-                      <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>DPJP</span>
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 ${
-                            isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300'
-                          }`}>
-                            {dpjpInitials}
-                          </span>
-                          <span className={`text-xs font-semibold truncate ${isLight ? 'text-slate-800' : 'text-slate-200'}`} title={c.dpjp}>
-                            {c.dpjp}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="py-2 flex items-center justify-between gap-2">
-                        <span className={`text-xs truncate max-w-[120px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`} title={c.hospital}>
-                          {c.hospital}
-                        </span>
-                        <span className={`font-mono font-bold tabular-nums shrink-0 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                          {c.tariff}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Footer Attachment + Reload Row */}
-                    <div className={`pt-2 border-t flex items-center justify-between gap-2 ${
-                      isLight ? 'border-slate-100' : 'border-white/[0.07]'
-                    }`}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-                          isLight ? 'bg-slate-50 border-slate-200 text-slate-600' : 'bg-white/[0.05] border-white/10 text-slate-300'
-                        }`}>
-                          <FileText className="w-3.5 h-3.5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className={`text-[11px] font-semibold font-mono truncate ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
-                            {c.code}_RM.pdf
-                          </div>
-                          <div className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                            Skor {Number(c.totalScore).toFixed(1)} · {statusBadge.label}
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        aria-label={`Muat ulang klaim ${c.id}`}
-                        title="Sinkronkan ulang antrean klaim"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setRefreshingCardId(c.id);
-                          await reloadClaimsQueue();
-                          setTimeout(() => setRefreshingCardId(null), 400);
-                        }}
-                        className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer ${
-                          isLight
-                            ? 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                            : 'border-white/10 bg-white/[0.05] text-slate-300 hover:bg-white/10'
-                        }`}
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${refreshingCardId === c.id ? 'animate-spin text-emerald-500' : ''}`} />
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-
-          {/* BOTTOM REGULATORY STRIP */}
-          <div className={`rounded-xl border px-4 py-2.5 flex flex-wrap items-center justify-between text-[11px] ${
-            isLight
-              ? 'bg-white border-slate-200 text-slate-600'
-              : 'bg-[#131822] border-white/[0.08] text-slate-400'
-          }`}>
-            <div className="flex items-center space-x-3">
-              <span>Standar SLA: <strong className={isLight ? 'text-slate-800 font-bold' : 'text-white/90'}>Maksimal 10 Hari Kerja</strong></span>
-              <span>•</span>
-              <span>Regulasi: <strong className={isLight ? 'text-slate-800 font-bold' : 'text-white/90'}>Perpres No. 82/2018 Pasal 76 ayat 2</strong></span>
-            </div>
-            <div className={`flex items-center space-x-1.5 ${isLight ? 'text-slate-600 font-medium' : 'text-slate-300'}`}>
-              <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-              <span>Ketuk kartu atau tombol panah untuk telaah mendalam</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-      /* TRIAGE QUEUE TABLE */
+      {/* TRIAGE QUEUE: HIGH-DENSITY ENTERPRISE DATA TABLE */}
       <div className={`rounded-xl overflow-hidden border ${
         isLight
           ? 'bg-white border-[#061B31]/[0.08] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
@@ -1506,7 +1259,7 @@ export default function TriageOverview({
                   </td>
                 </tr>
               )}
-              {displayedClaims.map((c) => {
+              {paginatedClaims.map((c) => {
                 const isChecked = selectedIds.includes(c.id);
                 const statusBadge = formatDecisionStatus(c.statusVerifikasi, c.lane);
                 return (
@@ -1676,24 +1429,63 @@ export default function TriageOverview({
           </table>
         </div>
 
-        {/* BOTTOM REGULATORY STRIP */}
-        <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between text-[11px] ${
+        {/* ENTERPRISE PAGINATION & REGULATORY STRIP */}
+        <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between gap-3 text-[11px] ${
           isLight
             ? 'bg-slate-50 border-slate-200 text-slate-600'
-            : 'bg-[#000c24]/90 border-white/10 text-white/50'
+            : 'bg-[#000c24]/90 border-white/10 text-white/60'
         }`}>
-          <div className="flex items-center space-x-3">
-            <span>Standar SLA: <strong className={isLight ? 'text-slate-800 font-bold' : 'text-white/80'}>Maksimal 10 Hari Kerja</strong></span>
-            <span>•</span>
-            <span>Regulasi: <strong className={isLight ? 'text-slate-800 font-bold' : 'text-white/80'}>Perpres No. 82/2018 Pasal 76 ayat 2</strong></span>
+          <div className="flex flex-wrap items-center gap-3 tabular-nums">
+            <span>
+              Menampilkan <strong className={isLight ? 'text-slate-900' : 'text-white'}>{displayedClaims.length === 0 ? 0 : pageStartIdx + 1}–{Math.min(pageStartIdx + pageSize, displayedClaims.length)}</strong> dari <strong className={isLight ? 'text-slate-900' : 'text-white'}>{displayedClaims.length}</strong> berkas
+            </span>
+            <label className="inline-flex items-center gap-1.5">
+              <span>Baris/hal:</span>
+              <select
+                aria-label="Jumlah baris per halaman"
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                className={`px-2 py-0.5 rounded-md border text-[11px] font-mono font-semibold cursor-pointer ${
+                  isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-white/10 border-white/15 text-white'
+                }`}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </label>
           </div>
-          <div className={`flex items-center space-x-1.5 ${isLight ? 'text-slate-600 font-medium' : 'text-white/60'}`}>
-            <ShieldCheck className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-            <span>Sistem Otentikasi Terintegrasi Smart ClaimTrace</span>
+          <div className="flex items-center gap-2">
+            <span className="hidden md:inline text-[10.5px] opacity-80">SLA 10 Hari Kerja · Perpres 82/2018</span>
+            <div className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={`px-2.5 py-1 rounded-md border text-[11px] font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white hover:bg-white/10'
+                }`}
+              >
+                Sebelumnya
+              </button>
+              <span className="px-2 font-mono font-semibold tabular-nums">
+                Hal {safePage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className={`px-2.5 py-1 rounded-md border text-[11px] font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white hover:bg-white/10'
+                }`}
+              >
+                Berikutnya
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      )}
 
       {/* INPUT & VERIFIKASI PRA-BAYAR FPK BARU (C03.04) MODAL */}
       {showIngestModal && typeof document !== 'undefined' && createPortal(
