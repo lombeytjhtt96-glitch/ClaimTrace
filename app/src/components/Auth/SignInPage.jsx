@@ -12,7 +12,14 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
-import { API_BASE_URL, getDeviceFingerprint, clearSessionStorage, saveAuthenticatedSession } from '../../services/apiConfig';
+import {
+  API_BASE_URL,
+  SANDBOX_DEMO_TOKEN,
+  createSandboxDemoUser,
+  getDeviceFingerprint,
+  clearSessionStorage,
+  saveAuthenticatedSession,
+} from '../../services/apiConfig';
 
 const GOOGLE_RECAPTCHA_V2_SITE_KEY =
   (import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || import.meta.env.VITE_RECAPTCHA_SITE_KEY || '').trim() ||
@@ -94,7 +101,7 @@ export default function SignInPage({
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJurySubmitting, setIsJurySubmitting] = useState(false);
-  const [juryDemoEnabled, setJuryDemoEnabled] = useState(false);
+  const [juryDemoEnabled, setJuryDemoEnabled] = useState(true);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
   const [forgotMessage, setForgotMessage] = useState('');
 
@@ -493,6 +500,17 @@ export default function SignInPage({
     }
   };
 
+  const enterSandboxDemoSession = () => {
+    const demoUser = createSandboxDemoUser();
+    saveAuthenticatedSession(SANDBOX_DEMO_TOKEN, demoUser);
+    if (onLoginSuccess) {
+      onLoginSuccess(demoUser, {
+        expiresInSeconds: 28800,
+        idleTimeoutSeconds: 1800,
+      });
+    }
+  };
+
   const handleJuryAdminQuickLogin = async () => {
     if (isSubmitting || isJurySubmitting) return;
     setErrorMsg('');
@@ -507,6 +525,10 @@ export default function SignInPage({
         },
         body: JSON.stringify({ device_fingerprint: deviceFingerprint }),
       });
+      if (response.status === 404 || response.status >= 500) {
+        enterSandboxDemoSession();
+        return;
+      }
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.token || !data.user) {
         setErrorMsg(data.detail || 'Gagal memulai sesi Akun Demo Administrator.');
@@ -520,7 +542,7 @@ export default function SignInPage({
         });
       }
     } catch {
-      setErrorMsg('Tidak dapat terhubung ke server autentikasi.');
+      enterSandboxDemoSession();
     } finally {
       setIsJurySubmitting(false);
     }

@@ -12,6 +12,27 @@ export const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+export const SANDBOX_DEMO_TOKEN = 'ct.sandbox.demo';
+
+export const isSandboxDemoToken = (token) => token === SANDBOX_DEMO_TOKEN;
+
+export const createSandboxDemoUser = () => ({
+  nip: '198501012010011001',
+  name: 'Administrator ClaimTrace',
+  username: 'admin.demo',
+  email: 'admin.demo@claimtrace.internal',
+  role: 'ADMIN',
+  roleTitle: 'Administrator Sistem Utama',
+  unit: 'Kantor Pusat BPJS Kesehatan · Kedeputian Bidang Pengawasan dan Pemeriksaan',
+  avatar: 'AC',
+  isMfaVerified: true,
+  mfa: true,
+  idle_sec: 1800,
+  idleTimeoutMinutes: 30,
+  allowedRoles: ['ADMIN', 'KEPALA_CABANG', 'VERIFICATOR_MEDIS', 'ANALYST'],
+  isDemoSandbox: true,
+});
+
 const _sessionJsonCache = new Map();
 const _inflightGetMap = new Map();
 let _prefetchedSession = false;
@@ -128,6 +149,27 @@ const _verifySessionInflight = new Map();
 const _verifySessionCache = new Map();
 
 export const verifySessionRequest = async (token, touch = false) => {
+  if (isSandboxDemoToken(token)) {
+    let storedUser = null;
+    try {
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('claimtrace_user') : null;
+      storedUser = raw ? JSON.parse(raw) : null;
+    } catch {
+      storedUser = null;
+    }
+    const payload = {
+      status: 'valid',
+      user: { ...createSandboxDemoUser(), ...(storedUser || {}), isMfaVerified: true, mfa: true },
+      session_timings: {
+        idle_remaining_seconds: 1800,
+        expires_in_seconds: 28800,
+      },
+    };
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   const key = `${token || ''}:${touch ? 1 : 0}`;
   if (!touch) {
     const cached = _verifySessionCache.get(key);
@@ -259,7 +301,7 @@ export const authFetch = async (url, options = {}) => {
 
   const response = await fetch(url, { ...options, headers });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !isSandboxDemoToken(token)) {
     clearSessionStorage({ broadcast: true });
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
