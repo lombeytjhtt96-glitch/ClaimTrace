@@ -256,10 +256,12 @@ const INITIAL_TRENDS = {
 // ─── Tooltips ──────────────────────────────────
 function NumberTooltip({ active, payload, label, isLight }) {
   if (!active || !payload?.length) return null;
-  const openedItem = payload.find(p => p.dataKey === 'opened');
-  const closedItem = payload.find(p => p.dataKey === 'closed');
-  const clearanceRate = openedItem && closedItem && openedItem.value > 0
-    ? ((closedItem.value / openedItem.value) * 100).toFixed(1).replace('.', ',')
+  const point = payload[0]?.payload || {};
+  const hasBothInPoint = typeof point.opened === 'number' && typeof point.closed === 'number';
+  const openedVal = typeof point.opened === 'number' ? point.opened : payload.find(p => p.dataKey === 'opened')?.value;
+  const closedVal = typeof point.closed === 'number' ? point.closed : payload.find(p => p.dataKey === 'closed')?.value;
+  const clearanceRate = openedVal && closedVal && openedVal > 0
+    ? ((closedVal / openedVal) * 100).toFixed(1).replace('.', ',')
     : null;
 
   return (
@@ -268,24 +270,41 @@ function NumberTooltip({ active, payload, label, isLight }) {
     }`}>
       {label && <p className={`mb-1.5 font-bold ${isLight ? 'text-slate-800' : 'text-white/90'}`}>{label}</p>}
       <div className="space-y-1">
-        {payload.map((item, index) => {
-          const isPercent = item.name?.includes('Skor') || item.name?.includes('SLA') || item.unit === '%';
-          const valStr = typeof item.value === 'number'
-            ? isPercent
-              ? `${item.value.toFixed(1).replace('.', ',')}%`
-              : `${item.value.toLocaleString('id-ID')} berkas`
-            : item.value;
-          return (
-            <p key={`${item.name ?? 'metric'}-${index}`} className="flex items-center justify-between gap-4 text-xs">
-              <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                {item.name ?? 'Nilai'}:
-              </span>
-              <span className={`font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                {valStr}
+        {hasBothInPoint && payload.length === 1 && !payload[0].dataKey?.includes('topic') && !payload[0].dataKey?.includes('value') ? (
+          <>
+            <p className="flex items-center justify-between gap-4 text-xs">
+              <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Berkas Masuk:</span>
+              <span className={`font-mono font-bold ${isLight ? 'text-blue-700' : 'text-blue-400'}`}>
+                {openedVal.toLocaleString('id-ID')} berkas
               </span>
             </p>
-          );
-        })}
+            <p className="flex items-center justify-between gap-4 text-xs">
+              <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>Berkas Selesai:</span>
+              <span className={`font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                {closedVal.toLocaleString('id-ID')} berkas
+              </span>
+            </p>
+          </>
+        ) : (
+          payload.map((item, index) => {
+            const isPercent = item.name?.includes('Skor') || item.name?.includes('SLA') || item.unit === '%';
+            const valStr = typeof item.value === 'number'
+              ? isPercent
+                ? `${item.value.toFixed(1).replace('.', ',')}%`
+                : `${item.value.toLocaleString('id-ID')} berkas`
+              : item.value;
+            return (
+              <p key={`${item.name ?? 'metric'}-${index}`} className="flex items-center justify-between gap-4 text-xs">
+                <span className={`font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                  {item.name ?? 'Nilai'}:
+                </span>
+                <span className={`font-mono font-bold ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                  {valStr}
+                </span>
+              </p>
+            );
+          })
+        )}
         {clearanceRate && (
           <div className="pt-1.5 mt-1 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-4 text-[11px]">
             <span className={isLight ? 'text-slate-500' : 'text-white/60'}>Kliring SLA:</span>
@@ -954,41 +973,30 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
               <Legend verticalAlign="bottom" height={32} wrapperStyle={{ paddingTop: '8px', color: isLight ? '#334155' : 'rgba(255,255,255,0.8)', fontSize: 12 }} />
               {timeRange === 'all' && !useLogScale ? (
                 <Bar
-                  dataKey="opened"
+                  dataKey={caseMode === 'closed' ? 'closed' : 'opened'}
                   fill="url(#execBarBlue)"
                   radius={[6, 6, 0, 0]}
                   barSize={26}
-                  fillOpacity={caseMode === 'closed' ? 0.2 : 0.92}
+                  fillOpacity={0.92}
                   isAnimationActive={false}
-                  name="Berkas Masuk"
+                  name={caseMode === 'closed' ? 'Berkas Selesai' : caseMode === 'all' ? 'Volume Berkas Klaim' : 'Berkas Masuk'}
                 />
               ) : (
                 <Area
                   type="monotone"
-                  dataKey="openedSafe"
+                  dataKey={caseMode === 'closed' ? 'closed' : 'openedSafe'}
                   baseValue="dataMin"
                   stroke="#2563eb"
-                  strokeWidth={caseMode === 'opened' ? 3 : caseMode === 'all' ? 2.2 : 1}
+                  strokeWidth={caseMode === 'all' ? 2.2 : 2.5}
                   fill="url(#execLifecycleBlue)"
-                  fillOpacity={caseMode === 'closed' ? 0.05 : 1}
-                  strokeOpacity={caseMode === 'closed' ? 0.25 : 1}
+                  fillOpacity={1}
+                  strokeOpacity={1}
                   dot={false}
                   activeDot={false}
                   isAnimationActive={false}
-                  name="Berkas Masuk"
+                  name={caseMode === 'closed' ? 'Berkas Selesai' : caseMode === 'all' ? 'Volume Berkas Klaim' : 'Berkas Masuk'}
                 />
               )}
-              <Line
-                type="monotone"
-                dataKey="closed"
-                stroke="#00733B"
-                strokeWidth={caseMode === 'closed' ? 3 : 2.5}
-                strokeOpacity={caseMode === 'opened' ? 0.35 : 1}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                name="Berkas Selesai"
-              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
