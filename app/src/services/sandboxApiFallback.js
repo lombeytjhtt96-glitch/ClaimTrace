@@ -230,6 +230,20 @@ export async function trySandboxApiFallback(url, options = {}) {
     });
   }
 
+  if (path === '/api/v1/appeals/submit') {
+    const deadline = new Date(Date.now() + 15 * 86400 * 1000).toISOString().slice(0, 10);
+    return jsonResponse({
+      status: 'success',
+      appeal: {
+        appeal_id: `SGG-2026-${String(Date.now()).slice(-4)}`,
+        claim_id: body.claim_id || 'CLM-2026-8801',
+        status: 'DIAJUKAN_FASKES',
+        sla_deadline: deadline,
+      },
+      message: 'Sanggahan BAKB berhasil didaftarkan dalam lingkungan Sandbox.',
+    });
+  }
+
   if (
     path.startsWith('/api/v1/adjudication/') ||
     path.startsWith('/api/v1/appeals') ||

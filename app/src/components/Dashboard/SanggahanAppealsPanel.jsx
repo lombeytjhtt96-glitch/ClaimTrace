@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { Gavel, Clock, CheckCircle2, AlertTriangle, RefreshCw, Send } from 'lucide-react';
 
+const APPEAL_STATUS_LABELS = {
+  DIAJUKAN_FASKES: 'Diajukan Faskes',
+  DALAM_TELAAH: 'Dalam Telaah',
+  MENUNGGU_KLARIFIKASI: 'Menunggu Klarifikasi',
+  ESKALASI_TKMKB: 'Eskalasi TKMKB',
+  DITERIMA_PENUH: 'Diterima Penuh',
+  DITERIMA_SEBAGIAN: 'Diterima Sebagian',
+  DITOLAK_TETAP: 'Ditolak Tetap',
+};
+
+const formatAppealStatus = (raw) => {
+  if (!raw) return 'Diajukan Faskes';
+  if (APPEAL_STATUS_LABELS[raw]) return APPEAL_STATUS_LABELS[raw];
+  return String(raw)
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+};
+
 export default function SanggahanAppealsPanel({
   activeClaimId = 'CLM-2026-8801',
   faskesName = 'RS Medika Prima',
@@ -251,7 +270,7 @@ export default function SanggahanAppealsPanel({
                 <span className="font-mono font-bold text-[#061B31] dark:text-white">{ap.appeal_id}</span>
                 <span className="font-mono text-[11px] text-slate-500">{ap.claim_id}</span>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     ap.sla_status === 'LEWAT_BATAS_DENDA_1PCT'
                       ? 'bg-rose-100 text-rose-800'
                       : ap.sla_status === 'KRITIS_MENDEKATI_BATAS'
@@ -259,8 +278,8 @@ export default function SanggahanAppealsPanel({
                       : 'bg-emerald-100 text-emerald-800'
                   }`}
                 >
-                  <Clock className="w-3 h-3 inline mr-1" aria-hidden="true" />
-                  {ap.status} · {slaDaysLabel}
+                  <Clock className="w-3 h-3 mr-1 shrink-0" aria-hidden="true" />
+                  {formatAppealStatus(ap.status)} · {slaDaysLabel}
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">{ap.clinical_argument}</p>
