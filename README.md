@@ -9,6 +9,10 @@
 - **Khalaf Faith Pradyatama** (*Ketua Tim · Lead Systems Architect & AppSec Engineer*)
 - **Gaudiansyah Abiyu Mahya** (*Anggota Tim · AI/ML Engineer & Healthcare Data Analyst*)
 
+> 🏆 **Healthkathon 2026 Submission Showcase & Panduan Juri:**  
+> **[Baca Dossier Lengkap Healthkathon: Hackathon-README.md](Hackathon-README.md)**  
+> **Live Cockpit:** `http://localhost:3000` | **Dokumentasi API Swagger:** `http://localhost:8000/docs` | **Mode Juri 1-Klik:** Aktif di Halaman Masuk
+
 ---
 
 ## 1. Tujuan Tunggal & Cara Menyaring Klaim Anomali (Skala 0 - 100)
@@ -69,12 +73,42 @@ Paradigma kerja: **"Satu skor prioritas (0 - 100), tiga lapis bukti faktual inde
 
 ---
 
-## 3. Struktur Cockpit Terfokus (3 Kelompok Navigasi Inti & 9 Modul Klinis)
+## 3. Alur Kerja 4 Pilar Verifikasi & Model Arsitektur C4
 
-Antarmuka disusun dengan prinsip *Clinical Precision* (mode terang `#F7F8FA`/`#FFFFFF` sebagai bawaan) agar verifikator menguasai alur kerja tanpa distraksi:
-- **1. Alur Kerja Utama:** `Dashboard Ringkasan` (Executive Hub 1,69 Juta Klaim & SLA 99,9%), `Antrean Klaim` (Triase Jalur Hijau/Kuning/Merah), `Telaah Kasus` (Bedah 4-Lapis, FairGuard Z49.1, OSRM Geovelocity, & Konfirmasi Mobile JKN), serta `Konsol Putusan` (Putusan 2-Tier Human-in-the-Loop & BAHV QR).
-- **2. Alat Investigasi:** `Cek Dokumen RS` (Audit 7 Berkas Wajib RME-TTE & Deteksi Inversi Kronologi Waktu) serta `Peringkat Risiko Faskes` (Profil Risiko Perilaku 2.091 FKRTL & Klaster Repeat/Phantom Billing).
-- **3. Laporan & Audit:** `Laporan Resmi (BAHV)` (Generator Berita Acara Kolektif QR + Checksum SHA-256), `Jejak Audit Sistem` (Immutable Chained Hash Ledger SHA-256), serta `Pengaturan` (Kontrol Kebijakan Sistem & Live Probe API `< 15 ms`).
+Antarmuka ClaimTrace disusun berlandaskan siklus hidup verifikasi klaim sekuensial 4-Pilar (*Sequential Adjudication Pipeline*) guna menjamin kepatuhan terhadap SLA 10 Hari Kerja (Ps. 76 Perpres No. 82/2018):
+
+1. **Pilar 1: Antrean & Berkas Klaim (`1. Antrean & Berkas Klaim`):**  
+   Triase otomatis berkas FPK masuk ke 3 lajur kepatuhan (Hijau `<24 jam`, Kuning `5 hari kerja`, Merah `tahan pra-bayar`).
+2. **Pilar 2: Telaah & Dokumen Medis (`2. Telaah & Dokumen Medis`):**  
+   Audit komparatif 3 lapis: resume medis elektronik (RME), legalitas SIP & batas fisik DPJP, geovelocity OSRM, dan telemetri kehadiran Mobile JKN.
+3. **Pilar 3: Konsol Putusan & BAKB (`3. Konsol Putusan & BAKB`):**  
+   Formulasi amar putusan human-in-the-loop (Setujui / Koreksi / Tunda), penerbitan Berita Acara Kelengkapan Berkas (BAKB) digital QR SHA-256, dan penanganan sengketa TKMKB.
+4. **Pilar 4: Pengawasan Faskes & DPJP (`4. Faskes & DPJP`):**  
+   Surveilans longitudinal profil risiko faskes (*Facility Risk Index* - FRI), pemantauan dokter anomali, dan visualisasi sindikat klaim lintas rumah sakit.
+
+### Diagram Arsitektur C4 Context
+
+```mermaid
+C4Context
+title System Context Diagram - ClaimTrace BPJS Kesehatan
+Person(verifier, "Verifikator Medis", "Dokter / staf verifikasi BPJS Kesehatan.")
+Person(hospital, "Koder FKRTL", "Staf koder rumah sakit yang mengajukan klaim FPK.")
+Person(patient, "Peserta JKN", "Pasien yang menerima layanan dan mengonfirmasi presensi.")
+Person(judge, "Dewan Juri", "Evaluator teknis & anti-fraud Healthkathon.")
+
+System(claimtrace, "ClaimTrace DSS", "Sistem penapisan pra-bayar & anti-fraud multi-sinyal.")
+System_Ext(vclaim, "V-Claim / E-Klaim", "Sistem inti penerbitan SEP & grouping INA-CBG.")
+System_Ext(sisdmk, "Kemenkes SISDMK", "Validasi izin praktik dokter (SIP aktif).")
+System_Ext(mobilejkn, "Mobile JKN", "Push notification kehadiran (Zero-PHI).")
+
+Rel(hospital, vclaim, "Mengajukan berkas klaim digital")
+Rel(vclaim, claimtrace, "Mengalirkan berkas FPK")
+Rel(claimtrace, sisdmk, "Validasi keabsahan SIP DPJP")
+Rel(claimtrace, mobilejkn, "Kirim konfirmasi presensi")
+Rel(patient, mobilejkn, "Konfirmasi Ya / Tidak")
+Rel(verifier, claimtrace, "Telaah 3 lapis & putusan BAKB")
+Rel(judge, claimtrace, "Akses evaluasi juri 1-klik")
+```
 
 ---
 
@@ -115,6 +149,8 @@ npm run dev -- --host 0.0.0.0 --port 3000
 ```
 - **Aplikasi Web:** Buka browser pada **`http://localhost:3000`**
 - **PWA Offline Service Worker:** Terpasang otomatis via `sw.js` untuk ketahanan audit lapangan Wasrik tanpa koneksi internet.
+- **Akses Cepat Dewan Juri (1-Click Evaluation Mode):**
+  Untuk mempermudah pengujian langsung oleh dewan juri tanpa hambatan OTP email atau captcha, tersedia tombol hijau **`[ 🛡️ Masuk Langsung Administrator (Mode Juri) ]`** di bagian bawah form login yang langsung membuka sesi Administrator dalam 1 kali klik.
 - **Kredensial Login Verifikator Resmi (Fail-Closed 4-Field + 3-Lapis Google reCAPTCHA + MFA):**
   - Username / NIP: `siti.rahma` / `198704202011012001` (dr. Siti Rahma, Sp.PK -- Verifikator Medis Senior)
   - Email: `siti.rahma@bpjs-kesehatan.go.id` | Kata Sandi: `Password123!` | PIN MFA: `123456`
