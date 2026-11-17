@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { downloadTextFile } from '../../utils/exportCsv';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
@@ -1704,13 +1705,13 @@ export default function TriageOverview({
       )}
 
       {/* INPUT & VERIFIKASI PRA-BAYAR FPK BARU (C03.04) MODAL */}
-      {showIngestModal && (
+      {showIngestModal && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Registrasi dan verifikasi pra-bayar FPK baru"
           onClick={(e) => { if (e.target === e.currentTarget) setShowIngestModal(false); }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
         >
           <div className={`w-full max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
@@ -2030,17 +2031,18 @@ export default function TriageOverview({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL TARIK DATA FPK KOLEKTIF VCLAIM + PRA-PURIFIKASI CLAIMTRACE */}
-      {showFpkPullModal && (
+      {showFpkPullModal && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Tarik data klaim dan FPK kolektif"
           onClick={(e) => { if (e.target === e.currentTarget) setShowFpkPullModal(false); }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
         >
           <div className={`w-full max-w-xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
             isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#00153A] border-white/15 text-white'
@@ -2210,7 +2212,8 @@ export default function TriageOverview({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

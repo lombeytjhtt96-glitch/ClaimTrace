@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import RealBundleMorbidityPanel from './RealBundleMorbidityPanel';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -898,15 +899,13 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
 
       {/* POLICYPILOT 4-STEP DOCUMENT VALIDATION & AI SCAN MODAL */}
       <AnimatePresence>
-        {showUploadScanModal && (
+        {showUploadScanModal && typeof document !== 'undefined' && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Unggah dan pemindaian AI dokumen klaim"
             onClick={(e) => { if (e.target === e.currentTarget) setShowUploadScanModal(false); }}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${
-              isLight ? 'bg-slate-900/45 backdrop-blur-xs' : 'bg-black/75 backdrop-blur-sm'
-            }`}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/75 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 10 }}
@@ -1221,7 +1220,8 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
                 </div>
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

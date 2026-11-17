@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { exportCsvFile } from '../../utils/exportCsv';
 import {
@@ -990,15 +991,13 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
       </div>
 
       {/* Report Detail Modal (Comprehensive Audit Dossier) */}
-      {selectedReportModal && (
+      {selectedReportModal && typeof document !== 'undefined' && createPortal(
         <div 
           role="dialog"
           aria-modal="true"
           aria-label="Rincian dossier laporan audit"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedReportModal(null); }}
-          className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
-            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
-          }`}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/75 backdrop-blur-md"
         >
           <div className={`rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl space-y-5 border max-h-[90vh] overflow-y-auto ${
             isLight
@@ -1160,19 +1159,18 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* All Reports Archive Modal */}
-      {showAllReportsModal && (
+      {showAllReportsModal && typeof document !== 'undefined' && createPortal(
         <div 
           role="dialog"
           aria-modal="true"
           aria-label="Arsip lengkap laporan wawasan dan audit klaim"
           onClick={(e) => { if (e.target === e.currentTarget) setShowAllReportsModal(false); }}
-          className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
-            isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-[#00081c]/80 backdrop-blur-md'
-          }`}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/75 backdrop-blur-md"
         >
           <div className={`rounded-2xl max-w-3xl w-full p-6 sm:p-7 shadow-2xl space-y-4 border max-h-[90vh] overflow-y-auto ${
             isLight
@@ -1319,7 +1317,8 @@ export default function InsightsAnalyticsView({ isLight: propIsLight, onNavigate
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1251,13 +1252,13 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
       {/* DECISION RECEIPTS & HUMAN GATE MODAL */}
       <AnimatePresence>
-        {showReceiptsModal && (
+        {showReceiptsModal && typeof document !== 'undefined' && createPortal(
           <div 
             role="dialog"
             aria-modal="true"
             aria-label="Konsol Agent Decision Receipts dan Human Gate"
             onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -1653,7 +1654,8 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

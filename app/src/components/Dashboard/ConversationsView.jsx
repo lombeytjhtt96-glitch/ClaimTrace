@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
@@ -627,15 +628,14 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
 
       {/* Session Detail Drilldown Modal */}
       <AnimatePresence>
-        {selectedSession && (
+        {selectedSession && typeof document !== 'undefined' && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label={`Transkrip sesi audit ${selectedSession.session_id || ''}`.trim()}
             onClick={(e) => { if (e.target === e.currentTarget) setSelectedSession(null); }}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in ${
-            isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
-          }`}>
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/75 backdrop-blur-md"
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -894,20 +894,20 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                 </div>
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 
       {/* Flag Reason Dialog Modal */}
-      {flagModalOpen && selectedSession && (
+      {flagModalOpen && selectedSession && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Tandai sesi untuk audit Wasrik"
           onClick={(e) => { if (e.target === e.currentTarget) setFlagModalOpen(false); }}
-          className={`fixed inset-0 z-60 flex items-center justify-center p-4 animate-fade-in ${
-          isLight ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-[#00081c]/80 backdrop-blur-md'
-        }`}>
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in bg-black/75 backdrop-blur-md"
+        >
           <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-6 space-y-4 ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900'
@@ -960,7 +960,8 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Floating Toast Notification */}

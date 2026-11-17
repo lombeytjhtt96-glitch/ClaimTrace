@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
@@ -2781,15 +2782,13 @@ export default function ExecutiveHub({
 
       {/* Generate Report Modal */}
       <AnimatePresence>
-        {isReportModalOpen && (
+        {isReportModalOpen && typeof document !== 'undefined' && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Unduh dan generator laporan eksekutif"
             onClick={() => setIsReportModalOpen(false)}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
-              isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
-            }`}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 cursor-pointer bg-black/75 backdrop-blur-md"
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
@@ -2912,21 +2911,20 @@ export default function ExecutiveHub({
                 </div>
               </form>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 
       {/* Insights Campaign Modal */}
       <AnimatePresence>
-        {isCampaignModalOpen && (
+        {isCampaignModalOpen && typeof document !== 'undefined' && createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Kampanye intervensi pengawasan JKN"
             onClick={() => setIsCampaignModalOpen(false)}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 cursor-pointer ${
-              isLight ? 'bg-slate-900/40 backdrop-blur-sm' : 'bg-black/75 backdrop-blur-md'
-            }`}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 cursor-pointer bg-black/75 backdrop-blur-md"
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
@@ -3046,7 +3044,8 @@ export default function ExecutiveHub({
                 )}
               </div>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

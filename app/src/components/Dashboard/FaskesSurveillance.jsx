@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -615,7 +616,7 @@ export default function FaskesSurveillance({
 
       {/* DETAIL MODAL DRAWER WITH MOTION */}
       <AnimatePresence>
-        {selectedFaskesDetail && (
+        {selectedFaskesDetail && typeof document !== 'undefined' && createPortal(
           <motion.div 
             role="dialog"
             aria-modal="true"
@@ -624,9 +625,7 @@ export default function FaskesSurveillance({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all ${
-              isLight ? 'bg-slate-900/40 backdrop-blur-xs' : 'bg-[#00081c]/80 backdrop-blur-md'
-            }`}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all bg-black/75 backdrop-blur-md"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -773,7 +772,8 @@ export default function FaskesSurveillance({
                 </motion.button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

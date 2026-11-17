@@ -3099,7 +3099,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setCommandPaletteOpen(false)}
-            className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-24 px-4"
+            className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 px-4"
           >
             <motion.div
               role="dialog"
