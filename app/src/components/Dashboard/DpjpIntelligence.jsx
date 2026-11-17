@@ -297,8 +297,8 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
             <div className="h-[210px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[...filteredDoctors]
-                    .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
+                  data={filteredDoctors
+                    .toSorted((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
                     .slice(0, 6)
                     .map((d) => ({
                       shortName: formatAxisLabel(d.name, { maxChars: 27 }),
@@ -348,8 +348,8 @@ export default function DpjpIntelligence({ onSelectCase, isLight: propIsLight })
                   />
                   <ReferenceLine x={40} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} />
                   <Bar dataKey="dailyWorkload" radius={[0, 6, 6, 0]} barSize={18} isAnimationActive={false}>
-                    {[...filteredDoctors]
-                      .sort((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
+                    {filteredDoctors
+                      .toSorted((a, b) => Number(b.dailyWorkload) - Number(a.dailyWorkload))
                       .slice(0, 6)
                       .map((entry, idx) => {
                         const over = Number(entry.dailyWorkload || 0) > Number(entry.workloadLimit || 40);

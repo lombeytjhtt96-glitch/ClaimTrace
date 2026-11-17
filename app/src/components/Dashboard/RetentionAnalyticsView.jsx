@@ -288,8 +288,8 @@ export default function RetentionAnalyticsView({ onNavigateTab, isLight: propIsL
 
   // Urutan kronologis untuk grafik tren
   const activeUsersTrend = useMemo(() => {
-    return [...dailyActivity]
-      .reverse()
+    return dailyActivity
+      .toReversed()
       .map((p) => ({ date: p.date, count: p.activeUsers }));
   }, [dailyActivity]);
 

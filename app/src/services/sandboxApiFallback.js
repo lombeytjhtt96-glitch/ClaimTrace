@@ -49,7 +49,7 @@ function jsonResponse(payload, status = 200) {
 function patchClaimId(obj, targetId) {
   if (!obj || typeof obj !== 'object') return obj;
   try {
-    const cloned = JSON.parse(JSON.stringify(obj));
+    const cloned = structuredClone(obj);
     if (cloned.claim_id) cloned.claim_id = targetId;
     if (cloned.claim?.claim_id) cloned.claim.claim_id = targetId;
     return cloned;

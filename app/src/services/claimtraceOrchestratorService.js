@@ -262,26 +262,19 @@ export async function callClaimTraceGenerateContent({
   const startTime = performance.now();
   try {
     const apiBase = API_BASE_URL;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    let res;
-    try {
-      res = await authFetch(`${apiBase}/api/v1/claimtrace-ai/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt,
-          system_instruction: systemInstruction,
-          temperature,
-          preferred_model: preferredModel,
-        }),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const res = await authFetch(`${apiBase}/api/v1/claimtrace-ai/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        system_instruction: systemInstruction,
+        temperature,
+        preferred_model: preferredModel,
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
 
     const data = await res.json();
     const durationMs = Math.round(performance.now() - startTime);

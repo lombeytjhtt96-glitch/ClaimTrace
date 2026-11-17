@@ -706,6 +706,10 @@ export default function SignInPage({
           <div className="mx-auto w-12 h-12 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm p-1.5 flex items-center justify-center">
             <img
               alt="Logo ClaimTrace"
+              width="36"
+              height="36"
+              fetchPriority="high"
+              decoding="async"
               className="object-contain w-full h-full"
               src="/assets/images/bpjs_icon.png"
             />

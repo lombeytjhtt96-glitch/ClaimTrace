@@ -291,8 +291,8 @@ export default function FaskesSurveillance({
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[...filteredFaskes]
-                    .sort((a, b) => Number(b.friScore) - Number(a.friScore))
+                  data={filteredFaskes
+                    .toSorted((a, b) => Number(b.friScore) - Number(a.friScore))
                     .slice(0, 6)
                     .map((f) => ({
                       shortName: formatAxisLabel(f.name, { maxChars: 32, stripParens: true }),
@@ -341,8 +341,8 @@ export default function FaskesSurveillance({
                     }}
                   />
                   <Bar dataKey="friScore" radius={[0, 6, 6, 0]} barSize={18} isAnimationActive={false}>
-                    {[...filteredFaskes]
-                      .sort((a, b) => Number(b.friScore) - Number(a.friScore))
+                    {filteredFaskes
+                      .toSorted((a, b) => Number(b.friScore) - Number(a.friScore))
                       .slice(0, 6)
                       .map((entry, idx) => {
                         const score = Number(entry.friScore || 0);

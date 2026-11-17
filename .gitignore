@@ -42,14 +42,15 @@ design-skills/
 # Internal documentation and generator scripts
 AGENTS.md
 !DESIGN.md
-.impeccable/*
-!.impeccable/config.json
+.impeccable/
 */AGENTS.md
 */DESIGN.md
 start_all.bat
 start_all.sh
 *.bat
 *.sh
+scripts/record_*.mjs
+scripts/test_record.mjs
 
 # Large Submission Binaries & Media (Private - Do NOT track in Git)
 *.pptx

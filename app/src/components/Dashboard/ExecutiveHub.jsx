@@ -814,8 +814,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
 
   const topicData = useMemo(
     () =>
-      [...(overview.insights.trending_topics ?? [])]
-        .sort((a, b) => b.count - a.count)
+      (overview.insights.trending_topics ?? [])
+        .toSorted((a, b) => b.count - a.count)
         .slice(0, 6),
     [overview.insights.trending_topics]
   );

@@ -413,8 +413,8 @@ export default function TriageOverview({
 
   const capacityBudgetK = Math.max(1, (Number(capVerifiers) || 1) * (Number(capPerDay) || 5) * 10);
   const displayedClaims = capacityPriorityOnly
-    ? [...filteredClaims]
-        .sort((a, b) => (b.totalScore - a.totalScore) || (Number(b.rawClaim?.nilai_klaim_rp || 0) - Number(a.rawClaim?.nilai_klaim_rp || 0)))
+    ? filteredClaims
+        .toSorted((a, b) => (b.totalScore - a.totalScore) || (Number(b.rawClaim?.nilai_klaim_rp || 0) - Number(a.rawClaim?.nilai_klaim_rp || 0)))
         .slice(0, capacityBudgetK)
     : filteredClaims;
 
@@ -866,8 +866,8 @@ export default function TriageOverview({
             <div className="h-24 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[...liveClaims]
-                    .sort((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
+                  data={liveClaims
+                    .toSorted((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
                     .slice(0, 5)
                     .map((c) => ({
                       label: c.hospital
@@ -894,8 +894,8 @@ export default function TriageOverview({
                     }}
                   />
                   <Bar dataKey="score" radius={[4, 4, 0, 0]} barSize={26} isAnimationActive={false}>
-                    {[...liveClaims]
-                      .sort((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
+                    {liveClaims
+                      .toSorted((a, b) => Number(b.totalScore || 0) - Number(a.totalScore || 0))
                       .slice(0, 5)
                       .map((c, idx) => (
                         <Cell

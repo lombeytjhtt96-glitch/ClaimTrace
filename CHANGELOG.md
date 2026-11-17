@@ -4,6 +4,27 @@ Semua perubahan terdokumentasi secara kronologis untuk platform **ClaimTrace JKN
 
 ---
 
+## [1.3.0-final-release] - 2026-11-18
+
+### Ringkasan Rilis
+Finalisasi antarmuka produksi, kesiapan deployment publik Vercel dengan fallback Sandbox terisolasi, modernisasi JavaScript ES2023+ & Core Web Vitals, serta sinkronisasi dokumentasi dan pengujian otomatis penuh (`434 passed`).
+
+### [Antarmuka, Navigasi, & Pengalaman Pengguna]
+- **Penyederhanaan Navigasi & Kebersihan Layout:** Penghapusan banner alur kerja ganda (`WorkflowPipelineBanner`), modal peta alur (`WorkflowMapModal`), tombol `Peta Alur Kerja`, badge `Fokus Prioritas #1`, navigasi horizontal ganda pada header atas, serta penomoran `1–4` pada label menu sidebar utama.
+- **Akses Demo 1-Klik & Sandbox Fallback Vercel:** Penambahan dukungan fallback Sandbox terisolasi *lazy-loaded* (`app/src/services/sandboxApiFallback.js`, 132 snapshot endpoint) serta validasi sesi Sandbox Demo (`ct.sandbox.demo`) sehingga seluruh modul (7 Dokumen RS, NLP Klinis, MB1–MB5 & Fornas, BAKB, Forensik) berjalan mulus tanpa error `404 Not Found` baik pada backend live maupun pratinjau publik Vercel.
+- **Penegasan Arsitektur AI Lokal & Sandbox:** Pembaruan endpoint `/health` backend (`ai_engine: Local On-Premise`, `environment: Sandbox`) dan dokumentasi `README.md` terkait inferensi NLP/ML lokal tanpa eksfiltrasi cloud (UU PDP No. 27/2022).
+
+### [Modern Web Guidance & Kualitas Kode]
+- **Modernisasi JS ES2023+ (0 Temuan `legacy-scan`):** Penggantian `AbortController` + `setTimeout` manual dengan `AbortSignal.timeout(20000)` pada `claimtraceOrchestratorService.js`, penggantian `JSON.parse(JSON.stringify(...))` dengan `structuredClone(...)` pada `sandboxApiFallback.js`, serta migrasi 9 pola `[...arr].sort()` / `.reverse()` ke `.toSorted()` dan `.toReversed()` di komponen Dashboard (`DpjpIntelligence`, `ExecutiveHub`, `FaskesSurveillance`, `RetentionAnalyticsView`, `TriageOverview`).
+- **Optimasi LCP & CLS Halaman Masuk:** Penambahan dimensi eksplisit (`width`/`height`), `fetchPriority="high"`, dan `decoding="async"` pada logo utama `SignInPage.jsx`.
+- **Kebersihan Repositori:** Pengabaian berkas internal editor dan skrip rekam sementara di `.gitignore` serta pembersihan tautan jalur lokal pada naskah submisi.
+
+### [Verifikasi Akhir]
+- **Backend & E2E Pytest:** **434 passed (100% Green)** — `322 passed` (`backend/tests/`) + `112 passed` (`tests_e2e/`).
+- **Frontend & Modern Web:** `modern-web-guidance legacy-scan` menunjukkan `0` temuan dari 38 panduan (52 aturan), `npm --prefix app run build` lulus bersih tanpa error.
+
+---
+
 ## [1.2.0-field-hardening] - 2026-11-16
 
 ### Ringkasan Rilis
