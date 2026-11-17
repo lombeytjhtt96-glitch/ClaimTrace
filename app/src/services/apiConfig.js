@@ -117,7 +117,10 @@ export const getCachedJsonSync = (url) => {
   if (!hasValidSessionStorage()) return null;
   const entry = _sessionJsonCache.get(url);
   if (!entry) return null;
-  if (Date.now() - entry.ts > 60000) return entry.data;
+  if (Date.now() - entry.ts > 60000) {
+    _sessionJsonCache.delete(url);
+    return null;
+  }
   return entry.data;
 };
 

@@ -94,7 +94,7 @@ export default function SignInPage({
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJurySubmitting, setIsJurySubmitting] = useState(false);
-  const [juryDemoEnabled, setJuryDemoEnabled] = useState(true);
+  const [juryDemoEnabled, setJuryDemoEnabled] = useState(false);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
   const [forgotMessage, setForgotMessage] = useState('');
 

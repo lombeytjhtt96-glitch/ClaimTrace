@@ -245,7 +245,16 @@ export default function App() {
   const { client } = useClientAsyncInit(
     'client-xuGhZIFcJXG4W5mMcIvGmf72EuWFy93Ezdbd3F9nXU6',
     { userID: id },
-    { plugins: [new StatsigAutoCapturePlugin(), new StatsigSessionReplayPlugin()] }
+    {
+      plugins: [
+        new StatsigAutoCapturePlugin(),
+        new StatsigSessionReplayPlugin({
+          maskAllInputs: true,
+          maskAllText: false,
+          blockSelector: '.phi-protected, [data-phi], input[type="password"]',
+        }),
+      ],
+    }
   );
 
   useEffect(() => {
@@ -1026,14 +1035,30 @@ export default function App() {
   const [lapis3Score, setLapis3Score] = useState(80);
   const [verificatorAction, setVerificatorAction] = useState(null);
 
-  // Jam Resmi Server BPJS Kesehatan (Waktu Indonesia Barat - WIB)
+  // Jam Resmi Server BPJS Kesehatan (Tersinkronisasi dengan Server Waktu Indonesia Barat - WIB)
+  const serverOffsetRef = useRef(0);
   const [currentServerTime, setCurrentServerTime] = useState(() => {
     return new Date().toLocaleTimeString('id-ID', {
+      timeZone: 'Asia/Jakarta',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     }).replace(/\./g, ':') + ' WIB';
   });
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/health`, { cache: 'no-store' })
+      .then((res) => {
+        const serverDateHeader = res.headers.get('date');
+        if (serverDateHeader) {
+          const serverEpoch = new Date(serverDateHeader).getTime();
+          if (!isNaN(serverEpoch)) {
+            serverOffsetRef.current = serverEpoch - Date.now();
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Mode Tema Dasbor (light / dark / system) - Default: Light (Clinical White)
   const [theme, setTheme] = useState(() => {
@@ -1099,8 +1124,10 @@ export default function App() {
 
   useEffect(() => {
     const timer = setInterval(() => {
+      const syncedNow = new Date(Date.now() + (serverOffsetRef.current || 0));
       setCurrentServerTime(
-        new Date().toLocaleTimeString('id-ID', {
+        syncedNow.toLocaleTimeString('id-ID', {
+          timeZone: 'Asia/Jakarta',
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -1162,18 +1189,30 @@ export default function App() {
     setToastMessage('Layar Mobile JKN ditutup. Mode Cockpit Penuh aktif.');
   };
 
-  // Tangani respons peserta
+  // Tangani respons peserta (Sinkronisasi status Lapis 3 ke backend dan UI)
   const handlePatientAnswer = (answer) => {
     setPatientResponse(answer);
     setShowModal(false);
     setNotificationToast(false);
     
+    const attended = answer === 'confirmed';
+    const targetClaimId = selectedCase?.id || 'CLM-2026-0001';
+
+    // Kirim mutasi resmi ke backend via authFetch (dengan hak ADJUDICATE verifikator)
+    authFetch(`${API_BASE_URL}/api/v1/claims/${targetClaimId}/mobile-response`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attended }),
+    }).catch((err) => {
+      console.warn('[Mobile JKN Sync Warning]:', err?.message || err);
+    });
+
     if (answer === 'denied') {
       setLapis3Score(92);
-      setToastMessage('Laporan dicatat: Peserta menyangkal kehadiran. Skor anomali Lapis 3 naik ke 92 (Indikasi Phantom Billing).');
+      setToastMessage('[Simulasi Sandbox Mobile JKN] Peserta menyangkal kehadiran. Skor anomali Lapis 3 naik ke 92 (Indikasi Phantom Billing).');
     } else {
       setLapis3Score(30);
-      setToastMessage('Laporan dicatat: Peserta mengonfirmasi kehadiran sah.');
+      setToastMessage('[Simulasi Sandbox Mobile JKN] Peserta mengonfirmasi kehadiran sah. Sinyal Lapis 3 tervalidasi.');
     }
   };
 

@@ -154,13 +154,12 @@ npm run dev -- --host 0.0.0.0 --port 3000
 ```
 - **Aplikasi Web:** Buka browser pada **`http://localhost:3000`**
 - **PWA Offline Service Worker:** Terpasang otomatis via `sw.js` untuk ketahanan audit lapangan Wasrik tanpa koneksi internet.
-- **Akses Cepat Dewan Juri (1-Click Evaluation Mode):**
-  Untuk mempermudah pengujian langsung oleh dewan juri tanpa hambatan OTP email atau captcha, tersedia tombol hijau **`[ 🛡️ Masuk Langsung Administrator (Mode Juri) ]`** di bagian bawah form login yang langsung membuka sesi Administrator dalam 1 kali klik.
-- **Kredensial Login Verifikator Resmi (Fail-Closed 4-Field + 3-Lapis Google reCAPTCHA + MFA):**
-  - Username / NIP: `siti.rahma` / `198704202011012001` (dr. Siti Rahma, Sp.PK -- Verifikator Medis Senior)
-  - Email: `siti.rahma@bpjs-kesehatan.go.id` | Kata Sandi: `Password123!` | PIN MFA: `123456`
-  - Alternatif NIP: `199208152015031002` (`admin.fraud` / `admin.fraud@bpjs-kesehatan.go.id` -- Budi Santoso, S.Kom, M.TI)
-  - Pengaman CAPTCHA: 3 lapisan Google reCAPTCHA aktif pada antarmuka Sign-In (v2 Checkbox + v3 Score + Enterprise; mode pengembangan mendukung header `test-token` bila `RECAPTCHA_ENFORCE_ALL_LAYERS=false`).
+- **Tata Kelola Autentikasi Produksi & Evaluasi (Fail-Closed Zero-Trust):**
+  - Secara default pada lingkungan produksi, seluruh akun demo dan jalur bypass dinonaktifkan (`CLAIMTRACE_ALLOW_DEMO_ACCOUNTS=0`, `CLAIMTRACE_ALLOW_JURY_DEMO=0`).
+  - Untuk lingkungan evaluasi / sandbox tertutup, akun uji verifikator dapat diaktifkan secara eksplisit melalui variabel lingkungan `.env` (`CLAIMTRACE_ALLOW_DEMO_ACCOUNTS=1`):
+    - **Akun Verifikator Medis:** dr. Siti Rahma, Sp.PK (`siti.rahma` / NIP `198704202011012001`) — Hak Akses `ADJUDICATE` & `BAKB_SIGNER`.
+    - **Akun Analis Forensik Anti-Fraud:** Budi Santoso, S.Kom, M.TI (`admin.fraud` / NIP `199208152015031002`) — Hak Akses `ANALYST` & `FRAUD_INVESTIGATOR`.
+  - Seluruh kredensial diverifikasi secara ketat menggunakan PBKDF2-HMAC-SHA256 bergaram (salted hashes), perlindungan proteksi brute-force bertingkat (Rate Limiter 5x lockout), 3-lapis Google reCAPTCHA (v2 Checkbox + v3 Score + Enterprise), dan verifikasi MFA multi-faktor bertahap.
 
 ---
 
@@ -168,13 +167,16 @@ npm run dev -- --host 0.0.0.0 --port 3000
 
 Pengujian otomatis (`backend/tests/` dan `tests_e2e/`) memvalidasi keamanan kriptografis, kalkulasi SLA hari kerja, integritas rantai audit SHA-256, rule anti-fraud & FairGuard Z49.1, Zero-PHI UU PDP, dan algoritma penapisan `0,50*S1 + 0,30*S2 + 0,20*S3`:
 ```bash
+# Menjalankan seluruh test suite backend dan e2e
 python3 -m pytest backend/tests/ -q
 python3 -m pytest tests_e2e/ -q
-python3 scripts/verify_claimtrace_stack.py
+
+# Menjalankan evaluasi benchmark independen (reproducible offline)
+python3 backend/scripts/evaluate_benchmarks.py
 ```
 **Hasil Uji Kualitas & Benchmark Terverifikasi:**
-- **Backend & E2E Test Suite:** **300 of 300 Backend Tests Passed** (`backend/tests/`) + **112 of 112 E2E Tests Passed** (`tests_e2e/`) = **412 Total Tests Passed (100% Green)** meliputi **197 Endpoint FastAPI Aktif**.
-- **Internal Stack Smoke Check:** **16/16 endpoint verifikasi kritis lulus** via `scripts/verify_claimtrace_stack.py`.
+- **Backend & E2E Test Suite:** **322 of 322 Backend Tests Passed** (`backend/tests/`) + **112 of 112 E2E Tests Passed** (`tests_e2e/`) = **434 Total Tests Passed (100% Green)** meliputi **197 Endpoint FastAPI Aktif**.
+- **Evaluasi Offline Deterministik (`backend/scripts/evaluate_benchmarks.py`):** Lulus 100% mereproduksi metrik HKEval independen.
 - **Uji Integritas Rantai Audit Tamper-Evident:** Lulus 100% mendeteksi pemalsuan payload, manipulasi `prev_hash`, dan pembongkaran segel kriptografis.
 - **Benchmark HKEval (`n=3.002` klaim, 2,0% prevalensi, 5/5 Checklist REFORMS Lolos):**
   - **Precision@50 = 86,0%** (43,0x Lift; `+30,0%` poin dibanding aturan baku, paired `p = 0,0012`)

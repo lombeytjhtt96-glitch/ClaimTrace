@@ -13,6 +13,8 @@ from starlette.testclient import TestClient
 
 # Pastikan environment test aktif agar tidak memodifikasi file penyimpanan persisten produksi
 os.environ["PYTEST_CURRENT_TEST"] = "true"
+os.environ["CLAIMTRACE_ALLOW_DEMO_ACCOUNTS"] = "1"
+os.environ["CLAIMTRACE_ALLOW_JURY_DEMO"] = "1"
 
 # Daftarkan direktori backend ke sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -24,6 +26,16 @@ from app.security.token_manager import create_access_token
 
 
 import httpx
+
+
+@pytest.fixture(autouse=True)
+def _reset_auth_rate_limit_lockouts():
+    try:
+        from app.security.rate_limiter import rate_limiter
+        rate_limiter.reset_all_auth_lockouts()
+    except Exception:
+        pass
+    yield
 
 
 @pytest.fixture(scope="session")

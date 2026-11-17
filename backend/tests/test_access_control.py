@@ -369,3 +369,76 @@ def test_duckdb_describe_table_rejects_injection_and_unknown_tables(monkeypatch)
 
     res_unknown = client.get("/api/v1/duckdb/describe/nonexistent_table_xyz")
     assert res_unknown.status_code == 400
+
+
+def test_mobile_jkn_response_rejects_read_only_roles():
+    """Verify that READ-only roles (ANALYST, AUDITOR_VIEWER) cannot mutate claims via mobile-response."""
+    analyst_token = create_access_token({
+        "nip": "199201012015011003",
+        "username": "analyst.audit",
+        "role": "ANALYST",
+        "name": "Analis Forensik",
+        "unit": "Kedeputian Wasrik",
+        "isMfaVerified": True
+    })
+
+    res = client.post(
+        "/api/v1/claims/CLM-2026-8801/mobile-response",
+        json={"attended": False},
+        headers={"Authorization": f"Bearer {analyst_token}"}
+    )
+    assert res.status_code == 403
+    assert res.json()["detail"]["required_privilege"] == "ADJUDICATE"
+
+
+def test_mobile_jkn_response_hmac_signature_verification():
+    """Verify HMAC-SHA256 signature verification on Mobile JKN webhook endpoint."""
+    import time
+    import hmac
+    import hashlib
+
+    secret = b"jkn-webhook-secret-key-bpjs-secure-2026"
+    claim_id = "CLM-2026-8801"
+    now_ts = str(time.time())
+    nonce = "nonce-test-123"
+    canonical = f"{now_ts}:{nonce}:{claim_id}:true".encode()
+    valid_sig = hmac.new(secret, canonical, hashlib.sha256).hexdigest()
+
+    # 1. Valid signature and fresh timestamp -> 200 OK
+    res_ok = client.post(
+        f"/api/v1/claims/{claim_id}/mobile-response",
+        json={"attended": True},
+        headers={
+            "X-Mobile-JKN-Signature": valid_sig,
+            "X-Mobile-JKN-Timestamp": now_ts,
+            "X-Mobile-JKN-Nonce": nonce,
+        }
+    )
+    assert res_ok.status_code == 200
+
+    # 2. Tampered signature -> 401 Unauthorized
+    res_bad_sig = client.post(
+        f"/api/v1/claims/{claim_id}/mobile-response",
+        json={"attended": True},
+        headers={
+            "X-Mobile-JKN-Signature": "tampered_signature_hex_12345",
+            "X-Mobile-JKN-Timestamp": now_ts,
+            "X-Mobile-JKN-Nonce": nonce,
+        }
+    )
+    assert res_bad_sig.status_code == 401
+
+    # 3. Expired timestamp (> 300s old) -> 401 Unauthorized
+    old_ts = str(time.time() - 600)
+    old_canonical = f"{old_ts}:{nonce}:{claim_id}:true".encode()
+    old_sig = hmac.new(secret, old_canonical, hashlib.sha256).hexdigest()
+    res_expired = client.post(
+        f"/api/v1/claims/{claim_id}/mobile-response",
+        json={"attended": True},
+        headers={
+            "X-Mobile-JKN-Signature": old_sig,
+            "X-Mobile-JKN-Timestamp": old_ts,
+            "X-Mobile-JKN-Nonce": nonce,
+        }
+    )
+    assert res_expired.status_code == 401

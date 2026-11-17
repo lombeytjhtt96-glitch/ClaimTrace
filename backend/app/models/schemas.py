@@ -10,6 +10,8 @@ class DPJPValidation(BaseModel):
     jam_praktik_valid: bool = True
     faskes_terdaftar: str
     catatan_sdmk: str
+    anomali_kecepatan: bool = False
+    kecepatan_kmh: Optional[float] = None
 
 class EpisodeFingerprint(BaseModel):
     cluster_id: str

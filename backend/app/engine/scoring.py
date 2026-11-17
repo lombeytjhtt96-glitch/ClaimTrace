@@ -1,9 +1,78 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from app.models.schemas import ClaimInput, TriageResult, TriageScoreBreakdown
 from app.security.audit_log import get_audit_logger
 from app.engine.episode_graph import generate_cluster_graph
 
 audit_logger = get_audit_logger()
+
+
+def compute_raw_evidence_scores(claim: Any) -> Tuple[float, float, float]:
+    """
+    Computes S1, S2, and S3 independently from raw multi-layer claim evidence:
+    - S1 (Episode Radar & Pattern): Cluster baseline surge, repeat billing flag, cluster ID, and baksos status.
+    - S2 (DPJP SDMK Telemetry): SIP status (EXPIRED=100, UNSYNCED=60, ACTIVE=10) & spatiotemporal velocity.
+    - S3 (Mobile JKN Confirmation): Binary beneficiary presence response denial ratio.
+    """
+    # S1 computation
+    s1 = 15.0
+    ep_meta = getattr(claim, "episode_meta", None)
+    if ep_meta:
+        ep_cluster = getattr(ep_meta, "cluster_id", "")
+        ep_ratio = float(getattr(ep_meta, "rasio_lonjakan_baseline", 1.0))
+        ep_baksos = bool(getattr(ep_meta, "terdaftar_baksos_resmi", False))
+        ep_repeat = bool(getattr(ep_meta, "indikasi_repeat_billing", False))
+
+        if ep_cluster == "CLS-UPCODING-SEVERITY":
+            s1 = 80.0
+        elif ep_ratio >= 3.0 and not ep_baksos:
+            s1 = min(95.0, 30.0 + ep_ratio * 12.0)
+        elif ep_repeat:
+            s1 = 75.0
+        elif ep_baksos:
+            s1 = 10.0
+
+    # S2 computation
+    s2 = 10.0
+    dp_meta = getattr(claim, "dpjp_meta", None)
+    if dp_meta:
+        sip_status = getattr(dp_meta, "sip_status", "ACTIVE")
+        jam_valid = getattr(dp_meta, "jam_praktik_valid", True)
+        anomali_speed = getattr(dp_meta, "anomali_kecepatan", False)
+        speed_kmh = getattr(dp_meta, "kecepatan_kmh", None)
+        catatan = str(getattr(dp_meta, "catatan_sdmk", "") or "").lower()
+
+        if sip_status == "EXPIRED":
+            s2 = 100.0
+        elif sip_status == "UNSYNCED":
+            s2 = 60.0
+        elif not jam_valid:
+            s2 = 85.0
+        elif anomali_speed or (speed_kmh and speed_kmh > 120):
+            s2 = 90.0
+        elif "kecepatan" in catatan or "geovelocity" in catatan:
+            s2 = 90.0
+        else:
+            s2 = 10.0
+
+    # S3 computation
+    s3 = 50.0
+    mob_meta = getattr(claim, "mobile_meta", None)
+    if mob_meta:
+        mob_sent = int(getattr(mob_meta, "sampel_terkirim", 0))
+        mob_absent = int(getattr(mob_meta, "respon_tidak_hadir", 0))
+        mob_present = int(getattr(mob_meta, "respon_hadir", 0))
+
+        if mob_sent > 0:
+            if mob_absent > 0:
+                ratio = mob_absent / max(1, mob_sent)
+                s3 = min(100.0, 70.0 + ratio * 30.0)
+            elif mob_present > 0:
+                s3 = 10.0
+            else:
+                s3 = 50.0
+
+    return round(s1, 1), round(s2, 1), round(s3, 1)
+
 
 def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     """
@@ -12,9 +81,15 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     Includes Independent Hard Triggers (SIP Expired -> Merah) and Administrative Uncertainty (Unsynced -> Kuning).
     Generates non-hallucinatory structured audit dossier adhering to Perpres 82/2018.
     """
-    s1_contrib = round(0.5 * claim.s1_score, 2)
-    s2_contrib = round(0.3 * claim.s2_score, 2)
-    s3_contrib = round(0.2 * claim.s3_score, 2)
+    # Compute raw evidence scores as fallback if not explicitly supplied
+    computed_s1, computed_s2, computed_s3 = compute_raw_evidence_scores(claim)
+    effective_s1 = claim.s1_score if claim.s1_score is not None else computed_s1
+    effective_s2 = claim.s2_score if claim.s2_score is not None else computed_s2
+    effective_s3 = claim.s3_score if claim.s3_score is not None else computed_s3
+
+    s1_contrib = round(0.5 * effective_s1, 2)
+    s2_contrib = round(0.3 * effective_s2, 2)
+    s3_contrib = round(0.2 * effective_s3, 2)
     raw_score = round(s1_contrib + s2_contrib + s3_contrib, 1)
 
     final_score = raw_score
@@ -47,7 +122,7 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
             "IND-L1-TERAPI-KRONIS: Siklus terapi terjadwal rutin sesuai pedoman klinis JKN (Kesesuaian Pola Historis)"
         )
 
-    # Semantic Plagiarism Verification via ChromaDB Vector Space
+    # Semantic Plagiarism Verification via ChromaDB Vector Space (Fail-Closed)
     if claim.claim_id:
         try:
             from app.engine.chroma_semantic import chroma_engine
@@ -59,10 +134,13 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
                     f"({sim_score}% kemiripan) antar-pasien dalam klaster faskes yang sama "
                     f"(Fabrikasi Rekam Medis Baksos Fiktif Modus #6)"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            indikator.append(
+                f"WARN-SEM-AUDIT-DEGRADED: Modul semantik ChromaDB mengalami kendala ({e.__class__.__name__}). "
+                f"Disposisi diarahkan ke telaah resume medis manual."
+            )
 
-    # Clinical & Comorbidity Deep Auditing (Charlson Comorbidity & INA-CBG Severity)
+    # Clinical & Comorbidity Deep Auditing (Charlson Comorbidity & INA-CBG Severity) (Fail-Closed)
     try:
         from app.engine.clinical_auditor import clinical_auditor
         upcoding_check = clinical_auditor.validate_ina_cbg_severity(
@@ -78,10 +156,15 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
             )
             raw_score = max(raw_score, 75.0)
             final_score = raw_score
-    except Exception:
-        pass
+    except Exception as e:
+        indikator.append(
+            f"WARN-CLIN-AUDIT-DEGRADED: Audit keparahan INA-CBG gagal dieksekusi ({e.__class__.__name__}). "
+            f"Status dialihkan ke peninjauan koder klinis manual."
+        )
+        if raw_score < 50.0:
+            final_score = max(final_score, 50.0)
 
-    # Temporal Causality & Trajectory Coherence
+    # Temporal Causality & Trajectory Coherence (Fail-Closed)
     try:
         from app.engine.temporal_coherence import temporal_coherence
         temp_eval = temporal_coherence.validate_episode_causality(
@@ -91,11 +174,13 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
         if not temp_eval.get("is_coherent") and temp_eval.get("violations"):
             hard_trigger = True
             trigger_reason = f"Anomali Kausalitas Temporal: {temp_eval['violations'][0]}"
-            lane = "MERAH"
             final_score = max(final_score, 85.0)
             indikator.append(f"IND-TEMP-INVERSION: {temp_eval['violations'][0]}")
-    except Exception:
-        pass
+    except Exception as e:
+        indikator.append(
+            f"WARN-TEMP-AUDIT-DEGRADED: Validasi temporal kausalitas gagal ({e.__class__.__name__}). "
+            f"Diperlukan audit tanggal masuk/pulang manual."
+        )
 
     # 2. Evaluate Lapis 2 Indicators (SATUSEHAT SDMK Footprint)
     if claim.episode_meta.cluster_id == "CLS-GEODIST-COLLISION" or "Anomali Kecepatan Fisik" in claim.dpjp_meta.catatan_sdmk:
@@ -132,7 +217,39 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
             "IND-L3-PENDING: Menunggu respons konfirmasi peserta terarah atau peserta berada di wilayah kendala sinyal"
         )
 
-    # 4. Baseline Triage Lane Determination
+    # 4. AI Automatic Anomaly Detection (Active Signal Fusion Before Lane Decision)
+    ai_prediction = None
+    ai_category_labels = {
+        "PHANTOM_BILLING": "Klaim Fiktif (Phantom Billing)",
+        "REPEAT_BILLING": "Penagihan Berulang (Repeat Billing)",
+        "IMPOSSIBLE_TRAVEL": "Tabrakan Spatiotemporal DPJP (Impossible Travel)",
+        "UPCODING_SEVERITY": "Upcoding Tingkat Keparahan INA-CBG",
+        "ADMINISTRATIVE_HARD_TRIGGER": "Pelanggaran Izin Praktik DPJP",
+        "ADMINISTRATIVE_UNCERTAINTY": "Ketidakpastian Sinkronisasi Administratif",
+        "NORMAL_CLAIM": "Klaim Normal Terverifikasi",
+    }
+    try:
+        from app.engine.ai_anomaly_detector import ai_anomaly_engine
+        ai_prediction = ai_anomaly_engine.detect_anomaly(claim)
+        if ai_prediction and ai_prediction.is_anomaly:
+            readable_ai_cat = ai_category_labels.get(
+                ai_prediction.primary_anomaly_category,
+                ai_prediction.primary_anomaly_category.replace("_", " ").title()
+            )
+            indikator.append(
+                f"IND-AI-ANOMALY: Deteksi Otomatis Mesin AI ClaimTrace "
+                f"mengidentifikasi anomali {readable_ai_cat} "
+                f"(Skor Anomali AI: {ai_prediction.anomaly_score}%, Keyakinan: {ai_prediction.confidence_score}%)"
+            )
+            # Active AI Signal Flagging: if AI detects high-confidence outlier, add audit indicator
+            if ai_prediction.confidence_score >= 80.0 and ai_prediction.anomaly_score >= 80.0:
+                indikator.append(
+                    f"IND-AI-ELEVATION: Konvergensi model AI Unsupervised Outlier mengonfirmasi pola anomali dengan keyakinan tinggi ({ai_prediction.confidence_score}%)."
+                )
+    except Exception as e:
+        indikator.append(f"WARN-AI-DEGRADED: Mesin deteksi anomali AI mengalami kendala ({e.__class__.__name__}).")
+
+    # 5. Baseline Triage Lane Determination
     if final_score < 50.0:
         lane = "HIJAU"
     elif final_score < 75.0:
@@ -140,9 +257,14 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
     else:
         lane = "MERAH"
 
-    # 5. Independent Hard Trigger & Administrative Uncertainty Rules
+    # 6. Independent Hard Trigger & Administrative Uncertainty Rules
     if claim.dpjp_meta.sip_status == "EXPIRED":
         hard_trigger = True
+        trigger_reason = (
+            "Aturan Prioritas (Hard Trigger): Izin praktik (SIP) DPJP terbukti berakhir/non-aktif pada tanggal layanan. "
+            "Klaim dialihkan ke prioritas telaah Merah secara independen."
+        )
+        lane = "MERAH"
         trigger_reason = (
             "Aturan Prioritas (Hard Trigger): Izin praktik (SIP) DPJP terbukti berakhir/non-aktif pada tanggal layanan. "
             "Klaim dialihkan ke prioritas telaah Merah secara independen."

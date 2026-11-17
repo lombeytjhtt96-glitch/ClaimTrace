@@ -1178,11 +1178,11 @@ def _register_directory_record(directory: Dict[str, Dict[str, Any]], record: Dic
 
 
 def _demo_accounts_enabled() -> bool:
-    """Allow seeded demo credentials unless explicitly disabled outside pytest for field rollout."""
-    if os.getenv("PYTEST_CURRENT_TEST"):
-        return True
-    flag = os.getenv("CLAIMTRACE_ALLOW_DEMO_ACCOUNTS", "1").strip().lower()
-    return flag not in {"0", "false", "no", "off"}
+    """Allow seeded demo credentials only when explicitly enabled outside production (fail-closed default)."""
+    env_flag = os.getenv("CLAIMTRACE_ALLOW_DEMO_ACCOUNTS")
+    if env_flag is not None:
+        return env_flag.strip().lower() in {"1", "true", "yes", "on"}
+    return False
 
 
 def _pytest_fallback_id(default_id: str) -> Optional[str]:
@@ -2680,13 +2680,13 @@ def authorize_device_session(
 
 
 def _jury_demo_login_enabled() -> bool:
-    """Allow temporary one-click Administrator demo sign-in only when strict auth is off and feature flag permits."""
+    """Allow quick evaluation mode only when strict auth is off AND feature flag is explicitly enabled (fail-closed default)."""
     if os.getenv("CLAIMTRACE_STRICT_API_AUTH") == "1":
         return False
-    raw = os.getenv("CLAIMTRACE_ALLOW_JURY_DEMO")
+    raw = os.getenv("CLAIMTRACE_ALLOW_JURY_DEMO", "0")
     if os.getenv("PYTEST_CURRENT_TEST"):
         return str(raw or "").strip() == "1"
-    return str(raw if raw is not None else "1").strip().lower() not in {"0", "false", "no", "off"}
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
 class JuryDemoLoginRequest(BaseModel):
@@ -3557,21 +3557,45 @@ def simulate_mobile_jkn_response(
     x_verificator_role: Optional[str] = Header(None, alias="X-Verificator-Role"),
     x_verificator_nip: Optional[str] = Header(None, alias="X-Verificator-NIP"),
     x_mobile_signature: Optional[str] = Header(None, alias="X-Mobile-JKN-Signature"),
+    x_mobile_timestamp: Optional[str] = Header(None, alias="X-Mobile-JKN-Timestamp"),
+    x_mobile_nonce: Optional[str] = Header(None, alias="X-Mobile-JKN-Nonce"),
 ):
     """
-    Simulates real-time binary confirmation from Mobile JKN (Lapis 3).
-    Secured by HMAC signature or authenticated operator session.
+    Ingests / simulates real-time binary confirmation from Mobile JKN (Lapis 3).
+    Secured by HMAC-SHA256 signature (Mobile JKN gateway webhook) or authenticated operator session with ADJUDICATE privilege.
+    Rejects read-only roles (ANALYST, AUDITOR_VIEWER) from mutating claims.
     Adjusts S3 score dynamically and records SHA-256 audit entry.
     """
-    if not x_mobile_signature:
+    actor = "MOBILE_JKN_GATEWAY"
+    if x_mobile_signature:
+        # Cryptographic Webhook signature verification
+        secret = os.getenv("CLAIMTRACE_MOBILE_JKN_SECRET", "jkn-webhook-secret-key-bpjs-secure-2026").encode()
+        if not x_mobile_timestamp:
+            raise HTTPException(status_code=401, detail="Header 'X-Mobile-JKN-Timestamp' wajib disertakan bersama tanda tangan.")
+        try:
+            ts_float = float(x_mobile_timestamp)
+            current_ts = datetime.now(timezone.utc).timestamp()
+            if abs(current_ts - ts_float) > 300:
+                raise HTTPException(status_code=401, detail="Tanda tangan Mobile JKN kedaluwarsa (timestamp di luar toleransi 300 detik).")
+        except ValueError:
+            raise HTTPException(status_code=401, detail="Format 'X-Mobile-JKN-Timestamp' tidak valid.")
+
+        canonical_msg = f"{x_mobile_timestamp}:{x_mobile_nonce or ''}:{claim_id}:{str(payload.attended).lower()}".encode()
+        expected_sig = hmac.new(secret, canonical_msg, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expected_sig, x_mobile_signature.strip()):
+            raise HTTPException(status_code=401, detail="Tanda tangan kriptografis Mobile JKN (HMAC-SHA256) tidak valid.")
+        actor = "MOBILE_JKN_WEBHOOK"
+    else:
+        # Operator-initiated mutation: strictly require ADJUDICATE privilege (Fail-closed for READ-only roles)
         subject = resolve_subject(
             authorization=authorization,
             x_bpjs_token=x_bpjs_token,
             x_verificator_role=x_verificator_role,
             x_verificator_nip=x_verificator_nip,
-            fallback_verifier_id="MOBILE_JKN_GATEWAY"
+            fallback_verifier_id=_pytest_fallback_id("VRF-MOBILE-OPERATOR")
         )
-        verify_privilege(subject, Privilege.READ, action_name="SIMULATE_MOBILE_JKN_RESPONSE")
+        verify_privilege(subject, Privilege.ADJUDICATE, action_name="MUTATE_MOBILE_JKN_RESPONSE")
+        actor = subject.nip or subject.name or "OPERATOR_VERIFIKATOR"
 
     if claim_id not in SYNTHETIC_CLAIMS_DATABASE:
         raise HTTPException(status_code=404, detail=f"Klaim dengan ID '{claim_id}' tidak ditemukan")
@@ -3596,7 +3620,7 @@ def simulate_mobile_jkn_response(
     audit_entry = audit_logger.record_event(
         event_type="MOBILE_JKN_BINARY_SYNC",
         claim_id=claim_id,
-        actor="MOBILE_JKN_GATEWAY",
+        actor=actor,
         payload={
             "attended": payload.attended,
             "new_s3_score": claim.s3_score,
