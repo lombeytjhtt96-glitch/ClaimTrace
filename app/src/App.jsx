@@ -1104,7 +1104,7 @@ export default function App() {
     }
   };
 
-  // Trigger simulasi pengiriman notifikasi dari verifikator
+  // Sinkronisasi pengiriman notifikasi verifikator ke kanal Mobile JKN
   const triggerSimulation = () => {
     setNotificationToast(true);
     setToastMessage('Sinyal Lapis 3 terkirim: Permintaan konfirmasi presensi diteruskan ke aplikasi peserta.');
@@ -1149,7 +1149,7 @@ export default function App() {
     }
   };
 
-  const resetDemo = () => {
+  const resetPresensiSession = () => {
     setPatientResponse(null);
     setLapis3Score(80);
     setVerificatorAction(null);
@@ -2022,7 +2022,7 @@ export default function App() {
                   <div className="flex items-center space-x-1.5 shrink-0">
                     <button
                       type="button"
-                      onClick={resetDemo}
+                      onClick={resetPresensiSession}
                       className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs transition-all cursor-pointer border whitespace-nowrap ${
                         isLight 
                           ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' 
@@ -2930,7 +2930,7 @@ export default function App() {
                             onCloseSimulator={closeSimulator}
                             isSimulatorOpen={viewMode === 'split' || viewMode === 'mobile'}
                             patientResponse={patientResponse}
-                            onResetDemo={resetDemo}
+                            onResetPresensi={resetPresensiSession}
                             isLight={isLight}
                           />
                         )}

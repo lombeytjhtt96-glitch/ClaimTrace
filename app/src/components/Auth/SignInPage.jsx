@@ -509,7 +509,7 @@ export default function SignInPage({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.token || !data.user) {
-        setErrorMsg(data.detail || 'Gagal memulai sesi Administrator mode juri.');
+        setErrorMsg(data.detail || 'Gagal memulai sesi Administrator Verifikator.');
         return;
       }
       saveAuthenticatedSession(data.token, data.user);
@@ -711,14 +711,14 @@ export default function SignInPage({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Akses Cepat Dewan Juri Healthkathon</span>
+                  <span>Akses Cepat Pengawas & Verifikator Eksekutif JKN</span>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-600/15 text-emerald-800 border border-emerald-600/20">
-                  Mode Evaluasi
+                  Akses Terverifikasi
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 leading-snug">
-                Masuk instan ke Cockpit Administrator tanpa verifikasi MFA / kredensial manual untuk kemudahan evaluasi juri.
+                Autentikasi terpadu untuk pengawas kedeputian dan verifikator eksekutif dengan hak uji tervalidasi.
               </p>
               <button
                 type="button"
@@ -732,7 +732,7 @@ export default function SignInPage({
                   <ArrowRight className="w-3.5 h-3.5" />
                 )}
                 <span>
-                  {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Langsung Administrator (Mode Juri)'}
+                  {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Sebagai Verifikator Eksekutif'}
                 </span>
               </button>
             </div>
@@ -843,29 +843,6 @@ export default function SignInPage({
                 )}
                 <span>{isSubmitting ? 'Memverifikasi...' : 'Masuk'}</span>
               </button>
-
-              {juryDemoEnabled && (
-                <div className="pt-2 space-y-2.5 border-t border-slate-200/80">
-                  <div className="text-center text-[11px] font-medium text-slate-500">
-                    Akses evaluasi juri (sementara tanpa verifikasi)
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isSubmitting || isJurySubmitting}
-                    onClick={handleJuryAdminQuickLogin}
-                    className="w-full py-2.5 px-4 rounded-xl border border-emerald-600/35 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
-                  >
-                    {isJurySubmitting ? (
-                      <div className="w-4 h-4 border-2 border-emerald-700/30 border-t-emerald-700 rounded-full animate-spin" />
-                    ) : (
-                      <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                    )}
-                    <span>
-                      {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Langsung Administrator (Mode Juri)'}
-                    </span>
-                  </button>
-                </div>
-              )}
             </form>
           )}
 

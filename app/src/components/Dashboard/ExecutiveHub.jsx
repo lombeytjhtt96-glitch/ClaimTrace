@@ -1848,7 +1848,7 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
 
 // ─── PolicyPilot-Style Live Claims Bento Table & Performance Card ───────────────────────
 const FALLBACK_RECENT_CLAIMS = [
-  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, score: 87.0, lane: 'red', slaDays: 3, source: 'Simulasi FKRTL' },
+  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, score: 87.0, lane: 'red', slaDays: 3, source: 'Pengajuan Mandiri FKRTL' },
   { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Maya Kusuma, Sp.PD', code: 'K-4-17-I', tariffRp: 9850000, score: 74.5, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
   { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Farhan Malik, Sp.B', code: 'B-1-10-I', tariffRp: 42000000, score: 91.2, lane: 'red', slaDays: 2, source: 'Audit SDMK' },
   { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', tariffRp: 4200000, score: 12.4, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },

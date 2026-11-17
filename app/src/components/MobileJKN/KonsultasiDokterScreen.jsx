@@ -55,7 +55,7 @@ export default function KonsultasiDokterScreen({ onNavigate }) {
     setMessages((prev) => [...prev, newMsg]);
     setInputText('');
 
-    // Simulasi jawaban dokter otomatis
+    // Respon telekonsultasi dokter otomatis
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,

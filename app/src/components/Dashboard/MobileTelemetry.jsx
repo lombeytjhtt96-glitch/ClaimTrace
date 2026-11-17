@@ -16,10 +16,12 @@ export default function MobileTelemetry({
   onCloseSimulator, 
   isSimulatorOpen, 
   patientResponse, 
+  onResetPresensi,
   onResetDemo,
   isLight: propIsLight
 }) {
   const isLight = useCockpitTheme(propIsLight);
+  const handleResetPresensi = onResetPresensi || onResetDemo;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -462,10 +464,10 @@ export default function MobileTelemetry({
                 </button>
               )}
 
-              {onResetDemo && (
+              {handleResetPresensi && (
                 <button
                   type="button"
-                  onClick={onResetDemo}
+                  onClick={handleResetPresensi}
                   className={`w-full py-1.5 px-3 rounded-xl font-semibold text-xs flex items-center justify-center space-x-1 transition cursor-pointer border ${
                     isLight
                       ? 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 border-transparent hover:border-slate-200'

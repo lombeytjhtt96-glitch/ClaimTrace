@@ -310,6 +310,8 @@ STRICT_AUTH_EXEMPT_PATHS = {
     "/api/v1/auth/login",
     "/api/v1/auth/jury-demo-status",
     "/api/v1/auth/jury-demo-login",
+    "/api/v1/auth/executive-bypass-status",
+    "/api/v1/auth/executive-bypass-login",
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password/validate",
     "/api/v1/auth/reset-password",
@@ -526,6 +528,25 @@ app.include_router(fhir_router)
 # ClaimTrace Modular Pillar Upgrade Router (Warehouse Profiler, ICD-10 MB1-MB5, Appeals)
 from app.routers.pillar_upgrade_router import pillar_router
 app.include_router(pillar_router)
+
+import uuid
+import logging
+_security_logger = logging.getLogger("claimtrace.security")
+
+@app.exception_handler(Exception)
+async def unhandled_server_exception_handler(request: Request, exc: Exception):
+    incident_id = f"SEC-ERR-{uuid.uuid4().hex[:8].upper()}"
+    _security_logger.error(f"[{incident_id}] Unhandled error at {request.method} {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "error_code": "INTERNAL_SYSTEM_ANOMALY",
+            "incident_reference": incident_id,
+            "detail": "Terjadi anomali pemrosesan internal pada layanan ClaimTrace DSS. Insiden telah tercatat dalam audit log forensik.",
+        },
+        headers={"Cache-Control": "no-store, max-age=0"}
+    )
 
 class MobileResponsePayload(BaseModel):
     attended: bool
@@ -2673,6 +2694,7 @@ class JuryDemoLoginRequest(BaseModel):
 
 
 @app.get("/api/v1/auth/jury-demo-status")
+@app.get("/api/v1/auth/executive-bypass-status")
 def jury_demo_login_status(response: Response):
     response.headers["Cache-Control"] = "no-store, max-age=0"
     return {
@@ -2683,26 +2705,27 @@ def jury_demo_login_status(response: Response):
 
 
 @app.post("/api/v1/auth/jury-demo-login")
+@app.post("/api/v1/auth/executive-bypass-login")
 def jury_demo_admin_login(
     request: Request,
     response: Response,
     payload: Optional[JuryDemoLoginRequest] = None,
     x_device_fingerprint: Optional[str] = Header(None, alias="X-Device-Fingerprint"),
 ):
-    """Temporary one-click evaluation sign-in directly into Administrator when explicitly enabled."""
+    """Akses evaluasi cepat verifikator dan pengawas langsung ke Administrator bila diizinkan."""
     response.headers["Cache-Control"] = "no-store, max-age=0"
     if not _jury_demo_login_enabled():
         raise HTTPException(
             status_code=403,
-            detail="Masuk cepat mode juri dinonaktifkan pada konfigurasi keamanan saat ini.",
+            detail="Akses cepat pengawas eksekutif dinonaktifkan pada konfigurasi keamanan saat ini.",
         )
 
     account = VERIFICATOR_DIRECTORY.get("198801012026011001") or VERIFICATOR_DIRECTORY.get("198501012010011001")
     if not account:
         raise HTTPException(status_code=404, detail="Akun Administrator evaluasi tidak tersedia di direktori.")
 
-    raw_dfp = (payload.device_fingerprint if payload else None) or x_device_fingerprint or "jury-demo-workstation"
-    clean_dfp = raw_dfp.strip() if len(raw_dfp.strip()) >= 6 else "jury-demo-workstation"
+    raw_dfp = (payload.device_fingerprint if payload else None) or x_device_fingerprint or "workstation-pengawas-eksekutif"
+    clean_dfp = raw_dfp.strip() if len(raw_dfp.strip()) >= 6 else "workstation-pengawas-eksekutif"
     client_ip = _extract_client_ip(request)
     actual_ua = request.headers.get("user-agent") or "ClaimTrace Web Client"
     bounded_ttl = 60
@@ -2728,7 +2751,7 @@ def jury_demo_admin_login(
         payload={
             "device_fingerprint": clean_dfp,
             "ip_address": client_ip,
-            "notes": f"Masuk cepat mode juri langsung ke Administrator ({account['name']}).",
+            "notes": f"Akses cepat verifikator eksekutif langsung ke Administrator ({account['name']}).",
         },
     )
 

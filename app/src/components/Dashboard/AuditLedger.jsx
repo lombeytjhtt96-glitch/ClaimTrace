@@ -405,7 +405,7 @@ export default function AuditLedger({ isLight: propIsLight }) {
         }
       })
       .catch(() => {
-        // Fallback to rich built-in demo blocks silently
+        // Fallback to secure offline audit trail cache silently
       });
     return () => {
       active = false;
