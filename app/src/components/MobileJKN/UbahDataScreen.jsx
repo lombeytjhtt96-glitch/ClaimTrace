@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Hospital, User, Phone, Mail, MapPin, Check, ChevronRight } from 'lucide-react';
+import SearchableCombobox from '../Common/SearchableCombobox';
+
+const FKTP_DIRECTORY_OPTIONS = [
+  { value: 'KLINIK PRATAMA NASIONAL BPJS (0112U001)', label: 'KLINIK PRATAMA NASIONAL BPJS', meta: 'Kode 0112U001 • Jakarta Pusat' },
+  { value: 'PUSKESMAS CEMPAKA PUTIH (0112P004)', label: 'PUSKESMAS CEMPAKA PUTIH', meta: 'Kode 0112P004 • Jakarta Pusat' },
+  { value: 'KLINIK SEHAT SEJAHTERA (0112U009)', label: 'KLINIK SEHAT SEJAHTERA', meta: 'Kode 0112U009 • Jakarta Pusat' },
+];
 
 export default function UbahDataScreen({ onNavigate }) {
   const [faskes, setFaskes] = useState(() => {
@@ -60,17 +67,16 @@ export default function UbahDataScreen({ onNavigate }) {
               <Hospital className="w-4 h-4" />
               <label htmlFor="mobile-ubah-faskes" className="text-xs font-bold text-slate-900">Fasilitas Kesehatan Tk. I (FKTP)</label>
             </div>
-            <select
+            <SearchableCombobox
               id="mobile-ubah-faskes"
-              name="mobile_ubah_faskes"
+              ariaLabel="Cari Fasilitas Kesehatan Tingkat I (FKTP)"
               value={faskes}
-              onChange={(e) => setFaskes(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none"
-            >
-              <option value="KLINIK PRATAMA NASIONAL BPJS (0112U001)">KLINIK PRATAMA NASIONAL BPJS (0112U001)</option>
-              <option value="PUSKESMAS CEMPAKA PUTIH (0112P004)">PUSKESMAS CEMPAKA PUTIH (0112P004)</option>
-              <option value="KLINIK SEHAT SEJAHTERA (0112U009)">KLINIK SEHAT SEJAHTERA (0112U009)</option>
-            </select>
+              onChange={(val) => { if (val) setFaskes(val); }}
+              options={FKTP_DIRECTORY_OPTIONS}
+              placeholder="Ketik nama / kode FKTP..."
+              isLight
+              maxResults={6}
+            />
             <p className="text-[9.5px] text-slate-400">
               *Perpindahan faskes mulai berlaku pada tanggal 1 bulan berikutnya sesuai regulasi BPJS Kesehatan.
             </p>

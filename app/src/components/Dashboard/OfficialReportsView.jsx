@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
 import { exportCsvFile } from '../../utils/exportCsv';
+import SearchableCombobox from '../Common/SearchableCombobox';
 
 export default function OfficialReportsView({ 
   initialReportType = 'bahv-kolektif',
@@ -405,17 +406,15 @@ export default function OfficialReportsView({
           <label htmlFor="official-report-hospital" className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Fasilitas Kesehatan Rujukan (FKRTL):
           </label>
-          <select
+          <SearchableCombobox
             id="official-report-hospital"
-            name="official_report_hospital"
+            ariaLabel="Cari Fasilitas Kesehatan Rujukan (FKRTL)"
             value={selectedHospital}
-            onChange={(e) => setSelectedHospital(e.target.value)}
-            className="w-full text-xs py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            {hospitals.map(h => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedHospital(val)}
+            options={hospitals.map((h) => ({ value: h.id, label: h.name, sublabel: h.id }))}
+            placeholder="Ketik nama / kode RS FKRTL..."
+            isLight={isLight}
+          />
         </div>
 
         {/* BATCH SELECTOR */}
@@ -423,17 +422,15 @@ export default function OfficialReportsView({
           <label htmlFor="official-report-batch" className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
             Nomor Batch Formulir Pengajuan Klaim (FPK):
           </label>
-          <select
+          <SearchableCombobox
             id="official-report-batch"
-            name="official_report_batch"
+            ariaLabel="Cari Nomor Batch FPK"
             value={selectedBatch}
-            onChange={(e) => setSelectedBatch(e.target.value)}
-            className="w-full text-xs py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            {batches.map(b => (
-              <option key={b.id} value={b.id}>{b.label}</option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedBatch(val)}
+            options={batches.map((b) => ({ value: b.id, label: b.label, sublabel: b.id }))}
+            placeholder="Ketik nomor FPK / periode..."
+            isLight={isLight}
+          />
         </div>
       </div>
 

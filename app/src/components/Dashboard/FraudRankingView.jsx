@@ -36,6 +36,8 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
   const [sortBy, setSortBy] = useState('risk_score');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFaskesDetail, setSelectedFaskesDetail] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchRankings();
@@ -77,6 +79,15 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
     );
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredRankings.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIdx = (safePage - 1) * pageSize;
+  const paginatedRankings = filteredRankings.slice(startIdx, startIdx + pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedWilayah, selectedKelas, sortBy, pageSize]);
+
   return (
     <div className="space-y-4">
       {/* HEADER SECTION */}
@@ -101,7 +112,8 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
 
           <div className="flex items-center space-x-2 shrink-0">
             <button
-              onClick={fetchRankings}
+              type="button"
+              onClick={() => fetchRankings(true)}
               title="Perbarui Data Leaderboard"
               className={`p-2 rounded-lg border transition cursor-pointer ${
                 isLight ? 'hover:bg-slate-100 border-slate-200 text-slate-700' : 'hover:bg-slate-800 border-slate-700 text-white'
@@ -282,7 +294,7 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {filteredRankings.map((faskes) => {
+                  {paginatedRankings.map((faskes) => {
                     const isSelected = selectedFaskesDetail?.faskes_id === faskes.faskes_id;
                     const isTop3 = faskes.rank <= 3;
                     return (
@@ -381,6 +393,53 @@ export default function FraudRankingView({ isLight = true, onSelectFaskes }) {
                 </tbody>
               </table>
             </div>
+            {filteredRankings.length > 0 && (
+              <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] ${
+                isLight ? 'bg-slate-50/80 border-slate-200 text-slate-600' : 'bg-white/[0.02] border-white/10 text-slate-400'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <span>
+                    Menampilkan <strong className="font-mono">{startIdx + 1}–{Math.min(startIdx + pageSize, filteredRankings.length)}</strong> dari <strong className="font-mono">{filteredRankings.length}</strong> Faskes
+                  </span>
+                  <select
+                    aria-label="Jumlah Faskes per halaman"
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className={`px-2 py-0.5 rounded border text-[11px] font-mono cursor-pointer ${
+                      isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-800 border-slate-700 text-white'
+                    }`}
+                  >
+                    <option value={10}>10 / hal</option>
+                    <option value={25}>25 / hal</option>
+                    <option value={50}>50 / hal</option>
+                    <option value={100}>100 / hal</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className={`px-2.5 py-1 rounded border font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                      isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                    }`}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="font-mono font-semibold px-1.5">Hal {safePage} / {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className={`px-2.5 py-1 rounded border font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                      isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
+                    }`}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

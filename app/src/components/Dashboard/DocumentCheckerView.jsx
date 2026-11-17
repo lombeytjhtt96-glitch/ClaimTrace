@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import RealBundleMorbidityPanel from './RealBundleMorbidityPanel';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import SearchableCombobox from '../Common/SearchableCombobox';
 import { SegmentedComplianceBar, PolicyStepProgressRing } from '../Common/PolicyWidgets';
 import {
   FileText,
@@ -281,26 +282,24 @@ export default function DocumentCheckerView({ isLight = true, currentUser, initi
 
           {/* CLAIM SELECTOR */}
           <div className="flex items-center space-x-2 shrink-0">
-            <label htmlFor="doc-checker-claim-select" className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Pilih Kasus:</label>
-            <select
+            <label htmlFor="doc-checker-claim-select" className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Cari Kasus:</label>
+            <SearchableCombobox
               id="doc-checker-claim-select"
-              aria-label="Pilih kasus klaim untuk verifikasi berkas"
+              ariaLabel="Cari nomor klaim atau rumah sakit untuk verifikasi berkas"
               value={activeClaimId}
-              onChange={(e) => {
-                const nextId = e.target.value;
+              onChange={(nextId) => {
                 setActiveClaimId(nextId);
                 if (onSelectClaim) onSelectClaim({ id: nextId });
               }}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer max-w-[300px] sm:max-w-md ${
-                isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-slate-800 border-slate-700 text-white'
-              }`}
-            >
-              {claimOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.id} - {opt.label}
-                </option>
-              ))}
-            </select>
+              options={claimOptions.map((opt) => ({
+                value: opt.id,
+                label: `${opt.id} — ${opt.label}`,
+                sublabel: opt.badge || undefined,
+              }))}
+              placeholder="Ketik No. Klaim / SEP / RS..."
+              isLight={isLight}
+              className="w-[240px] sm:w-[320px]"
+            />
             <button
               type="button"
               onClick={() => fetchDocumentAudit(activeClaimId, true)}

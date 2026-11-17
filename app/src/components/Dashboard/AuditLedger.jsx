@@ -262,6 +262,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const [gateName, setGateName] = useState('');
   const [gateNotes, setGateNotes] = useState('');
   const [gateActionStatus, setGateActionStatus] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const handleOpenReceiptsModal = async () => {
     setShowReceiptsModal(true);
@@ -548,6 +550,15 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
     if (eventTypeFilter === 'mobile') return matchSearch && b.action.includes('MOBILE');
     return matchSearch;
   });
+
+  const totalLedgerPages = Math.max(1, Math.ceil(filteredBlocks.length / pageSize));
+  const safeLedgerPage = Math.min(currentPage, totalLedgerPages);
+  const ledgerStartIdx = (safeLedgerPage - 1) * pageSize;
+  const paginatedBlocks = filteredBlocks.slice(ledgerStartIdx, ledgerStartIdx + pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, eventTypeFilter, pageSize]);
 
   return (
     <div className={`space-y-4 font-inter ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -841,7 +852,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                     </td>
                   </tr>
                 )}
-                {filteredBlocks.map((b) => (
+                {paginatedBlocks.map((b) => (
                   <tr
                     key={b.index}
                     tabIndex={0}
@@ -971,6 +982,53 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               </tbody>
             </table>
           </div>
+          {filteredBlocks.length > 0 && (
+            <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] font-sans ${
+              isLight ? 'bg-slate-50/80 border-slate-200 text-slate-600' : 'bg-white/[0.02] border-white/10 text-white/60'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span>
+                  Menampilkan <strong className="font-mono">{ledgerStartIdx + 1}–{Math.min(ledgerStartIdx + pageSize, filteredBlocks.length)}</strong> dari <strong className="font-mono">{filteredBlocks.length}</strong> blok
+                </span>
+                <select
+                  aria-label="Jumlah blok audit per halaman"
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className={`px-2 py-0.5 rounded border text-[11px] font-mono cursor-pointer ${
+                    isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-[#00153A] border-white/15 text-white'
+                  }`}
+                >
+                  <option value={10}>10 / hal</option>
+                  <option value={25}>25 / hal</option>
+                  <option value={50}>50 / hal</option>
+                  <option value={100}>100 / hal</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={safeLedgerPage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={`px-2.5 py-1 rounded border font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                    isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  Sebelumnya
+                </button>
+                <span className="font-mono font-semibold px-1.5">Hal {safeLedgerPage} / {totalLedgerPages}</span>
+                <button
+                  type="button"
+                  disabled={safeLedgerPage >= totalLedgerPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalLedgerPages, p + 1))}
+                  className={`px-2.5 py-1 rounded border font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                    isLight ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100' : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* BLOCK INSPECTOR (5 COLS) */}

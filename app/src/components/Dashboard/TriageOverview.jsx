@@ -4,7 +4,7 @@ import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '.
 import { downloadTextFile } from '../../utils/exportCsv';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
+import SearchableCombobox from '../Common/SearchableCombobox';
 import { motion } from 'motion/react';
 import {
   AlertOctagon, ChevronRight, ArrowUpRight, RefreshCw, FileText,
@@ -1001,23 +1001,22 @@ export default function TriageOverview({
             <option value="RITL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Rawat Inap (RITL)</option>
           </select>
 
-          <select 
+          <SearchableCombobox
             id="triage-faskes-filter"
-            name="faskes_filter"
-            aria-label="Filter Fasilitas Kesehatan"
+            ariaLabel="Cari dan filter Fasilitas Kesehatan"
             value={selectedFaskes}
-            onChange={(e) => setSelectedFaskes(e.target.value)}
-            className={`w-full sm:w-auto text-xs px-3 py-2 rounded-xl border focus:outline-none cursor-pointer ${
-              isLight
-                ? 'bg-white border-slate-300 text-slate-800 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
-                : 'bg-white/5 text-white border-white/15 focus:border-[#FFCA40]'
-            }`}
-          >
-            <option value="all" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>Semua Fasilitas Kesehatan</option>
-            {uniqueFaskesOptions.map((hosp) => (
-              <option key={hosp} value={hosp} className={isLight ? 'bg-white text-slate-900' : 'bg-[#00153A] text-white'}>{hosp}</option>
-            ))}
-          </select>
+            onChange={(val) => {
+              setSelectedFaskes(val);
+              setCurrentPage(1);
+            }}
+            options={uniqueFaskesOptions.map((hosp) => ({ value: hosp, label: hosp }))}
+            placeholder="Cari Faskes / RS..."
+            allowAll
+            allValue="all"
+            allLabel="Semua Faskes Cabang"
+            isLight={isLight}
+            className="w-full sm:w-[230px]"
+          />
 
           <div className="relative w-full sm:w-auto sm:min-w-[220px]">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
