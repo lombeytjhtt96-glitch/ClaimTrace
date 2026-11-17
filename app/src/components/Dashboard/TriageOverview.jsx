@@ -3,6 +3,7 @@ import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '.
 import { downloadTextFile } from '../../utils/exportCsv';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
 import { motion } from 'motion/react';
 import {
   AlertOctagon, ChevronRight, ArrowUpRight, LayoutGrid, List, RefreshCw, FileText,
@@ -195,7 +196,13 @@ const formatDecisionStatus = (statusCode, lane = 'green') => {
   }
 };
 
-export default function TriageOverview({ onSelectCase, isLight: propIsLight, initialSearchQuery = '' }) {
+export default function TriageOverview({
+  onSelectCase,
+  onNavigateTab,
+  onOpenWorkflowMap,
+  isLight: propIsLight,
+  initialSearchQuery = '',
+}) {
   const isLight = useCockpitTheme(propIsLight);
 
   const mapLiveClaimsSafe = (rawList) => (Array.isArray(rawList) ? rawList : []).map((entry) => {
@@ -717,6 +724,15 @@ export default function TriageOverview({ onSelectCase, isLight: propIsLight, ini
           </button>
         </div>
       )}
+
+      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
+      <WorkflowPipelineBanner
+        activeStep={1}
+        onNavigateTab={onNavigateTab}
+        onOpenWorkflowMap={onOpenWorkflowMap}
+        isLight={isLight}
+        customNote="Tahap 1: Verifikator menyaring berkas FPK bulan berjalan berdasarkan 3 Lajur Risiko & SLA 10 Hari (Perpres 82/2018)."
+      />
 
       {/* COCKPIT 4 SUMMARY CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

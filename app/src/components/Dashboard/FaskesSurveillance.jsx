@@ -3,6 +3,7 @@ import { API_BASE_URL, getCachedJsonSync, cachedAuthGetJson } from '../../servic
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { SingleLineYAxisTick, formatAxisLabel } from '../Common/PolicyWidgets';
+import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Hospital, Search, Filter, AlertTriangle, ShieldCheck,
@@ -20,7 +21,13 @@ import {
   LabelList,
 } from 'recharts';
 
-export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCase, isLight: propIsLight }) {
+export default function FaskesSurveillance({
+  onSelectHospital,
+  onSelectFaskesCase,
+  onNavigateTab,
+  onOpenWorkflowMap,
+  isLight: propIsLight,
+}) {
   const isLight = useCockpitTheme(propIsLight);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -164,6 +171,15 @@ export default function FaskesSurveillance({ onSelectHospital, onSelectFaskesCas
 
   return (
     <div className={`space-y-4 font-sans pb-20 animate-fade-in ${isLight ? 'text-slate-800' : 'text-white'}`}>
+      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
+      <WorkflowPipelineBanner
+        activeStep={4}
+        onNavigateTab={onNavigateTab}
+        onOpenWorkflowMap={onOpenWorkflowMap}
+        isLight={isLight}
+        customNote="Tahap 4: Pengawasan longitudinal profil faskes (Indeks FRI), pemantauan dokter abnormal, dan deteksi sindikat klaim."
+      />
+
       {/* HEADER SECTION & SEARCH CONTROLS */}
       <div className="space-y-3">
         <div className={`p-5 rounded-2xl border backdrop-blur-xl space-y-2 transition-all ${

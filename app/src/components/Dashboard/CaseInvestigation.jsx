@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
 import { motion, AnimatePresence } from 'motion/react';
 import TemporalAlertCard from './TemporalAlertCard';
+import WorkflowPipelineBanner from '../Common/WorkflowPipelineBanner';
 import { 
   ArrowLeft, ShieldCheck, 
   Clock, Hospital, Stethoscope, UserCheck, AlertOctagon,
@@ -70,6 +71,8 @@ export default function CaseInvestigation({
   onBackToQueue,
   onOpenDecision,
   onOpenDocumentChecker,
+  onNavigateTab,
+  onOpenWorkflowMap,
   isLight = false
 }) {
   const [volumeViewType, setVolumeViewType] = useState('bar'); // 'bar' | 'area'
@@ -638,6 +641,19 @@ export default function CaseInvestigation({
 
   return (
     <div className={`space-y-4 font-inter ${isLight ? 'text-slate-800' : 'text-white'} tabular-nums`}>
+      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
+      <WorkflowPipelineBanner
+        activeStep={2}
+        onNavigateTab={(tab) => {
+          if (tab === 'queue') onBackToQueue();
+          else if (tab === 'decision') onOpenDecision();
+          else if (onNavigateTab) onNavigateTab(tab);
+        }}
+        onOpenWorkflowMap={onOpenWorkflowMap}
+        isLight={isLight}
+        customNote={`Tahap 2: Menelaah Lapis 1 (Pola), Lapis 2 (DPJP & SATUSEHAT), Lapis 3 (FRISTA & Mobile JKN) pada berkas ${currentCase.id}.`}
+      />
+
       {/* UNIFIED EXECUTIVE CASE CARD -GLASSMORPHISM */}
       <div className={`${isLight ? 'bg-white border-slate-200 shadow-sm hover:border-slate-300' : 'bg-[#00153A]/85 border-white/10 shadow-2xl shadow-[#00081c]/50 hover:border-white/20'} backdrop-blur-xl border rounded-2xl p-4 space-y-3 transition-all duration-300`}>
         {/* Row 1: Breadcrumb & Case Classification */}

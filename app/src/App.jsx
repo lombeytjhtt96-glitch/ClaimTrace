@@ -21,7 +21,7 @@ import {
   Printer, QrCode, CreditCard, ListFilter, Database, ShieldAlert, Key, LayoutDashboard, Building2,
   ChevronDown, LogOut, PanelLeftClose, PanelLeft, RotateCcw, Settings, X,
   Briefcase, Zap, Flag, Calendar, Users, MessageSquare, ClipboardList,
-  Sparkles, Sun, Moon, FileCheck2
+  Sparkles, Sun, Moon, FileCheck2, Compass
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
@@ -48,6 +48,7 @@ const BugarScreen = lazyWithRetry(() => import('./components/MobileJKN/BugarScre
 const ObatScreen = lazyWithRetry(() => import('./components/MobileJKN/ObatScreen'));
 import TabErrorBoundary from './components/Common/TabErrorBoundary';
 import WorkspaceHubShell from './components/Common/WorkspaceHubShell';
+import WorkflowMapModal from './components/Common/WorkflowMapModal';
 import { verifySessionRequest } from './services/apiConfig';
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
@@ -300,6 +301,7 @@ export default function App() {
     ...HUB_SUB_DEFAULTS,
     ...(initialRoute.sub && HUB_SUB_DEFAULTS[initialRoute.tab] ? { [initialRoute.tab]: initialRoute.sub } : {}),
   }));
+  const [workflowMapOpen, setWorkflowMapOpen] = useState(false);
 
   const setDashboardTab = (targetId, explicitSub) => {
     const resolved = LEGACY_TAB_MAP[targetId] || { tab: 'executive' };
@@ -498,33 +500,33 @@ export default function App() {
   // Navigasi Sidebar Verifikator Terfokus (10 Hub Kerja dalam 3 Kelompok)
   const sidebarNavGroups = [
     {
-      group: 'Alur Kerja Utama',
+      group: 'Alur Verifikasi Pra-Bayar',
       items: [
-        { id: 'executive', label: 'Dashboard Ringkasan', keywords: 'ringkasan eksekutif home beranda kpi', icon: LayoutDashboard },
         {
           id: 'queue',
-          label: 'Antrean & Berkas',
-          keywords: 'antrean daftar sep prioritas top-k triase cepat manajemen berkas ditandai flagged',
+          label: '1. Antrean & Berkas Klaim',
+          keywords: 'antrean daftar sep prioritas top-k triase cepat manajemen berkas ditandai flagged sla 10 hari',
           icon: ListFilter,
           badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined,
           badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
         },
-        { id: 'investigation', label: 'Telaah & Dokumen', keywords: 'telaah kasus investigasi 4 lapis upcoding 7 dokumen icd-10 mb1', icon: FileText },
-        { id: 'decision', label: 'Konsol Putusan', keywords: 'putusan bakb bahv sanggahan fhir claim submit', icon: ShieldAlert },
+        { id: 'investigation', label: '2. Telaah & Dokumen Medis', keywords: 'telaah kasus investigasi 4 lapis upcoding 7 dokumen icd-10 mb1 frista mobile jkn', icon: FileText },
+        { id: 'decision', label: '3. Konsol Putusan & BAKB', keywords: 'putusan bakb bahv sanggahan fhir claim submit tkmkb', icon: ShieldAlert },
       ],
     },
     {
-      group: 'Forensik & Koordinasi',
+      group: 'Pengawasan Faskes & Forensik',
       items: [
-        { id: 'faskes', label: 'Faskes & DPJP', keywords: 'fri profil rs ranking sindikat dpjp sip geovelocity retensi kepatuhan', icon: Building2 },
+        { id: 'faskes', label: '4. Faskes & DPJP', keywords: 'fri profil rs ranking sindikat dpjp sip geovelocity retensi kepatuhan surveilans', icon: Building2 },
         { id: 'empirical', label: 'Forensik & Gudang Data', keywords: 'benford lorenz gini phantom repeat billing sql tren privasi analitik', icon: Zap },
         { id: 'mobile_bridge', label: 'Klarifikasi & Mobile JKN', keywords: 'mobile jkn lapis 3 jadwal klarifikasi peserta dialog intervensi s06', icon: Smartphone },
+        { id: 'official_reports', label: 'Laporan & Jejak Audit', keywords: 'cetak pdf sp-1 bahv ba pending berita acara vedika audit sha-256 ledger', icon: Printer },
       ],
     },
     {
-      group: 'Laporan & Sistem',
+      group: 'Ringkasan & Bantuan',
       items: [
-        { id: 'official_reports', label: 'Laporan & Jejak Audit', keywords: 'cetak pdf sp-1 bahv ba pending berita acara vedika audit sha-256 ledger', icon: Printer },
+        { id: 'executive', label: 'Dashboard Ringkasan', keywords: 'ringkasan eksekutif home beranda kpi', icon: LayoutDashboard },
         { id: 'health_ai_chat', label: 'Asisten Klinis JKN', keywords: 'asisten chat tanya regulasi jkn permenkes kopilot ai', icon: Sparkles },
         { id: 'settings', label: 'Pengaturan & Akun', keywords: 'setting tema kebijakan ambang profil sandi sesi perangkat', icon: Settings },
       ],
@@ -1407,10 +1409,10 @@ export default function App() {
               <nav aria-label="Navigasi cepat portal" className="hidden xl:flex items-center gap-1 min-w-0">
                 {[
                   { id: 'executive', label: 'Ringkasan' },
-                  { id: 'queue', label: 'Antrean' },
-                  { id: 'investigation', label: 'Dokumen' },
-                  { id: 'decision', label: 'Putusan' },
-                  { id: 'faskes', label: 'Faskes' },
+                  { id: 'queue', label: '1. Antrean' },
+                  { id: 'investigation', label: '2. Telaah' },
+                  { id: 'decision', label: '3. Putusan' },
+                  { id: 'faskes', label: '4. Faskes' },
                   { id: 'official_reports', label: 'Laporan' },
                 ].map((navItem) => {
                   const active = dashboardTab === navItem.id;
@@ -1437,6 +1439,22 @@ export default function App() {
 
               {/* Center/Right: Clean Navigation Actions */}
               <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
+                {/* Peta Alur Kerja Modal Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setWorkflowMapOpen(true)}
+                  aria-label="Buka Peta Alur Kerja ClaimTrace"
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                    isLight
+                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs'
+                      : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
+                  }`}
+                  title="Peta Alur Kerja & Siklus Verifikasi Klaim JKN"
+                >
+                  <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="hidden sm:inline">Peta Alur Kerja</span>
+                </button>
+
                 {/* Dual View Toggle (Mobile Simulation) */}
                 <button
                   type="button"
@@ -2692,6 +2710,8 @@ export default function App() {
                               setSelectedCase(c);
                               setDashboardTab('investigation', 'audit');
                             }}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onOpenWorkflowMap={() => setWorkflowMapOpen(true)}
                             isLight={isLight}
                             initialSearchQuery={globalSearchQuery}
                           />
@@ -2754,6 +2774,8 @@ export default function App() {
                             onBackToQueue={() => setDashboardTab('queue', 'priority')}
                             onOpenDecision={() => setDashboardTab('decision')}
                             onOpenDocumentChecker={() => setDashboardTab('document_checker')}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onOpenWorkflowMap={() => setWorkflowMapOpen(true)}
                             isLight={isLight}
                           />
                         )}
@@ -2791,6 +2813,8 @@ export default function App() {
                               setDashboardTab('investigation', 'audit');
                             }}
                             onSelectHospital={() => {}}
+                            onNavigateTab={(t) => setDashboardTab(t)}
+                            onOpenWorkflowMap={() => setWorkflowMapOpen(true)}
                           />
                         )}
                         {hubSubTabs.faskes === 'ranking' && (
@@ -2940,6 +2964,8 @@ export default function App() {
                         onSetVerificatorAction={setVerificatorAction}
                         onBackToInvestigation={() => setDashboardTab('investigation', 'audit')}
                         onBackToQueue={() => setDashboardTab('queue', 'priority')}
+                        onNavigateTab={(t) => setDashboardTab(t)}
+                        onOpenWorkflowMap={() => setWorkflowMapOpen(true)}
                         currentUser={currentUser}
                         isLight={isLight}
                       />
@@ -3143,6 +3169,14 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Interactive Workflow Map Modal */}
+      <WorkflowMapModal
+        isOpen={workflowMapOpen}
+        onClose={() => setWorkflowMapOpen(false)}
+        onNavigateTab={(tab) => setDashboardTab(tab)}
+        isLight={isLight}
+      />
 
       {/* FOOTER (CLEAN SINGLE-ROW ENTERPRISE STATUS STRIP) */}
       <footer className={`py-2 px-4 flex flex-col lg:flex-row items-center justify-between text-[11px] gap-2 shrink-0 z-20 select-none transition-colors ${
