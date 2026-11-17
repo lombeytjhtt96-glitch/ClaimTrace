@@ -1256,7 +1256,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
           <div 
             role="dialog"
             aria-modal="true"
-            aria-label="Konsol Agent Decision Receipts dan Human Gate"
+            aria-label="Konsol Tanda Terima Putusan Audit dan Human Gate"
             onClick={(e) => { if (e.target === e.currentTarget) setShowReceiptsModal(false); }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
           >
@@ -1278,7 +1278,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   </div>
                   <div>
                     <h3 className={`text-base font-bold ${isLight ? 'text-purple-950' : 'text-purple-100'}`}>
-                      Agent Decision Receipts &amp; Human Gate Console
+                      Tanda Terima Putusan Sistem &amp; Human Gate (ISO 27001)
                     </h3>
                     <p className={`text-xs ${isLight ? 'text-purple-700' : 'text-white/60'}`}>
                       Spesifikasi Tanda Terima Keputusan Audit · ISO 27001 · Permenkes No. 26/2021 &amp; Perpres No. 82/2018
@@ -1311,7 +1311,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   }`}
                 >
                   <FileCode className="w-3.5 h-3.5" />
-                  <span>Daftar Keputusan AI ({receiptsList.length})</span>
+                  <span>Daftar Putusan Sistem ({receiptsList.length})</span>
                 </button>
                 <button
                   type="button"
@@ -1344,7 +1344,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                 {loadingReceipts ? (
                   <div className="py-16 text-center space-y-3">
                     <RefreshCw className="w-8 h-8 mx-auto animate-spin text-purple-500" />
-                    <p className="text-xs font-mono text-slate-400">Memuat Decision Receipts &amp; Human Gate status...</p>
+                    <p className="text-xs font-mono text-slate-400">Memuat tanda terima putusan sistem &amp; status human gate...</p>
                   </div>
                 ) : receiptsTab === 'receipts' ? (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -1609,7 +1609,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                   <div className="max-w-3xl mx-auto space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className={`p-4 rounded-xl border ${isLight ? 'bg-purple-50 border-purple-200' : 'bg-white/5 border-white/10'}`}>
-                        <span className="text-[10px] text-slate-400 block">Total Decision Receipts</span>
+                        <span className="text-[10px] text-slate-400 block">Total Tanda Terima Putusan</span>
                         <span className="text-xl font-bold font-mono text-purple-400 mt-0.5 block">
                           {receiptsManifest?.total_receipts || 0}
                         </span>
@@ -1650,7 +1650,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
               <div className={`px-5 py-3 border-t flex items-center justify-between text-[10.5px] font-mono ${
                 isLight ? 'bg-purple-100 border-purple-200 text-purple-800' : 'bg-[#000c24] border-white/10 text-white/60'
               }`}>
-                <span>ClaimTrace Decision Receipts &middot; ISO 27001 Record-Keeping</span>
+                <span>ClaimTrace Audit Trail Receipts &middot; ISO 27001 Record-Keeping</span>
                 <span>Standar Kepatuhan: Permenkes No. 26/2021 &amp; Perpres No. 82/2018</span>
               </div>
             </motion.div>

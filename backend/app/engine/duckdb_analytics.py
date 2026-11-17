@@ -658,7 +658,7 @@ class DuckDbAnalyticsEngine:
             }
 
     def _format_as_markdown(self, columns: List[str], rows: List[tuple]) -> str:
-        """Membuat tabel Markdown yang hemat token untuk AI Assistant"""
+        """Membuat tabel Markdown ringkas untuk pratinjau analitik."""
         if not columns:
             return "*(Hasil kueri kosong)*"
         header = "| " + " | ".join(columns) + " |"

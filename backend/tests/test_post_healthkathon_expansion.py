@@ -2,7 +2,7 @@
 Unit & Integration Tests for Post-Healthkathon Expansion Suite:
 1. Multi-Typology Fraud Detection (Upcoding Severity Level #4 & Unbundling/Fragmentation #9)
 2. FRISTA Biometric & Liveness Telemetry (Quad-Triangulation / Lapis Bukti Ke-4)
-3. HealthAI Copilot RAG Regulatory & INA-CBG Clinical Coding Auditor
+3. HealthAI RAG Regulatory & INA-CBG Clinical Coding Auditor
 4. Berita Acara Resmi & Cryptographic SHA-256 QR Matrix Dossier Generator
 """
 

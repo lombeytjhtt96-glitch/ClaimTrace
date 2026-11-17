@@ -5565,7 +5565,7 @@ def get_icd10_statistics():
 # POST-HEALTHKATHON EXPANSION SUITE (LOCALHOST DEVELOPMENT)
 # 1. Multi-Typology Fraud Detection (Upcoding #4 & Unbundling/Fragmentation #9)
 # 2. FRISTA Biometric & Liveness Telemetry (Quad-Triangulation / Lapis 4)
-# 3. HealthAI Copilot RAG Regulatory & INA-CBG Clinical Coding Auditor
+# 3. HealthAI RAG Regulatory & INA-CBG Clinical Coding Auditor
 # 4. Berita Acara Resmi & Cryptographic SHA-256 QR Matrix Dossier Generator
 # ==============================================================================
 import json
@@ -5795,7 +5795,7 @@ async def query_healthai_regulatory_rag(req: RegulatoryRagRequest):
             ClaimTraceSynthesisRequest(
                 prompt=rag_prompt,
                 system_instruction=(
-                    "Anda adalah HealthAI Legal & Clinical Coding RAG Copilot untuk Verifikator BPJS Kesehatan. "
+                    "Anda adalah Mesin Analisis Regulasi & Koding Klinis RAG untuk Verifikator BPJS Kesehatan. "
                     "Anda menggabungkan pencarian vektor regulasi ChromaDB dengan penalaran hukum kesehatan dan koding INA-CBG. "
                     "Jawab setiap pertanyaan pengguna secara langsung, tajam, akurat, dan kontekstual terhadap kasus klaim yang sedang aktif. "
                     "Dilarang menggunakan emoji."

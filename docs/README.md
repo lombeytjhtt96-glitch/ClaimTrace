@@ -18,19 +18,16 @@
 4. [**UI_DESIGN_SYSTEM_SPEC.md**](UI_DESIGN_SYSTEM_SPEC.md):
    Dokumentasi mendalam mengenai desain token, elevasi, dan komponen antarmuka klinis.
 
-5. [**UI_WIREFRAME_PROMPTS.md (UI Screen Specifications)**](UI_WIREFRAME_PROMPTS.md):
-   Spesifikasi layar antarmuka terfokus pada 3 kelompok navigasi utama (Alur Kerja Utama, Alat Investigasi, serta Laporan & Audit).
-
-6. [**ARCHITECTURE.md (Technical Architecture & Data Contracts)**](ARCHITECTURE.md):
+5. [**ARCHITECTURE.md (Technical Architecture & Data Contracts)**](ARCHITECTURE.md):
    Arsitektur teknis on-premise, diagram topologi sistem Mermaid, kontrak data JSON (`ClaimRecord`, `TriageEvaluation`, `PresenceVerificationRequest`, `AuditTrailLog`), serta mekanisme bus event sinkronisasi real-time antara Mobile JKN dan Web Dashboard.
 
-7. [**ENTERPRISE_ARCHITECTURE_DOSSIER.md**](ENTERPRISE_ARCHITECTURE_DOSSIER.md):
+6. [**ENTERPRISE_ARCHITECTURE_DOSSIER.md**](ENTERPRISE_ARCHITECTURE_DOSSIER.md):
    Dossier arsitektur enterprise menyeluruh yang memetakan keamanan, integrasi data, dan ketahanan sistem.
 
-8. [**DEPLOYMENT_GUIDE.md**](DEPLOYMENT_GUIDE.md):
+7. [**DEPLOYMENT_GUIDE.md**](DEPLOYMENT_GUIDE.md):
    Panduan lengkap deployment di lingkungan lokal, Docker, on-premise server, dan cloud hosting.
 
-9. [**GLOSSARY.md**](GLOSSARY.md):
+8. [**GLOSSARY.md**](GLOSSARY.md):
    Glosarium istilah baku kedinasan jaminan kesehatan (FPK, VEDIKA, BAHV, BAKB, INA-CBG, DPJP, SEP, PRB).
 
 10. [**SOP_VERIFIKATOR_MEDIS_BPJS.md**](SOP_VERIFIKATOR_MEDIS_BPJS.md):

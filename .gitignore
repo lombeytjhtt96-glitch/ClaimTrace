@@ -28,18 +28,16 @@ chroma_db/
 /*.pptx
 /*.png
 
-# Local tooling & design artifacts
+# Local editor & workspace artifacts
 .agent/
 .agents/
-.claude/*
-!.claude/skills/
+.claude/
 .codex/
 .cursor/
+.ua/
+.vscode/
+.idea/
 design-skills/
-.ua/intermediate/
-.ua/.trash-*/
-.ua/tmp/
-.ua/diff-overlay.json
 
 # Internal documentation and generator scripts
 AGENTS.md

@@ -24,7 +24,7 @@ flowchart LR
 
 ### Tahap 1: Implementasi Komponen Berdasarkan Spesifikasi UI
 1. Buka referensi tata letak antarmuka ClaimTrace JKN.
-2. Gunakan spesifikasi layar dari file [`UI_WIREFRAME_PROMPTS.md`](UI_WIREFRAME_PROMPTS.md):
+2. Gunakan spesifikasi tata letak dan modul antarmuka:
    - **Layar 1:** `claimtrace-triage-overview` (Dashboard Antrean Utama)
    - **Layar 2:** `claimtrace-case-investigation` (Matriks Bukti 3 Lapis)
    - **Layar 3:** `claimtrace-graph-visualizer` (Visualisasi Graf Jejaring Anomali)

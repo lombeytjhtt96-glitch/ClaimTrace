@@ -71,11 +71,11 @@ export default function WorkflowMapModal({
       badgeColor: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
       icon: ShieldAlert,
       summary:
-        'Pusat penetapan putusan resmi oleh Verifikator Medis (dr. Siti Rahma, Sp.PK - NIP Wajib). Dilengkapi fasilitas mediasi sanggahan faskes hingga sidang pertimbangan TKMKB.',
+        'Pusat penetapan putusan resmi oleh Verifikator Medis Senior (NIP Wajib). Dilengkapi fasilitas mediasi sanggahan faskes hingga sidang pertimbangan TKMKB.',
       highlights: [
         '4 Opsi Putusan Resmi: SETUJU (Siap Bayar), PENDING (Tunda Klarifikasi), KOREKSI (Downgrade Upcoding), TOLAK (Fraud).',
         'Alur Sanggahan & Dispute: Jika faskes menyanggah penundaan klaim, berkas masuk mediasi atau eskalasi ke sidang TKMKB.',
-        'Decision Receipts Kriptografis: Pembubuhan stempel digital HMAC-SHA256 yang mengikat secara yuridis.',
+        'Tanda Terima Putusan Kriptografis: Pembubuhan stempel digital HMAC-SHA256 yang mengikat secara yuridis.',
         'Penerbitan Dokumen Resmi: Cetak BAKB Digital, Surat Panggilan Klarifikasi (SP-1), dan Berita Acara bersegel [SEALED · SAH].',
       ],
       legalRef: 'Pasal 76 Perpres 82/2018 (Penundaan Berita Acara) & Forum Sengketa Klinis TKMKB.',

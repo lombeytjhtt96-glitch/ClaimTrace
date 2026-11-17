@@ -3,7 +3,7 @@ ClaimTrace Post-Healthkathon Expansion Engine (Localhost Development Suite)
 Covers:
 1. Multi-Typology Fraud Detection (Modus #4 Upcoding Severity Level & Modus #8/#9 Services Unbundling/Fragmentation)
 2. FRISTA Biometric & Liveness Telemetry Validator (Quad-Triangulation / Lapis Bukti Ke-4)
-3. HealthAI Copilot RAG Regulatory & INA-CBG Clinical Coding Auditor (Permenkes 3/2023, Permenkes 26/2021, Perpres 82/2018)
+3. HealthAI RAG Regulatory & INA-CBG Clinical Coding Auditor (Permenkes 3/2023, Permenkes 26/2021, Perpres 82/2018)
 4. Official Berita Acara Verifikasi Klaim & Cryptographic SHA-256 QR Matrix Dossier Generator
 """
 
