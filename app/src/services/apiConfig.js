@@ -292,6 +292,7 @@ export const prefetchDashboardHotEndpoints = () => {
 export const authFetch = async (url, options = {}) => {
   const token = getStoredAuthToken();
   const deviceFingerprint = getDeviceFingerprint();
+  const sandboxMode = isSandboxDemoToken(token);
 
   const headers = {
     ...(options.headers || {}),
@@ -299,18 +300,37 @@ export const authFetch = async (url, options = {}) => {
     'X-Device-Fingerprint': deviceFingerprint,
   };
 
-  const response = await fetch(url, { ...options, headers });
+  try {
+    const response = await fetch(url, { ...options, headers });
 
-  if (response.status === 401 && !isSandboxDemoToken(token)) {
-    clearSessionStorage({ broadcast: true });
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('claimtrace:session-expired', {
-          detail: { status: 401, url },
-        })
-      );
+    if (response.status === 404 || (sandboxMode && (response.status === 401 || response.status >= 500))) {
+      const { trySandboxApiFallback } = await import('./sandboxApiFallback');
+      const fallbackRes = await trySandboxApiFallback(url, options);
+      if (fallbackRes) {
+        return fallbackRes;
+      }
     }
-  }
 
-  return response;
+    if (response.status === 401 && !sandboxMode) {
+      clearSessionStorage({ broadcast: true });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('claimtrace:session-expired', {
+            detail: { status: 401, url },
+          })
+        );
+      }
+    }
+
+    return response;
+  } catch (err) {
+    if (sandboxMode) {
+      const { trySandboxApiFallback } = await import('./sandboxApiFallback');
+      const fallbackRes = await trySandboxApiFallback(url, options);
+      if (fallbackRes) {
+        return fallbackRes;
+      }
+    }
+    throw err;
+  }
 };
