@@ -2511,6 +2511,7 @@ export default function ExecutiveHub({
               />
 
               <SegmentedRadialHighlightCard
+                isLight={isLight}
                 title="Kapasitas & Validasi Pra-Bayar"
                 percentage={approvalPct}
                 centerPrimary={`${approvalPct.toFixed(1).replace('.', ',')}%`}
