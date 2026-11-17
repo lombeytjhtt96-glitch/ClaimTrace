@@ -541,20 +541,20 @@ export default function App() {
       items: [
         {
           id: 'queue',
-          label: '1. Antrean & Berkas Klaim',
+          label: 'Antrean & Berkas Klaim',
           keywords: 'antrean daftar sep prioritas top-k triase cepat manajemen berkas ditandai flagged sla 10 hari',
           icon: ListFilter,
           badge: (sidebarBadges.total_claims ?? sidebarBadges.pending_cases) != null ? String(sidebarBadges.total_claims ?? sidebarBadges.pending_cases) : undefined,
           badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
         },
-        { id: 'investigation', label: '2. Telaah & Dokumen Medis', keywords: 'telaah kasus investigasi 4 lapis upcoding 7 dokumen icd-10 mb1 frista mobile jkn', icon: FileText },
-        { id: 'decision', label: '3. Konsol Putusan & BAKB', keywords: 'putusan bakb bahv sanggahan fhir claim submit tkmkb', icon: ShieldAlert },
+        { id: 'investigation', label: 'Telaah & Dokumen Medis', keywords: 'telaah kasus investigasi 4 lapis upcoding 7 dokumen icd-10 mb1 frista mobile jkn', icon: FileText },
+        { id: 'decision', label: 'Konsol Putusan & BAKB', keywords: 'putusan bakb bahv sanggahan fhir claim submit tkmkb', icon: ShieldAlert },
       ],
     },
     {
       group: 'Pengawasan Faskes & Forensik',
       items: [
-        { id: 'faskes', label: '4. Faskes & DPJP', keywords: 'fri profil rs ranking sindikat dpjp sip geovelocity retensi kepatuhan surveilans', icon: Building2 },
+        { id: 'faskes', label: 'Faskes & DPJP', keywords: 'fri profil rs ranking sindikat dpjp sip geovelocity retensi kepatuhan surveilans', icon: Building2 },
         { id: 'empirical', label: 'Forensik & Gudang Data', keywords: 'benford lorenz gini phantom repeat billing sql tren privasi analitik', icon: Zap },
         { id: 'mobile_bridge', label: 'Klarifikasi & Mobile JKN', keywords: 'mobile jkn lapis 3 jadwal klarifikasi peserta dialog intervensi s06', icon: Smartphone },
         { id: 'official_reports', label: 'Laporan & Jejak Audit', keywords: 'cetak pdf sp-1 bahv ba pending berita acara vedika audit sha-256 ledger', icon: Printer },
@@ -1489,38 +1489,6 @@ export default function App() {
                   </button>
                 </form>
               </div>
-
-              {/* Center: PolicyPilot-style Horizontal Hub Pills */}
-              <nav aria-label="Navigasi cepat portal" className="hidden xl:flex items-center gap-1 min-w-0">
-                {[
-                  { id: 'executive', label: 'Ringkasan' },
-                  { id: 'queue', label: '1. Antrean' },
-                  { id: 'investigation', label: '2. Telaah' },
-                  { id: 'decision', label: '3. Putusan' },
-                  { id: 'faskes', label: '4. Faskes' },
-                  { id: 'official_reports', label: 'Laporan' },
-                ].map((navItem) => {
-                  const active = dashboardTab === navItem.id;
-                  return (
-                    <button
-                      key={navItem.id}
-                      type="button"
-                      onClick={() => setDashboardTab(navItem.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                        active
-                          ? isLight
-                            ? 'bg-slate-100 text-slate-950 font-semibold'
-                            : 'bg-white/10 text-white font-semibold'
-                          : isLight
-                            ? 'text-slate-600 hover:text-slate-950 hover:bg-slate-50'
-                            : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {navItem.label}
-                    </button>
-                  );
-                })}
-              </nav>
 
               {/* Center/Right: Clean Navigation Actions */}
               <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
