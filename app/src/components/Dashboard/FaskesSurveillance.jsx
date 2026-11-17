@@ -172,15 +172,6 @@ export default function FaskesSurveillance({
 
   return (
     <div className={`space-y-4 font-sans pb-20 animate-fade-in ${isLight ? 'text-slate-800' : 'text-white'}`}>
-      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
-      <WorkflowPipelineBanner
-        activeStep={4}
-        onNavigateTab={onNavigateTab}
-        onOpenWorkflowMap={onOpenWorkflowMap}
-        isLight={isLight}
-        customNote="Tahap 4: Pengawasan longitudinal profil faskes (Indeks FRI), pemantauan dokter abnormal, dan deteksi sindikat klaim."
-      />
-
       {/* HEADER SECTION & SEARCH CONTROLS */}
       <div className="space-y-3">
         <div className={`p-5 rounded-2xl border backdrop-blur-xl space-y-2 transition-all ${

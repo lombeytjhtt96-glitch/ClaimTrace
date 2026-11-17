@@ -614,7 +614,9 @@ def health_check():
         "audit_integrity_valid": valid,
         "active_claims_count": len(SYNTHETIC_CLAIMS_DATABASE),
         "framework": "FastAPI (Python 3.14)",
-        "security_compliance": "UU PDP No. 27/2022 & Perpres 82/2018"
+        "security_compliance": "UU PDP No. 27/2022 & Perpres 82/2018",
+        "ai_engine": "Local On-Premise (Zero-Cloud Exfiltration)",
+        "environment": "Sandbox (Isolated Evaluation)"
     }
 
 # ==============================================================================

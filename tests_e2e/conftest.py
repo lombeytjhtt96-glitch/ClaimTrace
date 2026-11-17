@@ -39,19 +39,11 @@ def _reset_auth_rate_limit_lockouts():
 
 
 @pytest.fixture(scope="session")
-def client() -> httpx.Client:
+def client() -> TestClient:
     """
-    Client pengujian E2E tersinkronisasi untuk memanggil endpoint REST API ClaimTrace DSS.
-    Mengutamakan koneksi Opaque-Box E2E langsung ke live server aktif pada port 8000,
-    dengan fallback otomatis ke in-process TestClient jika daemon background tidak aktif.
+    Client pengujian E2E in-process TestClient tersinkronisasi penuh
+    dengan token manager dan rate limiter ClaimTrace DSS.
     """
-    try:
-        live_client = httpx.Client(base_url="http://127.0.0.1:8000", timeout=30.0)
-        res = live_client.get("/health")
-        if res.status_code == 200:
-            return live_client
-    except Exception:
-        pass
     from app.main import app
     return TestClient(app)
 

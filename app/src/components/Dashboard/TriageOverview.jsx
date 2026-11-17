@@ -726,15 +726,6 @@ export default function TriageOverview({
         </div>
       )}
 
-      {/* 4-STAGE WORKFLOW PIPELINE BANNER */}
-      <WorkflowPipelineBanner
-        activeStep={1}
-        onNavigateTab={onNavigateTab}
-        onOpenWorkflowMap={onOpenWorkflowMap}
-        isLight={isLight}
-        customNote="Tahap 1: Verifikator menyaring berkas FPK bulan berjalan berdasarkan 3 Lajur Risiko & SLA 10 Hari (Perpres 82/2018)."
-      />
-
       {/* COCKPIT 4 SUMMARY CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: TOTAL ANTREAN */}

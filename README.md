@@ -13,6 +13,10 @@
 > **[Baca Dossier Lengkap Healthkathon: Healthkathon-README.md](Healthkathon-README.md)**  
 > **Live Cockpit:** `http://localhost:3000` | **Dokumentasi API Swagger:** `http://localhost:8000/docs` | **Mode Juri 1-Klik:** Aktif di Halaman Masuk
 
+> 🔒 **ARSITEKTUR PRIVASI AI LOKAL & SANDBOX EVALUASI TERISOLASI:**  
+> - **AI Lokal (On-Premise Inference):** Seluruh inferensi pemrosesan bahasa alami (Clinical NLP), deteksi anomali Benford's Law, dan machine learning audit klaim berjalan **100% lokal secara On-Premise** di dalam infrastruktur internal tanpa mengekspos atau mengirim data pasien ke cloud/API pihak ketiga, memenuhi amanat kedaulatan data kesehatan UU PDP No. 27/2022.  
+> - **Sandbox Evaluasi Terisolasi:** ClaimTrace beroperasi dalam lingkungan **Sandbox Tertutup & Terisolasi** yang memungkinkan simulasi verifikasi klaim, telaah forensik, dan pengujian lapangan Wasrik tanpa risiko merusak integritas basis data produksi nasional BPJS Kesehatan.
+
 > [!IMPORTANT]
 > **PERNYATAAN RESMI KEPATUHAN DATA PRIBADI & BENCHMARK SINTETIK (UU PDP NO. 27 TAHUN 2022):**  
 > Seluruh data yang digunakan dalam repositori dan sistem ClaimTrace ini — meliputi nama pasien, nama dokter/DPJP, nama verifikator/pejabat kedinasan, Nomor Induk Pegawai (NIP), nomor kontak/telepon, alamat, nomor Surat Izin Praktik (SIP), nomor rekam medis, hingga rincian berkas klaim dan nama fasilitas kesehatan — adalah **100% DATA SINTETIK / BENCHMARK FIKTIF**.  

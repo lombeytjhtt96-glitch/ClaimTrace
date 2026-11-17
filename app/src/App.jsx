@@ -27,7 +27,7 @@ import {
   Printer, QrCode, CreditCard, ListFilter, Database, ShieldAlert, Key, LayoutDashboard, Building2,
   ChevronDown, LogOut, PanelLeftClose, PanelLeft, RotateCcw, Settings, X,
   Briefcase, Zap, Flag, Calendar, Users, MessageSquare, ClipboardList,
-  Sparkles, Sun, Moon, FileCheck2, Compass
+  Sparkles, Sun, Moon, FileCheck2, Cpu
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
@@ -54,7 +54,6 @@ const BugarScreen = lazyWithRetry(() => import('./components/MobileJKN/BugarScre
 const ObatScreen = lazyWithRetry(() => import('./components/MobileJKN/ObatScreen'));
 import TabErrorBoundary from './components/Common/TabErrorBoundary';
 import WorkspaceHubShell from './components/Common/WorkspaceHubShell';
-import WorkflowMapModal from './components/Common/WorkflowMapModal';
 import { verifySessionRequest } from './services/apiConfig';
 
 // Secondary Forensic Cockpit Modules (Lazy-loaded on demand)
@@ -1287,7 +1286,7 @@ export default function App() {
                 © 2026 BPJS Kesehatan · ClaimTrace
               </span>
               <span className="text-[10.5px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                Seluruh Data Adalah Data Sintetis Fiktif · UU PDP No. 27/2022
+                AI Lokal (On-Premise) · Sandbox Evaluasi Terisolasi · UU PDP No. 27/2022
               </span>
             </div>
           </footer>
@@ -1525,21 +1524,32 @@ export default function App() {
 
               {/* Center/Right: Clean Navigation Actions */}
               <div ref={headerPopoversRef} className="flex items-center space-x-2 shrink-0">
-                {/* Peta Alur Kerja Modal Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setWorkflowMapOpen(true)}
-                  aria-label="Buka Peta Alur Kerja ClaimTrace"
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
-                    isLight
-                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs'
-                      : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
-                  }`}
-                  title="Peta Alur Kerja & Siklus Verifikasi Klaim JKN"
-                >
-                  <Compass className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span className="hidden sm:inline">Peta Alur Kerja</span>
-                </button>
+                {/* Lencana Status AI Lokal (On-Premise) & Sandbox Terisolasi */}
+                <div className="hidden md:flex items-center gap-1.5">
+                  <span 
+                    title="Inference Natural Language Processing (NLP) & Machine Learning berjalan lokal On-Premise tanpa transmisi data pasien ke cloud eksternal (Zero-PHI UU PDP No. 27/2022)"
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition select-none ${
+                      isLight
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
+                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    }`}
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>AI Lokal (On-Premise)</span>
+                  </span>
+
+                  <span 
+                    title="Lingkungan Sandbox Evaluasi Wasrik Terisolasi (Simulasi data aman tanpa memodifikasi DB Produksi Nasional)"
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition select-none ${
+                      isLight
+                        ? 'bg-sky-50 text-sky-800 border-sky-300 shadow-2xs'
+                        : 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+                    }`}
+                  >
+                    <Shield className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    <span>Sandbox Terisolasi</span>
+                  </span>
+                </div>
 
                 {/* Dual View Toggle (Mobile Simulation) */}
                 <button
@@ -2683,25 +2693,7 @@ export default function App() {
                           </button>
                         </div>
                       </div>
-                    ) : (
-                      headerAlerts[0]?.claimData && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedCase(headerAlerts[0].claimData);
-                            setDashboardTab('investigation');
-                          }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
-                            isLight
-                              ? 'bg-rose-50 border-rose-200 text-rose-800 hover:bg-rose-100'
-                              : 'bg-rose-500/15 border-rose-500/30 text-rose-300 hover:bg-rose-500/25'
-                          }`}
-                        >
-                          <Clock className="w-3 h-3 shrink-0" />
-                          <span>Fokus Prioritas #1: {headerAlerts[0].claimData.id}</span>
-                        </button>
-                      )
-                    )}
+                    ) : null}
 
                     <button
                       type="button"
@@ -3257,14 +3249,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Interactive Workflow Map Modal */}
-      <WorkflowMapModal
-        isOpen={workflowMapOpen}
-        onClose={() => setWorkflowMapOpen(false)}
-        onNavigateTab={(tab) => setDashboardTab(tab)}
-        isLight={isLight}
-      />
-
       {/* FOOTER (CLEAN SINGLE-ROW ENTERPRISE STATUS STRIP) */}
       <footer className={`py-2 px-4 flex flex-col lg:flex-row items-center justify-between text-[11px] gap-2 shrink-0 z-20 select-none transition-colors ${
         isLight
@@ -3286,7 +3270,7 @@ export default function App() {
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
               : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
           }`}>
-            DATA SINTETIK / BENCHMARK FIKTIF · UU PDP NO. 27/2022
+            AI LOKAL (ON-PREMISE) · SANDBOX EVALUASI TERISOLASI · UU PDP NO. 27/2022
           </span>
         </div>
       </footer>
