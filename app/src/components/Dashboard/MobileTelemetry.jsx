@@ -29,17 +29,6 @@ export default function MobileTelemetry({
   const [pushSentSuccess, setPushSentSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncNotice, setSyncNotice] = useState(null);
-  const [showComplianceModal, setShowComplianceModal] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && showComplianceModal) {
-        setShowComplianceModal(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showComplianceModal]);
 
   const handleSyncData = async () => {
     setIsSyncing(true);
@@ -568,45 +557,6 @@ export default function MobileTelemetry({
             </div>
           </div>
 
-          <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs transition-all ${
-            isLight
-              ? 'bg-gradient-to-r from-emerald-500/[0.07] via-teal-500/[0.04] to-emerald-500/[0.07] border-emerald-600/25 shadow-sm'
-              : 'bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-emerald-950/30 border-emerald-500/20 shadow-md'
-          }`}>
-            <div className="flex items-start sm:items-center gap-3 min-w-0">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                isLight ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-600/20' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-400/25'
-              }`}>
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Standar Keamanan Nasional Terpenuhi
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-600/10 text-emerald-800 border border-emerald-600/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                    Kepatuhan Terverifikasi
-                  </span>
-                </div>
-                <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                  ISO 27001 Information Security Management &amp; Peraturan BPJS Kesehatan No. 9 Tahun 2024.
-                </p>
-              </div>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setShowComplianceModal(true)}
-              className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition shadow-sm ${
-                isLight
-                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-              }`}
-            >
-              <span>Lihat Dokumen Kepatuhan</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -851,92 +801,6 @@ export default function MobileTelemetry({
           </table>
         </div>
       </div>
-
-      {/* MODAL KEPATUHAN & SERTIFIKASI REGULASI */}
-      <AnimatePresence>
-        {showComplianceModal && (
-          <div 
-            role="dialog"
-            aria-modal="true"
-            aria-label="Dokumen kepatuhan dan sertifikasi keamanan"
-            onClick={(e) => { if (e.target === e.currentTarget) setShowComplianceModal(false); }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className={`rounded-2xl border shadow-2xl max-w-lg w-full p-6 space-y-4 ${
-                isLight
-                  ? 'bg-white border-slate-200 text-slate-900'
-                  : 'bg-[#00153A] border-white/20 text-white'
-              }`}
-            >
-              <div className={`flex items-center justify-between pb-3 border-b ${
-                isLight ? 'border-slate-100' : 'border-white/10'
-              }`}>
-                <div className="flex items-center space-x-2">
-                  <ShieldCheck className={`w-5 h-5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                  <h3 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                    Dokumen Kepatuhan &amp; Sertifikasi Keamanan
-                  </h3>
-                </div>
-                <button 
-                  type="button"
-                  aria-label="Tutup modal sertifikasi keamanan"
-                  onClick={() => setShowComplianceModal(false)}
-                  className={`p-1 rounded-lg ${
-                    isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/50 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className={`space-y-3 text-xs leading-relaxed ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                <div className={`p-3 rounded-xl border space-y-1 ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-                }`}>
-                  <span className={`font-bold block ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-                    1. ISO/IEC 27001:2022
-                  </span>
-                  <p>Sertifikasi Sistem Manajemen Keamanan Informasi (SMKI) pada seluruh transmisi FCM dan API Gateway BPJS Kesehatan.</p>
-                </div>
-                <div className={`p-3 rounded-xl border space-y-1 ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-                }`}>
-                  <span className={`font-bold block ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-                    2. UU No. 27 Tahun 2022 (UU PDP)
-                  </span>
-                  <p>Pasal 34: Pemrosesan data medis spesifik dilakukan menggunakan enkripsi SHA-256 dan ZK-Proof tanda tangan kehadiran.</p>
-                </div>
-                <div className={`p-3 rounded-xl border space-y-1 ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
-                }`}>
-                  <span className={`font-bold block ${isLight ? 'text-emerald-700' : 'text-[#FFCA40]'}`}>
-                    3. Peraturan BPJS Kesehatan No. 9 Tahun 2024
-                  </span>
-                  <p>Standar perlindungan integritas dana jaminan sosial kesehatan dan larangan klaim fiktif berbasis verifikasi faktual peserta.</p>
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button 
-                  type="button"
-                  onClick={() => setShowComplianceModal(false)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    isLight
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800'
-                      : 'bg-white/10 hover:bg-white/20 text-white'
-                  }`}
-                >
-                  Tutup Dokumen
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
