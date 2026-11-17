@@ -337,9 +337,9 @@ function MiniTooltip({ active, payload, isLight, unit = '' }) {
 
 // ─── KPICard (PolicyPilot Minimalist Card) ─────────
 function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 'info', isLight, sparkValues = [], onActionClick, actionLabel }) {
-  const cardStyleClass = isLight
-    ? 'border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(6,27,49,0.04)] hover:border-slate-300 hover:shadow-[0_6px_18px_rgba(6,27,49,0.07)] text-[#061B31]'
-    : 'border-white/[0.08] bg-[#131822] hover:border-white/[0.16] text-[#F3F5F8]';
+  const cardStyleClass = `glass-panel transition-[border-color,box-shadow,transform] duration-200 ${
+    isLight ? 'text-slate-900 hover:border-slate-300 hover:shadow-md' : 'text-slate-100 hover:border-white/20'
+  }`;
 
   const topAccentClass = {
     critical: 'from-rose-500 via-rose-400 to-amber-400',
@@ -464,12 +464,11 @@ function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 
             <polyline
               fill="none"
               stroke={sparkStroke}
-              strokeWidth="2"
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
               points={sparkPoints.pts}
             />
-            <circle cx={sparkPoints.w} cy={sparkPoints.lastY} r="2.5" fill={sparkStroke} />
           </svg>
         )}
       </div>
@@ -511,10 +510,10 @@ function MicroTrendCard({ title, value, subtitle, data, color, icon, isLight, un
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-2xl border p-4 transition-all duration-300 ${
+      className={`rounded-2xl border p-4 transition-all duration-300 glass-panel ${
         isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm hover:border-emerald-500/40'
-          : 'border-white/10 bg-[#00153A]/80 backdrop-blur-md shadow-xl shadow-[#00081c]/40 hover:border-white/20 text-white'
+          ? 'text-slate-900 hover:border-slate-300'
+          : 'border-white/10 text-white hover:border-white/20'
       }`}
       aria-label={`${title} metric`}
     >
@@ -844,10 +843,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
       className="grid grid-cols-1 gap-5 xl:grid-cols-3"
       aria-label="Grafik interaktif pengawasan klaim"
     >
-      <article className={`rounded-2xl border p-5 shadow-soft xl:col-span-2 ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-2xl text-white'
+      <article className={`rounded-2xl border p-5 xl:col-span-2 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-white'
       }`}>
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -871,17 +868,15 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
             <button
               type="button"
               onClick={() => setScaleMode(useLogScale ? 'linear' : 'log')}
-              className={`rounded-xl border px-2.5 py-1.5 text-[11px] font-mono font-semibold transition cursor-pointer ${
-                isLight
-                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
-                  : 'bg-white/5 hover:bg-white/10 text-white/80 border-white/15'
+              className={`rounded-xl border px-2.5 py-1.5 text-[11px] font-mono font-semibold transition cursor-pointer glass-pill ${
+                isLight ? 'text-slate-700' : 'text-white/80'
               }`}
               title="Ubah skala sumbu Y antara Logaritmik dan Linear"
             >
               {useLogScale ? 'Lihat Linear' : 'Lihat Log'}
             </button>
-            <div className={`inline-flex rounded-xl border p-1 gap-1 ${
-              isLight ? 'bg-slate-100 border-slate-200' : 'border-white/10 bg-white/5'
+            <div className={`inline-flex rounded-xl border p-1 gap-1 glass-panel-subtle ${
+              isLight ? 'border-slate-200' : 'border-white/10'
             }`}>
               <button
                 type="button"
@@ -999,10 +994,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
         </div>
       </article>
 
-      <article className={`rounded-xl border p-5 transition-colors ${
-        isLight
-          ? 'bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
-          : 'border-white/[0.08] bg-[#11141A] text-[#F3F5F8]'
+      <article className={`rounded-2xl border p-5 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-white'
       }`}>
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className={`text-sm font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'}`}>Proporsi Tingkat Risiko Klaim</h3>
@@ -1130,10 +1123,8 @@ function InteractiveMetricsCharts({ overview, trends, isLight, timeRange = 'all'
         </ul>
       </article>
 
-      <article className={`rounded-2xl border p-5 shadow-sm xl:col-span-3 ${
-        isLight
-          ? 'bg-white border-[#061B31]/[0.08] text-[#061B31] shadow-[0_1px_2px_rgba(6,27,49,0.04)]'
-          : 'border-white/[0.08] bg-[#11141A] text-[#F3F5F8]'
+      <article className={`rounded-2xl border p-5 xl:col-span-3 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-white'
       }`}>
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -1264,22 +1255,20 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-2xl border overflow-hidden transition-all ${
-        isLight
-          ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-          : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-xl shadow-[#00081c]/50 text-white'
+      className={`rounded-2xl border overflow-hidden transition-all glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-white'
       }`}
     >
       {/* Header */}
       <div className={`px-6 py-4 border-b ${
         isLight
-          ? 'bg-[#F7F8FA] border-[#061B31]/[0.08]'
-          : 'border-white/[0.08] bg-[#161A22]'
+          ? 'border-slate-200/80'
+          : 'border-white/[0.08]'
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="flex items-center gap-2">
-              <h3 className={`text-base font-display font-semibold tracking-tight ${isLight ? 'text-[#061B31]' : 'text-slate-100'}`}>Ringkasan Temuan &amp; Rekomendasi Audit</h3>
+              <h3 className={`text-base font-display font-semibold tracking-tight ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>Ringkasan Temuan &amp; Rekomendasi Audit</h3>
             </div>
             {insights.report_generated_at && (
               <div className={`flex items-center gap-2 text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
@@ -1302,28 +1291,24 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
               <button
                 type="button"
                 onClick={onGenerateReport}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer ${
-                  isLight
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                    : 'bg-gradient-to-r from-health-blue-dark to-health-blue hover:from-health-blue hover:to-health-blue-light border border-[#FFCA40]/40 text-white shadow-[#00081c]/50'
-                }`}
+                className="px-3.5 py-2 text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-white' : 'text-[#FFCA40]'}`} />
-                Buat Laporan
+                <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                <span>Buat Laporan</span>
               </button>
             )}
             {onGenerateCampaign && hasInsights && (
               <button
                 type="button"
                 onClick={onGenerateCampaign}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer glass-pill ${
                   isLight
-                    ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10'
-                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                    ? 'text-slate-800 hover:bg-white'
+                    : 'text-white hover:bg-white/20'
                 }`}
               >
                 <BellRing className="w-3.5 h-3.5" />
-                Intervensi Faskes
+                <span>Intervensi Faskes</span>
               </button>
             )}
           </div>
@@ -1333,23 +1318,23 @@ function InsightsPanelCard({ insights, onGenerateReport, onGenerateCampaign, isL
       {/* Content */}
       <div className="p-6 space-y-5">
         {/* Ringkasan Visual Terukur */}
-        <div className={`rounded-xl p-4 border space-y-3 ${
-          isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+        <div className={`rounded-xl p-4 border space-y-3 glass-panel-subtle ${
+          isLight ? 'border-slate-200' : 'border-white/10'
         }`}>
           <div className="grid grid-cols-3 gap-2.5">
-            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+            <div className={`p-2.5 rounded-lg border glass-item ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
               <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Pola Terdeteksi</span>
               <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
                 {(insights.patterns || []).length}
               </span>
             </div>
-            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+            <div className={`p-2.5 rounded-lg border glass-item ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
               <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Rekomendasi Aksi</span>
               <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
                 {(insights.recommendations || []).length}
               </span>
             </div>
-            <div className={`p-2.5 rounded-lg border ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1936]/70 border-white/10'}`}>
+            <div className={`p-2.5 rounded-lg border glass-item ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
               <span className={`text-[10px] uppercase font-bold block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Prioritas Tindak</span>
               <span className={`text-lg font-extrabold font-mono ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
                 Tinggi
@@ -1765,18 +1750,16 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
   const severityConfig = isLight ? lightSeverityConfig : darkSeverityConfig;
 
   return (
-    <div className={`rounded-2xl border overflow-hidden transition-all ${
-      isLight
-        ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-        : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl shadow-xl shadow-[#00081c]/50 text-white'
+    <div className={`rounded-2xl border overflow-hidden transition-all glass-panel ${
+      isLight ? 'text-slate-900' : 'border-white/10 text-white'
     }`}>
       <div className={`px-6 py-4 border-b ${
         isLight
-          ? 'bg-rose-50/50 border-rose-200'
-          : 'border-white/10 bg-gradient-to-r from-rose-950/60 via-[#00153A]/90 to-[#00134A]/80'
+          ? 'bg-rose-50/40 border-rose-200/80'
+          : 'border-white/10 bg-rose-950/20'
       }`}>
         <div className="flex items-center justify-between">
-          <h3 className={`text-lg font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Peringatan Anomali Klaim Kritis</h3>
+          <h3 className={`text-base font-display font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Peringatan Anomali Klaim Kritis</h3>
           <span className={`px-3 py-1 rounded-full border text-xs font-semibold ${
             isLight
               ? 'bg-rose-100 text-rose-800 border-rose-300'
@@ -1787,7 +1770,7 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
         </div>
       </div>
 
-      <div className={`divide-y ${isLight ? 'divide-slate-200' : 'divide-white/5'}`}>
+      <div className={`divide-y ${isLight ? 'divide-slate-200/70' : 'divide-white/5'}`}>
         {alerts.map((alert) => {
           const config = severityConfig[alert.severity] || severityConfig.medium;
           const Icon = config.icon;
@@ -1804,7 +1787,7 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
                 }
               }}
               className={`p-4 transition-all cursor-pointer group flex items-start justify-between gap-3 ${
-                isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5'
+                isLight ? 'hover:bg-white/80' : 'hover:bg-white/5'
               }`}
             >
               <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -1827,7 +1810,7 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
                   <div className="flex items-center justify-between gap-2 mt-1">
                     <p className={`text-xs leading-relaxed truncate ${isLight ? 'text-slate-600' : 'text-white/70'}`}>{alert.message}</p>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <div className={`w-12 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-white/10'}`}>
+                      <div className={`w-14 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200/60' : 'bg-white/10'}`}>
                         <div
                           className={`h-full rounded-full ${
                             alert.severity === 'critical' ? 'bg-rose-500 w-[94%]' : alert.severity === 'high' ? 'bg-orange-500 w-[82%]' : 'bg-amber-500 w-[65%]'
@@ -1912,10 +1895,8 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
   return (
     <section
       aria-label="Daftar klaim prioritas terbaru"
-      className={`rounded-2xl border p-5 transition-colors duration-300 ${
-        isLight
-          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
-          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      className={`rounded-2xl border p-5 transition-colors duration-300 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-slate-100'
       }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -2072,7 +2053,7 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                       <span>{row.lane === 'red' ? 'Audit' : row.lane === 'yellow' ? 'Klarifikasi' : 'Sah'}</span>
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-12 h-1 rounded-full overflow-hidden ${isLight ? 'bg-slate-100' : 'bg-white/10'}`}>
+                      <div className={`w-14 h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-slate-200/70' : 'bg-white/10'}`}>
                         <div
                           className="h-full rounded-full transition-all duration-300"
                           style={{
@@ -2107,10 +2088,8 @@ function FaskesPerformanceCard({ isLight, onInspectCase, onNavigateTab }) {
   return (
     <section
       aria-label="Prioritas pemantauan faskes"
-      className={`rounded-2xl border p-5 transition-colors duration-300 ${
-        isLight
-          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
-          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      className={`rounded-2xl border p-5 transition-colors duration-300 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-slate-100'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -2140,10 +2119,10 @@ function FaskesPerformanceCard({ isLight, onInspectCase, onNavigateTab }) {
             key={item.id}
             type="button"
             onClick={() => onInspectCase?.(item.id)}
-            className={`w-full flex items-center justify-between gap-2.5 p-2 rounded-xl border text-left transition cursor-pointer ${
+            className={`w-full flex items-center justify-between gap-2.5 p-2 rounded-xl border text-left transition cursor-pointer glass-item ${
               isLight
-                ? 'border-slate-100 hover:bg-slate-50 hover:border-slate-200'
-                : 'border-white/[0.06] hover:bg-white/[0.04]'
+                ? 'hover:bg-white/90'
+                : 'hover:bg-white/[0.08]'
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -2555,32 +2534,40 @@ export default function ExecutiveHub({
 
   return (
     <div className={`space-y-6 pb-8 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-      {/* HEADER ATAS */}
-      <div className={`flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 border-b pb-4 ${
-        isLight ? 'border-slate-200' : 'border-white/10'
+      {/* HEADER ATAS (HORIZON UI COCKPIT GLASS BANNER) */}
+      <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 glass-panel ${
+        isLight ? 'text-slate-900' : 'border-white/10 text-white'
       }`}>
-        <div className="flex items-center gap-3 w-full xl:w-auto min-w-0 flex-1">
-          <div className={`p-2.5 rounded-2xl border shadow-sm shrink-0 ${
+        <div className="flex items-center gap-3.5 w-full xl:w-auto min-w-0 flex-1">
+          <div className={`p-3 rounded-2xl border shadow-sm shrink-0 ${
             isLight
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-              : 'bg-gradient-to-tr from-health-blue-dark to-health-blue border-white/10 text-white'
+              ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-800'
+              : 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300'
           }`}>
             <LayoutDashboard className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className={`text-lg sm:text-xl font-display font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Dashboard Ringkasan
-            </h1>
-            <p className={`text-xs mt-0.5 leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
-              Ringkasan eksekutif pengawasan pra-pembayaran klaim JKN dan pemantauan risiko fasilitas kesehatan.
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className={`text-xl sm:text-2xl font-display font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Dashboard Ringkasan Eksekutif
+              </h1>
+              <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1.5 ${
+                isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+              }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>6,26 Jt Baris Terhubung</span>
+              </span>
+            </div>
+            <p className={`text-xs mt-1 leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+              Pengawasan pra-pembayaran klaim JKN, penapisan kecurangan algoritma 4-tier, dan pemantauan kepatuhan FKRTL.
             </p>
           </div>
         </div>
 
         {/* Kontrol Eksekutif: Rentang Waktu, Refresh & Buat Laporan */}
-        <div className="flex items-center gap-2 self-start lg:self-auto shrink-0 flex-wrap">
-          <div className={`inline-flex rounded-xl border p-1 ${
-            isLight ? 'bg-slate-100 border-slate-300' : 'border-white/10 bg-white/5'
+        <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0 flex-wrap">
+          <div className={`inline-flex rounded-xl border p-1 glass-panel-subtle ${
+            isLight ? 'border-slate-200' : 'border-white/10'
           }`}>
             {[
               { id: 'all', label: 'Semua' },
@@ -2595,11 +2582,11 @@ export default function ExecutiveHub({
                 className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
                   timeRange === item.id
                     ? isLight
-                      ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                      : 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-slate-900 text-white font-bold shadow-xs'
+                      : 'bg-emerald-600 text-white font-bold shadow-xs'
                     : isLight
-                    ? 'text-slate-600 hover:text-slate-900'
-                    : 'text-white/60 hover:text-white'
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {item.label}
@@ -2611,28 +2598,24 @@ export default function ExecutiveHub({
             type="button"
             onClick={handleRefreshData}
             disabled={isRefreshing}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-sm cursor-pointer transition-colors ${
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-xs cursor-pointer transition glass-item ${
               isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white'
+                ? 'text-slate-700 hover:bg-white'
+                : 'text-white/80 hover:bg-white/10 hover:text-white'
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLight ? 'text-emerald-600' : 'text-emerald-400'} ${isRefreshing ? 'animate-spin' : ''}`} />
-            Perbarui
+            <span>Perbarui</span>
           </button>
 
           <button
             type="button"
             onClick={handleExportExecutiveCsv}
             aria-label="Ekspor data ringkasan eksekutif ke CSV"
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold shadow-md cursor-pointer transition-all ${
-              isLight
-                ? 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-            }`}
+            className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-sm cursor-pointer transition bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             <Download className="w-3.5 h-3.5" />
-            Ekspor Laporan
+            <span>Ekspor Laporan</span>
           </button>
         </div>
       </div>

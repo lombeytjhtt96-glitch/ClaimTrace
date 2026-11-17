@@ -24,10 +24,8 @@ export function SegmentedComplianceBar({
   return (
     <section
       aria-label={title}
-      className={`rounded-2xl border p-5 transition-colors duration-300 ${
-        isLight
-          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
-          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      className={`rounded-2xl border p-5 transition-colors duration-300 glass-panel ${
+        isLight ? 'text-slate-900' : 'text-slate-100'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-4">
@@ -68,8 +66,8 @@ export function SegmentedComplianceBar({
         </div>
 
         <div
-          className={`w-full h-2.5 rounded-full overflow-hidden flex gap-0.5 p-0.5 ${
-            isLight ? 'bg-slate-100' : 'bg-white/[0.06]'
+          className={`w-full h-2 rounded-full overflow-hidden flex ${
+            isLight ? 'bg-slate-200/70' : 'bg-white/10'
           }`}
           role="img"
           aria-label={normalized.map((s) => `${s.label} ${Math.round(s.pct)}%`).join(', ')}
@@ -78,7 +76,7 @@ export function SegmentedComplianceBar({
             <div
               key={seg.id}
               style={{ width: `${Math.max(4, seg.pct)}%`, backgroundColor: seg.color }}
-              className="h-full rounded-full transition-all duration-500"
+              className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
               title={`${seg.label}: ${Number(seg.count || 0).toLocaleString('id-ID')} (${seg.pct.toFixed(1)}%)`}
             />
           ))}
@@ -90,8 +88,8 @@ export function SegmentedComplianceBar({
         {segments.slice(0, 3).map((seg) => (
           <div
             key={seg.id}
-            className={`rounded-xl border px-2.5 py-2 transition-colors ${
-              isLight ? 'bg-slate-50/80 border-slate-200/80' : 'bg-white/[0.04] border-white/[0.08]'
+            className={`rounded-xl border px-2.5 py-2 transition-colors glass-item ${
+              isLight ? 'hover:bg-white/90' : 'hover:bg-white/10'
             }`}
           >
             <div className="flex items-center gap-1.5">
@@ -180,10 +178,8 @@ export function SegmentedRadialHighlightCard({
   return (
     <section
       aria-label={title}
-      className={`rounded-2xl border p-5 transition-colors duration-300 relative overflow-hidden ${
-        isLight
-          ? 'bg-white border-slate-200/90 text-slate-900 shadow-[0_1px_3px_rgba(6,27,49,0.04)]'
-          : 'bg-[#131822] border-white/[0.08] text-slate-100 shadow-lg'
+      className={`rounded-2xl border p-5 transition-colors duration-300 relative overflow-hidden glass-panel ${
+        isLight ? 'text-slate-900' : 'text-slate-100'
       }`}
     >
       <div className="relative z-10 flex items-center justify-between gap-2 mb-4">
@@ -217,10 +213,10 @@ export function SegmentedRadialHighlightCard({
                   key={tile.id}
                   type="button"
                   onClick={tile.onClick || onCtaClick}
-                  className={`text-left rounded-xl border p-3 transition cursor-pointer group ${
+                  className={`text-left rounded-xl border p-3 transition cursor-pointer group glass-item ${
                     isLight
-                      ? 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100/90'
-                      : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.08]'
+                      ? 'hover:bg-white/90'
+                      : 'hover:bg-white/[0.08]'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1.5">
@@ -235,10 +231,10 @@ export function SegmentedRadialHighlightCard({
             })}
           </div>
           {footerNote && (
-            <div className={`rounded-xl border px-3 py-2 flex items-center gap-2 text-xs ${
+            <div className={`rounded-xl border px-3 py-2 flex items-center gap-2 text-xs glass-item ${
               isLight
-                ? 'bg-slate-50 border-slate-200 text-slate-700'
-                : 'bg-white/[0.04] border-white/[0.08] text-white/90'
+                ? 'text-slate-700'
+                : 'text-white/90'
             }`}>
               <Info className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
               <span className="leading-snug">{footerNote}</span>
@@ -288,10 +284,10 @@ export function SegmentedRadialHighlightCard({
             {breakdownRows.map((row) => (
               <div
                 key={row.id}
-                className={`rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2.5 transition-colors ${
+                className={`rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2.5 transition-colors glass-item ${
                   isLight
-                    ? 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100/80'
-                    : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07]'
+                    ? 'hover:bg-white/90'
+                    : 'hover:bg-white/[0.08]'
                 }`}
               >
                 <div className="min-w-0">

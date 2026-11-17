@@ -1255,19 +1255,32 @@ export default function App() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className={`h-dvh max-h-dvh flex flex-col font-sans antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 ${
+          className={`h-dvh max-h-dvh flex flex-col font-sans antialiased overflow-hidden selection:bg-emerald-500 selection:text-white transition-colors duration-300 relative ${
             isLight
-              ? 'bg-[#F7F8FA] text-slate-900 theme-light'
-              : 'dark bg-[#0B0F17] text-[#F3F5F8] theme-dark'
+              ? 'bg-[#F8FAFC] text-slate-900 theme-light'
+              : 'dark bg-[#0A0E17] text-[#F3F5F8] theme-dark'
           }`}
         >
+          {/* Ambient Lighting Spheres for Frosted Glass Refraction */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+            <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full blur-3xl opacity-40 transition-colors duration-500 ${
+              isLight ? 'bg-gradient-to-br from-emerald-300/30 via-teal-200/20 to-transparent' : 'bg-gradient-to-br from-emerald-500/15 via-teal-500/10 to-transparent'
+            }`} />
+            <div className={`absolute top-1/4 -right-32 w-[550px] h-[550px] rounded-full blur-3xl opacity-35 transition-colors duration-500 ${
+              isLight ? 'bg-gradient-to-bl from-blue-300/25 via-sky-200/20 to-transparent' : 'bg-gradient-to-bl from-blue-600/15 via-sky-500/10 to-transparent'
+            }`} />
+            <div className={`absolute -bottom-32 left-1/3 w-[650px] h-[500px] rounded-full blur-3xl opacity-30 transition-colors duration-500 ${
+              isLight ? 'bg-gradient-to-tr from-indigo-200/25 via-emerald-100/15 to-transparent' : 'bg-gradient-to-tr from-indigo-600/10 via-emerald-500/10 to-transparent'
+            }`} />
+          </div>
+
           {/* ======================================================== */}
           {/* UNIFIED HEADER (POLICYPILOT-INSPIRED CLEAN PRECISION)    */}
           {/* ======================================================== */}
-          <header className={`backdrop-blur-xl border-b px-4 py-2.5 shrink-0 z-40 transition-colors duration-300 ${
+          <header className={`glass-panel border-b px-4 py-2.5 shrink-0 z-40 relative transition-colors duration-300 ${
             isLight
-              ? 'bg-white/95 border-slate-200/80 text-slate-900 shadow-[0_1px_2px_rgba(6,27,49,0.03)]'
-              : 'bg-[#0E131B]/95 border-white/[0.08] text-[#F3F5F8]'
+              ? 'border-slate-200/80 text-slate-900 shadow-sm'
+              : 'border-white/[0.08] text-[#F3F5F8]'
           }`}>
             <div className="w-full flex items-center justify-between gap-3">
               
@@ -1979,8 +1992,8 @@ export default function App() {
         </motion.aside>
 
         {/* WORKSPACE AREA (COCKPIT LAYOUT) */}
-        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-6 lg:px-7 py-3 lg:py-5 pb-28 min-h-0 transition-colors duration-300 ${
-          isLight ? 'bg-[#F7F8FA] text-slate-900' : 'bg-[#0B0F17] text-slate-100'
+        <main ref={mainContentRef} className={`flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-6 lg:px-7 py-3 lg:py-5 pb-28 min-h-0 transition-colors duration-300 relative z-10 ${
+          isLight ? 'text-slate-900' : 'text-slate-100'
         }`}>
           <div className={`w-full max-w-[1700px] mx-auto ${
             viewMode === 'split' ? 'flex flex-col xl:flex-row gap-5 items-start' : 'space-y-4'
