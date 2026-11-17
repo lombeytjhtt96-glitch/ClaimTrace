@@ -328,15 +328,19 @@ export function PolicyStepProgressRing({ pct = 16, size = 24, isLight = true }) 
 /**
  * Normalizes categorical axis labels so horizontal Recharts bars never wrap awkwardly onto multiple lines.
  */
-export function formatAxisLabel(raw, { maxChars = 29, stripParens = false } = {}) {
+export function formatAxisLabel(raw, { maxChars = 32, stripParens = false } = {}) {
   let label = String(raw || '').trim();
   if (stripParens) {
-    label = label.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    label = label
+      .replace(/\s*\([^)]*\)\s*/g, ' ')
+      .replace(/\s+Sehat Mandiri\b/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
   if (label.length <= maxChars) return label;
   const sliced = label.slice(0, maxChars - 1);
   const lastSpace = sliced.lastIndexOf(' ');
-  const clean = lastSpace > Math.floor(maxChars * 0.5) ? sliced.slice(0, lastSpace) : sliced;
+  const clean = lastSpace > Math.floor(maxChars * 0.45) ? sliced.slice(0, lastSpace) : sliced;
   return `${clean.trimEnd()}…`;
 }
 
@@ -350,7 +354,7 @@ export function SingleLineYAxisTick({
   fill = '#334155',
   fontSize = 11,
   fontWeight = 500,
-  maxChars = 29,
+  maxChars = 32,
   stripParens = false,
 }) {
   const fullVal = String(payload?.value || '');

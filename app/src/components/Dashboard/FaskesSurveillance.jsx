@@ -303,7 +303,7 @@ export default function FaskesSurveillance({
                     .sort((a, b) => Number(b.friScore) - Number(a.friScore))
                     .slice(0, 6)
                     .map((f) => ({
-                      shortName: formatAxisLabel(f.name, { maxChars: 29, stripParens: true }),
+                      shortName: formatAxisLabel(f.name, { maxChars: 32, stripParens: true }),
                       fullName: f.name,
                       friScore: Number(f.friScore || 0),
                       anomalyCount: f.anomalyCount || 0,
@@ -321,7 +321,7 @@ export default function FaskesSurveillance({
                   <YAxis
                     type="category"
                     dataKey="shortName"
-                    width={198}
+                    width={218}
                     interval={0}
                     axisLine={false}
                     tickLine={false}
@@ -330,7 +330,7 @@ export default function FaskesSurveillance({
                         fill={isLight ? '#334155' : '#e2e8f0'}
                         fontSize={11}
                         fontWeight={600}
-                        maxChars={29}
+                        maxChars={32}
                         stripParens
                       />
                     }

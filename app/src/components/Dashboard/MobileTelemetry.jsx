@@ -568,25 +568,43 @@ export default function MobileTelemetry({
             </div>
           </div>
 
-          <div className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs transition-all ${
+            isLight
+              ? 'bg-gradient-to-r from-emerald-500/[0.07] via-teal-500/[0.04] to-emerald-500/[0.07] border-emerald-600/25 shadow-sm'
+              : 'bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-emerald-950/30 border-emerald-500/20 shadow-md'
           }`}>
-            <div className="space-y-0.5">
-              <span className={`font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Standar Keamanan Nasional Terpenuhi
-              </span>
-              <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                ISO 27001 Information Security Management &amp; Peraturan BPJS Kesehatan No. 9 Tahun 2024.
-              </p>
+            <div className="flex items-start sm:items-center gap-3 min-w-0">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                isLight ? 'bg-emerald-600/10 text-emerald-700 border border-emerald-600/20' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-400/25'
+              }`}>
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                    Standar Keamanan Nasional Terpenuhi
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-600/10 text-emerald-800 border border-emerald-600/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                    Kepatuhan Terverifikasi
+                  </span>
+                </div>
+                <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                  ISO 27001 Information Security Management &amp; Peraturan BPJS Kesehatan No. 9 Tahun 2024.
+                </p>
+              </div>
             </div>
             <button 
               type="button" 
               onClick={() => setShowComplianceModal(true)}
-              className={`text-[11px] underline font-bold shrink-0 cursor-pointer ${
-                isLight ? 'text-emerald-700 hover:text-emerald-900' : 'text-[#FFCA40] hover:text-[#FFE08C]'
+              className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition shadow-sm ${
+                isLight
+                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
               }`}
             >
-              Lihat Dokumen Kepatuhan
+              <span>Lihat Dokumen Kepatuhan</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

@@ -722,6 +722,44 @@ def build_verifier_workload(
     }
 
 
+def humanize_verification_status(raw_status: Optional[str], triage_lane: Optional[str] = None) -> str:
+    """Transform raw database enum/snake_case statuses into official human-friendly BPJS Healthkathon Indonesian terms."""
+    val = (raw_status or "").strip().upper()
+    if not val and triage_lane:
+        val = f"REKOMENDASI_{triage_lane.upper()}"
+
+    mapping = {
+        "PENDING_KLARIFIKASI": "Pending Klarifikasi (SLA 10 HK)",
+        "KLARIFIKASI_FASKES": "Pending Klarifikasi (SLA 10 HK)",
+        "HOLD_KLARIFIKASI": "Pending Klarifikasi (SLA 10 HK)",
+        "TIDAK_LAYAK_FRAUD": "Tidak Layak Bayar (Indikasi Fraud)",
+        "TOLAK_FRAUD": "Tidak Layak Bayar (Indikasi Fraud)",
+        "TOLAK_KLAIM": "Tidak Layak Bayar (Indikasi Fraud)",
+        "DITOLAK": "Tidak Layak Bayar (Indikasi Fraud)",
+        "AUDIT_LAPANGAN": "Audit Lapangan (Prioritas Merah)",
+        "FRAUD_SUSPECT": "Tidak Layak Bayar (Indikasi Fraud)",
+        "REKOMENDASI_MERAH": "Rekomendasi Jalur Merah (Audit Khusus)",
+        "REKOMENDASI_KUNING": "Rekomendasi Jalur Kuning (Klarifikasi)",
+        "REKOMENDASI_HIJAU": "Rekomendasi Jalur Hijau (Fast-Track)",
+        "LAYAK_BAYAR": "Layak Bayar (ACC Pra-Bayar)",
+        "LOLOSKAN_KLAIM": "Layak Bayar (ACC Pra-Bayar)",
+        "DISETUJUI": "Layak Bayar (ACC Pra-Bayar)",
+        "SETUJUI_LAYAK": "Layak Bayar (ACC Pra-Bayar)",
+        "DISPUTE_TKMKB": "Dispute Klinis (Eskalasi TKMKB)",
+        "DISPUTE_KODING": "Dispute Koding INA-CBG",
+        "HOLD_AUDIT": "Penundaan Bayar (Audit Khusus)",
+    }
+    if val in mapping:
+        return mapping[val]
+    if "MERAH" in val or "RED" in val:
+        return "Rekomendasi Jalur Merah (Audit Khusus)"
+    if "KUNING" in val or "YELLOW" in val:
+        return "Rekomendasi Jalur Kuning (Klarifikasi)"
+    if "HIJAU" in val or "GREEN" in val:
+        return "Rekomendasi Jalur Hijau (Fast-Track)"
+    return val.replace("_", " ").title() if val else "Menunggu Penelaahan"
+
+
 def _classify_bahv_bucket(claim: Any, triage: Any) -> str:
     st = getattr(claim, "status_verifikasi", None)
     if st in ("LOLOSKAN_KLAIM", "LAYAK_BAYAR", "DISETUJUI"):
@@ -804,8 +842,9 @@ def build_bahv_recap_payload(
             "triage_lane": triage.triage_lane,
             "lane": triage.triage_lane,
             "score": triage.final_priority_score,
-            "recorded_decision": raw_status or f"REKOMENDASI_{triage.triage_lane}",
-            "status_verifikasi": raw_status or f"REKOMENDASI_{triage.triage_lane}",
+            "raw_status": raw_status or f"REKOMENDASI_{triage.triage_lane}",
+            "recorded_decision": humanize_verification_status(raw_status, triage.triage_lane),
+            "status_verifikasi": humanize_verification_status(raw_status, triage.triage_lane),
             "adjudicated_by": c.adjudicated_by,
             "assigned_verifier_name": c.assigned_verifier_name or "Belum Di-plot",
             "sla_days": triage.sla_deadline_days,
@@ -1030,15 +1069,28 @@ def render_ba_pending_dispute_html(
             f"{code}: {VEDIKA_CODE_LOOKUP[code]['title']}" if code in VEDIKA_CODE_LOOKUP else code
             for code in code_list
         )
+        raw_v = str(item.get('raw_status') or item.get('status_verifikasi') or '')
+        human_status = humanize_verification_status(raw_v, item.get('triage_lane'))
+        badge_style = (
+            "background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;"
+            if ("Fraud" in human_status or "Merah" in human_status)
+            else "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;"
+            if ("Klarifikasi" in human_status or "Kuning" in human_status or "Dispute" in human_status)
+            else "background:#dcfce7;color:#166534;border:1px solid #86efac;"
+        )
+        status_badge_html = (
+            f"<span style='display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;font-size:10px;line-height:1.4;{badge_style}'>"
+            f"{html.escape(human_status)}"
+            f"</span>"
+            + (f"<br/><small style='color:#64748b'>Tier: {html.escape(item['dispute_level'])}</small>" if item.get("dispute_level") else "")
+        )
         rows += (
             f"<tr>"
             f"<td style='text-align:center'>{idx}</td>"
             f"<td><strong>{html.escape(item['claim_id'])}</strong><br/><small>{html.escape(item.get('no_fpk') or '-')}</small></td>"
             f"<td>{html.escape(item['nama_faskes'])}</td>"
             f"<td style='text-align:center'>{html.escape(item['jenis_pelayanan'])}<br/><small>{html.escape(item['ina_cbg_code'])}</small></td>"
-            f"<td>{html.escape(item['status_verifikasi'])}"
-            + (f"<br/><small>Tier: {html.escape(item['dispute_level'])}</small>" if item.get("dispute_level") else "")
-            + "</td>"
+            f"<td>{status_badge_html}</td>"
             f"<td>{html.escape(descs)}</td>"
             f"<td class='num'>{_fmt_rp(int(item['nilai_klaim_rp']))}</td>"
             f"</tr>"

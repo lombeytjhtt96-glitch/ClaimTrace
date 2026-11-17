@@ -5,8 +5,10 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
+  ArrowRight,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import SecurityVerificationModal from './SecurityVerificationModal';
@@ -701,6 +703,38 @@ export default function SignInPage({
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-rose-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span className="font-medium leading-snug">{errorMsg}</span>
+            </div>
+          )}
+
+          {mode === 'login' && juryDemoEnabled && (
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 border border-emerald-600/35 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Akses Cepat Dewan Juri Healthkathon</span>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-600/15 text-emerald-800 border border-emerald-600/20">
+                  Mode Evaluasi
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-800 leading-snug">
+                Masuk instan ke Cockpit Administrator tanpa verifikasi MFA / kredensial manual untuk kemudahan evaluasi juri.
+              </p>
+              <button
+                type="button"
+                disabled={isSubmitting || isJurySubmitting}
+                onClick={handleJuryAdminQuickLogin}
+                className="w-full py-2.5 px-3 rounded-lg bg-[#00733B] hover:bg-[#005E30] text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+              >
+                {isJurySubmitting ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {isJurySubmitting ? 'Membuka Sesi Administrator...' : 'Masuk Langsung Administrator (Mode Juri)'}
+                </span>
+              </button>
             </div>
           )}
 

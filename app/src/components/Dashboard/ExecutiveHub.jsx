@@ -1705,18 +1705,20 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
         const list = Array.isArray(payload) ? payload : (payload.claims || payload.data || []);
         if (!Array.isArray(list) || list.length === 0) return;
         const mapped = list.slice(0, 12).map((item) => {
-          const rawLane = String(item.triage_lane || item.lane || 'GREEN').toUpperCase();
+          const c = item?.claim || item;
+          const t = item?.triage || item;
+          const rawLane = String(t.triage_lane || c.triage_lane || item.lane || 'GREEN').toUpperCase();
           const lane = rawLane.includes('RED') || rawLane.includes('MERAH') ? 'red' : rawLane.includes('YELLOW') || rawLane.includes('KUNING') ? 'yellow' : 'green';
           return {
-            id: item.claim_id || item.id,
-            hospital: item.faskes_name || item.hospital || item.nama_faskes || 'FKRTL Mitra JKN',
-            dpjp: item.dpjp_name || item.dpjp || 'DPJP Terdaftar',
-            code: item.ina_cbg_code || item.code || 'J-4-10-II',
-            tariffRp: Number(item.nilai_klaim_rp ?? item.claimed_tariff_rp ?? 0),
-            score: Number(item.total_risk_score ?? item.totalScore ?? 0),
+            id: c.claim_id || item.id,
+            hospital: c.nama_faskes || c.faskes_name || item.hospital || 'RS Mitra JKN',
+            dpjp: c.dpjp_meta?.nama_dpjp_alias || c.nama_dpjp || item.dpjp || 'DPJP Terdaftar',
+            code: c.ina_cbg_code || c.code || 'J-4-10-II',
+            tariffRp: Number(c.fkl47_biaya_tagih ?? c.nilai_klaim_rp ?? c.claimed_tariff_rp ?? 0),
+            score: Number(t.final_priority_score ?? item.score ?? 0),
             lane,
-            slaDays: Number(item.sla_remaining_days ?? item.slaDays ?? 5),
-            source: item.modus_label || item.jenis_pengajuan || 'Reguler FPK',
+            slaDays: Number(t.sla_deadline_days ?? c.sla_deadline_days ?? item.slaDays ?? 5),
+            source: c.episode_meta?.cluster_id ? 'Klaster Anomali' : (c.jenis_pengajuan || 'Reguler FPK'),
           };
         });
         if (mapped.length > 0) setRows(mapped);
@@ -1859,7 +1861,11 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                   {row.code}
                 </td>
                 <td className="py-3 px-2 font-mono font-semibold tabular-nums">
-                  {row.tariffRp > 0 ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt` : '-'}
+                  {row.tariffRp >= 1000000
+                    ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt`
+                    : row.tariffRp > 0
+                    ? `Rp ${row.tariffRp.toLocaleString('id-ID')}`
+                    : '-'}
                 </td>
                 <td className="py-3 px-2 truncate max-w-[140px]">
                   <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
@@ -2157,22 +2163,31 @@ export default function ExecutiveHub({
           value: Number(((c.retention?.[1]?.retention_rate || 0.999) * 100).toFixed(2)),
           note: `${Number(c.retention?.[1]?.retained_users || 0).toLocaleString('id-ID')}/${Number(c.claims_count).toLocaleString('id-ID')} Disetujui Penuh`,
         })),
-        cases_opened_trend: liveCohortTrends.map((c) => ({
-          date: c.cohort_date,
-          day: 'Kohort',
-          shortLabel: c.cohort_date.split('(')[0].trim(),
-          labelDate: c.cohort_date,
-          value: c.claims_count,
-          note: `${Number(c.cohort_size).toLocaleString('id-ID')} Peserta`,
-        })),
-        cases_closed_trend: liveCohortTrends.map((c) => ({
-          date: c.cohort_date,
-          day: 'Kohort',
-          shortLabel: c.cohort_date.split('(')[0].trim(),
-          labelDate: c.cohort_date,
-          value: c.retention?.[1]?.retained_users || c.claims_count,
-          note: `Koreksi: ${Number(c.corrected_count || 0).toLocaleString('id-ID')} berkas`,
-        })),
+        cases_opened_trend: liveCohortTrends.map((c) => {
+          const annualFactor = c.cohort_year === 2016 ? 10 : 1;
+          const normalizedClaims = Math.round(c.claims_count / annualFactor);
+          return {
+            date: c.cohort_date,
+            day: 'Kohort',
+            shortLabel: c.cohort_date.split('(')[0].trim(),
+            labelDate: c.cohort_date,
+            value: normalizedClaims,
+            note: `${Number(normalizedClaims).toLocaleString('id-ID')} Klaim/Tahun (${Number(c.cohort_size).toLocaleString('id-ID')} Peserta)`,
+          };
+        }),
+        cases_closed_trend: liveCohortTrends.map((c) => {
+          const annualFactor = c.cohort_year === 2016 ? 10 : 1;
+          const normalizedClosed = Math.round((c.retention?.[1]?.retained_users || c.claims_count) / annualFactor);
+          const normalizedCorr = Math.round((c.corrected_count || 0) / annualFactor);
+          return {
+            date: c.cohort_date,
+            day: 'Kohort',
+            shortLabel: c.cohort_date.split('(')[0].trim(),
+            labelDate: c.cohort_date,
+            value: normalizedClosed,
+            note: `Koreksi: ${Number(normalizedCorr).toLocaleString('id-ID')} berkas/tahun`,
+          };
+        }),
         latency_trend: liveCohortTrends.map((c, idx) => ({
           date: c.cohort_date,
           day: 'Kohort',
