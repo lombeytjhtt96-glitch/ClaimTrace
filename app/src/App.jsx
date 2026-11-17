@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { StatsigProvider, useClientAsyncInit } from '@statsig/react-bindings';
+import { StatsigAutoCapturePlugin } from '@statsig/web-analytics';
+import { StatsigSessionReplayPlugin } from '@statsig/session-replay';
+import { GrowthBookProvider } from '@growthbook/growthbook-react';
+import { growthbook } from './services/growthbook';
 import lazyWithRetry from './utils/lazyWithRetry';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -236,6 +241,29 @@ const buildDpjpCaseFallback = (cId) => {
 };
 
 export default function App() {
+  const id = typeof userID !== 'undefined' ? userID : 'a-user';
+  const { client } = useClientAsyncInit(
+    'client-xuGhZIFcJXG4W5mMcIvGmf72EuWFy93Ezdbd3F9nXU6',
+    { userID: id },
+    { plugins: [new StatsigAutoCapturePlugin(), new StatsigSessionReplayPlugin()] }
+  );
+
+  useEffect(() => {
+    growthbook.init({ streaming: true }).catch((err) => {
+      console.warn('[GrowthBook Init Notice]:', err?.message || err);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (client) {
+      client.logEvent('claimtrace_app_mounted', 'INIT_SUCCESS', {
+        version: '1.0.0',
+        environment: import.meta.env.MODE || 'production',
+        regulatory_standard: 'Permenkes 26/2021',
+      });
+    }
+  }, [client]);
+
   // Fail-closed initial router: NEVER opens landing or unauthenticated dashboard
   const getInitialResetToken = () => {
     if (typeof window !== 'undefined') {
@@ -1174,8 +1202,10 @@ export default function App() {
   // RENDER APP WITH MOTION ANIMATED PRESENCE
   // -------------------------------------------------------------
   return (
-    <>
-      <AnimatePresence mode="wait">
+    <StatsigProvider client={client} loadingComponent={<div>Loading...</div>}>
+      <GrowthBookProvider growthbook={growthbook}>
+        <>
+          <AnimatePresence mode="wait">
       {(authView === 'login' || authView === 'reset_password') && (
         <motion.div 
           key="login"
@@ -3255,5 +3285,7 @@ export default function App() {
       typeof window !== 'undefined' &&
       !['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname) && <Analytics />}
   </>
+      </GrowthBookProvider>
+    </StatsigProvider>
   );
 }
