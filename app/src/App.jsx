@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { StatsigProvider, useClientAsyncInit } from '@statsig/react-bindings';
 import { StatsigAutoCapturePlugin } from '@statsig/web-analytics';
 import { StatsigSessionReplayPlugin } from '@statsig/session-replay';
@@ -3132,7 +3133,7 @@ export default function App() {
 
       {/* PALET PERINTAH NAVIGASI PORTAL (CTRL+K) */}
       <AnimatePresence>
-        {commandPaletteOpen && (
+        {commandPaletteOpen && typeof document !== 'undefined' && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -3251,7 +3252,8 @@ export default function App() {
                 })}
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
 
