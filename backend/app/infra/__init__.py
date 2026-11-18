@@ -1,5 +1,11 @@
-"""ClaimTrace JKN infrastructure modules (Redis cache/queue, PostgreSQL OLTP, Reverse Proxy)."""
+"""ClaimTrace JKN infrastructure modules (Redis cache/queue, PostgreSQL OLTP, Scheduled Backups, Reverse Proxy)."""
 
+from app.infra.backup_manager import (
+    create_scheduled_backup,
+    get_backup_status,
+    list_backups,
+    verify_backup_archive,
+)
 from app.infra.postgres_db import (
     get_postgres_status,
     init_postgres_schema,

@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    service: claimtrace-jkn
+    environment: docker-production
+
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+scrape_configs:
+  - job_name: "claimtrace-backend"
+    metrics_path: /metrics
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["backend:8000"]
+        labels:
+          component: fastapi-dss
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

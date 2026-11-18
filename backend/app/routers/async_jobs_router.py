@@ -33,6 +33,7 @@ JobTypeLiteral = Literal[
     "audit_integrity_check",
     "analytics_refresh",
     "mobile_jkn_batch",
+    "scheduled_backup",
 ]
 
 

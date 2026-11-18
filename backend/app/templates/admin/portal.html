@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClaimTrace JKN — FastAPI-Admin & Enterprise Operations Portal</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #f4f7f7; color: #0f172a; }
+    header { background: linear-gradient(135deg, #005E30, #00733B); color: #fff; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
+    .nav-links a { color: #fff; text-decoration: none; background: rgba(255,255,255,0.16); padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-left: 8px; display: inline-block; }
+    .nav-links a:hover { background: rgba(255,255,255,0.28); }
+    main { max-width: 1240px; margin: 24px auto; padding: 0 24px 48px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+    .card h2 { margin: 0 0 10px; font-size: 14px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+    .metric { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .ok { background: #dcfce7; color: #166534; }
+    .warn { background: #fef3c7; color: #92400e; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>ClaimTrace JKN · FastAPI-Admin Portal</h1>
+      <p>Konsol Tata Kelola Enterprise — SQLAdmin, PyCasbin RBAC, SlowAPI, APScheduler + ARQ Cron, FastAPI-Mail, Prometheus & Scheduled Backup</p>
+    </div>
+    <div class="nav-links">
+      <a href="/sqladmin">Buka SQLAdmin (PostgreSQL CRUD)</a>
+      <a href="/docs">OpenAPI Docs</a>
+      <a href="/metrics">Prometheus /metrics</a>
+      <a href="/dashboard/executive">Kembali ke Cockpit UI</a>
+    </div>
+  </header>
+  <main>
+    <div class="grid">
+      <div class="card">
+        <h2>PostgreSQL OLTP</h2>
+        <div class="metric">{{ "ONLINE" if postgres.postgres_connected else "FALLBACK" }}</div>
+        <p><span class="pill {{ 'ok' if postgres.postgres_connected else 'warn' }}">{{ postgres.database_name or "json_fallback" }}</span></p>
+        <p style="font-size:12px;color:#475569;">Claims: <strong>{{ postgres.tables.claims }}</strong> · Ledger: <strong>{{ postgres.tables.audit_ledger_blocks }}</strong> · Jobs: <strong>{{ postgres.tables.async_job_runs }}</strong></p>
+      </div>
+      <div class="card">
+        <h2>Redis + ARQ Worker</h2>
+        <div class="metric">{{ "ONLINE" if redis.redis_connected else "FALLBACK" }}</div>
+        <p><span class="pill {{ 'ok' if redis.worker_active else 'warn' }}">Worker: {{ "Aktif" if redis.worker_active else "Standby" }}</span></p>
+        <p style="font-size:12px;color:#475569;">Queue: <code>{{ redis.queue_name }}</code> · Keys: <strong>{{ redis.keyspace_keys or 0 }}</strong></p>
+      </div>
+      <div class="card">
+        <h2>Casbin RBAC & SlowAPI</h2>
+        <div class="metric">{{ casbin.total_policies }} Policies</div>
+        <p><span class="pill ok">{{ slowapi.engine }} ({{ slowapi.storage_backend }})</span></p>
+        <p style="font-size:12px;color:#475569;">Default limit: <code>{{ slowapi.default_limit }}</code> · Role Links: <strong>{{ casbin.total_role_links }}</strong></p>
+      </div>
+      <div class="card">
+        <h2>Scheduled Backup & Mail</h2>
+        <div class="metric">{{ backup.total_archives }} Arsip</div>
+        <p><span class="pill ok">FastAPI-Mail + Jinja2 ({{ mailer.available_templates | length }} template)</span></p>
+        <p style="font-size:12px;color:#475569;">Jadwal: {{ backup.schedule }}</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <h2>APScheduler & ARQ Cron Jobs Terdaftar</h2>
+      <table>
+        <thead><tr><th>Job ID</th><th>Deskripsi</th><th>Engine</th><th>Trigger</th></tr></thead>
+        <tbody>
+          {% for job in scheduler.apscheduler_jobs %}
+          <tr><td><code>{{ job.id }}</code></td><td>{{ job.name }}</td><td><span class="pill ok">APScheduler</span></td><td><code>{{ job.trigger }}</code></td></tr>
+          {% endfor %}
+          {% for job in scheduler.arq_cron_jobs %}
+          <tr><td><code>{{ job.id }}</code></td><td>{{ job.name }}</td><td><span class="pill ok">ARQ Cron</span></td><td><code>{{ job.trigger }}</code></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Matriks Kebijakan PyCasbin RBAC</h2>
+      <table>
+        <thead><tr><th>Peran (Subject)</th><th>Resource Pattern</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for p in casbin.policies %}
+          <tr><td><strong>{{ p.subject }}</strong></td><td><code>{{ p.resource }}</code></td><td><code>{{ p.action }}</code></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

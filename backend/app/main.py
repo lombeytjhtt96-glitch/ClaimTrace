@@ -485,6 +485,29 @@ class StrictSessionGateMiddleware(BaseHTTPMiddleware):
         return response
 
 
+import time as _time
+
+
+class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
+    """Records HTTP throughput & latency RED metrics into the ClaimTrace Prometheus registry."""
+
+    async def dispatch(self, request: Request, call_next):
+        t0 = _time.perf_counter()
+        status_code = 500
+        try:
+            response = await call_next(request)
+            status_code = response.status_code
+            return response
+        finally:
+            if request.url.path != "/metrics":
+                telemetry_engine.record_http_request(
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=status_code,
+                    duration_seconds=_time.perf_counter() - t0,
+                )
+
+
 app = FastAPI(
     title="ClaimTrace DSS API",
     description="Sistem Pendukung Keputusan Verifikator Klaim JKN Berbasis Triase Multi-Sinyal Independen • BPJS Kesehatan",
@@ -493,10 +516,11 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Middleware stack (outermost executes first: CORS -> SecurityHeaders -> RateLimiter -> StrictSessionGate)
+# Middleware stack (outermost executes first: CORS -> Prometheus -> SecurityHeaders -> RateLimiter -> StrictSessionGate)
 app.add_middleware(StrictSessionGateMiddleware)
 app.add_middleware(RateLimiterMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(PrometheusMetricsMiddleware)
 
 # 3. Tightened CORS for Trusted Cockpit & BPJS Domains
 ALLOWED_ORIGINS = [
@@ -541,9 +565,13 @@ app.include_router(fhir_router)
 from app.routers.pillar_upgrade_router import pillar_router
 app.include_router(pillar_router)
 
-# ClaimTrace Redis Cache, ARQ Async Background Worker, PostgreSQL OLTP & Reverse Proxy Routers
+# ClaimTrace Redis Cache, ARQ Async Background Worker, PostgreSQL OLTP, Reverse Proxy, SQLAdmin, Casbin, SlowAPI, APScheduler & FastAPI-Mail
+from slowapi.errors import RateLimitExceeded
 from app.routers.async_jobs_router import async_jobs_router
 from app.routers.infra_router import detect_reverse_proxy, infra_router
+from app.routers.admin_suite import admin_suite_router, mount_sqladmin
+from app.security.slowapi_limiter import claimtrace_rate_limit_handler, limiter
+from app.infra.scheduler import shutdown_scheduler, start_scheduler
 from app.infra.redis_client import cache_get_json, cache_set_json, get_redis_status
 from app.infra.postgres_db import (
     get_postgres_status,
@@ -552,8 +580,22 @@ from app.infra.postgres_db import (
     sync_claims_to_postgres,
     sync_operations_snapshot_to_postgres,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, claimtrace_rate_limit_handler)
 app.include_router(async_jobs_router)
 app.include_router(infra_router)
+app.include_router(admin_suite_router)
+mount_sqladmin(app)
+
+
+@app.on_event("startup")
+async def _start_enterprise_scheduler():
+    start_scheduler()
+
+
+@app.on_event("shutdown")
+async def _stop_enterprise_scheduler():
+    shutdown_scheduler()
 
 import uuid
 import logging

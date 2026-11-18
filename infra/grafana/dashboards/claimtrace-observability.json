@@ -1,0 +1,180 @@
+{
+  "uid": "claimtrace-jkn-observability",
+  "title": "ClaimTrace JKN — Infrastructure, SLO & Fraud Telemetry",
+  "tags": ["claimtrace", "bpjs", "prometheus", "postgresql", "redis", "backup"],
+  "timezone": "Asia/Jakarta",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "editable": true,
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "PostgreSQL OLTP",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_postgres_up", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "ONLINE", "color": "green" }, "0": { "text": "FALLBACK", "color": "red" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Redis Cache & Queue",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_redis_up", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "ONLINE", "color": "green" }, "0": { "text": "FALLBACK", "color": "orange" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "ARQ Async Worker",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_arq_worker_up", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "ACTIVE", "color": "green" }, "0": { "text": "OFFLINE", "color": "red" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "SHA-256 Audit Ledger",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_audit_integrity_status", "refId": "A" }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "VERIFIED 100%", "color": "green" }, "0": { "text": "COMPROMISED", "color": "red" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Scheduled Backup Archives",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_backup_total_archives", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "HTTP Throughput (RPS by Status)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (status_code) (rate(claimtrace_http_requests_total[1m]))",
+          "legendFormat": "HTTP {{status_code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "API Latency Percentiles (P50 / P95)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(claimtrace_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "P50 Latency",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(claimtrace_http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "P95 Latency",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Paparan Finansial Klaim per Jalur Triase (IDR)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [
+        {
+          "expr": "claimtrace_financial_exposure_rupiah",
+          "legendFormat": "Jalur {{lane}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "currencyIDR" } }
+    },
+    {
+      "id": 9,
+      "type": "bargauge",
+      "title": "PostgreSQL OLTP Table Row Counts",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [
+        {
+          "expr": "claimtrace_postgres_table_rows",
+          "legendFormat": "{{table}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Mobile JKN Layer-3 Presence Attestation Ratio",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [
+        {
+          "expr": "claimtrace_mobile_jkn_confirmation_ratio",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Ukuran Arsip Backup Terakhir",
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_backup_last_size_bytes", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Antrean ARQ Redis Jobs",
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "claimtrace-prometheus" },
+      "targets": [{ "expr": "claimtrace_arq_queued_jobs", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    }
+  ]
+}

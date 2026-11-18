@@ -49,6 +49,8 @@ start_all.bat
 start_all.sh
 *.bat
 *.sh
+!scripts/backup_claimtrace.sh
+backend/backups/
 scripts/record_*.mjs
 scripts/test_record.mjs
 

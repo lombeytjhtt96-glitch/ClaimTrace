@@ -1,0 +1,66 @@
+groups:
+  - name: claimtrace_infrastructure_alerts
+    interval: 15s
+    rules:
+      - alert: ClaimTraceBackendDown
+        expr: up{job="claimtrace-backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "ClaimTrace FastAPI Backend tidak dapat di-scrape"
+          description: "Endpoint /metrics backend ClaimTrace tidak merespons selama >30 detik."
+
+      - alert: ClaimTracePostgresDown
+        expr: claimtrace_postgres_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL OLTP ClaimTrace terputus"
+          description: "Koneksi PostgreSQL claimtrace_db tidak aktif (mode fallback JSON berjalan)."
+
+      - alert: ClaimTraceRedisDown
+        expr: claimtrace_redis_up == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis Cache & Queue ClaimTrace terputus"
+          description: "Koneksi Redis tidak aktif; cache dan antrean ARQ beralih ke fallback lokal."
+
+      - alert: ClaimTraceArqWorkerDown
+        expr: claimtrace_arq_worker_up == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ARQ Async Background Worker tidak aktif"
+          description: "Heartbeat worker ARQ di Redis tidak terdeteksi selama >1 menit."
+
+      - alert: ClaimTraceAuditChainCompromised
+        expr: claimtrace_audit_integrity_status == 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Integritas Rantai Hash SHA-256 Audit Ledger Terganggu"
+          description: "Verifikasi kriptografi audit_ledger_chain gagal. Segera lakukan investigasi forensik."
+
+      - alert: ClaimTraceHighHttpLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(claimtrace_http_request_duration_seconds_bucket[5m])) by (le)) > 1.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latensi HTTP P95 ClaimTrace melewati 1.5 detik"
+          description: "Latensi P95 API ClaimTrace saat ini berada di atas ambang batas SLO 1.5s."
+
+      - alert: ClaimTraceBackupStale
+        expr: (time() - claimtrace_backup_last_success_timestamp_seconds) > 93600 and claimtrace_backup_last_success_timestamp_seconds > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup Terjadwal ClaimTrace Melewati 26 Jam"
+          description: "Tidak ada arsip backup baru yang berhasil dibuat dalam 26 jam terakhir."

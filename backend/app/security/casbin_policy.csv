@@ -1,0 +1,28 @@
+p, ANALYST, /api/v1/claims*, GET
+p, ANALYST, /api/v1/audit-logs*, GET
+p, ANALYST, /api/v1/system/infrastructure/status, GET
+p, ANALYST, /api/v1/system/postgres/*, GET
+p, ANALYST, /api/v1/system/backups, GET
+p, ANALYST, /api/v1/system/scheduler/jobs, GET
+p, ANALYST, /api/v1/security/casbin/policies, GET
+p, ANALYST, /metrics, GET
+
+p, VERIFICATOR_MEDIS, /api/v1/claims/*, POST
+p, VERIFICATOR_MEDIS, /api/v1/claims/*, PATCH
+p, VERIFICATOR_MEDIS, /api/v1/operations/*, POST
+p, VERIFICATOR_MEDIS, /api/v1/jobs/enqueue, POST
+p, VERIFICATOR_MEDIS, /api/v1/system/mail/send, POST
+p, VERIFICATOR_MEDIS, /api/v1/system/mail/outbox, GET
+
+p, KEPALA_CABANG, /api/v1/system/backups/run, POST
+p, KEPALA_CABANG, /api/v1/system/backups/verify/*, POST
+p, KEPALA_CABANG, /api/v1/system/postgres/sync, POST
+p, KEPALA_CABANG, /admin-portal*, GET
+
+p, ADMIN, /api/v1/*, *
+p, ADMIN, /sqladmin*, *
+p, ADMIN, /admin-portal*, *
+
+g, VERIFICATOR_MEDIS, ANALYST
+g, KEPALA_CABANG, VERIFICATOR_MEDIS
+g, ADMIN, KEPALA_CABANG

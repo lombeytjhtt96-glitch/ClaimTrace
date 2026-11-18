@@ -8,8 +8,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 
+from app.infra.backup_manager import (
+    create_scheduled_backup,
+    get_backup_status,
+    list_backups,
+    verify_backup_archive,
+)
 from app.infra.postgres_db import (
     get_postgres_status,
     query_async_jobs_from_postgres,
@@ -46,15 +52,56 @@ def detect_reverse_proxy(request: Request) -> Dict[str, Any]:
 
 @infra_router.get("/api/v1/system/infrastructure/status")
 def get_infrastructure_status(request: Request):
-    """Status real-time terpadu untuk Reverse Proxy (Nginx), PostgreSQL OLTP, dan Redis + ARQ Worker."""
+    """Status real-time terpadu untuk Reverse Proxy (Nginx), PostgreSQL OLTP, Redis/ARQ, Observability, dan Scheduled Backup."""
     proxy_diag = detect_reverse_proxy(request)
     pg_diag = get_postgres_status()
     redis_diag = get_redis_status()
+    backup_diag = get_backup_status()
     return {
         "status": "success",
         "reverse_proxy": proxy_diag,
         "postgres": pg_diag,
         "redis": redis_diag,
+        "scheduled_backup": backup_diag,
+        "observability": {
+            "prometheus_metrics_endpoint": "/metrics",
+            "prometheus_ui": "http://localhost:9090",
+            "grafana_dashboard_uid": "claimtrace-jkn-observability",
+            "grafana_ui": "http://localhost:3001",
+            "locust_loadtest_ui": "http://localhost:8089",
+        },
+    }
+
+
+@infra_router.get("/api/v1/system/backups")
+def get_scheduled_backups(limit: int = Query(30, ge=1, le=100)):
+    """Daftar arsip backup terjadwal beserta kebijakan retensi dan checksum SHA-256."""
+    return {
+        "status": "success",
+        "policy": get_backup_status(),
+        "backups": list_backups(limit=limit),
+    }
+
+
+@infra_router.post("/api/v1/system/backups/run")
+def trigger_scheduled_backup():
+    """Menjalankan backup penuh PostgreSQL + Redis + Audit Ledger SHA-256 secara langsung."""
+    metadata = create_scheduled_backup(trigger="api_manual_trigger")
+    return {
+        "status": "success",
+        "backup": metadata,
+    }
+
+
+@infra_router.post("/api/v1/system/backups/verify/{backup_id}")
+def verify_scheduled_backup(backup_id: str):
+    """Memverifikasi integritas arsip backup terhadap checksum SHA-256."""
+    result = verify_backup_archive(backup_id)
+    if not result.get("exists"):
+        raise HTTPException(status_code=404, detail=f"Arsip backup '{backup_id}' tidak ditemukan.")
+    return {
+        "status": "success",
+        "verification": result,
     }
 
 

@@ -66,6 +66,7 @@ services:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-claimtrace}:${POSTGRES_PASSWORD:-claimtrace_local_dev}@postgres:5432/${POSTGRES_DB:-claimtrace_db}
       - REDIS_URL=redis://redis:6379/0
       - CLAIMTRACE_TRUST_PROXY_HEADERS=1
+      - CLAIMTRACE_BACKUP_DIR=/app/backups
       - HOST=0.0.0.0
       - PORT=8000
     depends_on:
@@ -75,6 +76,7 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/data:/app/data
+      - claimtrace_backups_data:/app/backups
 
   worker:
     build:
@@ -87,6 +89,7 @@ services:
       - APP_ENV=production
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-claimtrace}:${POSTGRES_PASSWORD:-claimtrace_local_dev}@postgres:5432/${POSTGRES_DB:-claimtrace_db}
       - REDIS_URL=redis://redis:6379/0
+      - CLAIMTRACE_BACKUP_DIR=/app/backups
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,6 +97,78 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/data:/app/data
+      - claimtrace_backups_data:/app/backups
+
+  backup-scheduler:
+    image: postgres:16-alpine
+    container_name: claimtrace-backup-scheduler
+    restart: unless-stopped
+    environment:
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=${POSTGRES_USER:-claimtrace}
+      - PGPASSWORD=${POSTGRES_PASSWORD:-claimtrace_local_dev}
+      - PGDATABASE=${POSTGRES_DB:-claimtrace_db}
+      - BACKUP_RETENTION_DAYS=${CLAIMTRACE_BACKUP_RETENTION_COUNT:-14}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/data:/data:ro
+      - claimtrace_backups_data:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 19 * * * /bin/sh -c 'TS=$$(date -u +%Y%m%d-%H%M%S); mkdir -p /backups/tmp_$$TS && pg_dump --no-owner --no-privileges -f /backups/tmp_$$TS/claimtrace_db.sql && cp /data/*.json /data/*.jsonl /backups/tmp_$$TS/ 2>/dev/null || true; tar -czf /backups/claimtrace-backup-$$TS.tar.gz -C /backups tmp_$$TS && rm -rf /backups/tmp_$$TS && sha256sum /backups/claimtrace-backup-$$TS.tar.gz > /backups/claimtrace-backup-$$TS.sha256 && find /backups -name \"claimtrace-backup-*.tar.gz\" -mtime +$${BACKUP_RETENTION_DAYS:-14} -delete'" > /etc/crontabs/root
+        crond -f -l 6
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: claimtrace-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - claimtrace_prometheus_data:/prometheus
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: claimtrace-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-claimtrace2026}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/claimtrace-observability.json
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - claimtrace_grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  locust:
+    image: locustio/locust:2.32.6
+    container_name: claimtrace-locust
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    command: ["-f", "/mnt/locust/locustfile.py", "--host", "http://reverse-proxy:80"]
+    volumes:
+      - ./loadtest:/mnt/locust:ro
+    depends_on:
+      - reverse-proxy
 
   frontend:
     build:
@@ -109,3 +184,6 @@ services:
 volumes:
   claimtrace_postgres_data:
   claimtrace_redis_data:
+  claimtrace_backups_data:
+  claimtrace_prometheus_data:
+  claimtrace_grafana_data:

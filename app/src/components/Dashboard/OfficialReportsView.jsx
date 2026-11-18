@@ -330,6 +330,37 @@ export default function OfficialReportsView({
     setReportNotice('Lampiran CSV berhasil diunduh.');
   };
 
+  const [pdfExportBusy, setPdfExportBusy] = useState(false);
+
+  const handleExportReactPdf = async () => {
+    if (pdfExportBusy) return;
+    setPdfExportBusy(true);
+    try {
+      const { downloadBahvPdf } = await import('../Reports/BahvPdfDocument');
+      await downloadBahvPdf(
+        {
+          documentNumber: `BAHV/BPJS/XI/2026/${selectedBatch || '8801'}`,
+          fpkNumber: selectedBatch || 'FPK-0114-202611-001',
+          hospitalName: selectedHospitalName || 'RS Khusus Mitra Husada',
+          sha256Hash: ledgerHeadHash || sha256Seal || 'VERIFIED-SHA256-AUDIT-LEDGER',
+          items: activeClaims.map((c) => ({
+            claim_id: c.claim_id || c.sep,
+            nama_faskes: selectedHospitalName || 'RS Khusus Mitra Husada',
+            ina_cbg_code: c.cbg || c.diagnosis || '-',
+            status_verifikasi: statusBadgeLabels[c.status] || c.status,
+            nilai_klaim_rp: c.tariff_submitted || 0,
+          })),
+        },
+        `BAHV_ClaimTrace_${selectedBatch || 'Kolektif'}.pdf`,
+      );
+      setReportNotice('Dokumen PDF vektor (React-PDF) berhasil dibuat dan diunduh.');
+    } catch (err) {
+      setReportNotice(`Gagal membuat PDF vektor (${err?.message || 'error'}).`);
+    } finally {
+      setPdfExportBusy(false);
+    }
+  };
+
   const copyHash = () => {
     navigator.clipboard.writeText(ledgerHeadHash || sha256Seal);
     setCopyFeedback(true);
@@ -397,6 +428,15 @@ export default function OfficialReportsView({
           >
             <FileText className="w-4 h-4" />
             <span>{serverPrintBusy ? 'Memuat...' : 'Pratinjau VEDIKA Server'}</span>
+          </button>
+          <button
+            type="button"
+            disabled={pdfExportBusy}
+            onClick={handleExportReactPdf}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-60"
+          >
+            <Download className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span>{pdfExportBusy ? 'Menyusun PDF...' : 'Unduh PDF'}</span>
           </button>
           <button
             type="button"

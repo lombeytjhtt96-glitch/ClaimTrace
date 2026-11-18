@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Notifikasi Klarifikasi Klaim FKRTL — ClaimTrace JKN</title>
+</head>
+<body style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background:#f4f7f7; padding:24px; color:#0f172a;">
+  <div style="max-width:620px; margin:0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+    <div style="background:#00733B; color:#ffffff; padding:20px 24px;">
+      <div style="font-size:12px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.9;">BPJS Kesehatan · ClaimTrace DSS</div>
+      <h1 style="margin:6px 0 0; font-size:20px;">Undangan Klarifikasi Verifikasi Klaim FKRTL</h1>
+    </div>
+    <div style="padding:24px; font-size:14px; line-height:1.6;">
+      <p>Yth. <strong>{{ recipient_name }}</strong> ({{ faskes_name }}),</p>
+      <p>Sehubungan dengan proses penapisan 4-Lapis ClaimTrace DSS pada berkas klaim <strong>{{ claim_id }}</strong> (INA-CBG <code>{{ ina_cbg_code }}</code>), dimohon kehadiran tim Casemix/Koding FKRTL untuk agenda klarifikasi:</p>
+      <table style="width:100%; border-collapse:collapse; margin:16px 0; font-size:13px;">
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Nomor Klaim</td><td style="padding:8px; border:1px solid #e2e8f0;"><strong>{{ claim_id }}</strong></td></tr>
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Jadwal Klarifikasi</td><td style="padding:8px; border:1px solid #e2e8f0;">{{ schedule_date }}</td></tr>
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Catatan Verifikator</td><td style="padding:8px; border:1px solid #e2e8f0;">{{ notes }}</td></tr>
+      </table>
+      <p style="font-size:12px; color:#475569;">Pesan ini dibuat otomatis oleh FastAPI-Mail + Jinja2 ClaimTrace JKN dan tercatat pada Audit Ledger SHA-256 sesuai UU PDP No. 27/2022.</p>
+    </div>
+  </div>
+</body>
+</html>

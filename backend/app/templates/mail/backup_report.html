@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Laporan Scheduled Backup — ClaimTrace JKN</title>
+</head>
+<body style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background:#f4f7f7; padding:24px; color:#0f172a;">
+  <div style="max-width:620px; margin:0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+    <div style="background:#0C4A60; color:#ffffff; padding:20px 24px;">
+      <div style="font-size:12px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.9;">ClaimTrace Infrastructure · Scheduled Backup</div>
+      <h1 style="margin:6px 0 0; font-size:20px;">Arsip Backup Terverifikasi SHA-256</h1>
+    </div>
+    <div style="padding:24px; font-size:14px; line-height:1.6;">
+      <p>Backup terjadwal PostgreSQL OLTP, Redis snapshot, dan rantai Audit Ledger SHA-256 telah selesai diproses.</p>
+      <table style="width:100%; border-collapse:collapse; margin:16px 0; font-size:13px;">
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">ID Arsip</td><td style="padding:8px; border:1px solid #e2e8f0;"><code>{{ backup_id }}</code></td></tr>
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Ukuran</td><td style="padding:8px; border:1px solid #e2e8f0;">{{ size_bytes }} bytes</td></tr>
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">SHA-256</td><td style="padding:8px; border:1px solid #e2e8f0; word-break:break-all;"><code>{{ sha256 }}</code></td></tr>
+        <tr><td style="padding:8px; border:1px solid #e2e8f0; background:#f8fafc;">Waktu</td><td style="padding:8px; border:1px solid #e2e8f0;">{{ created_at }}</td></tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

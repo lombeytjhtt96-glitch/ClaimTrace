@@ -99,6 +99,89 @@ class TelemetryMetricsEngine:
             registry=self.registry
         )
 
+        # HTTP Observability (RED metrics for Prometheus & Grafana)
+        self.http_requests_total = Counter(
+            "claimtrace_http_requests_total",
+            "Total permintaan HTTP yang diproses oleh ClaimTrace FastAPI Backend",
+            ["method", "path", "status_code"],
+            registry=self.registry
+        )
+
+        self.http_request_duration_seconds = Histogram(
+            "claimtrace_http_request_duration_seconds",
+            "Distribusi latensi respons HTTP ClaimTrace dalam detik",
+            ["method", "path"],
+            buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0),
+            registry=self.registry
+        )
+
+        # Infrastructure & Scheduled Backup Telemetry Gauges
+        self.postgres_up = Gauge(
+            "claimtrace_postgres_up",
+            "Status konektivitas database PostgreSQL OLTP (1 = Online, 0 = Fallback)",
+            registry=self.registry
+        )
+
+        self.postgres_table_rows = Gauge(
+            "claimtrace_postgres_table_rows",
+            "Jumlah baris aktual pada tabel PostgreSQL OLTP ClaimTrace",
+            ["table"],
+            registry=self.registry
+        )
+
+        self.redis_up = Gauge(
+            "claimtrace_redis_up",
+            "Status konektivitas Redis Cache & Message Broker (1 = Online, 0 = Fallback)",
+            registry=self.registry
+        )
+
+        self.arq_worker_up = Gauge(
+            "claimtrace_arq_worker_up",
+            "Status heartbeat ARQ Async Background Worker (1 = Aktif, 0 = Offline)",
+            registry=self.registry
+        )
+
+        self.arq_queued_jobs = Gauge(
+            "claimtrace_arq_queued_jobs",
+            "Jumlah tugas yang sedang mengantre di queue Redis ARQ",
+            registry=self.registry
+        )
+
+        self.backup_last_success_timestamp = Gauge(
+            "claimtrace_backup_last_success_timestamp_seconds",
+            "Unix timestamp keberhasilan arsip backup terjadwal terakhir",
+            registry=self.registry
+        )
+
+        self.backup_total_archives = Gauge(
+            "claimtrace_backup_total_archives",
+            "Jumlah total arsip backup terverifikasi SHA-256 yang tersimpan",
+            registry=self.registry
+        )
+
+        self.backup_last_size_bytes = Gauge(
+            "claimtrace_backup_last_size_bytes",
+            "Ukuran arsip backup terakhir dalam byte",
+            registry=self.registry
+        )
+
+    @staticmethod
+    def _normalize_http_path(path: str) -> str:
+        """Normalizes dynamic path IDs to keep Prometheus label cardinality bounded."""
+        clean = (path or "/").split("?")[0]
+        clean = re.sub(r"/CLM-[A-Za-z0-9_-]+", "/:claim_id", clean)
+        clean = re.sub(r"/JOB-[A-Za-z0-9_-]+", "/:job_id", clean)
+        clean = re.sub(r"/claimtrace-backup-[A-Za-z0-9_-]+", "/:backup_id", clean)
+        clean = re.sub(r"/[0-9a-fA-F-]{16,}", "/:id", clean)
+        return clean[:96]
+
+    def record_http_request(self, method: str, path: str, status_code: int, duration_seconds: float) -> None:
+        """Records HTTP request counter and latency histogram sample."""
+        norm_path = self._normalize_http_path(path)
+        m = (method or "GET").upper()
+        self.http_requests_total.labels(method=m, path=norm_path, status_code=str(status_code)).inc()
+        self.http_request_duration_seconds.labels(method=m, path=norm_path).observe(max(0.0, float(duration_seconds)))
+
     def sync_metrics_from_data(self) -> None:
         """Sinkronisasi data klaim aktif ke instans metrik telemetri"""
         valid, _ = audit_logger.verify_integrity()
@@ -128,6 +211,38 @@ class TelemetryMetricsEngine:
         if total_sample > 0:
             self.mobile_jkn_confirmation_ratio.labels(status="hadir").set(round(total_attended / total_sample, 3))
             self.mobile_jkn_confirmation_ratio.labels(status="tidak_hadir").set(round(total_denied / total_sample, 3))
+
+        # Sync live PostgreSQL, Redis/ARQ, and Scheduled Backup metrics
+        try:
+            from app.infra.postgres_db import get_postgres_status
+
+            pg = get_postgres_status()
+            self.postgres_up.set(1 if pg.get("postgres_connected") else 0)
+            for tbl, cnt in (pg.get("tables") or {}).items():
+                self.postgres_table_rows.labels(table=str(tbl)).set(float(cnt or 0))
+        except Exception:
+            self.postgres_up.set(0)
+
+        try:
+            from app.infra.redis_client import get_redis_status
+
+            rd = get_redis_status()
+            self.redis_up.set(1 if rd.get("redis_connected") else 0)
+            self.arq_worker_up.set(1 if rd.get("worker_active") else 0)
+            self.arq_queued_jobs.set(float(rd.get("queued_jobs") or 0))
+        except Exception:
+            self.redis_up.set(0)
+            self.arq_worker_up.set(0)
+
+        try:
+            from app.infra.backup_manager import get_backup_status
+
+            bk = get_backup_status()
+            self.backup_total_archives.set(float(bk.get("total_archives") or 0))
+            self.backup_last_success_timestamp.set(float(bk.get("last_success_epoch") or 0))
+            self.backup_last_size_bytes.set(float(bk.get("last_size_bytes") or 0))
+        except Exception:
+            pass
 
     def get_metrics_exposition(self) -> str:
         """Menghasilkan representasi metrik standar OpenMetrics text/plain"""

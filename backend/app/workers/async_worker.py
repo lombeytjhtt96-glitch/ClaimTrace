@@ -236,6 +236,30 @@ async def run_mobile_jkn_batch_dispatch_job(
         return _mark_failed(job_id, "mobile_jkn_batch", requested_by, t0, exc)
 
 
+async def run_scheduled_backup_job(
+    ctx: Dict[str, Any],
+    job_id: str,
+    requested_by: str = "SYSTEM_SCHEDULER",
+) -> Dict[str, Any]:
+    """Creates a verified PostgreSQL + Redis + Audit Ledger backup archive asynchronously."""
+    t0 = _mark_started(job_id, "scheduled_backup", requested_by)
+    try:
+        from app.infra.backup_manager import create_scheduled_backup
+
+        result = create_scheduled_backup(trigger=f"arq_worker:{requested_by}")
+        cache_set_json("backup_latest", result, ttl_seconds=600)
+        return _mark_completed(job_id, "scheduled_backup", requested_by, t0, result)
+    except Exception as exc:
+        logger.exception("run_scheduled_backup_job failed: %s", exc)
+        return _mark_failed(job_id, "scheduled_backup", requested_by, t0, exc)
+
+
+async def scheduled_backup_cron(ctx: Dict[str, Any]) -> None:
+    """Daily automated scheduled backup cron (02:00 WIB / 19:00 UTC)."""
+    job_id = f"JOB-CRON-BACKUP-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}"
+    await run_scheduled_backup_job(ctx, job_id, requested_by="ARQ_DAILY_CRON_02WIB")
+
+
 async def worker_heartbeat_cron(ctx: Dict[str, Any]) -> None:
     """Periodic 15-second heartbeat so API/UI can monitor live ARQ worker health."""
     set_worker_heartbeat(WORKER_ID, {"mode": "arq_worker_process"})
@@ -255,6 +279,7 @@ JOB_HANDLER_MAP = {
     "audit_integrity_check": run_audit_integrity_verification_job,
     "analytics_refresh": run_fpk_analytics_refresh_job,
     "mobile_jkn_batch": run_mobile_jkn_batch_dispatch_job,
+    "scheduled_backup": run_scheduled_backup_job,
 }
 
 
@@ -268,9 +293,11 @@ class WorkerSettings:
         run_audit_integrity_verification_job,
         run_fpk_analytics_refresh_job,
         run_mobile_jkn_batch_dispatch_job,
+        run_scheduled_backup_job,
     ]
     cron_jobs = [
         cron(worker_heartbeat_cron, second={0, 15, 30, 45}),
+        cron(scheduled_backup_cron, hour={19}, minute={0}),
     ]
     on_startup = on_startup
     on_shutdown = on_shutdown
