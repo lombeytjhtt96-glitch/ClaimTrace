@@ -538,6 +538,8 @@ export default function App() {
     const handleSettingsUpdated = (evt) => {
       const mins = Number(evt?.detail?.session_timeout_minutes);
       if (Number.isFinite(mins) && mins >= 5 && mins <= 120) {
+        idleLimitSecRef.current = mins * 60;
+        try { localStorage.setItem('claimtrace_idle_timeout_minutes', String(mins)); } catch {}
         setSessionIdleSeconds(mins * 60);
       }
     };
@@ -599,7 +601,7 @@ export default function App() {
     { id: 'insights', label: 'Analitik Tren Klaim', keywords: 'insights tren statistik privasi', icon: Sparkles },
     { id: 'database_viewer', label: 'Gudang Data & SQL', keywords: 'sql query tabel analitik gudang', icon: Database },
     { id: 'appointments', label: 'Jadwal Klarifikasi RS', keywords: 'jadwal panggilan klarifikasi faskes', icon: Calendar },
-    { id: 'conversations', label: 'Konfirmasi Peserta', keywords: 'percakapan respon peserta', icon: MessageSquare },
+    { id: 'conversations', label: 'Dialog AI Forensik', keywords: 'dialog percakapan ai forensik verifikator', icon: MessageSquare },
     { id: 'interventions', label: 'Intervensi & Tindak Lanjut', keywords: 'intervensi s06 hold pembayaran', icon: ShieldCheck },
     { id: 'audit', label: 'Jejak Audit Sistem', keywords: 'audit sha-256 ledger log forensik', icon: Key },
     { id: 'profile', label: 'Profil & Keamanan Sesi', keywords: 'profil sandi sesi perangkat dipercaya', icon: User },
@@ -673,7 +675,13 @@ export default function App() {
   const [lastLoggedOutUser, setLastLoggedOutUser] = useState(null);
   const lastServerTouchRef = useRef(0);
   const lastUiResetRef = useRef(Date.now());
-  const idleLimitSecRef = useRef(900);
+  const idleLimitSecRef = useRef((() => {
+    try {
+      const savedMins = Number(localStorage.getItem('claimtrace_idle_timeout_minutes'));
+      if (Number.isFinite(savedMins) && savedMins >= 5 && savedMins <= 120) return savedMins * 60;
+    } catch {}
+    return 1800;
+  })());
   const prevMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
   const headerPopoversRef = useRef(null);
 
@@ -780,7 +788,7 @@ export default function App() {
           unit: raw.unit || prev?.unit || 'Kedeputian Bidang Pengawasan dan Pemeriksaan',
           avatar: prev?.avatar || (raw.name ? raw.name.slice(0, 2).toUpperCase() : 'VR'),
           isMfaVerified: true,
-          idleTimeoutMinutes: raw.idle_sec ? Math.round(raw.idle_sec / 60) : (prev?.idleTimeoutMinutes || 15),
+          idleTimeoutMinutes: raw.idle_sec ? Math.round(raw.idle_sec / 60) : (prev?.idleTimeoutMinutes || 30),
           allowedRoles: raw.allowedRoles || prev?.allowedRoles || ['VERIFICATOR_MEDIS'],
         };
         saveAuthenticatedSession(token, merged);
@@ -788,10 +796,17 @@ export default function App() {
       });
 
       const srvIdle = data.session_timings?.idle_remaining_seconds;
-      if (typeof srvIdle === 'number') {
-        idleLimitSecRef.current = raw.idle_sec ? Number(raw.idle_sec) : Math.max(idleLimitSecRef.current, srvIdle);
-        setSessionIdleSeconds(srvIdle);
+      const configuredIdle = raw.idle_sec ? Number(raw.idle_sec) : idleLimitSecRef.current;
+      if (configuredIdle >= 300) {
+        idleLimitSecRef.current = configuredIdle;
       }
+      setSessionIdleSeconds((prev) => {
+        if (typeof prev === 'number' && prev > 0) return prev;
+        if (typeof srvIdle === 'number' && srvIdle > 0 && srvIdle <= idleLimitSecRef.current) {
+          return idleLimitSecRef.current;
+        }
+        return idleLimitSecRef.current;
+      });
       setAuthStatusVerified(true);
       setSessionNotice('');
       return true;
@@ -824,14 +839,30 @@ export default function App() {
     };
   }, [verifySessionWithServer]);
 
+  // Deterministic 600ms fallback timeout so parallel tabs never hang on "Memverifikasi Otoritas Sesi & MFA"
+  useEffect(() => {
+    if (authView !== 'dashboard' || authStatusVerified) return;
+    const timer = setTimeout(() => {
+      const token = getStoredAuthToken();
+      if (token && currentUser?.isMfaVerified) {
+        setSessionIdleSeconds((prev) => (typeof prev === 'number' && prev > 0 ? prev : idleLimitSecRef.current));
+        setAuthStatusVerified(true);
+      } else if (!token) {
+        setAuthView('login');
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [authView, authStatusVerified, currentUser?.isMfaVerified]);
+
   // Client-side sliding idle countdown + automatic session lockout
   useEffect(() => {
     if (authView !== 'dashboard' || !authStatusVerified || !currentUser?.isMfaVerified) {
       return;
     }
+    setSessionIdleSeconds((prev) => (typeof prev === 'number' && prev > 0 ? prev : idleLimitSecRef.current));
     const onUserActivity = () => {
       const now = Date.now();
-      if (now - lastUiResetRef.current > 5000) {
+      if (now - lastUiResetRef.current > 2000) {
         lastUiResetRef.current = now;
         setSessionIdleSeconds(idleLimitSecRef.current);
       }
@@ -839,10 +870,10 @@ export default function App() {
         verifySessionWithServer(true);
       }
     };
-    const events = ['mousemove', 'keydown', 'pointerdown', 'scroll'];
+    const events = ['mousemove', 'keydown', 'mousedown', 'pointerdown', 'scroll'];
     events.forEach((evt) => window.addEventListener(evt, onUserActivity, { passive: true }));
     const tickId = setInterval(() => {
-      setSessionIdleSeconds((prev) => (typeof prev === 'number' ? Math.max(0, prev - 1) : prev));
+      setSessionIdleSeconds((prev) => (typeof prev === 'number' ? Math.max(0, prev - 1) : idleLimitSecRef.current));
     }, 1000);
     return () => {
       events.forEach((evt) => window.removeEventListener(evt, onUserActivity));
@@ -1278,7 +1309,7 @@ export default function App() {
                 idleLimitSecRef.current = Number(meta.idleTimeoutSeconds);
                 setSessionIdleSeconds(Number(meta.idleTimeoutSeconds));
               } else {
-                idleLimitSecRef.current = (verifiedUser.idleTimeoutMinutes || 15) * 60;
+                idleLimitSecRef.current = (verifiedUser.idleTimeoutMinutes || 30) * 60;
                 setSessionIdleSeconds(idleLimitSecRef.current);
               }
               lastUiResetRef.current = Date.now();
@@ -2935,7 +2966,7 @@ export default function App() {
                         tabs={[
                           { id: 'telemetry', label: 'Telemetri Mobile JKN', icon: Smartphone },
                           { id: 'schedule', label: 'Jadwal Klarifikasi RS', icon: Calendar },
-                          { id: 'dialog', label: 'Konfirmasi Peserta', icon: MessageSquare },
+                          { id: 'dialog', label: 'Dialog AI Forensik', icon: MessageSquare },
                           { id: 'interventions', label: 'Intervensi FKRTL', icon: ShieldCheck },
                         ]}
                       >

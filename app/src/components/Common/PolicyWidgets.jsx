@@ -19,7 +19,19 @@ export function SegmentedComplianceBar({
   isLight = true,
 }) {
   const safeSegments = segments.filter((s) => Number(s.pct) > 0);
-  const normalized = safeSegments.length > 0 ? safeSegments : [{ id: 'default', label: 'Valid', pct: 100, count: validCount, color: '#059669' }];
+  const rawNormalized = safeSegments.length > 0 ? safeSegments : [{ id: 'default', label: 'Valid', pct: 100, count: validCount, color: '#059669' }];
+  // Format 1-decimal percentages guaranteed to sum to exactly 100.0%
+  const rawTotalPct = rawNormalized.reduce((acc, s) => acc + Number(s.pct || 0), 0) || 100;
+  let runningRounded = 0;
+  const normalized = rawNormalized.map((seg, idx) => {
+    const scaled = (Number(seg.pct || 0) / rawTotalPct) * 100;
+    const isLast = idx === rawNormalized.length - 1;
+    const displayPct = isLast
+      ? Number(Math.max(0, 100 - runningRounded).toFixed(1))
+      : Number(scaled.toFixed(1));
+    runningRounded = Number((runningRounded + displayPct).toFixed(1));
+    return { ...seg, displayPct };
+  });
 
   return (
     <section
@@ -55,12 +67,12 @@ export function SegmentedComplianceBar({
           {normalized.map((seg) => (
             <div
               key={seg.id}
-              style={{ width: `${Math.max(12, seg.pct)}%` }}
-              className={`min-w-0 truncate border-l pl-1.5 ${
+              style={{ width: `${Math.max(16, seg.displayPct)}%` }}
+              className={`min-w-0 whitespace-nowrap border-l pl-1.5 ${
                 isLight ? 'border-slate-200 text-slate-700' : 'border-white/15 text-slate-200'
               }`}
             >
-              {Math.round(seg.pct)}%
+              {seg.displayPct.toFixed(1).replace('.', ',')}%
             </div>
           ))}
         </div>
@@ -70,14 +82,14 @@ export function SegmentedComplianceBar({
             isLight ? 'bg-slate-200/70' : 'bg-white/10'
           }`}
           role="img"
-          aria-label={normalized.map((s) => `${s.label} ${Math.round(s.pct)}%`).join(', ')}
+          aria-label={normalized.map((s) => `${s.label} ${s.displayPct.toFixed(1)}%`).join(', ')}
         >
           {normalized.map((seg) => (
             <div
               key={seg.id}
-              style={{ width: `${Math.max(4, seg.pct)}%`, backgroundColor: seg.color }}
+              style={{ width: `${Math.max(4, seg.displayPct)}%`, backgroundColor: seg.color }}
               className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
-              title={`${seg.label}: ${Number(seg.count || 0).toLocaleString('id-ID')} (${seg.pct.toFixed(1)}%)`}
+              title={`${seg.label}: ${Number(seg.count || 0).toLocaleString('id-ID')} (${seg.displayPct.toFixed(1)}%)`}
             />
           ))}
         </div>
@@ -88,7 +100,7 @@ export function SegmentedComplianceBar({
         {segments.slice(0, 3).map((seg) => (
           <div
             key={seg.id}
-            className={`rounded-xl border px-2.5 py-2 transition-colors glass-item ${
+            className={`rounded-xl border px-2 py-2 transition-colors glass-item min-w-0 ${
               isLight ? 'hover:bg-white/90' : 'hover:bg-white/10'
             }`}
           >
@@ -98,7 +110,7 @@ export function SegmentedComplianceBar({
                 {Number(seg.count || 0).toLocaleString('id-ID')}
               </span>
             </div>
-            <p className={`text-xs font-medium truncate mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className={`text-[11px] font-medium whitespace-nowrap mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               {seg.label}
             </p>
           </div>

@@ -121,18 +121,27 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         },
     ]
 
+    wib_tz = timezone(timedelta(hours=7))
+    now_wib = datetime.now(wib_tz)
+
+    def _business_wib(days_offset: int, hour: int, minute: int) -> str:
+        target = (now_wib + timedelta(days=days_offset)).replace(
+            hour=hour, minute=minute, second=0, microsecond=0
+        )
+        return target.isoformat()
+
     schedules = [
         {
             "id": 801,
             "claim_id": "CLM-2026-8801",
-            "appointment_datetime": (now + timedelta(hours=3)).isoformat(),
+            "appointment_datetime": _business_wib(1, 9, 0),
             "notes": "Klarifikasi klaster 85 berkas fisioterapi Z-3-12-0 dan validasi status SIP DPJP pasca masa berlaku berakhir.",
             "status": "scheduled",
             "created_at": (now - timedelta(days=1)).isoformat(),
             "updated_at": (now - timedelta(hours=2)).isoformat(),
             "faskes_pic": {
                 "name": "RS Khusus Mitra Husada · Tim Casemix",
-                "email": "casemix@rs-mitrahusada.co.id",
+                "email": "casemix@mitrahusada.simulasi.test",
                 "registry_code": "FSK-RSX-01 · CLM-2026-8801"
             },
             "verificator": {
@@ -148,7 +157,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         {
             "id": 802,
             "claim_id": "CLM-2026-8805",
-            "appointment_datetime": (now + timedelta(hours=6)).isoformat(),
+            "appointment_datetime": _business_wib(3, 13, 30),
             "notes": "Gelar perkara dugaan Impossible Travel DPJP spesialis bedah antara dua rumah sakit berbeda dalam jeda 45 menit.",
             "status": "scheduled",
             "created_at": (now - timedelta(hours=18)).isoformat(),
@@ -171,11 +180,11 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         {
             "id": 803,
             "claim_id": "CLM-2026-8806",
-            "appointment_datetime": (now + timedelta(days=1)).isoformat(),
+            "appointment_datetime": _business_wib(-2, 10, 0),
             "notes": "Konfirmasi resume medis dan hasil penunjang laboratorium/endoskopi untuk pengajuan INA-CBG Level III K-1-10-III.",
-            "status": "scheduled",
-            "created_at": (now - timedelta(days=1, hours=4)).isoformat(),
-            "updated_at": (now - timedelta(hours=5)).isoformat(),
+            "status": "completed",
+            "created_at": (now - timedelta(days=4)).isoformat(),
+            "updated_at": _business_wib(-2, 11, 0),
             "faskes_pic": {
                 "name": "RS Medika Prima (Kelas B) · Koder INA-CBG",
                 "email": "koder.jkn@medikaprima.simulasi.test",
@@ -203,7 +212,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "plan_title": "Intervensi & Rekonsiliasi Klaster Fisioterapi (CLM-2026-8801)",
             "claim_id": "CLM-2026-8801",
             "risk_level": "CRITICAL",
-            "risk_score": 87,
+            "risk_score": 87.0,
             "status": "in_progress",
             "total_steps": 4,
             "completed_steps": 1,
@@ -243,7 +252,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "plan_title": "Klarifikasi Bukti Penunjang K-1-10-III (CLM-2026-8806)",
             "claim_id": "CLM-2026-8806",
             "risk_level": "CRITICAL",
-            "risk_score": 76,
+            "risk_score": 75.5,
             "status": "pending_review",
             "total_steps": 3,
             "completed_steps": 1,
@@ -472,9 +481,9 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
                     "message_count": 2,
                     "model_used": "ClaimTrace ReAct Orchestrator",
                     "tokens_total": 980,
-                    "risk_level": "HIGH",
-                    "risk_score": 76,
-                    "status": "completed",
+                    "risk_level": "CRITICAL",
+                    "risk_score": 75.5,
+                    "status": "anomaly_flagged",
                     "messages": [
                         {
                             "role": "user",

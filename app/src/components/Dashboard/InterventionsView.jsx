@@ -676,7 +676,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                                 : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                           }`}
                         >
-                          {normRisk === 'CRITICAL' ? 'KRITIS' : normRisk === 'SEVERE' ? 'BERAT' : normRisk === 'MODERATE' ? 'SEDANG' : 'RENDAH'} ({plan.risk_score})
+                          {normRisk === 'CRITICAL' ? 'KRITIS' : normRisk === 'SEVERE' ? 'BERAT' : normRisk === 'MODERATE' ? 'SEDANG' : 'RENDAH'} ({Number(plan.risk_score || 0).toFixed(1)})
                         </span>
                       </div>
                       <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>

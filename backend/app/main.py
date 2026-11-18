@@ -6374,7 +6374,7 @@ def pull_fpk_batch_and_prapurifikasi(
             "desc": "Angina Pektoris & Perawatan Kardiovaskular Berat (Severity II)",
             "icd10": "I20.0 (Unstable angina)",
             "icd9": "88.56 (Coronary arteriography)",
-            "dpjp": "dr. Hendra Wijaya, Sp.JP(K)",
+            "dpjp": "dr. Bambang Sutrisno, Sp.JP(K)",
             "rp": 21400000,
             "los": 5,
             "s1": 78.0,
@@ -6497,7 +6497,7 @@ def pull_fpk_batch_and_prapurifikasi(
             ),
             dpjp_meta=DPJPValidation(
                 dpjp_id_hash=f"SDMK-FPK-{100 + i}",
-                nama_dpjp_alias=tpl.get("dpjp") or "dr. Hendra Wijaya, Sp.JP(K)",
+                nama_dpjp_alias=tpl.get("dpjp") or "dr. Bambang Sutrisno, Sp.JP(K)",
                 sip_status=tpl["sip"],
                 sip_expiry_date=date(2028, 12, 31),
                 jam_praktik_valid=(tpl["sip"] == "ACTIVE"),

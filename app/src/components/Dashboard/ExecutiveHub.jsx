@@ -101,7 +101,7 @@ const INITIAL_OVERVIEW = {
   insights: {
     ia_summary:
       'Sistem pengawasan pra-pembayaran memantau kepatuhan klaim FKRTL secara real-time. Klaim yang terindikasi anomali dialihkan ke antrean telaah untuk diverifikasi sebelum pembayaran.',
-    report_generated_at: '2026-10-24T09:30:00Z',
+    report_generated_at: new Date().toISOString(),
     report_period: 'Data Transaksi JKN & Basis Data Klaim Terverifikasi',
     llm_powered: true,
     patterns: [
@@ -403,7 +403,7 @@ function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className={`group relative overflow-hidden rounded-2xl border p-4 sm:p-5 transition-[border-color,box-shadow,transform] duration-200 ${cardStyleClass}`}
+      className={`group relative overflow-hidden rounded-2xl border p-4 sm:p-5 h-full flex flex-col justify-between transition-[border-color,box-shadow,transform] duration-200 ${cardStyleClass}`}
     >
       {/* Minimal hairline container without rainbow stripe */}
       <div className="flex items-start justify-between gap-2">
@@ -428,7 +428,7 @@ function KPICard({ title, periodBadge, value, subtitle, trend, icon, severity = 
                 </span>
               )}
             </div>
-            <div className={`text-2xl sm:text-[26px] xl:text-[28px] font-display font-semibold tabular-nums tracking-tight leading-tight ${
+            <div className={`text-xl sm:text-2xl xl:text-[26px] font-display font-semibold tabular-nums tracking-tight leading-tight whitespace-nowrap ${
               isLight ? 'text-[#061B31]' : 'text-[#F3F5F8]'
             }`}>
               {value}
@@ -1774,7 +1774,7 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
               ? 'bg-rose-100 text-rose-800 border-rose-300'
               : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
           }`}>
-            {alerts.length} berkas aktif
+            {alerts.length} klaster aktif
           </span>
         </div>
       </div>
@@ -1849,11 +1849,11 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
 
 // ─── PolicyPilot-Style Live Claims Bento Table & Performance Card ───────────────────────
 const FALLBACK_RECENT_CLAIMS = [
-  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, score: 87.0, lane: 'red', slaDays: 3, source: 'Pengajuan Mandiri FKRTL' },
-  { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Maya Kusuma, Sp.PD', code: 'K-4-17-I', tariffRp: 9850000, score: 74.5, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
-  { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Farhan Malik, Sp.B', code: 'B-1-10-I', tariffRp: 42000000, score: 91.2, lane: 'red', slaDays: 2, source: 'Audit SDMK' },
-  { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', tariffRp: 4200000, score: 12.4, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },
-  { id: 'CLM-2026-8806', hospital: 'RS Medika Prima', dpjp: 'dr. Ratna Wulandari, Sp.A', code: 'I-4-10-III', tariffRp: 27400000, score: 83.8, lane: 'red', slaDays: 2, source: 'Deteksi Upcoding' },
+  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, clusterCount: 85, score: 87.0, lane: 'red', slaDays: 3, source: 'Pengajuan Mandiri FKRTL' },
+  { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Agus Salim, Sp.PD', code: 'K-4-17-I', tariffRp: 9850000, clusterCount: 1, score: 74.5, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
+  { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Agung Nugroho, Sp.B-KBD', code: 'B-1-10-II', tariffRp: 18400000, clusterCount: 1, score: 75.0, lane: 'red', slaDays: 3, source: 'Audit SDMK' },
+  { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', tariffRp: 4200000, clusterCount: 1, score: 20.0, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },
+  { id: 'CLM-2026-8806', hospital: 'RS Medika Prima', dpjp: 'dr. Suryadi Wijaya, Sp.PD-KGEH', code: 'K-1-10-III', tariffRp: 38750000, clusterCount: 1, score: 75.5, lane: 'red', slaDays: 3, source: 'Deteksi Upcoding' },
 ];
 
 function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
@@ -1880,6 +1880,7 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
             dpjp: c.dpjp_meta?.nama_dpjp_alias || c.nama_dpjp || item.dpjp || 'DPJP Terdaftar',
             code: c.ina_cbg_code || c.code || 'J-4-10-II',
             tariffRp: Number(c.fkl47_biaya_tagih ?? c.nilai_klaim_rp ?? c.claimed_tariff_rp ?? 0),
+            clusterCount: Number(c.episode_meta?.jumlah_klaim_klaster ?? item.clusterCount ?? 1),
             score: Number(t.final_priority_score ?? item.score ?? 0),
             lane,
             slaDays: Number(t.sla_deadline_days ?? c.sla_deadline_days ?? item.slaDays ?? 5),
@@ -1990,8 +1991,8 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs min-w-[540px]">
+      <div className="overflow-x-auto pb-1">
+        <table className="w-full text-left text-xs min-w-[600px]">
           <thead>
             <tr className={`border-b text-xs font-bold uppercase tracking-wider ${
               isLight ? 'border-slate-100 text-slate-500' : 'border-white/[0.07] text-slate-400'
@@ -1999,7 +2000,7 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
               <th scope="col" className="py-2.5 pr-3">Faskes &amp; Klaim</th>
               <th scope="col" className="py-2.5 px-2">INA-CBG</th>
               <th scope="col" className="py-2.5 px-2">Nilai Klaim</th>
-              <th scope="col" className="py-2.5 px-2">DPJP</th>
+              <th scope="col" className="py-2.5 px-2 min-w-[165px]">DPJP</th>
               <th scope="col" className="py-2.5 pl-2 text-right">Status</th>
             </tr>
           </thead>
@@ -2013,7 +2014,7 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                 }`}
               >
                 <td className="py-3 pr-3">
-                  <div className={`font-semibold text-sm truncate max-w-[200px] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <div className={`font-semibold text-sm leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {row.hospital}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -2032,21 +2033,28 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-2">
+                <td className="py-3 px-2 whitespace-nowrap">
                   <span className={`px-2 py-0.5 rounded-md font-mono font-semibold text-xs border ${
                     isLight ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-slate-200 border-white/10'
                   }`}>
                     {row.code}
                   </span>
                 </td>
-                <td className="py-3 px-2 font-mono font-bold text-xs sm:text-sm tabular-nums">
-                  {row.tariffRp >= 1000000
-                    ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt`
-                    : row.tariffRp > 0
-                    ? `Rp ${row.tariffRp.toLocaleString('id-ID')}`
-                    : '-'}
+                <td className="py-3 px-2 whitespace-nowrap">
+                  <div className="font-mono font-bold text-xs sm:text-sm tabular-nums">
+                    {row.tariffRp >= 1000000
+                      ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt`
+                      : row.tariffRp > 0
+                      ? `Rp ${row.tariffRp.toLocaleString('id-ID')}`
+                      : '-'}
+                  </div>
+                  {row.clusterCount > 1 && (
+                    <div className={`text-[10px] font-mono font-semibold mt-0.5 ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>
+                      Akumulasi {row.clusterCount} SEP
+                    </div>
+                  )}
                 </td>
-                <td className="py-3 px-2 text-xs sm:text-sm truncate max-w-[140px]">
+                <td className="py-3 px-2 text-xs sm:text-[13px] leading-snug min-w-[165px]">
                   <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
                 </td>
                 <td className="py-3 pl-2 text-right">
@@ -2733,14 +2741,14 @@ export default function ExecutiveHub({
                   { id: 'med', label: 'Klarifikasi', count: medCount, pct: (medCount / denom) * 100, color: '#F59E0B' },
                   { id: 'low', label: 'Sah & Layak', count: lowCount, pct: (lowCount / denom) * 100, color: '#059669' },
                 ]}
-                validCount={activeOverview.kpis.cases_closed_7d}
-                validLabel="Berkas Sah"
-                pendingCount={activeOverview.kpis.critical_Waiting_cases}
+                validCount={lowCount}
+                validLabel="Berkas Sah Murni"
+                pendingCount={highCritCount}
                 pendingLabel="Prioritas Audit"
                 warningText={
                   complianceAlertDismissed
                     ? ''
-                    : `${Number(activeOverview.kpis.critical_Waiting_cases || 0).toLocaleString('id-ID')} berkas berada di Jalur Merah & membutuhkan verifikasi klinis sebelum batas SLA 10 HK.`
+                    : `${Number(highCritCount || 0).toLocaleString('id-ID')} berkas berada di Jalur Merah & membutuhkan verifikasi klinis sebelum batas SLA 10 HK.`
                 }
                 onDismissWarning={() => setComplianceAlertDismissed(true)}
                 actionLabel="Buka verifikasi 7 dokumen RS"

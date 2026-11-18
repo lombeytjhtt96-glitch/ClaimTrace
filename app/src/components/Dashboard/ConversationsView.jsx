@@ -573,21 +573,21 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {session.risk_level === 'CRITICAL' ? (
+                        {(session.risk_level === 'CRITICAL' || Number(session.risk_score) >= 75) ? (
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                             isLight
                               ? 'bg-rose-50 text-rose-800 border-rose-300'
                               : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                           }`}>
-                            KRITIS ({session.risk_score})
+                            KRITIS ({Number(session.risk_score || 0).toFixed(1)})
                           </span>
-                        ) : session.risk_level === 'HIGH' ? (
+                        ) : (session.risk_level === 'HIGH' || session.risk_level === 'SEVERE' || Number(session.risk_score) >= 50) ? (
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                             isLight
                               ? 'bg-amber-50 text-amber-800 border-amber-300'
                               : 'bg-amber-500/15 text-[#FFCA40] border-amber-500/30'
                           }`}>
-                            TINGGI ({session.risk_score})
+                            TINGGI ({Number(session.risk_score || 0).toFixed(1)})
                           </span>
                         ) : (
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
@@ -600,12 +600,14 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                         )}
 
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          isLight
-                            ? 'bg-slate-100 text-slate-700 border-slate-300'
-                            : 'bg-white/10 text-white/70 border-white/10'
+                          session.status === 'anomaly_flagged' || session.status === 'flagged'
+                            ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30')
+                            : (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-white/70 border-white/10')
                         }`}>
                           {session.status === 'awaiting_approval'
                             ? 'MENUNGGU PERSETUJUAN'
+                            : session.status === 'anomaly_flagged'
+                            ? 'AUDIT / ANOMALI READMISI'
                             : session.status === 'flagged'
                             ? 'DITANDAI WASRIK'
                             : 'TERVERIFIKASI'}

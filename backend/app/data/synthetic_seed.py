@@ -87,7 +87,7 @@ def get_initial_claims() -> Dict[str, ClaimInput]:
             ),
             dpjp_meta=DPJPValidation(
                 dpjp_id_hash="SDMK-DR-3391",
-                nama_dpjp_alias="dr. Hendra Prasetya, Sp.PD",
+                nama_dpjp_alias="dr. Agus Salim, Sp.PD",
                 sip_status="UNSYNCED",
                 jam_praktik_valid=True,
                 faskes_terdaftar="RS Swasta As-Syifa",
