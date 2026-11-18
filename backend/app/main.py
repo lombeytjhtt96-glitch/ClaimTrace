@@ -3996,8 +3996,26 @@ def _ensure_seeded_audit_chain() -> None:
     """
     Memastikan rantai Audit Ledger SHA-256 memiliki tepat 1 Genesis Block SEC-AUTH di Blok #1,
     diikuti event triase klaim medis, konfirmasi Mobile JKN Lapis 3 (tanpa klaim PENDING_UNCONFIRMED),
-    serta keputusan verifikator medis agar blok terbaru di Halaman 1 selalu berupa audit klaim medis.
+    serta keputusan verifikator medis dengan jeda waktu kronologis bertahap agar integritas SHA-256
+    tetap 100% terverifikasi asli dan blok terbaru di Halaman 1 selalu berupa audit klaim medis.
     """
+    from datetime import timedelta as _td
+    seed_now = datetime.now(timezone.utc)
+
+    has_mobile_events = any(
+        "MOBILE" in str(b.get("event_type", "")).upper()
+        for b in audit_logger.chain
+    )
+    has_verifier_decisions = any(
+        any(tok in str(b.get("event_type", "")).upper() for tok in ("WASRIK", "REJECTED", "APPROVED"))
+        for b in audit_logger.chain
+    )
+
+    # Saat inisialisasi awal rantai baru (belum ada mobile & keputusan verifikator),
+    # bersihkan blok triase prematur hasil import-time agar seluruh 23 blok tersusun kronologis berurutan.
+    if not has_mobile_events and not has_verifier_decisions and not os.getenv("PYTEST_CURRENT_TEST"):
+        audit_logger.clear_persisted_chain()
+
     if not any(b.get("claim_id") == "SEC-AUTH" for b in audit_logger.chain):
         audit_logger.record_event(
             event_type="OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR",
@@ -4009,27 +4027,33 @@ def _ensure_seeded_audit_chain() -> None:
                 "device_fingerprint": "BPJS-TRUSTED-WORKSTATION-01",
                 "notes": "Otentikasi sesi SSO & MFA Verifikator tervalidasi (Genesis Block Audit Ledger).",
             },
+            timestamp_override=(seed_now - _td(minutes=115, seconds=17)).isoformat(),
         )
 
-    # Pastikan seluruh klaim aktif sudah memiliki blok triase awal sebelum mobile & putusan verifikator
+    # Pastikan seluruh klaim aktif sudah memiliki blok triase awal (Blok #2..#12: now - 105m s.d. now - 65m)
     existing_triage_ids = {
         b.get("claim_id")
         for b in audit_logger.chain
         if b.get("event_type") == "AUTO_TRIAGE_SCORING"
     }
     if len(existing_triage_ids) < len(SYNTHETIC_CLAIMS_DATABASE):
-        for claim in SYNTHETIC_CLAIMS_DATABASE.values():
+        triage_offsets = [
+            (105, 42), (101, 19), (97, 53), (93, 28), (89, 11),
+            (85, 47), (81, 23), (77, 39), (73, 16), (69, 51), (65, 24),
+        ]
+        for idx, claim in enumerate(SYNTHETIC_CLAIMS_DATABASE.values()):
             if claim.claim_id not in existing_triage_ids:
+                mins_ago, secs_ago = triage_offsets[idx] if idx < len(triage_offsets) else (max(60, 105 - idx * 3), (idx * 17 + 13) % 59)
+                ts_override = (seed_now - _td(minutes=mins_ago, seconds=secs_ago)).isoformat()
                 try:
-                    evaluate_claim_triage(claim)
+                    evaluate_claim_triage(claim, audit_timestamp_override=ts_override)
                 except Exception:
                     continue
 
-    has_mobile_events = any(
-        "MOBILE" in str(b.get("event_type", "")).upper()
-        for b in audit_logger.chain
-    )
+    # Blok #13..#17: Konfirmasi Mobile JKN (now - 58m s.d. now - 34m)
     if not has_mobile_events:
+        mobile_offsets = [(58, 31), (52, 14), (46, 48), (40, 22), (34, 9)]
+        mob_idx = 0
         for cid, claim in list(SYNTHETIC_CLAIMS_DATABASE.items())[:6]:
             mm = getattr(claim, "mobile_meta", None)
             if not mm:
@@ -4041,6 +4065,8 @@ def _ensure_seeded_audit_chain() -> None:
                 "SANGKALAN_PESERTA" if mm.respon_tidak_hadir > mm.respon_hadir
                 else "HADIR_TERKONFIRMASI"
             )
+            mins_ago, secs_ago = mobile_offsets[mob_idx] if mob_idx < len(mobile_offsets) else (32, 17)
+            mob_idx += 1
             audit_logger.record_event(
                 event_type="MOBILE_JKN_CONFIRMATION",
                 claim_id=cid,
@@ -4053,46 +4079,56 @@ def _ensure_seeded_audit_chain() -> None:
                     "respon_tidak_hadir": mm.respon_tidak_hadir,
                     "attestation": "ECDSA-SHA256 Device Attestation (UU PDP No. 27/2022)",
                 },
+                timestamp_override=(seed_now - _td(minutes=mins_ago, seconds=secs_ago)).isoformat(),
             )
 
-    has_verifier_decisions = any(
-        any(tok in str(b.get("event_type", "")).upper() for tok in ("WASRIK", "REJECTED", "APPROVED"))
-        for b in audit_logger.chain
-    )
+    # Blok #18..#23: Putusan Verifikator & Wasrik (now - 28m s.d. now - 4m)
     if not has_verifier_decisions:
         seed_decisions = [
             (
                 "WASRIK_INVESTIGATION_FLAG",
                 "CLM-2026-8806",
                 "Eskalasi Audit Wasrik untuk verifikasi silang berkas LIS/PACS INA-CBG K-1-10-III.",
+                "BAHP/BPJS/XI/2026/8806",
+                (28, 44),
             ),
             (
                 "WASRIK_INVESTIGATION_FLAG",
                 "CLM-2026-8802",
-                "Penandaan Wasrik atas lonjakan readmisi <30 hari dan pemecahan episode tindakan jantung.",
+                "Penandaan Wasrik atas lonjakan readmisi <30 hari dan pemecahan episode tindakan.",
+                "BAHP/BPJS/XI/2026/8802",
+                (23, 19),
             ),
             (
                 "CLAIM_REJECTED_FRAUD",
                 "CLM-2026-8801",
                 "Penolakan pra-bayar klaster 85 SEP fisioterapi Z-3-12-0: SIP DPJP kedaluwarsa & 8/10 sangkalan Mobile JKN.",
+                "BAHP/BPJS/XI/2026/8801",
+                (18, 51),
             ),
             (
                 "CLAIM_REJECTED_FRAUD",
                 "CLM-2026-8805",
                 "Penolakan pra-bayar atas temuan Impossible Travel geovelocity OSRM 198,1 km/jam DPJP spesialis bedah.",
+                "BAHP/BPJS/XI/2026/8805",
+                (13, 27),
             ),
             (
                 "CLAIM_APPROVED_FASTTRACK",
                 "CLM-2026-8803",
                 "Persetujuan jalur cepat (Fast-Track): skor Lapis 1-3 wajar dan presensi peserta terkonfirmasi Mobile JKN.",
+                "BAHP/BPJS/XI/2026/8803",
+                (8, 12),
             ),
             (
                 "CLAIM_APPROVED_FASTTRACK",
                 "CLM-2026-8804",
                 "Persetujuan jalur cepat (Fast-Track): berkas klinis & konfirmasi kehadiran peserta valid 100%.",
+                "BAHP/BPJS/XI/2026/8804",
+                (4, 6),
             ),
         ]
-        for ev_type, cid, reason_txt in seed_decisions:
+        for ev_type, cid, reason_txt, bahp_no, (mins_ago, secs_ago) in seed_decisions:
             claim_obj = SYNTHETIC_CLAIMS_DATABASE.get(cid)
             if not claim_obj:
                 continue
@@ -4106,7 +4142,9 @@ def _ensure_seeded_audit_chain() -> None:
                     "actor_nip": "198704202011012001",
                     "actor_role": "Verifikator Medis Senior",
                     "reason": reason_txt,
+                    "beritaAcaraNo": bahp_no,
                 },
+                timestamp_override=(seed_now - _td(minutes=mins_ago, seconds=secs_ago)).isoformat(),
             )
 
 

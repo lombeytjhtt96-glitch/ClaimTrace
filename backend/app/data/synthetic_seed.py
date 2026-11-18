@@ -302,9 +302,9 @@ def get_initial_claims() -> Dict[str, ClaimInput]:
             ),
             mobile_meta=MobileJKNConfirmation(
                 sampel_terkirim=8,
-                respon_tidak_hadir=6,
-                respon_hadir=2,
-                status_konfirmasi="ANOMALY_DENIED"
+                respon_tidak_hadir=0,
+                respon_hadir=8,
+                status_konfirmasi="VERIFIED_ATTENDED"
             ),
             pstv01_peserta_id="PST-2026-0065412",
             fkl02_id_kunjungan="2608806006",

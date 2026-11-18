@@ -4,7 +4,7 @@ import hashlib
 import json
 import copy
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Tuple, Optional
 
 class AuditLogger:
@@ -31,6 +31,7 @@ class AuditLogger:
                 self.storage_path = os.path.join(base_dir, "audit_ledger_chain.jsonl")
             self._load_persisted_chain()
             if not self.chain and not os.getenv("PYTEST_CURRENT_TEST"):
+                genesis_ts = (datetime.now(timezone.utc) - timedelta(minutes=115, seconds=17)).isoformat()
                 self.record_event(
                     event_type="OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR",
                     claim_id="SEC-AUTH",
@@ -41,6 +42,7 @@ class AuditLogger:
                         "device_fingerprint": "BPJS-TRUSTED-WORKSTATION-01",
                         "notes": "Otentikasi sesi SSO & MFA Verifikator tervalidasi (Genesis Block Audit Ledger).",
                     },
+                    timestamp_override=genesis_ts,
                 )
         else:
             self.storage_path = storage_path
@@ -95,7 +97,8 @@ class AuditLogger:
         event_type: str,
         claim_id: str,
         actor: str,
-        payload: Dict[str, Any]
+        payload: Dict[str, Any],
+        timestamp_override: Optional[str] = None,
     ) -> Dict[str, Any]:
         with self._lock:
             # Deduplikasi event SEC-AUTH pada runtime produksi/lokal agar login & verifikasi sesi berulang
@@ -106,7 +109,7 @@ class AuditLogger:
                         return existing
 
             prev_hash = self.chain[-1]["current_hash"] if self.chain else "0" * 64
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = timestamp_override if timestamp_override else datetime.now(timezone.utc).isoformat()
             frozen_payload = copy.deepcopy(payload)
 
             block_content = json.dumps({

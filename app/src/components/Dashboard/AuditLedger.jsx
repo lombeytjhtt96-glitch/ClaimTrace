@@ -78,106 +78,15 @@ export default function AuditLedger({ isLight: propIsLight }) {
     timestamp: formatWibTimestamp()
   });
 
-  // Baseline cryptographically verified ledger blocks conforming to backend app/security/audit_log.py
-  const initialBlocks = [
-    {
-      index: 1084,
-      timestamp: '2026-10-24T14:28:44+07:00',
-      action: 'CLAIM_REJECTED_PHANTOM',
-      actor: 'dr. Siti Rahma, Sp.PK',
-      actorNip: '198704202011012001',
-      actorRole: 'Verifikator Medis Senior',
-      claimId: 'CLM-2026-8801',
-      faskes: 'RS Khusus Mitra Husada',
-      nominal: 15300000,
-      prevHash: '9a4c51b2e8f170d3810c9e6a54f0a2c3d8e7b912a3456789abcdef0123456789',
-      currentHash: '3f7a18b9c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9',
-      signature: 'SIG-BPJS-RSA4096-7a89b0c1',
-      details: {
-        reason: 'Sangkalan Faktual Peserta Mobile JKN (Lapis 3) + Duplikasi Tindakan Terapi',
-        djsProtected: 15300000,
-        beritaAcaraNo: 'BAHP/BPJS/IX/2026/8801'
-      }
-    },
-    {
-      index: 1083,
-      timestamp: '2026-10-24T14:15:02+07:00',
-      action: 'MOBILE_JKN_DISPATCH',
-      actor: 'Sistem DSS ClaimTrace (Automated)',
-      actorNip: 'SYSTEM-BOT-01',
-      actorRole: 'Autonomous Verifier Lapis 3',
-      claimId: 'CLM-2026-8801',
-      faskes: 'RS Khusus Mitra Husada',
-      nominal: 15300000,
-      prevHash: '8b3d40a1e7f069c2709b8d5a43e9a1b2c7d6a80192345678abcdef0123456788',
-      currentHash: '9a4c51b2e8f170d3810c9e6a54f0a2c3d8e7b912a3456789abcdef0123456789',
-      signature: 'SIG-BPJS-GATEWAY-8812',
-      details: {
-        channel: 'Push Notification Bridge',
-        challengeTtl: 300,
-        zkProofStatus: 'ISSUED'
-      }
-    },
-    {
-      index: 1082,
-      timestamp: '2026-10-24T13:45:20+07:00',
-      action: 'WASRIK_INVESTIGATION_FLAG',
-      actor: 'Dimas Darmawan, S.Kom, CFE',
-      actorNip: '199208152016031002',
-      actorRole: 'Pemeriksa Wasrik Pusat',
-      claimId: 'CLM-2026-8802',
-      faskes: 'RS Swasta As-Syifa (Kelas C)',
-      nominal: 1950000,
-      prevHash: '7a2c39f0d6e958b1698a7c4932d890a1b6c5970081234567abcdef0123456787',
-      currentHash: '8b3d40a1e7f069c2709b8d5a43e9a1b2c7d6a80192345678abcdef0123456788',
-      signature: 'SIG-BPJS-WASRIK-4412',
-      details: {
-        reason: 'Repeat Billing Terdeteksi (Tension Headache & Cephalgia dalam 1x24 jam)',
-        parquetDataset: 'fkrtl_warehouse_2024.parquet',
-        databaseQueryRow: 412
-      }
-    },
-    {
-      index: 1081,
-      timestamp: '2026-10-24T12:30:15+07:00',
-      action: 'CLAIM_APPROVED_FASTTRACK',
-      actor: 'dr. Siti Rahma, Sp.PK',
-      actorNip: '198704202011012001',
-      actorRole: 'Verifikator Medis Senior',
-      claimId: 'CLM-2026-8803',
-      faskes: 'RS Khusus Mata Nusantara (Kelas B)',
-      nominal: 4200000,
-      prevHash: '6f1b28e9c5d847a058796b3821c78990a5b4869970123456abcdef0123456786',
-      currentHash: '7a2c39f0d6e958b1698a7c4932d890a1b6c5970081234567abcdef0123456787',
-      signature: 'SIG-BPJS-RSA4096-7a89b0c1',
-      details: {
-        reason: 'Verifikasi Lapis 1-3 Lolos Wajar. Peserta mengonfirmasi kehadiran via Mobile JKN.',
-        djsDisbursed: 1850000
-      }
-    },
-    {
-      index: 1080,
-      timestamp: '2026-10-24T11:10:00+07:00',
-      action: 'DATA_ACCESS_AUDIT_LOG',
-      actor: 'Ahmad Fauzi, S.Kom',
-      actorNip: '199501022019021004',
-      actorRole: 'TI & Database Security',
-      claimId: 'GLOBAL-BATCH-2026-W42',
-      faskes: 'Kantor Pusat BPJS Kesehatan',
-      nominal: 0,
-      prevHash: '5e0a17d8b4c7369f47685a2710b6788994a3758869012345abcdef0123456785',
-      currentHash: '6f1b28e9c5d847a058796b3821c78990a5b4869970123456abcdef0123456786',
-      signature: 'SIG-BPJS-DETECTION-1102',
-      details: {
-        complianceStandard: 'UU PDP No. 27/2022 Pasal 35 (Pencatatan Akses Data Medis)',
-        ipAddress: '10.12.4.99 (Intranet BPJS)',
-        anonymizedQuery: 'SELECT * FROM klaim_warehouse_2024 WHERE fri_score > 80'
-      }
-    }
-  ];
+  const [blocks, setBlocks] = useState([]);
+  const [selectedBlock, setSelectedBlock] = useState(null);
 
-  const [blocks, setBlocks] = useState(initialBlocks);
-  const [selectedBlock, setSelectedBlock] = useState(initialBlocks[0]);
+  // Sinkronkan selectedBlock ke blok teratas aktif (blocks[0]) bila belum dipilih atau tidak ada di rantai live
+  useEffect(() => {
+    if (blocks.length > 0 && (!selectedBlock || !blocks.some((b) => b.index === selectedBlock.index))) {
+      setSelectedBlock(blocks[0]);
+    }
+  }, [blocks, selectedBlock]);
 
   // Helper to format action labels
   const formatActionTitle = (action) => {
@@ -756,7 +665,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
 
             <div className={`border rounded-xl p-3 relative overflow-hidden group ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
               <span className={`text-[10px] block font-medium relative z-10 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Blok Terakhir Dicatat</span>
-              <span className={`text-sm font-bold font-mono mt-0.5 block relative z-10 ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>#{blocks[0]?.index || 1084}</span>
+              <span className={`text-sm font-bold font-mono mt-0.5 block relative z-10 ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>#{blocks[0]?.index ?? '-'}</span>
               <span className={`text-[9.5px] relative z-10 ${isLight ? 'text-slate-600' : 'text-white/40'}`}>Index Rantai Berkelanjutan</span>
             </div>
 

@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from app.models.schemas import ClaimInput, TriageResult, TriageScoreBreakdown
 from app.security.audit_log import get_audit_logger
 from app.engine.episode_graph import generate_cluster_graph
@@ -74,7 +74,10 @@ def compute_raw_evidence_scores(claim: Any) -> Tuple[float, float, float]:
     return round(s1, 1), round(s2, 1), round(s3, 1)
 
 
-def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
+def evaluate_claim_triage(
+    claim: ClaimInput,
+    audit_timestamp_override: Optional[str] = None,
+) -> TriageResult:
     """
     Deterministic Multi-Signal Triage Fusion Engine:
     S = 0.5*S1 (Episode Radar) + 0.3*S2 (DPJP SDMK) + 0.2*S3 (Mobile JKN Binary Confirmation)
@@ -450,7 +453,8 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
                 "indicators": list(indikator),
                 "f3_tags": f3_tags,
                 "attack_tags": attack_tags
-            }
+            },
+            timestamp_override=audit_timestamp_override,
         )
 
     breakdown = TriageScoreBreakdown(
