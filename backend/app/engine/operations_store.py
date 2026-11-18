@@ -1111,6 +1111,9 @@ class OperationsStore:
         """Mengembalikan log telemetri presensi Mobile JKN Lapis 3 (Zero-PHI Compliant)."""
         with self._lock:
             self._ensure_init(claims_db)
+            wib_now = datetime.now(timezone(timedelta(hours=7)))
+            today_wib_str = wib_now.strftime("%Y-%m-%d")
+            now_total_min = wib_now.hour * 60 + wib_now.minute
             logs = []
             for idx, (cid, claim) in enumerate(claims_db.items()):
                 mm = claim.mobile_meta
@@ -1134,16 +1137,25 @@ class OperationsStore:
                 dispatch_hour = 8 + (seed_int % 10)          # 08:xx - 17:xx WIB
                 dispatch_min = (seed_int // 10) % 60         # 00 - 59
                 latency_min = (3 + ((seed_int // 600) % 29)) if status != "PENDING" else 0  # 3 - 31 menit
-                resp_total_min = dispatch_hour * 60 + dispatch_min + latency_min
-                resp_hour = (resp_total_min // 60) % 24
-                resp_min = resp_total_min % 60
                 # Sinkronkan tanggal telemetri periode berjalan (November 2026) agar selaras dengan Audit Ledger
-                raw_date = str(claim.tanggal_layanan or "2026-11-18")
+                raw_date = str(claim.tanggal_layanan or today_wib_str)
                 if raw_date.startswith("2026-10-"):
                     synced_day = 16 + (idx % 3)
                     telemetry_date = f"2026-11-{synced_day:02d}"
                 else:
                     telemetry_date = raw_date
+                dispatch_total_min = dispatch_hour * 60 + dispatch_min
+                # Cegah waktu kirim/respons hari ini melampaui jam server WIB saat ini
+                if telemetry_date >= today_wib_str:
+                    latest_allowed_dispatch = max(8 * 60, now_total_min - latency_min - 8)
+                    if dispatch_total_min > latest_allowed_dispatch:
+                        span = max(1, latest_allowed_dispatch - 8 * 60)
+                        dispatch_total_min = 8 * 60 + (seed_int % span)
+                dispatch_hour = (dispatch_total_min // 60) % 24
+                dispatch_min = dispatch_total_min % 60
+                resp_total_min = dispatch_total_min + latency_min
+                resp_hour = (resp_total_min // 60) % 24
+                resp_min = resp_total_min % 60
                 dispatched_str = f"{telemetry_date} {dispatch_hour:02d}:{dispatch_min:02d} WIB"
                 responded_str = (
                     f"{telemetry_date} {resp_hour:02d}:{resp_min:02d} WIB"
