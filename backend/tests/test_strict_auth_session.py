@@ -1152,4 +1152,4 @@ def test_jury_demo_admin_login_feature_gate(monkeypatch):
         },
     )
     assert verify_res.status_code == 200
-    assert main_mod.audit_logger.chain[-1]["event_type"] == "JURY_DEMO_ADMIN_LOGIN"
+    assert main_mod.audit_logger.chain[-1]["event_type"] == "OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR"

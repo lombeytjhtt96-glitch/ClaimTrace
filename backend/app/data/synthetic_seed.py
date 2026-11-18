@@ -235,7 +235,7 @@ def get_initial_claims() -> Dict[str, ClaimInput]:
             s3_score=75.0,
             episode_meta=EpisodeFingerprint(
                 cluster_id="CLS-GEODIST-COLLISION",
-                jumlah_klaim_klaster=4,
+                jumlah_klaim_klaster=1,
                 rasio_lonjakan_baseline=2.1,
                 indikasi_repeat_billing=False,
                 terdaftar_baksos_resmi=False
@@ -287,7 +287,7 @@ def get_initial_claims() -> Dict[str, ClaimInput]:
             s3_score=80.0,
             episode_meta=EpisodeFingerprint(
                 cluster_id="CLS-UPCODING-SEVERITY",
-                jumlah_klaim_klaster=18,
+                jumlah_klaim_klaster=1,
                 rasio_lonjakan_baseline=4.8,
                 indikasi_repeat_billing=False,
                 terdaftar_baksos_resmi=False

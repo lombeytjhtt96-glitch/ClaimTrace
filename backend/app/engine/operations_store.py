@@ -295,13 +295,13 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "claim_id": "CLM-2026-8802",
             "risk_level": "SEVERE",
             "risk_score": 62,
-            "status": "in_progress",
+            "status": "completed",
             "total_steps": 3,
-            "completed_steps": 2,
+            "completed_steps": 3,
             "viewed_in_24h": True,
-            "stale_days": 1,
+            "stale_days": 0,
             "created_at": (now - timedelta(days=1)).isoformat(),
-            "updated_at": (now - timedelta(hours=4)).isoformat(),
+            "updated_at": (now - timedelta(hours=2)).isoformat(),
             "plan_steps": [
                 {
                     "title": "Identifikasi Klaim Terbayar Sebelumnya (CLM-2026-8100)",
@@ -315,8 +315,8 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
                 },
                 {
                     "title": "Finalisasi Status Pembayaran atau Pengembalian Berkas",
-                    "description": "Keputusan penggabungan episode atau penolakan tagihan ganda.",
-                    "completed": False,
+                    "description": "Keputusan penggabungan episode atau penolakan tagihan ganda telah direkonsiliasi penuh.",
+                    "completed": True,
                 },
             ],
         },

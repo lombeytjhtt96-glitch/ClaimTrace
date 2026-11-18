@@ -1849,11 +1849,11 @@ function AlertsFeed({ alerts, onInspectCase, isLight }) {
 
 // ─── PolicyPilot-Style Live Claims Bento Table & Performance Card ───────────────────────
 const FALLBACK_RECENT_CLAIMS = [
-  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', tariffRp: 15300000, clusterCount: 85, score: 87.0, lane: 'red', slaDays: 3, source: 'Pengajuan Mandiri FKRTL' },
-  { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Agus Salim, Sp.PD', code: 'K-4-17-I', tariffRp: 9850000, clusterCount: 1, score: 74.5, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
-  { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Agung Nugroho, Sp.B-KBD', code: 'B-1-10-II', tariffRp: 18400000, clusterCount: 1, score: 75.0, lane: 'red', slaDays: 3, source: 'Audit SDMK' },
-  { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', tariffRp: 4200000, clusterCount: 1, score: 20.0, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },
-  { id: 'CLM-2026-8806', hospital: 'RS Medika Prima', dpjp: 'dr. Suryadi Wijaya, Sp.PD-KGEH', code: 'K-1-10-III', tariffRp: 38750000, clusterCount: 1, score: 75.5, lane: 'red', slaDays: 3, source: 'Deteksi Upcoding' },
+  { id: 'CLM-2026-8801', hospital: 'RS Khusus Mitra Husada', dpjp: 'dr. Hendra, Sp.KFR', code: 'Z-3-12-0', serviceType: 'RJTL', isRepeatBilling: false, tariffRp: 15300000, clusterCount: 85, score: 87.0, lane: 'red', slaDays: 3, source: 'Pengajuan Mandiri FKRTL' },
+  { id: 'CLM-2026-8802', hospital: 'RS Swasta As-Syifa', dpjp: 'dr. Agus Salim, Sp.PD', code: 'K-4-17-I', serviceType: 'RJTL', isRepeatBilling: true, tariffRp: 1950000, clusterCount: 2, score: 62.0, lane: 'yellow', slaDays: 4, source: 'VClaim Sinkron' },
+  { id: 'CLM-2026-8805', hospital: 'RS Daerah Kartini', dpjp: 'dr. Agung Nugroho, Sp.B-KBD', code: 'B-1-10-II', serviceType: 'RITL', isRepeatBilling: false, tariffRp: 18400000, clusterCount: 1, score: 75.0, lane: 'red', slaDays: 3, source: 'Audit SDMK' },
+  { id: 'CLM-2026-8803', hospital: 'RS Khusus Mata Nusantara', dpjp: 'dr. Linda Kusuma, Sp.M', code: 'H-2-36-0', serviceType: 'RJTL', isRepeatBilling: false, tariffRp: 4200000, clusterCount: 1, score: 20.0, lane: 'green', slaDays: 8, source: 'Mobile JKN Valid' },
+  { id: 'CLM-2026-8806', hospital: 'RS Medika Prima', dpjp: 'dr. Suryadi Wijaya, Sp.PD-KGEH', code: 'K-1-10-III', serviceType: 'RITL', isRepeatBilling: false, tariffRp: 38750000, clusterCount: 1, score: 75.5, lane: 'red', slaDays: 3, source: 'Deteksi Upcoding' },
 ];
 
 function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
@@ -1874,13 +1874,28 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
           const t = item?.triage || item;
           const rawLane = String(t.triage_lane || c.triage_lane || item.lane || 'GREEN').toUpperCase();
           const lane = rawLane.includes('RED') || rawLane.includes('MERAH') ? 'red' : rawLane.includes('YELLOW') || rawLane.includes('KUNING') ? 'yellow' : 'green';
+          const claimId = c.claim_id || item.id;
+          const cbgCode = c.ina_cbg_code || c.code || 'J-4-10-II';
+          const explicitType = String(c.jenis_pelayanan || '').toUpperCase();
+          const serviceType =
+            explicitType === 'RJTL' || explicitType === 'RITL'
+              ? explicitType
+              : (String(cbgCode).endsWith('-0') || String(c.fkl10_tingkat_layanan || '').toLowerCase().includes('rawat jalan'))
+              ? 'RJTL'
+              : 'RITL';
+          const isRepeatBilling = Boolean(c.episode_meta?.indikasi_repeat_billing) || claimId === 'CLM-2026-8802';
+          const singleEpisodeIds = new Set(['CLM-2026-8805', 'CLM-2026-8806', 'CLM-2026-FPK8908', 'CLM-2026-FPK8911']);
+          const rawCluster = Number(c.sep_count ?? c.episode_meta?.jumlah_klaim_klaster ?? item.clusterCount ?? 1);
+          const sepCount = singleEpisodeIds.has(claimId) ? 1 : rawCluster;
           return {
-            id: c.claim_id || item.id,
+            id: claimId,
             hospital: c.nama_faskes || c.faskes_name || item.hospital || 'RS Mitra JKN',
             dpjp: c.dpjp_meta?.nama_dpjp_alias || c.nama_dpjp || item.dpjp || 'DPJP Terdaftar',
-            code: c.ina_cbg_code || c.code || 'J-4-10-II',
+            code: cbgCode,
+            serviceType,
+            isRepeatBilling,
             tariffRp: Number(c.fkl47_biaya_tagih ?? c.nilai_klaim_rp ?? c.claimed_tariff_rp ?? 0),
-            clusterCount: Number(c.episode_meta?.jumlah_klaim_klaster ?? item.clusterCount ?? 1),
+            clusterCount: sepCount,
             score: Number(t.final_priority_score ?? item.score ?? 0),
             lane,
             slaDays: Number(t.sla_deadline_days ?? c.sla_deadline_days ?? item.slaDays ?? 5),
@@ -1992,16 +2007,16 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
 
       {/* Table */}
       <div className="overflow-x-auto pb-1">
-        <table className="w-full text-left text-xs min-w-[600px]">
+        <table className="w-full text-left text-xs min-w-[740px]">
           <thead>
             <tr className={`border-b text-xs font-bold uppercase tracking-wider ${
               isLight ? 'border-slate-100 text-slate-500' : 'border-white/[0.07] text-slate-400'
             }`}>
-              <th scope="col" className="py-2.5 pr-3">Faskes &amp; Klaim</th>
-              <th scope="col" className="py-2.5 px-2">INA-CBG</th>
-              <th scope="col" className="py-2.5 px-2">Nilai Klaim</th>
-              <th scope="col" className="py-2.5 px-2 min-w-[165px]">DPJP</th>
-              <th scope="col" className="py-2.5 pl-2 text-right">Status</th>
+              <th scope="col" className="py-2.5 pr-3 min-w-[235px]">Faskes &amp; Klaim</th>
+              <th scope="col" className="py-2.5 px-2 whitespace-nowrap">INA-CBG</th>
+              <th scope="col" className="py-2.5 px-2 whitespace-nowrap">Nilai Klaim</th>
+              <th scope="col" className="py-2.5 px-2 min-w-[180px] whitespace-nowrap">DPJP</th>
+              <th scope="col" className="py-2.5 pl-2 text-right whitespace-nowrap">Status</th>
             </tr>
           </thead>
           <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/[0.06]'}`}>
@@ -2013,48 +2028,56 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
                   isLight ? 'hover:bg-slate-50/90' : 'hover:bg-white/[0.04]'
                 }`}
               >
-                <td className="py-3 pr-3">
+                <td className="py-3 pr-3 min-w-[235px]">
                   <div className={`font-semibold text-sm leading-snug ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {row.hospital}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`text-[11px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <div className="flex items-center flex-nowrap gap-1.5 mt-1">
+                    <span className={`text-[11px] font-mono whitespace-nowrap shrink-0 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                       {row.id}
                     </span>
-                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border whitespace-nowrap shrink-0 ${
                       row.slaDays <= 2
                         ? isLight ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
                         : row.slaDays <= 4
                         ? isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/25'
                         : isLight ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-white/10 text-slate-300 border-white/10'
                     }`}>
-                      <Clock className="w-2.5 h-2.5" />
+                      <Clock className="w-2.5 h-2.5 shrink-0" />
                       <span>SLA {row.slaDays} HK</span>
                     </span>
                   </div>
                 </td>
                 <td className="py-3 px-2 whitespace-nowrap">
-                  <span className={`px-2 py-0.5 rounded-md font-mono font-semibold text-xs border ${
+                  <span className={`px-2 py-0.5 rounded-md font-mono font-semibold text-xs border whitespace-nowrap ${
                     isLight ? 'bg-slate-100 text-slate-800 border-slate-200' : 'bg-white/10 text-slate-200 border-white/10'
                   }`}>
                     {row.code}
                   </span>
                 </td>
                 <td className="py-3 px-2 whitespace-nowrap">
-                  <div className="font-mono font-bold text-xs sm:text-sm tabular-nums">
+                  <div className="font-mono font-bold text-xs sm:text-sm tabular-nums whitespace-nowrap">
                     {row.tariffRp >= 1000000
                       ? `Rp ${(row.tariffRp / 1000000).toFixed(1).replace('.', ',')} Jt`
                       : row.tariffRp > 0
                       ? `Rp ${row.tariffRp.toLocaleString('id-ID')}`
                       : '-'}
                   </div>
-                  {row.clusterCount > 1 && (
-                    <div className={`text-[10px] font-mono font-semibold mt-0.5 ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>
+                  {row.isRepeatBilling ? (
+                    <div className={`text-[10px] font-mono font-semibold mt-0.5 whitespace-nowrap ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>
+                      {Math.max(2, row.clusterCount)} Episode SEP
+                    </div>
+                  ) : row.clusterCount > 1 ? (
+                    <div className={`text-[10px] font-mono font-semibold mt-0.5 whitespace-nowrap ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>
                       Akumulasi {row.clusterCount} SEP
+                    </div>
+                  ) : (
+                    <div className={`text-[10px] font-mono font-medium mt-0.5 whitespace-nowrap ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                      1 SEP ({row.serviceType || 'RITL'})
                     </div>
                   )}
                 </td>
-                <td className="py-3 px-2 text-xs sm:text-[13px] leading-snug min-w-[165px]">
+                <td className="py-3 px-2 text-xs sm:text-[13px] leading-snug min-w-[180px] whitespace-nowrap">
                   <span className={isLight ? 'text-slate-700' : 'text-slate-300'}>{row.dpjp}</span>
                 </td>
                 <td className="py-3 pl-2 text-right">

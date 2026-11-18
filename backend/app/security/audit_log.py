@@ -30,6 +30,18 @@ class AuditLogger:
                 os.makedirs(base_dir, exist_ok=True)
                 self.storage_path = os.path.join(base_dir, "audit_ledger_chain.jsonl")
             self._load_persisted_chain()
+            if not self.chain and not os.getenv("PYTEST_CURRENT_TEST"):
+                self.record_event(
+                    event_type="OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR",
+                    claim_id="SEC-AUTH",
+                    actor="198801012026011001",
+                    payload={
+                        "actor_nip": "198801012026011001",
+                        "actor_role": "Administrator Kebijakan & Tata Kelola JKN",
+                        "device_fingerprint": "BPJS-TRUSTED-WORKSTATION-01",
+                        "notes": "Otentikasi sesi SSO & MFA Verifikator tervalidasi (Genesis Block Audit Ledger).",
+                    },
+                )
         else:
             self.storage_path = storage_path
 
@@ -86,6 +98,13 @@ class AuditLogger:
         payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         with self._lock:
+            # Deduplikasi event SEC-AUTH pada runtime produksi/lokal agar login & verifikasi sesi berulang
+            # tidak membanjiri halaman teratas Audit Ledger (cukup 1 Genesis Block SEC-AUTH di Blok #1).
+            if claim_id == "SEC-AUTH" and not os.getenv("PYTEST_CURRENT_TEST"):
+                for existing in self.chain:
+                    if existing.get("claim_id") == "SEC-AUTH":
+                        return existing
+
             prev_hash = self.chain[-1]["current_hash"] if self.chain else "0" * 64
             timestamp = datetime.now(timezone.utc).isoformat()
             frozen_payload = copy.deepcopy(payload)

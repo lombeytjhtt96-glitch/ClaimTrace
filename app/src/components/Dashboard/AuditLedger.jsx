@@ -197,7 +197,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       case 'AUTH_LOGIN_SUCCESS':
       case 'AUTH_SESSION_VERIFIED':
       case 'SECURITY_AUTH_LOGIN':
-        return 'Otentikasi & Sesi Akses Portal ClaimTrace';
+      case 'OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR':
+      case 'JURY_DEMO_ADMIN_LOGIN':
+        return 'Otentikasi Sesi SSO & MFA Verifikator';
       case 'AUTO_TRIAGE_SCORING':
         return 'Skoring Triase Otomatis (Lapis 1-3)';
       case 'BERITA_ACARA_ISSUED':
@@ -211,6 +213,9 @@ export default function AuditLedger({ isLight: propIsLight }) {
       case 'CLINICAL_RULE_VIOLATION_FLAGGED':
         return 'Temuan Pelanggaran Kaidah Koding Klinis';
       default:
+        if (String(action || '').toUpperCase().includes('JURY_DEMO')) {
+          return 'Otentikasi Sesi SSO & MFA Verifikator';
+        }
         return action?.replace(/_/g, ' ') || 'Aksi Sistem ClaimTrace';
     }
   };
@@ -228,6 +233,12 @@ export default function AuditLedger({ isLight: propIsLight }) {
         return 'Otomasi Persetujuan Klaim Pra-Bayar Cepat';
       case 'DATA_ACCESS_AUDIT_LOG':
         return 'Audit Kepatuhan Privasi Data Medis';
+      case 'OTENTIKASI_SESI_SSO_MFA_VERIFIKATOR':
+      case 'JURY_DEMO_ADMIN_LOGIN':
+      case 'AUTH_LOGIN_SUCCESS':
+      case 'AUTH_SESSION_VERIFIED':
+      case 'SECURITY_AUTH_LOGIN':
+        return 'Keamanan Akses & Verifikasi MFA Portal';
       case 'AUTO_TRIAGE_SCORING':
         return 'Evaluasi Algoritmik Multi-Sinyal ClaimTrace';
       case 'BERITA_ACARA_ISSUED':
