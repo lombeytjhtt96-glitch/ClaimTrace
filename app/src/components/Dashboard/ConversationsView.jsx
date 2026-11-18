@@ -349,9 +349,9 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
         }`}>
           <div className="flex items-start justify-between">
             <div>
-              <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>TOTAL PERCAKAPAN</p>
+              <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>TOTAL PESAN DIALOG</p>
               <p className={`text-3xl font-bold mt-1.5 ${isLight ? 'text-amber-800' : 'text-[#FFCA40]'}`}>{stats.totalConversations}</p>
-              <p className={`text-xs mt-2 ${isLight ? 'text-slate-500 font-medium' : 'text-white/40'}`}>{stats.conversationsToday} hari ini</p>
+              <p className={`text-xs mt-2 ${isLight ? 'text-slate-500 font-medium' : 'text-white/40'}`}>{stats.conversationsToday} sesi aktif hari ini</p>
             </div>
             <div className={`p-3 rounded-xl border ${
               isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/10 text-[#FFCA40] border-amber-500/20'
@@ -391,7 +391,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
             <div>
               <p className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-white/60'}`}>MINGGU INI</p>
               <p className={`text-3xl font-bold mt-1.5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{stats.thisWeek}</p>
-              <p className={`text-xs mt-2 ${isLight ? 'text-slate-500 font-medium' : 'text-white/40'}`}>percakapan baru</p>
+              <p className={`text-xs mt-2 ${isLight ? 'text-slate-500 font-medium' : 'text-white/40'}`}>pesan audit minggu ini</p>
             </div>
             <div className={`p-3 rounded-xl border ${
               isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'

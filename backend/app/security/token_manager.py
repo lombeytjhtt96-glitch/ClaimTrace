@@ -136,10 +136,19 @@ def verify_ephemeral_blob(token: str, prefix: str = "ctblob") -> Tuple[bool, Opt
     return True, payload, None
 
 
+def _is_headless_ua(ua: Optional[str]) -> bool:
+    """Deteksi user-agent otomasi/bot pengujian (Playwright/HeadlessChrome) agar tidak mencemari daftar sesi verifikator."""
+    low = (ua or "").lower()
+    return "headlesschrome" in low or "headlessc" in low or "playwright" in low
+
+
 def _prune_expired_sessions_unlocked(now_ts: int) -> None:
     for jti in list(ACTIVE_SESSIONS.keys()):
         sess = ACTIVE_SESSIONS.get(jti)
         if not isinstance(sess, dict):
+            ACTIVE_SESSIONS.pop(jti, None)
+            continue
+        if _is_headless_ua(sess.get("ua_preview")):
             ACTIVE_SESSIONS.pop(jti, None)
             continue
         if jti in REVOKED_JTIS or int(sess.get("exp", 0)) < now_ts:
@@ -164,9 +173,19 @@ def _load_security_state() -> None:
             REVOKED_JTIS.update(str(j) for j in raw.get("revoked_jtis", [])[-5000:])
             for k, v in (raw.get("user_epochs") or {}).items():
                 USER_SESSION_EPOCHS[str(k)] = max(1, int(v))
+            dedup_by_device: Dict[Tuple[str, str], Tuple[str, Dict[str, Any]]] = {}
             for jti, sess in (raw.get("sessions") or {}).items():
-                if isinstance(sess, dict) and int(sess.get("exp", 0)) >= now_ts and jti not in REVOKED_JTIS:
-                    ACTIVE_SESSIONS[str(jti)] = sess
+                if not isinstance(sess, dict) or int(sess.get("exp", 0)) < now_ts or jti in REVOKED_JTIS:
+                    continue
+                if _is_headless_ua(sess.get("ua_preview")):
+                    continue
+                sub_key = str(sess.get("sub") or "")
+                dfp_key = str(sess.get("dfp_preview") or jti)
+                prev = dedup_by_device.get((sub_key, dfp_key))
+                if prev is None or int(sess.get("last_active", 0)) >= int(prev[1].get("last_active", 0)):
+                    dedup_by_device[(sub_key, dfp_key)] = (str(jti), sess)
+            for jti_str, sess in dedup_by_device.values():
+                ACTIVE_SESSIONS[jti_str] = sess
             _prune_expired_sessions_unlocked(now_ts)
     except Exception:
         pass
@@ -280,8 +299,19 @@ def create_access_token(
 
     token = sign_ephemeral_blob(payload, prefix="ct")
 
-    if token_type == "SESSION":
+    if token_type == "SESSION" and not _is_headless_ua(user_agent):
+        dfp_preview = (device_fingerprint or "")[:24]
         with _STATE_LOCK:
+            # Upsert berdasarkan (NIP, device_fingerprint) agar sesi kembar dari perangkat yang sama tidak menumpuk
+            if dfp_preview:
+                for old_jti in list(ACTIVE_SESSIONS.keys()):
+                    old_sess = ACTIVE_SESSIONS.get(old_jti)
+                    if (
+                        isinstance(old_sess, dict)
+                        and str(old_sess.get("sub")) == nip
+                        and str(old_sess.get("dfp_preview") or "") == dfp_preview
+                    ):
+                        ACTIVE_SESSIONS.pop(old_jti, None)
             ACTIVE_SESSIONS[jti] = {
                 "jti": jti,
                 "sub": nip,
@@ -293,7 +323,7 @@ def create_access_token(
                 "last_active": now,
                 "idle_sec": payload["idle_sec"],
                 "ver": epoch,
-                "dfp_preview": (device_fingerprint or "")[:24],
+                "dfp_preview": dfp_preview,
                 "ua_preview": (user_agent or "BPJS Workstation")[:80],
                 "ip_preview": normalize_ip(ip_address) if ip_address else "-",
                 "strict_ip_lock": bool(strict_ip_lock),
@@ -427,30 +457,41 @@ def revoke_token(token: str) -> None:
 
 
 def list_user_sessions(nip: str, current_jti: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Lists active, non-expired sessions for a given NIP."""
+    """Lists active, non-expired, deduplicated non-bot sessions for a given NIP."""
     now_ts = int(time.time())
     nip_key = str(nip)
-    results: List[Dict[str, Any]] = []
+    deduped: Dict[str, Dict[str, Any]] = {}
     with _STATE_LOCK:
         _prune_expired_sessions_unlocked(now_ts)
         for jti, sess in ACTIVE_SESSIONS.items():
             if str(sess.get("sub")) != nip_key:
                 continue
+            ua_val = str(sess.get("ua_preview") or "BPJS Workstation")
+            if _is_headless_ua(ua_val):
+                continue
             idle_sec = int(sess.get("idle_sec", 900))
             last_active = int(sess.get("last_active", now_ts))
-            results.append({
+            dfp_val = str(sess.get("dfp_preview") or "-")
+            dedup_key = dfp_val if dfp_val != "-" else jti
+            item = {
                 "jti": jti,
                 "is_current": bool(current_jti and jti == current_jti),
                 "issued_at": int(sess.get("iat", now_ts)),
                 "expires_at": int(sess.get("exp", now_ts)),
                 "last_active": last_active,
                 "idle_remaining_seconds": max(0, idle_sec - (now_ts - last_active)),
-                "device_fingerprint": sess.get("dfp_preview") or "-",
-                "user_agent": sess.get("ua_preview") or "BPJS Workstation",
+                "device_fingerprint": dfp_val,
+                "user_agent": ua_val,
                 "ip_address": sess.get("ip_preview") or "-",
                 "strict_ip_lock": bool(sess.get("strict_ip_lock", False)),
-            })
-    results.sort(key=lambda item: item["last_active"], reverse=True)
+            }
+            prev = deduped.get(dedup_key)
+            if prev is None:
+                deduped[dedup_key] = item
+            elif item["is_current"] or (not prev["is_current"] and item["last_active"] >= prev["last_active"]):
+                deduped[dedup_key] = item
+    results = list(deduped.values())
+    results.sort(key=lambda item: (1 if item["is_current"] else 0, item["last_active"]), reverse=True)
     return results
 
 

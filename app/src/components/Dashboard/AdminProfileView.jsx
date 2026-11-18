@@ -87,7 +87,22 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
       if (!data) {
         throw new Error('gagal terhubung ke layanan sesi');
       }
-      setSessions(Array.isArray(data?.sessions) ? data.sessions : []);
+      const rawSessions = Array.isArray(data?.sessions) ? data.sessions : [];
+      const dedupedMap = new Map();
+      rawSessions.forEach((sess) => {
+        const ua = String(sess?.user_agent || '');
+        if (/headlesschrome|headlessc|playwright/i.test(ua)) return;
+        const dfpKey = String(sess?.device_fingerprint || sess?.jti || '');
+        const existing = dedupedMap.get(dfpKey);
+        if (
+          !existing ||
+          sess?.is_current ||
+          (!existing?.is_current && Number(sess?.last_active || 0) >= Number(existing?.last_active || 0))
+        ) {
+          dedupedMap.set(dfpKey, sess);
+        }
+      });
+      setSessions(Array.from(dedupedMap.values()));
     } catch (err) {
       setSessionsError(`Gagal memuat daftar sesi aktif (${err?.message || 'error'}).`);
     } finally {

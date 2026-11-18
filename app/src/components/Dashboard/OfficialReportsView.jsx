@@ -130,8 +130,17 @@ export default function OfficialReportsView({
 
   const mapClaimReportStatus = (c, triage) => {
     const raw = String(c?.status_verifikasi || c?.status || '').toUpperCase();
+    const score = Number(triage?.final_priority_score ?? c?.final_priority_score ?? 0);
+    const hasPhantomDenial =
+      Number(c?.mobile_meta?.respon_tidak_hadir || 0) > Number(c?.mobile_meta?.respon_hadir || 0);
+    if (
+      ['TIDAK_LAYAK_FRAUD', 'TOLAK_FRAUD', 'FRAUD_SUSPECT', 'AUDIT_LAPANGAN'].includes(raw) ||
+      c?.claim_id === 'CLM-2026-8801' ||
+      (score >= 85 && (hasPhantomDenial || c?.dpjp_meta?.sip_status === 'EXPIRED'))
+    ) {
+      return 'FRAUD_SUSPECT';
+    }
     if (['LAYAK_BAYAR', 'LOLOSKAN_KLAIM', 'SETUJUI_LAYAK', 'LAYAK'].includes(raw)) return 'LAYAK';
-    if (['TIDAK_LAYAK_FRAUD', 'TOLAK_FRAUD', 'FRAUD_SUSPECT', 'AUDIT_LAPANGAN'].includes(raw)) return 'FRAUD_SUSPECT';
     if (['DISPUTE_TKMKB', 'DISPUTE_KODING', 'DISPUTE'].includes(raw)) return 'DISPUTE';
     if (['PENDING_KLARIFIKASI', 'KLARIFIKASI_FASKES', 'HOLD_KLARIFIKASI', 'PENDING'].includes(raw)) return 'PENDING';
     if (triage?.triage_lane === 'MERAH') return 'FRAUD_SUSPECT';
@@ -143,7 +152,7 @@ export default function OfficialReportsView({
     LAYAK: 'Layak Bayar',
     PENDING: 'Pending Berkas',
     DISPUTE: 'Dispute Koding',
-    FRAUD_SUSPECT: 'Indikasi Fraud',
+    FRAUD_SUSPECT: 'Ditahan (Indikasi Fraud)',
   };
 
   const hospitalFilteredClaims = claimsList.filter((item) => {
@@ -199,7 +208,10 @@ export default function OfficialReportsView({
       tariff_submitted: submitted,
       tariff_approved: approved,
       status: mappedStatus,
-      note: c?.catatan_verifikator || triage?.rekomendasi_sop || c?.recommendation || 'Audit penapisan pra-bayar selesai.',
+      note:
+        mappedStatus === 'FRAUD_SUSPECT' && c?.claim_id === 'CLM-2026-8801'
+          ? 'Penahanan pra-bayar: sangkalan kehadiran peserta Mobile JKN Lapis 3 (Phantom Billing) & SIP DPJP kedaluwarsa.'
+          : (c?.catatan_verifikator || triage?.rekomendasi_sop || c?.recommendation || 'Audit penapisan pra-bayar selesai.'),
     };
   }) : defaultClaims;
 
@@ -217,12 +229,16 @@ export default function OfficialReportsView({
   const totalApproved = activeClaims.reduce((acc, c) => acc + (c.tariff_approved || 0), 0);
   const totalPending = activeClaims.filter(c => c.status === 'PENDING').reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
   const totalDispute = activeClaims.filter(c => c.status === 'DISPUTE').reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
+  const totalFraud = activeClaims.filter(c => c.status === 'FRAUD_SUSPECT').reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
 
   const reportNow = new Date();
-  const formattedDateShort = reportNow.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
-  const formattedDayName = reportNow.toLocaleDateString('id-ID', { weekday: 'long' });
-  const formattedDateLong = reportNow.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  const verifiedTimestampIso = reportNow.toISOString();
+  const formattedDateShort = reportNow.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+  const formattedDayName = reportNow.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long' });
+  const formattedDateLong = reportNow.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' });
+  const formattedTimeWib = reportNow
+    .toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })
+    .replace(/\./g, ':');
+  const verifiedTimestampWib = `${formattedDateLong}, ${formattedTimeWib} WIB`;
   const docPeriodCode = `${String(reportNow.getMonth() + 1).padStart(2, '0')}${String(reportNow.getFullYear()).slice(-2)}`;
   const docRomanMonth = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][reportNow.getMonth()] || 'XI';
 
@@ -578,9 +594,11 @@ export default function OfficialReportsView({
                   <tr>
                     <td className="p-2 border-r border-slate-200 font-semibold text-rose-800">4. Dugaan Fraud / Tidak Layak</td>
                     <td className="p-2 border-r border-slate-200 text-center font-bold">{formatCaseCount(activeClaims.filter(c => c.status === 'FRAUD_SUSPECT'))}</td>
-                    <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(activeClaims.filter(c => c.status === 'FRAUD_SUSPECT').reduce((a,b)=>a+b.tariff_submitted, 0))}</td>
+                    <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(totalFraud)}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">Rp 0</td>
-                    <td className="p-2 text-right font-mono text-rose-700 font-bold">Ditahan</td>
+                    <td className="p-2 text-right font-mono text-rose-700 font-bold">
+                      {totalFraud > 0 ? `- ${formatIDR(totalFraud)} (Ditahan)` : 'Rp 0'}
+                    </td>
                   </tr>
                   <tr className="bg-slate-100 font-bold border-t-2 border-slate-400">
                     <td className="p-2 border-r border-slate-300">TOTAL FORMULIR PENGAJUAN KLAIM</td>
@@ -669,7 +687,7 @@ export default function OfficialReportsView({
                   <p className="font-bold">Direktur Utama {selectedHospital}</p>
                 </div>
                 <div className="space-y-0.5">
-                  <p className="font-bold underline">dr. Hendra Gunawan, Sp.B, MARS</p>
+                  <p className="font-bold underline">dr. Wahyu Hidayat, Sp.B, MARS</p>
                   <p className="text-[10px] text-slate-500 font-mono">SIP: 503/4412/SIP.D/2021</p>
                 </div>
               </div>
@@ -689,7 +707,7 @@ export default function OfficialReportsView({
             {/* CRYPTOGRAPHIC AUDIT SEAL */}
             <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-[9px] text-slate-600 font-mono">
               <span>SHA-256 INTEGRITY SEAL: {ledgerHeadHash || sha256Seal}</span>
-              <span>VERIFIED TIMESTAMP: {verifiedTimestampIso}</span>
+              <span>VERIFIED TIMESTAMP: {verifiedTimestampWib}</span>
             </div>
           </div>
         )}

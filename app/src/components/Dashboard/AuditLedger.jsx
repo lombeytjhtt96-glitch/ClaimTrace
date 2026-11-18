@@ -771,12 +771,12 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
         </div>
 
         {/* SEARCH & FILTER CONTROLS */}
-        <div className={`flex flex-col sm:flex-row gap-2.5 items-center justify-between backdrop-blur-xl border p-3 rounded-2xl shadow-xl ${
+        <div className={`flex flex-col xl:flex-row gap-2.5 items-stretch xl:items-center justify-between backdrop-blur-xl border p-3 rounded-2xl shadow-xl ${
           isLight
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
             : 'bg-[#00153A]/85 border-white/10 text-white shadow-xl'
         }`}>
-          <div className="relative w-full sm:w-80">
+          <div className="relative w-full sm:min-w-[380px] flex-1">
             <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
             <input
               id="audit-ledger-search"
@@ -794,7 +794,7 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-1.5 w-full xl:w-auto shrink-0">
             <span className={`text-[11px] flex items-center space-x-1 mr-1 ${isLight ? 'text-slate-600 font-semibold' : 'text-white/50'}`}>
               <Filter className="w-3 h-3" />
               <span>Filter:</span>
@@ -862,9 +862,9 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
             </div>
             <div className="h-[175px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={eventDistribution} layout="vertical" margin={{ top: 4, right: 20, left: 6, bottom: 4 }}>
+                <BarChart data={eventDistribution} layout="vertical" margin={{ top: 4, right: 20, left: 10, bottom: 4 }}>
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: isLight ? '#64748b' : '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="label" width={135} interval={0} tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="label" width={165} interval={0} tick={{ fontSize: 11, fill: isLight ? '#334155' : '#e2e8f0' }} axisLine={false} tickLine={false} />
                   <Tooltip
                     cursor={false}
                     formatter={(val) => [`${val} blok`, 'Jumlah Event']}
@@ -891,23 +891,23 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
       {/* DUAL-PANE WORKSPACE: INDEPENDENT SCROLLING TABLE & INSPECTOR */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[460px]">
         
-        {/* TABLE (7 COLS) */}
-        <div className="lg:col-span-7 flex flex-col min-h-0 min-w-0">
+        {/* TABLE (8 COLS) */}
+        <div className="lg:col-span-8 flex flex-col min-h-0 min-w-0">
           <div className={`overflow-x-auto backdrop-blur-xl border rounded-2xl shadow-xl ${
             isLight
               ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
               : 'bg-[#00153A]/85 border-white/10 text-white shadow-2xl'
           }`}>
-            <table className="w-full min-w-[660px] text-left text-xs font-sans">
-              <thead className={`font-bold uppercase text-xs tracking-wider border-b ${
+            <table className="w-full text-left text-xs font-sans">
+              <thead className={`font-bold uppercase text-[11px] tracking-wider border-b ${
                 isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-black/40 text-white/70 border-white/10'
               }`}>
                 <tr>
-                  <th scope="col" className="py-3 px-3.5">Blok #</th>
-                  <th scope="col" className="py-3 px-3.5">Waktu &amp; Tipe Event</th>
-                  <th scope="col" className="py-3 px-3.5">Aktor &amp; Peran</th>
-                  <th scope="col" className="py-3 px-3.5">Klaim / Nominal</th>
-                  <th scope="col" className="py-3 px-3.5">Hash SHA-256</th>
+                  <th scope="col" className="py-3 px-2.5 whitespace-nowrap">Blok #</th>
+                  <th scope="col" className="py-3 px-2.5 whitespace-nowrap">Waktu &amp; Tipe Event</th>
+                  <th scope="col" className="py-3 px-2.5 whitespace-nowrap">Aktor &amp; Peran</th>
+                  <th scope="col" className="py-3 px-2.5 whitespace-nowrap">Klaim / Nominal</th>
+                  <th scope="col" className="py-3 px-2.5 whitespace-nowrap">Hash SHA-256</th>
                 </tr>
               </thead>
               <tbody className={`divide-y font-mono ${
@@ -953,11 +953,11 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                         : (isLight ? 'hover:bg-slate-50' : 'hover:bg-white/5')
                     }`}
                   >
-                    <td className={`py-3 px-3.5 font-bold ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>
+                    <td className={`py-3 px-2.5 font-bold whitespace-nowrap ${isLight ? 'text-emerald-800' : 'text-cyan-300'}`}>
                       #{b.index}
                     </td>
 
-                    <td className="py-3 px-3.5 font-sans">
+                    <td className="py-3 px-2.5 font-sans">
                       <div className="flex items-center space-x-1.5">
                         {b.action.includes('REJECTED') && (
                           <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
@@ -1053,12 +1053,12 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       </span>
                     </td>
 
-                    <td className="py-3 px-3.5 font-sans">
-                      <span className={`font-bold block truncate max-w-[160px] text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
-                      <span className={`text-xs block truncate max-w-[160px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
+                    <td className="py-3 px-2.5 font-sans">
+                      <span className={`font-bold block truncate max-w-[140px] text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>{b.actor}</span>
+                      <span className={`text-[11px] block truncate max-w-[140px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>{b.actorRole}</span>
                     </td>
 
-                    <td className="py-3 px-3.5">
+                    <td className="py-3 px-2.5 whitespace-nowrap">
                       <span className={`block font-semibold text-[11px] ${isLight ? 'text-slate-900' : 'text-white/90'}`}>{b.claimId}</span>
                       {b.nominal > 0 ? (
                         <span className={`text-[10.5px] font-bold block tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
@@ -1069,12 +1069,14 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                       )}
                     </td>
 
-                    <td className="py-3 px-3.5">
-                      <div className={`flex items-center space-x-1 font-mono text-[9.5px] ${
+                    <td className="py-3 px-2.5 whitespace-nowrap">
+                      <div className={`flex items-center space-x-1 font-mono text-[10px] whitespace-nowrap ${
                         isLight ? 'text-slate-700 hover:text-emerald-800' : 'text-white/60 hover:text-cyan-300'
                       }`}>
                         <Hash className={`w-3 h-3 shrink-0 ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
-                        <span className={`truncate max-w-[85px] font-medium ${isLight ? 'text-emerald-900 font-bold' : ''}`}>{b.currentHash}</span>
+                        <span className={`font-medium ${isLight ? 'text-emerald-900 font-bold' : ''}`}>
+                          {String(b.currentHash || '').slice(0, 10)}
+                        </span>
                       </div>
                     </td>
                   </tr>
@@ -1131,8 +1133,8 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
           )}
         </div>
 
-        {/* BLOCK INSPECTOR (5 COLS) */}
-        <div className="lg:col-span-5 pr-1">
+        {/* BLOCK INSPECTOR (4 COLS) */}
+        <div className="lg:col-span-4 min-w-0 pr-1">
           <AnimatePresence mode="wait">
             {selectedBlock ? (
               <motion.div 
