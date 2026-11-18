@@ -128,6 +128,16 @@ def _persist_claims_state(claims_map: Dict[str, ClaimInput]) -> None:
         tmp_file.replace(CLAIMS_STATE_FILE)
     except Exception as e:
         print(f"[ClaimStatePersistence] Warning persisting claims: {e}")
+    # Write-through ke PostgreSQL OLTP & invalidasi cache Redis terkait
+    try:
+        from app.infra.postgres_db import sync_claims_to_postgres
+        from app.infra.redis_client import cache_delete_prefix
+
+        sync_claims_to_postgres(claims_map, evaluator=evaluate_claim_triage)
+        cache_delete_prefix("sidebar_badges")
+        cache_delete_prefix("claims:")
+    except Exception:
+        pass
 
 SYNTHETIC_CLAIMS_DATABASE: Dict[str, ClaimInput] = _load_persisted_claims()
 operations_store.initialize(SYNTHETIC_CLAIMS_DATABASE)
@@ -496,6 +506,8 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "https://bpjs-kesehatan.go.id",
     "https://claimtrace.bpjs-kesehatan.go.id",
     "https://claimtrace-healthkathon.vercel.app"
@@ -529,10 +541,19 @@ app.include_router(fhir_router)
 from app.routers.pillar_upgrade_router import pillar_router
 app.include_router(pillar_router)
 
-# ClaimTrace Redis Cache & ARQ Async Background Worker Router
+# ClaimTrace Redis Cache, ARQ Async Background Worker, PostgreSQL OLTP & Reverse Proxy Routers
 from app.routers.async_jobs_router import async_jobs_router
+from app.routers.infra_router import detect_reverse_proxy, infra_router
 from app.infra.redis_client import cache_get_json, cache_set_json, get_redis_status
+from app.infra.postgres_db import (
+    get_postgres_status,
+    init_postgres_schema,
+    sync_audit_blocks_to_postgres,
+    sync_claims_to_postgres,
+    sync_operations_snapshot_to_postgres,
+)
 app.include_router(async_jobs_router)
+app.include_router(infra_router)
 
 import uuid
 import logging
@@ -611,17 +632,24 @@ def root():
 @app.head("/healthz", include_in_schema=False)
 @app.get("/api/v1/health", operation_id="health_check_api_v1_get")
 @app.head("/api/v1/health", include_in_schema=False)
-def health_check():
+def health_check(request: Request):
     valid, broken_idx = audit_logger.verify_integrity()
     redis_diag = get_redis_status()
+    pg_diag = get_postgres_status()
+    proxy_diag = detect_reverse_proxy(request)
     return {
         "status": "healthy",
         "audit_chain_length": len(audit_logger.chain),
         "audit_integrity_valid": valid,
         "active_claims_count": len(SYNTHETIC_CLAIMS_DATABASE),
+        "postgres_connected": pg_diag.get("postgres_connected", False),
+        "postgres_database": pg_diag.get("database_name"),
+        "postgres_tables": pg_diag.get("tables"),
         "redis_connected": redis_diag.get("redis_connected", False),
         "async_worker_active": redis_diag.get("worker_active", False),
         "async_queue": redis_diag.get("queue_name", "claimtrace:arq"),
+        "reverse_proxy_detected": proxy_diag.get("detected", False),
+        "reverse_proxy_engine": proxy_diag.get("engine"),
         "framework": "FastAPI (Python 3.14)",
         "security_compliance": "UU PDP No. 27/2022 & Perpres 82/2018",
         "ai_engine": "Local On-Premise (Zero-Cloud Exfiltration)",
@@ -7572,6 +7600,19 @@ def _prewarm_claimtrace_caches() -> None:
                 evaluate_claim_triage(claim)
             operations_store.get_dpjp_intelligence(SYNTHETIC_CLAIMS_DATABASE)
             operations_store.list_cases(SYNTHETIC_CLAIMS_DATABASE)
+
+            # Inisialisasi skema PostgreSQL OLTP & sinkronisasi awal klaim, audit ledger, dan operasi
+            try:
+                if init_postgres_schema():
+                    sync_claims_to_postgres(SYNTHETIC_CLAIMS_DATABASE, evaluator=evaluate_claim_triage)
+                    sync_audit_blocks_to_postgres(audit_logger.chain)
+                    sync_operations_snapshot_to_postgres("cases", operations_store.list_cases(SYNTHETIC_CLAIMS_DATABASE))
+                    sync_operations_snapshot_to_postgres("flags", operations_store.list_flags(SYNTHETIC_CLAIMS_DATABASE))
+                    sync_operations_snapshot_to_postgres("schedules", operations_store.list_schedules(SYNTHETIC_CLAIMS_DATABASE))
+                    sync_operations_snapshot_to_postgres("interventions", operations_store.list_interventions(SYNTHETIC_CLAIMS_DATABASE))
+                    sync_operations_snapshot_to_postgres("mobile_telemetry", operations_store.get_mobile_telemetry(SYNTHETIC_CLAIMS_DATABASE))
+            except Exception as pg_exc:
+                print(f"[Warmup] PostgreSQL sync notice: {pg_exc}")
         except Exception as exc:
             print(f"[Warmup] Background pre-warm notice: {exc}")
 

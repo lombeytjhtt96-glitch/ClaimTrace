@@ -151,13 +151,14 @@ def cache_delete_prefix(prefix: str) -> int:
 
 
 def save_job_record(job_id: str, record: Dict[str, Any], ttl_seconds: int = 86400) -> Dict[str, Any]:
-    """Persists an async worker job status/result record to Redis (and memory fallback)."""
+    """Persists an async worker job status/result record to Redis, PostgreSQL (write-through), and memory fallback."""
     payload = {
         **record,
         "job_id": job_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     serialized = json.dumps(payload, ensure_ascii=False, default=str)
+    persisted_to_redis = False
     client = get_sync_redis()
     if client is not None:
         try:
@@ -167,15 +168,23 @@ def save_job_record(job_id: str, record: Dict[str, Any], ttl_seconds: int = 8640
             pipe.lpush(RECENT_JOBS_KEY, job_id)
             pipe.ltrim(RECENT_JOBS_KEY, 0, 49)
             pipe.execute()
-            return payload
+            persisted_to_redis = True
         except Exception:
             pass
-    with _MEM_LOCK:
-        _MEM_JOBS[job_id] = payload
-        if job_id in _MEM_JOB_ORDER:
-            _MEM_JOB_ORDER.remove(job_id)
-        _MEM_JOB_ORDER.insert(0, job_id)
-        del _MEM_JOB_ORDER[50:]
+    if not persisted_to_redis:
+        with _MEM_LOCK:
+            _MEM_JOBS[job_id] = payload
+            if job_id in _MEM_JOB_ORDER:
+                _MEM_JOB_ORDER.remove(job_id)
+            _MEM_JOB_ORDER.insert(0, job_id)
+            del _MEM_JOB_ORDER[50:]
+    # Durable write-through to PostgreSQL `async_job_runs` (safe no-op if Postgres disabled/offline)
+    try:
+        from app.infra.postgres_db import upsert_async_job_to_postgres
+
+        upsert_async_job_to_postgres(payload)
+    except Exception:
+        pass
     return payload
 
 
@@ -275,6 +284,7 @@ def get_redis_status() -> Dict[str, Any]:
         queue_len = int(client.zcard(ARQ_QUEUE_NAME) or 0)
         hb = get_worker_heartbeat()
         recent_count = int(client.llen(RECENT_JOBS_KEY) or 0)
+        keyspace_keys = int(client.dbsize() or 0)
         return {
             "redis_connected": True,
             "mode": "redis_live",
@@ -283,6 +293,7 @@ def get_redis_status() -> Dict[str, Any]:
             "latency_ms": latency_ms,
             "used_memory_human": info_mem.get("used_memory_human"),
             "connected_clients": info_cli.get("connected_clients"),
+            "keyspace_keys": keyspace_keys,
             "queue_name": ARQ_QUEUE_NAME,
             "queued_jobs": queue_len,
             "worker_active": hb is not None,

@@ -18,6 +18,8 @@ export const queryClient = new QueryClient({
 export const claimtraceQueryKeys = {
   sidebarBadges: ['system', 'sidebar-badges'],
   redisWorkerStatus: ['system', 'redis-worker-status'],
+  infrastructureStatus: ['system', 'infrastructure-status'],
+  postgresClaims: (lane = 'ALL', limit = 50) => ['postgres', 'claims', { lane, limit }],
   claims: (limit = 15) => ['claims', { limit }],
   auditLogs: ['audit-logs'],
   interventions: ['operations', 'interventions'],
@@ -79,6 +81,27 @@ export function useRedisWorkerStatusQuery(enabled = true) {
     staleTime: 10_000,
     refetchInterval: enabled ? 15_000 : false,
     queryFn: () => cachedAuthGetJson(`${API_BASE_URL}/api/v1/system/redis-worker/status`, { force: true }),
+  });
+}
+
+export function useInfrastructureStatusQuery(enabled = true) {
+  return useQuery({
+    queryKey: claimtraceQueryKeys.infrastructureStatus,
+    enabled,
+    staleTime: 10_000,
+    refetchInterval: enabled ? 15_000 : false,
+    queryFn: () => cachedAuthGetJson(`${API_BASE_URL}/api/v1/system/infrastructure/status`, { force: true }),
+  });
+}
+
+export function usePostgresClaimsQuery({ lane = 'ALL', limit = 50, enabled = true } = {}) {
+  const qs = new URLSearchParams({ limit: String(limit) });
+  if (lane && lane !== 'ALL') qs.set('lane', lane);
+  return useQuery({
+    queryKey: claimtraceQueryKeys.postgresClaims(lane, limit),
+    enabled,
+    staleTime: 20_000,
+    queryFn: () => cachedAuthGetJson(`${API_BASE_URL}/api/v1/system/postgres/claims?${qs.toString()}`, { force: true }),
   });
 }
 

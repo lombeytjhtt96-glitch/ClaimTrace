@@ -80,6 +80,14 @@ class AuditLogger:
                 f.flush()
         except Exception as e:
             print(f"[AuditLogger] Warning persisting entry to disk: {e}")
+        # Write-through to PostgreSQL `audit_ledger_blocks` when active outside unit tests
+        if not os.getenv("PYTEST_CURRENT_TEST"):
+            try:
+                from app.infra.postgres_db import upsert_audit_block_to_postgres
+
+                upsert_audit_block_to_postgres(entry)
+            except Exception:
+                pass
 
     def clear_persisted_chain(self) -> None:
         """Clears both memory and disk chain for clean initial seed reset."""
