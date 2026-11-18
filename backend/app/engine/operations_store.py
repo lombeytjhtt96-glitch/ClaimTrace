@@ -128,6 +128,13 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         target = (now_wib + timedelta(days=days_offset)).replace(
             hour=hour, minute=minute, second=0, microsecond=0
         )
+        # Pastikan jadwal klarifikasi selalu jatuh pada hari kerja resmi (Senin-Jumat)
+        if days_offset >= 0:
+            while target.weekday() >= 5:
+                target += timedelta(days=1)
+        else:
+            while target.weekday() >= 5:
+                target -= timedelta(days=1)
         return target.isoformat()
 
     schedules = [
@@ -157,7 +164,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
         {
             "id": 802,
             "claim_id": "CLM-2026-8805",
-            "appointment_datetime": _business_wib(3, 13, 30),
+            "appointment_datetime": _business_wib(2, 13, 30),
             "notes": "Gelar perkara dugaan Impossible Travel DPJP spesialis bedah antara dua rumah sakit berbeda dalam jeda 45 menit.",
             "status": "scheduled",
             "created_at": (now - timedelta(hours=18)).isoformat(),
@@ -1122,9 +1129,16 @@ class OperationsStore:
                 resp_total_min = dispatch_hour * 60 + dispatch_min + latency_min
                 resp_hour = (resp_total_min // 60) % 24
                 resp_min = resp_total_min % 60
-                dispatched_str = f"{claim.tanggal_layanan} {dispatch_hour:02d}:{dispatch_min:02d} WIB"
+                # Sinkronkan tanggal telemetri periode berjalan (November 2026) agar selaras dengan Audit Ledger
+                raw_date = str(claim.tanggal_layanan or "2026-11-18")
+                if raw_date.startswith("2026-10-"):
+                    synced_day = 16 + (idx % 3)
+                    telemetry_date = f"2026-11-{synced_day:02d}"
+                else:
+                    telemetry_date = raw_date
+                dispatched_str = f"{telemetry_date} {dispatch_hour:02d}:{dispatch_min:02d} WIB"
                 responded_str = (
-                    f"{claim.tanggal_layanan} {resp_hour:02d}:{resp_min:02d} WIB"
+                    f"{telemetry_date} {resp_hour:02d}:{resp_min:02d} WIB"
                     if status != "PENDING"
                     else "Menunggu Respon"
                 )

@@ -141,7 +141,7 @@ export default function AdminProfileView({ currentUser, onUpdateUser, onBackToDa
 
   const [timestamps, setTimestamps] = useState({
     createdAt: '12 Januari 2025, 08:30 WIB',
-    updatedAt: '24 Oktober 2026, 17:30 WIB',
+    updatedAt: '18 November 2026, 08:30 WIB',
   });
 
   const showToast = (message, type = 'success') => {

@@ -267,23 +267,25 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
   const getRelativeTime = (date) => {
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const dayDiff = Math.round((startOfDay(date) - startOfDay(now)) / 86400000);
 
-    if (diffMs < 0) {
-      const absDays = Math.abs(diffDays);
-      if (absDays === 0) return 'Hari ini (Lampau)';
+    if (dayDiff < 0) {
+      const absDays = Math.abs(dayDiff);
       if (absDays === 1) return 'Kemarin';
       if (absDays < 7) return `${absDays} hari lalu`;
       return `${Math.floor(absDays / 7)} minggu lalu`;
-    } else {
-      if (diffMinutes < 60) return `Dalam ${diffMinutes} menit`;
-      if (diffHours < 24) return `Dalam ${diffHours} jam`;
-      if (diffDays === 0) return 'Hari ini';
-      if (diffDays === 1) return 'Besok';
-      return `Dalam ${diffDays} hari`;
     }
+    if (dayDiff === 0) {
+      if (diffMs < 0) return 'Hari ini (Lampau)';
+      const diffMinutes = Math.max(1, Math.round(diffMs / (1000 * 60)));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffMinutes < 60) return `Dalam ${diffMinutes} menit`;
+      if (diffHours > 0) return `Dalam ${diffHours} jam`;
+      return 'Hari ini';
+    }
+    if (dayDiff === 1) return 'Besok (Dalam 1 hari)';
+    return `Dalam ${dayDiff} hari`;
   };
 
   const exportToCSV = () => {

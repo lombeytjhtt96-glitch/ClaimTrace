@@ -607,7 +607,7 @@ export default function ConversationsView({ onSelectCase, isLight: propIsLight }
                           {session.status === 'awaiting_approval'
                             ? 'MENUNGGU PERSETUJUAN'
                             : session.status === 'anomaly_flagged'
-                            ? 'AUDIT / ANOMALI READMISI'
+                            ? 'AUDIT / DISPUTE KODING LIS-PACS'
                             : session.status === 'flagged'
                             ? 'DITANDAI WASRIK'
                             : 'TERVERIFIKASI'}

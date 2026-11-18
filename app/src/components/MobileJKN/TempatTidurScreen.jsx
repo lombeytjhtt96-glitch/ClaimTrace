@@ -51,7 +51,7 @@ export default function TempatTidurScreen({ onNavigate }) {
     },
     {
       id: 4,
-      name: 'RS Khusus Jantung Harapan Kita',
+      name: 'RS Khusus Jantung Harapan Mulia',
       type: 'RS Khusus Kelas A',
       address: 'Jl. Letjen S. Parman Kav. 87, Jakarta Barat',
       beds: {

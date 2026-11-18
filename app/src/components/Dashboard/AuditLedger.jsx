@@ -183,8 +183,10 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const formatActionTitle = (action) => {
     switch (action) {
       case 'CLAIM_REJECTED_PHANTOM':
-        return 'Penolakan Klaim (Phantom Billing)';
+      case 'CLAIM_REJECTED_FRAUD':
+        return 'Penolakan Klaim (Indikasi Fraud / Phantom Billing)';
       case 'MOBILE_JKN_DISPATCH':
+      case 'MOBILE_JKN_CONFIRMATION':
         return 'Verifikasi Telemetri Mobile JKN';
       case 'WASRIK_INVESTIGATION_FLAG':
         return 'Penandaan Audit Investigatif Wasrik';
@@ -192,6 +194,10 @@ export default function AuditLedger({ isLight: propIsLight }) {
         return 'Persetujuan Klaim Jalur Cepat (Fast-Track)';
       case 'DATA_ACCESS_AUDIT_LOG':
         return 'Log Akses Data Medis (UU PDP No. 27/2022)';
+      case 'AUTH_LOGIN_SUCCESS':
+      case 'AUTH_SESSION_VERIFIED':
+      case 'SECURITY_AUTH_LOGIN':
+        return 'Otentikasi & Sesi Akses Portal ClaimTrace';
       case 'AUTO_TRIAGE_SCORING':
         return 'Skoring Triase Otomatis (Lapis 1-3)';
       case 'BERITA_ACARA_ISSUED':
@@ -381,15 +387,73 @@ export default function AuditLedger({ isLight: propIsLight }) {
             const dedupedIndicators = Array.isArray(rawDetails.indicators)
               ? Array.from(new Set(rawDetails.indicators))
               : rawDetails.indicators;
+            const rawActor = String(b.actor || '').trim();
+            const knownNipActors = {
+              '198801012026011001': {
+                name: 'Administrator ClaimTrace',
+                nip: '198801012026011001',
+                role: 'Administrator Kebijakan & Tata Kelola JKN',
+              },
+              '198704202011012001': {
+                name: 'dr. Siti Rahma, Sp.PK',
+                nip: '198704202011012001',
+                role: 'Verifikator Medis Senior',
+              },
+              '198501012010011001': {
+                name: 'Budi Santoso, S.Kom, M.TI',
+                nip: '198501012010011001',
+                role: 'Analis Forensik Wasrik',
+              },
+            };
+            const matchedKnown = knownNipActors[rawActor];
+            const isAdminNipOrAlias =
+              rawActor === '198801012026011001' ||
+              rawActor === 'AdministratorClaimTrace' ||
+              rawActor.toLowerCase() === 'admin';
+            const isSystemEngine =
+              !rawActor ||
+              rawActor === 'CLAIMTRACE_CORE_ENGINE_V1' ||
+              rawActor === 'CLAIMTRACE_CORE_ENGINE';
+            const isSeniorVerifier = rawActor.includes('Siti Rahma') || rawActor === '198704202011012001';
+            const isMobileBridge = rawActor.includes('Mobile');
+            const isWasrik = rawActor.includes('WASRIK') || String(b.event_type || '').includes('WASRIK');
+            const isSecAuth = String(cId).startsWith('SEC-') || String(b.event_type || '').toUpperCase().includes('AUTH') || String(b.event_type || '').toUpperCase().includes('LOGIN');
+
+            const resolvedActor = matchedKnown
+              ? matchedKnown.name
+              : isAdminNipOrAlias
+              ? 'Administrator ClaimTrace'
+              : isSystemEngine
+              ? 'Mesin Utama ClaimTrace (L1-3)'
+              : rawActor;
+            const resolvedNip = matchedKnown
+              ? matchedKnown.nip
+              : isAdminNipOrAlias
+              ? '198801012026011001'
+              : (rawDetails?.actor_nip || b.actor_nip || (isSeniorVerifier ? '198704202011012001' : 'SYSTEM-DSS-01'));
+            const resolvedRole = matchedKnown
+              ? matchedKnown.role
+              : isAdminNipOrAlias
+              ? 'Administrator Kebijakan & Tata Kelola JKN'
+              : (rawDetails?.actor_role || b.actor_role || (
+                  isSeniorVerifier ? 'Verifikator Medis Senior' :
+                  isMobileBridge ? 'Jembatan Telemetri Mobile JKN' :
+                  isWasrik ? 'Pemeriksa Wasrik' :
+                  isSecAuth ? 'Keamanan & Otorisasi Sistem' :
+                  meta.actorRole || 'Mesin Penapisan Lapis 1-3'
+                ));
+            const fallbackFaskes = isSecAuth || String(cId).startsWith('GLOBAL-') || String(cId).startsWith('SYS-')
+              ? 'Kantor Pusat BPJS Kesehatan'
+              : 'RSUP Bina Sehat Nusantara (Kelas A)';
             return {
               index: authenticIndex,
               timestamp: b.timestamp,
               action: b.event_type || b.action || 'AUTO_TRIAGE_SCORING',
-              actor: b.actor === 'CLAIMTRACE_CORE_ENGINE_V1' || b.actor === 'CLAIMTRACE_CORE_ENGINE' || !b.actor ? 'Mesin Utama ClaimTrace (L1-3)' : b.actor,
-              actorNip: b.actor_nip || 'SYSTEM-DSS-01',
-              actorRole: b.actor_role || meta.actorRole || (b.actor?.includes('WASRIK') ? 'Pemeriksa Wasrik' : b.actor?.includes('Mobile') ? 'Jembatan Telemetri Mobile JKN' : 'Mesin Penapisan Lapis 1-3'),
+              actor: resolvedActor,
+              actorNip: resolvedNip,
+              actorRole: resolvedRole,
               claimId: cId,
-              faskes: rawDetails?.faskes || b.faskes || meta.faskes || 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+              faskes: rawDetails?.faskes || b.faskes || meta.faskes || fallbackFaskes,
               nominal: rawDetails?.nominal || b.nominal || meta.nominal || 0,
               prevHash: b.prev_hash || b.previous_hash || b.prevHash || '0'.repeat(64),
               currentHash: b.current_hash || b.block_hash || b.currentHash || 'abcdef1234567890',
@@ -952,6 +1016,24 @@ Dokumen ini sah dan diterbitkan secara digital oleh ClaimTrace DSS BPJS Kesehata
                             isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                           }`}>
                             RESPONS PESERTA
+                          </span>
+                        )}
+                        {!(
+                          b.action.includes('REJECTED') ||
+                          b.action.includes('APPROVED') ||
+                          b.action.includes('WASRIK') ||
+                          b.action.includes('MOBILE') ||
+                          b.action.includes('TRIAGE') ||
+                          b.action.includes('AUDIT_LOG') ||
+                          b.action.includes('BERITA_ACARA') ||
+                          b.action.includes('HUMAN_IN_THE_LOOP') ||
+                          b.action.includes('VERIFIER_DECISION') ||
+                          b.action.includes('PATIENT_PRESENCE')
+                        ) && (
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                            isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                          }`}>
+                            AKSES &amp; SISTEM
                           </span>
                         )}
                       </div>

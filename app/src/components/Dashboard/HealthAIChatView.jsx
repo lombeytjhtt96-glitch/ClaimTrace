@@ -80,8 +80,8 @@ const SUGGESTED_PROMPTS = [
   {
     id: 'geovelocity',
     title: 'Validasi Geovelocity DPJP dr. Hendra',
-    subtitle: 'Kecepatan 198.1 km/jam Jakarta-Bandung (Impossible Travel)',
-    prompt: 'Jelaskan hasil audit geovelocity OSRM terhadap klaim dr. Hendra Prasetya, Sp.B antara RSUPN Dr. Cipto Mangunkusumo Jakarta dan RSUP Dr. Hasan Sadikin Bandung pada tanggal 24 Oktober 2026.',
+    subtitle: 'Kecepatan 198.1 km/jam antar faskes (Impossible Travel)',
+    prompt: 'Jelaskan hasil audit geovelocity OSRM terhadap klaim CLM-2026-8805 dr. Hendra Prasetya, Sp.B antara RS Daerah Kartini dan RS Medika Prima pada periode November 2026.',
     icon: Stethoscope,
     badge: 'ATT&CK T1078',
     badgeColorLight: 'bg-emerald-50 text-emerald-800 border-emerald-300',
@@ -90,8 +90,8 @@ const SUGGESTED_PROMPTS = [
   {
     id: 'mobile_jkn',
     title: 'Telemetri Presensi Mobile JKN (Lapis 3)',
-    subtitle: 'Konfirmasi sangkalan kehadiran peserta pada klaim katarak',
-    prompt: 'Bagaimana hasil verifikasi Lapis 3 Mobile JKN pada kasus klaim katarak Ny. Siti Aisyah? Apakah ada sangkalan kehadiran dan bagaimana aspek yuridis pembuktiannya?',
+    subtitle: 'Konfirmasi sangkalan kehadiran peserta pada klaster fisioterapi (8801)',
+    prompt: 'Bagaimana hasil verifikasi Lapis 3 Mobile JKN pada kasus klaster fisioterapi CLM-2026-8801 (RS Khusus Mitra Husada)? Mengapa 8 dari 10 peserta menyangkal kehadiran dan bagaimana aspek yuridis pembuktiannya?',
     icon: Radio,
     badge: 'Lapis 3 JKN',
     badgeColorLight: 'bg-emerald-50 text-emerald-800 border-emerald-300',
@@ -815,7 +815,7 @@ Silakan ketik pertanyaan audit klaim Anda atau pilih salah satu skenario investi
                 'Audit Kasus Fisioterapi Mitra Husada',
                 'Status SIP dr. Hendra SATUSEHAT',
                 'Rekonsiliasi Klaim Sebelum 10 Hari',
-                'Sangkalan Mobile JKN Katarak',
+                'Sangkalan Mobile JKN Fisioterapi',
                 'Draft Surat Klarifikasi Faskes',
               ].map((topic, i) => (
                 <button

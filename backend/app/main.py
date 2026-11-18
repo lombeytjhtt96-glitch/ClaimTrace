@@ -4005,9 +4005,12 @@ def get_audit_chain():
             mm = getattr(claim, "mobile_meta", None)
             if not mm:
                 continue
+            # Jangan catat konfirmasi Mobile JKN untuk klaim yang masih PENDING_UNCONFIRMED (mis. CLM-2026-8802)
+            if getattr(mm, "status_konfirmasi", "") == "PENDING_UNCONFIRMED":
+                continue
             status_lbl = (
                 "SANGKALAN_PESERTA" if mm.respon_tidak_hadir > mm.respon_hadir
-                else ("MENUNGGU_RESPON" if mm.status_konfirmasi == "PENDING_UNCONFIRMED" else "HADIR_TERKONFIRMASI")
+                else "HADIR_TERKONFIRMASI"
             )
             audit_logger.record_event(
                 event_type="MOBILE_JKN_CONFIRMATION",
@@ -4020,6 +4023,59 @@ def get_audit_chain():
                     "respon_hadir": mm.respon_hadir,
                     "respon_tidak_hadir": mm.respon_tidak_hadir,
                     "attestation": "ECDSA-SHA256 Device Attestation (UU PDP No. 27/2022)",
+                },
+            )
+    has_verifier_decisions = any(
+        any(tok in str(b.get("event_type", "")).upper() for tok in ("WASRIK", "REJECTED", "APPROVED"))
+        for b in audit_logger.chain
+    )
+    if not has_verifier_decisions:
+        seed_decisions = [
+            (
+                "WASRIK_INVESTIGATION_FLAG",
+                "CLM-2026-8806",
+                "Eskalasi Audit Wasrik untuk verifikasi silang berkas LIS/PACS INA-CBG K-1-10-III.",
+            ),
+            (
+                "WASRIK_INVESTIGATION_FLAG",
+                "CLM-2026-8802",
+                "Penandaan Wasrik atas lonjakan readmisi <30 hari dan pemecahan episode tindakan jantung.",
+            ),
+            (
+                "CLAIM_REJECTED_FRAUD",
+                "CLM-2026-8801",
+                "Penolakan pra-bayar klaster 85 SEP fisioterapi Z-3-12-0: SIP DPJP kedaluwarsa & 8/10 sangkalan Mobile JKN.",
+            ),
+            (
+                "CLAIM_REJECTED_FRAUD",
+                "CLM-2026-8805",
+                "Penolakan pra-bayar atas temuan Impossible Travel geovelocity OSRM 198,1 km/jam DPJP spesialis bedah.",
+            ),
+            (
+                "CLAIM_APPROVED_FASTTRACK",
+                "CLM-2026-8803",
+                "Persetujuan jalur cepat (Fast-Track): skor Lapis 1-3 wajar dan presensi peserta terkonfirmasi Mobile JKN.",
+            ),
+            (
+                "CLAIM_APPROVED_FASTTRACK",
+                "CLM-2026-8804",
+                "Persetujuan jalur cepat (Fast-Track): berkas klinis & konfirmasi kehadiran peserta valid 100%.",
+            ),
+        ]
+        for ev_type, cid, reason_txt in seed_decisions:
+            claim_obj = SYNTHETIC_CLAIMS_DATABASE.get(cid)
+            if not claim_obj:
+                continue
+            audit_logger.record_event(
+                event_type=ev_type,
+                claim_id=cid,
+                actor="dr. Siti Rahma, Sp.PK",
+                payload={
+                    "faskes": claim_obj.nama_faskes,
+                    "nominal": claim_obj.nilai_klaim_rp,
+                    "actor_nip": "198704202011012001",
+                    "actor_role": "Verifikator Medis Senior",
+                    "reason": reason_txt,
                 },
             )
     valid, broken_idx = audit_logger.verify_integrity()
@@ -5074,8 +5130,8 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
         text = (
             "**[Audit Geovelocity OSRM & Integritas Penugasan DPJP]**\n\n"
             "**1. Kronologi Temuan Impossible Travel (MITRE ATT&CK T1078):**\n"
-            "- Pada tanggal 24 Oktober 2026, akun DPJP *dr. Hendra Prasetya, Sp.B* tercatat menandatangani tindakan bedah di **RSUPN Dr. Cipto Mangunkusumo (Jakarta Pusat)** pada pukul 09:15 WIB.\n"
-            "- Hanya berselang **45 menit kemudian** (pukul 10:00 WIB), akun yang sama tercatat melakukan penanganan poliklinik bedah di **RS Immanuel Bandung**.\n"
+            "- Pada periode pelayanan aktif (November 2026), akun DPJP *dr. Hendra Prasetya, Sp.B* tercatat menandatangani tindakan bedah pada klaim `CLM-2026-8805` di **RS Daerah Kartini (Kelas B)** pada pukul 09:15 WIB.\n"
+            "- Hanya berselang **45 menit kemudian** (pukul 10:00 WIB), akun yang sama tercatat melakukan tindakan poliklinik bedah di faskes lintas kota **RS Medika Prima (Kelas B)**.\n"
             "- Jarak rute darat riil via Tol Cipularang berdasarkan kalkulasi engine routing OSRM adalah **148,6 km**. Untuk menempuh jarak tersebut dalam 45 menit dibutuhkan kecepatan rata-rata **198,1 km/jam**, yang secara fisik dan kondisi jalan raya adalah **anomali mustahil (*Impossible Travel*)**.\n\n"
             "**2. Kesimpulan Forensik Digital:**\n"
             "- Terindikasi kuat adanya praktik **kredensial sharing / delegasi ilegal akun VClaim** rumah sakit oleh petugas koder atau staf tanpa kehadiran fisik DPJP (*Phantom Doctor Signing*).\n"
@@ -5100,10 +5156,9 @@ def generate_local_claimtrace_engine(user_prompt: str, is_json_mode: bool = True
             "**1. Mekanisme Kerja Lapis 3:**\n"
             "- Konfirmasi presensi dikirimkan secara acak-terarah hanya kepada berkas klaim yang memiliki skor anomali awal pada Lapis 1 atau Lapis 2.\n"
             "- Menerapkan **prinsip minimasi data (UU PDP No. 27/2022)**: Notifikasi hanya menanyakan konfirmasi biner kehadiran sederhana (*'Apakah Bapak/Ibu benar-benar menerima tindakan medis di Rumah Sakit X pada tanggal Y?'*) tanpa mengekspos diagnosis sensitif pasien.\n\n"
-            "**2. Hasil Pembuktian Kasus Klaim Katarak:**\n"
-            "- Pada klaim operasi fakoemulsifikasi katarak RSUD Medika Prima atas nama peserta *Ny. S**** (Data Uji Sintetis - Token AES_4412)*, notifikasi Mobile JKN mencatat respons **[SANGKALAN FAKTUAL]**. Peserta menyatakan tidak pernah dirawat inap maupun dioperasi pada tanggal tersebut.\n"
-            "- Telemetri lokasi perangkat saat konfirmasi berada di radius 22 km dari rumah sakit.\n"
-            "- Secara yuridis, sangkalan langsung dari peserta ini mematahkan rekayasa tanda tangan pada berkas manual fisik dan menjadi bukti permulaan yang kuat untuk menahan klaim pra-bayar."
+            "**2. Hasil Pembuktian Kasus Klaster Fisioterapi (CLM-2026-8801):**\n"
+            "- Pada klaster 85 SEP fisioterapi `Z-3-12-0` di **RS Khusus Mitra Husada**, dari 10 sampel notifikasi Mobile JKN Lapis 3 yang dikirimkan (Zero-PHI / Device Attestation ECDSA-SHA256), **8 dari 10 peserta mencatat [SANGKALAN FAKTUAL]** menyatakan tidak pernah menjalani sesi fisioterapi pada tanggal klaim.\n"
+            "- Sangkalan peserta yang terverifikasi kriptografis ini diperkuat oleh anomali SIP DPJP kedaluwarsa (Lapis 2), mematahkan klaim tanda tangan fisik dan menjadi dasar hukum kuat penahanan klaim pra-bayar sesuai Permenkes 26/2021."
         )
         resolved_agent = "L3-Presensi"
         agents_invoked = ["L3-Presensi", "CMA"]

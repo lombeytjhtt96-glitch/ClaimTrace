@@ -120,12 +120,12 @@ export default function OfficialReportsView({
 
   // Fallback claims if API is unreachable
   const defaultClaims = [
-    { id: 'CLM-2026-8801', sep: '0301R0010326V000101', patient: 'Ny. S**** (000182*****)', diagnosis: 'Prosedur Fisioterapi (Z-3-12-0)', icd9: '93.39', tariff_submitted: 15300000, tariff_approved: 0, status: 'FRAUD_SUSPECT', note: 'Anomali klaster baksos fiktif dan SIP DPJP kadaluwarsa.' },
-    { id: 'CLM-2026-8802', sep: '0301R0010326V000102', patient: 'Tn. B**** (000291*****)', diagnosis: 'Infark Miokard Akut (I21.9)', icd9: '88.56', tariff_submitted: 32400000, tariff_approved: 0, status: 'PENDING', note: 'Memerlukan hasil EKG serial dan resume medis lengkap.' },
-    { id: 'CLM-2026-8803', sep: '0301R0010326V000103', patient: 'An. R**** (000412*****)', diagnosis: 'Demam Berdarah Dengue (A91)', icd9: '90.59', tariff_submitted: 6800000, tariff_approved: 6800000, status: 'LAYAK', note: 'Hasil trombosit serial terlampir dan sesuai standar.' },
-    { id: 'CLM-2026-8804', sep: '0301R0010326V000104', patient: 'Tn. A**** (000553*****)', diagnosis: 'Apendisitis Akut (K35.8)', icd9: '47.09', tariff_submitted: 14200000, tariff_approved: 0, status: 'DISPUTE', note: 'Perbedaan interpretasi kode komplikasi K35.3 vs K35.8.' },
-    { id: 'CLM-2026-8805', sep: '0301R0010326V000105', patient: 'Ny. D**** (000671*****)', diagnosis: 'Katarak Senilis (H25.0)', icd9: '13.41', tariff_submitted: 8900000, tariff_approved: 0, status: 'FRAUD_SUSPECT', note: 'Terdeteksi anomali geovelocity DPJP dan split-billing.' },
-    { id: 'CLM-2026-8806', sep: '0301R0010326V000106', patient: 'Tn. K**** (000789*****)', diagnosis: 'Hernia Inguinalis (K40.9)', icd9: '53.05', tariff_submitted: 11500000, tariff_approved: 11500000, status: 'LAYAK', note: 'Laporan operasi dan bukti billing farmasi terverifikasi.' },
+    { id: 'CLM-2026-8801', sep: '2608801001', clusterCount: 85, patient: 'Ny. S**** (000182*****)', diagnosis: 'Prosedur Fisioterapi (Z-3-12-0)', icd9: '93.39', tariff_submitted: 15300000, tariff_approved: 0, status: 'FRAUD_SUSPECT', note: 'Anomali klaster 85 SEP baksos fiktif (@ Rp 180.000 × 85 SEP) dan SIP DPJP kadaluwarsa.' },
+    { id: 'CLM-2026-8802', sep: '0301R0010326V000102', clusterCount: 1, patient: 'Tn. B**** (000291*****)', diagnosis: 'Infark Miokard Akut (I21.9)', icd9: '88.56', tariff_submitted: 32400000, tariff_approved: 0, status: 'PENDING', note: 'Memerlukan hasil EKG serial dan resume medis lengkap.' },
+    { id: 'CLM-2026-8803', sep: '0301R0010326V000103', clusterCount: 1, patient: 'An. R**** (000412*****)', diagnosis: 'Demam Berdarah Dengue (A91)', icd9: '90.59', tariff_submitted: 6800000, tariff_approved: 6800000, status: 'LAYAK', note: 'Hasil trombosit serial terlampir dan sesuai standar.' },
+    { id: 'CLM-2026-8804', sep: '0301R0010326V000104', clusterCount: 1, patient: 'Tn. A**** (000553*****)', diagnosis: 'Apendisitis Akut (K35.8)', icd9: '47.09', tariff_submitted: 14200000, tariff_approved: 0, status: 'DISPUTE', note: 'Perbedaan interpretasi kode komplikasi K35.3 vs K35.8.' },
+    { id: 'CLM-2026-8805', sep: '0301R0010326V000105', clusterCount: 1, patient: 'Ny. D**** (000671*****)', diagnosis: 'Katarak Senilis (H25.0)', icd9: '13.41', tariff_submitted: 8900000, tariff_approved: 0, status: 'FRAUD_SUSPECT', note: 'Terdeteksi anomali geovelocity DPJP dan split-billing.' },
+    { id: 'CLM-2026-8806', sep: '0301R0010326V000106', clusterCount: 1, patient: 'Tn. K**** (000789*****)', diagnosis: 'Hernia Inguinalis (K40.9)', icd9: '53.05', tariff_submitted: 11500000, tariff_approved: 11500000, status: 'LAYAK', note: 'Laporan operasi dan bukti billing farmasi terverifikasi.' },
   ];
 
   const mapClaimReportStatus = (c, triage) => {
@@ -182,9 +182,13 @@ export default function OfficialReportsView({
     const approved = mappedStatus === 'LAYAK'
       ? Number(c?.fkl48_biaya_verifikasi ?? submitted)
       : 0;
+    const clusterCount = Number(
+      c?.episode_meta?.jumlah_klaim_klaster || (c?.claim_id === 'CLM-2026-8801' ? 85 : 1)
+    );
     return {
       id: c?.claim_id || `CLM-2026-880${i + 1}`,
-      sep: c?.fkl02_id_kunjungan || c?.sep_number || `0301R0010326V000${100 + i}`,
+      sep: c?.fkl02_id_kunjungan || c?.sep_number || (c?.claim_id === 'CLM-2026-8801' ? '2608801001' : `0301R0010326V000${100 + i}`),
+      clusterCount,
       patient: c?.pstv01_peserta_id
         ? `${String(c.pstv01_peserta_id).slice(0, 8)}****`
         : c?.peserta_token_aes
@@ -198,6 +202,16 @@ export default function OfficialReportsView({
       note: c?.catatan_verifikator || triage?.rekomendasi_sop || c?.recommendation || 'Audit penapisan pra-bayar selesai.',
     };
   }) : defaultClaims;
+
+  const formatCaseCount = (list, defaultSuffix = '') => {
+    if (!list.length) return defaultSuffix ? `0 ${defaultSuffix}` : '0';
+    const totalSep = list.reduce((acc, item) => acc + Number(item.clusterCount || 1), 0);
+    const hasCluster = list.some((item) => Number(item.clusterCount || 1) > 1);
+    if (hasCluster) {
+      return `${list.length} Klaster (${totalSep} SEP)`;
+    }
+    return defaultSuffix ? `${list.length} ${defaultSuffix}` : `${list.length}`;
+  };
 
   const totalSubmitted = activeClaims.reduce((acc, c) => acc + (c.tariff_submitted || 0), 0);
   const totalApproved = activeClaims.reduce((acc, c) => acc + (c.tariff_approved || 0), 0);
@@ -542,35 +556,35 @@ export default function OfficialReportsView({
                 <tbody className="divide-y divide-slate-200">
                   <tr>
                     <td className="p-2 border-r border-slate-200 font-semibold text-emerald-800">1. Layak Bayar (Disetujui Penuh)</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-bold">{activeClaims.filter(c => c.status === 'LAYAK').length}</td>
+                    <td className="p-2 border-r border-slate-200 text-center font-bold">{formatCaseCount(activeClaims.filter(c => c.status === 'LAYAK'))}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(totalApproved)}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono font-bold text-emerald-800">{formatIDR(totalApproved)}</td>
                     <td className="p-2 text-right font-mono text-slate-500">Rp 0</td>
                   </tr>
                   <tr>
                     <td className="p-2 border-r border-slate-200 font-semibold text-amber-800">2. Pending (Penundaan Berkas)</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-bold">{activeClaims.filter(c => c.status === 'PENDING').length}</td>
+                    <td className="p-2 border-r border-slate-200 text-center font-bold">{formatCaseCount(activeClaims.filter(c => c.status === 'PENDING'))}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(totalPending)}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">Rp 0</td>
                     <td className="p-2 text-right font-mono text-amber-700">-{formatIDR(totalPending)}</td>
                   </tr>
                   <tr>
                     <td className="p-2 border-r border-slate-200 font-semibold text-indigo-800">3. Dispute (Klaim Sengketa Koding)</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-bold">{activeClaims.filter(c => c.status === 'DISPUTE').length}</td>
+                    <td className="p-2 border-r border-slate-200 text-center font-bold">{formatCaseCount(activeClaims.filter(c => c.status === 'DISPUTE'))}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(totalDispute)}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">Rp 0</td>
                     <td className="p-2 text-right font-mono text-indigo-700">-{formatIDR(totalDispute)}</td>
                   </tr>
                   <tr>
                     <td className="p-2 border-r border-slate-200 font-semibold text-rose-800">4. Dugaan Fraud / Tidak Layak</td>
-                    <td className="p-2 border-r border-slate-200 text-center font-bold">{activeClaims.filter(c => c.status === 'FRAUD_SUSPECT').length}</td>
+                    <td className="p-2 border-r border-slate-200 text-center font-bold">{formatCaseCount(activeClaims.filter(c => c.status === 'FRAUD_SUSPECT'))}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">{formatIDR(activeClaims.filter(c => c.status === 'FRAUD_SUSPECT').reduce((a,b)=>a+b.tariff_submitted, 0))}</td>
                     <td className="p-2 border-r border-slate-200 text-right font-mono">Rp 0</td>
                     <td className="p-2 text-right font-mono text-rose-700 font-bold">Ditahan</td>
                   </tr>
                   <tr className="bg-slate-100 font-bold border-t-2 border-slate-400">
                     <td className="p-2 border-r border-slate-300">TOTAL FORMULIR PENGAJUAN KLAIM</td>
-                    <td className="p-2 border-r border-slate-300 text-center">{activeClaims.length} Kasus</td>
+                    <td className="p-2 border-r border-slate-300 text-center">{formatCaseCount(activeClaims, 'Kasus')}</td>
                     <td className="p-2 border-r border-slate-300 text-right font-mono">{formatIDR(totalSubmitted)}</td>
                     <td className="p-2 border-r border-slate-300 text-right font-mono text-emerald-800">{formatIDR(totalApproved)}</td>
                     <td className="p-2 text-right font-mono text-rose-700">-{formatIDR(totalSubmitted - totalApproved)}</td>
@@ -598,12 +612,25 @@ export default function OfficialReportsView({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {activeClaims.map((c) => (
+                    {activeClaims.map((c) => {
+                      const isCluster = Number(c.clusterCount || 1) > 1;
+                      const sepLabel = isCluster
+                        ? `${c.sep}–${String(c.clusterCount).padStart(3, '0')} (${c.clusterCount} SEP)`
+                        : c.sep;
+                      const unitTariff = isCluster ? Math.round((c.tariff_submitted || 0) / c.clusterCount) : 0;
+                      return (
                       <tr key={c.id}>
-                        <td className="p-1.5 border-r border-slate-200 font-mono">{c.sep}</td>
+                        <td className="p-1.5 border-r border-slate-200 font-mono">{sepLabel}</td>
                         <td className="p-1.5 border-r border-slate-200">{c.patient}</td>
                         <td className="p-1.5 border-r border-slate-200">{c.diagnosis} ({c.icd9})</td>
-                        <td className="p-1.5 border-r border-slate-200 text-right font-mono">{formatIDR(c.tariff_submitted)}</td>
+                        <td className="p-1.5 border-r border-slate-200 text-right font-mono">
+                          <div>{formatIDR(c.tariff_submitted)}</div>
+                          {isCluster && (
+                            <div className="text-[9px] text-slate-500">
+                              @ {formatIDR(unitTariff)} × {c.clusterCount} SEP
+                            </div>
+                          )}
+                        </td>
                         <td className="p-1.5 border-r border-slate-200 text-right font-mono font-bold text-emerald-700">{formatIDR(c.tariff_approved)}</td>
                         <td className="p-1.5 border-r border-slate-200 text-center">
                           <span className={`px-1 py-0.5 rounded font-bold text-[9px] ${
@@ -617,7 +644,8 @@ export default function OfficialReportsView({
                         </td>
                         <td className="p-1.5 text-slate-600">{c.note}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
