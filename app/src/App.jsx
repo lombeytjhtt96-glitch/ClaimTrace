@@ -30,7 +30,7 @@ import {
   Printer, QrCode, CreditCard, ListFilter, Database, ShieldAlert, Key, LayoutDashboard, Building2,
   ChevronDown, LogOut, PanelLeftClose, PanelLeft, RotateCcw, Settings, X,
   Briefcase, Zap, Flag, Calendar, Users, MessageSquare, ClipboardList,
-  Sparkles, Sun, Moon, FileCheck2, Server
+  Sparkles, Sun, Moon, FileCheck2
 } from 'lucide-react';
 
 // Auth Components (Eager Login Gate on entry; SignOut lazy-loaded)
@@ -68,7 +68,6 @@ const DecisionConsole = lazyWithRetry(() => import('./components/Dashboard/Decis
 const AuditLedger = lazyWithRetry(() => import('./components/Dashboard/AuditLedger'));
 const AdminProfileView = lazyWithRetry(() => import('./components/Dashboard/AdminProfileView'));
 const AdminSettingsView = lazyWithRetry(() => import('./components/Dashboard/AdminSettingsView'));
-const InfrastructureConsoleView = lazyWithRetry(() => import('./components/Dashboard/InfrastructureConsoleView'));
 const InsightsAnalyticsView = lazyWithRetry(() => import('./components/Dashboard/InsightsAnalyticsView'));
 const RetentionAnalyticsView = lazyWithRetry(() => import('./components/Dashboard/RetentionAnalyticsView'));
 const CasesManagementView = lazyWithRetry(() => import('./components/Dashboard/CasesManagementView'));
@@ -123,7 +122,6 @@ const LEGACY_TAB_MAP = {
   expansion_suite: { tab: 'investigation', sub: 'audit' },
   settings: { tab: 'settings', sub: 'preferences' },
   profile: { tab: 'settings', sub: 'profile' },
-  infrastructure: { tab: 'settings', sub: 'infrastructure' },
 };
 
 const buildMitraCaseFallback = (cId) =>
@@ -3128,15 +3126,14 @@ export default function App() {
                       <WorkspaceHubShell
                         isLight={isLight}
                         ariaLabel="Sub-navigasi Pengaturan dan Akun Verifikator"
-                        activeSubTab={hubSubTabs.settings}
+                        activeSubTab={hubSubTabs.settings === 'profile' ? 'profile' : 'preferences'}
                         onChangeSubTab={(sub) => setHubSubTab('settings', sub)}
                         tabs={[
                           { id: 'preferences', label: 'Preferensi & Ambang Sistem', icon: Settings },
                           { id: 'profile', label: 'Profil & Keamanan Sesi', icon: User },
-                          { id: 'infrastructure', label: 'Infrastruktur & Tata Kelola', icon: Server },
                         ]}
                       >
-                        {hubSubTabs.settings === 'preferences' && (
+                        {hubSubTabs.settings !== 'profile' && (
                           <AdminSettingsView
                             currentTheme={theme}
                             onThemeChange={setTheme}
@@ -3151,9 +3148,6 @@ export default function App() {
                             onBackToDashboard={() => setDashboardTab('executive')}
                             isLight={isLight}
                           />
-                        )}
-                        {hubSubTabs.settings === 'infrastructure' && (
-                          <InfrastructureConsoleView />
                         )}
                       </WorkspaceHubShell>
                     )}
