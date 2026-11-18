@@ -65,6 +65,10 @@ services:
       - CLAIMTRACE_LLM_API_KEY=${CLAIMTRACE_LLM_API_KEY:-}
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-claimtrace}:${POSTGRES_PASSWORD:-claimtrace_local_dev}@postgres:5432/${POSTGRES_DB:-claimtrace_db}
       - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-claimtrace_minio}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-claimtrace_minio_secret_2026}
+      - KEYCLOAK_URL=http://keycloak:8080
       - CLAIMTRACE_TRUST_PROXY_HEADERS=1
       - CLAIMTRACE_BACKUP_DIR=/app/backups
       - HOST=0.0.0.0
@@ -158,6 +162,44 @@ services:
     depends_on:
       - prometheus
 
+  minio:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z
+    container_name: claimtrace-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-claimtrace_minio}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-claimtrace_minio_secret_2026}
+    command: server /data --console-address ":9001"
+    volumes:
+      - claimtrace_minio_data:/data
+
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: claimtrace-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - claimtrace_loki_data:/loki
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: claimtrace-keycloak
+    restart: unless-stopped
+    ports:
+      - "8180:8080"
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-claimtrace2026}
+    command: ["start-dev", "--import-realm"]
+    volumes:
+      - ./infra/keycloak/claimtrace-realm.json:/opt/keycloak/data/import/claimtrace-realm.json:ro
+
   locust:
     image: locustio/locust:2.32.6
     container_name: claimtrace-locust
@@ -187,3 +229,5 @@ volumes:
   claimtrace_backups_data:
   claimtrace_prometheus_data:
   claimtrace_grafana_data:
+  claimtrace_minio_data:
+  claimtrace_loki_data:

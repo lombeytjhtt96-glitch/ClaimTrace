@@ -1,0 +1,62 @@
+name: ClaimTrace JKN — Quality, Tests & Security CI
+
+on:
+  push:
+    branches: [local-dev, develop]
+  pull_request:
+    branches: [main, local-dev]
+
+jobs:
+  backend-quality-and-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt ruff bandit
+      - name: Ruff static lint check
+        run: ruff check app/infra app/routers/admin_suite.py app/routers/infra_router.py app/routers/async_jobs_router.py app/security/casbin_rbac.py app/security/slowapi_limiter.py app/security/keycloak_oidc.py app/security/pdf_signer.py
+      - name: Bandit SAST security scan
+        run: bandit -c pyproject.toml -r app/infra app/routers/admin_suite.py app/routers/infra_router.py app/security/casbin_rbac.py app/security/slowapi_limiter.py app/security/keycloak_oidc.py app/security/pdf_signer.py -ll
+      - name: Run infrastructure & enterprise pytest suites
+        env:
+          CLAIMTRACE_DISABLE_POSTGRES: "1"
+          CLAIMTRACE_DISABLE_REDIS: "1"
+        run: pytest -q tests/test_redis_and_async_worker.py tests/test_enterprise_admin_rbac_mail_scheduler.py
+
+  frontend-tests-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: Run Vitest unit & component tests
+        run: npm test
+      - name: Production Vite build
+        run: npm run build
+
+  infra-config-and-trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy filesystem & IaC vulnerability scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "0"

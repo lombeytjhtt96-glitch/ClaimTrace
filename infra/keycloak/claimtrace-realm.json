@@ -1,0 +1,48 @@
+{
+  "realm": "claimtrace-jkn",
+  "enabled": true,
+  "displayName": "BPJS Kesehatan · ClaimTrace JKN SSO",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      { "name": "ADMIN", "description": "Administrator Kebijakan & Tata Kelola JKN" },
+      { "name": "KEPALA_CABANG", "description": "Kepala Cabang / Pengawas Wilayah BPJS Kesehatan" },
+      { "name": "VERIFICATOR_MEDIS", "description": "Verifikator Medis FKRTL" },
+      { "name": "ANALYST", "description": "Analis Forensik & Aktuaria JKN" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "claimtrace-web",
+      "name": "ClaimTrace JKN React Cockpit",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": [
+        "http://localhost:8080/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080",
+        "http://localhost:3000"
+      ]
+    },
+    {
+      "clientId": "claimtrace-api",
+      "name": "ClaimTrace FastAPI Resource Server",
+      "enabled": true,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    }
+  ]
+}

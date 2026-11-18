@@ -13,8 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, Response
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel, Field
 from sqladmin import Admin, ModelView
@@ -26,6 +26,14 @@ from app.infra.mailer import (
     list_mail_outbox,
     send_templated_mail,
 )
+from app.infra.object_storage import (
+    BUCKET_BACKUPS,
+    BUCKET_DOCUMENTS,
+    get_object_storage_status,
+    list_bucket_objects,
+    upload_object_bytes,
+)
+from app.infra.observability import get_observability_snapshot
 from app.infra.postgres_db import (
     AsyncJobRunRecord,
     AuditLedgerBlockRecord,
@@ -38,6 +46,13 @@ from app.infra.postgres_db import (
 from app.infra.redis_client import get_redis_status
 from app.infra.scheduler import get_scheduler_status
 from app.security.casbin_rbac import enforce_policy, list_casbin_policies
+from app.security.keycloak_oidc import build_pkce_authorization_url, get_keycloak_status
+from app.security.pdf_signer import (
+    build_bahv_pdf_bytes,
+    get_pdf_signer_status,
+    sign_pdf_bytes,
+    verify_signed_pdf_bytes,
+)
 from app.security.slowapi_limiter import get_slowapi_status, limiter
 
 ADMIN_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates" / "admin"
@@ -236,6 +251,105 @@ def get_claimtrace_mail_outbox(limit: int = Query(20, ge=1, le=50)):
     }
 
 
+@admin_suite_router.get("/api/v1/system/observability/traces")
+def get_live_observability_traces(limit: int = Query(25, ge=1, le=100)):
+    """Mengembalikan jejak span OpenTelemetry dan log JSON terstruktur structlog terbaru."""
+    return {"status": "success", **get_observability_snapshot(limit=limit)}
+
+
+@admin_suite_router.get("/api/v1/system/object-storage/status")
+def get_s3_object_storage_status():
+    """Status konektivitas MinIO S3-Compatible On-Premise Object Storage & jumlah objek per bucket."""
+    return {"status": "success", **get_object_storage_status()}
+
+
+@admin_suite_router.get("/api/v1/system/object-storage/objects")
+def get_s3_bucket_objects(
+    bucket: str = Query(BUCKET_BACKUPS, description="Nama bucket MinIO S3"),
+    limit: int = Query(30, ge=1, le=100),
+):
+    """Daftar objek tersimpan pada bucket MinIO S3 atau mirror on-premise lokal."""
+    items = list_bucket_objects(bucket=bucket, limit=limit)
+    return {"status": "success", "bucket": bucket, "total": len(items), "objects": items}
+
+
+@admin_suite_router.get("/api/v1/auth/oidc/config")
+def get_keycloak_oidc_config(state: str = Query("claimtrace-oidc")):
+    """Konfigurasi Keycloak OIDC/SAML 2.0 SSO dan URL otorisasi PKCE untuk BPJS Kesehatan."""
+    status = get_keycloak_status()
+    return {
+        "status": "success",
+        **status,
+        "authorization_url": build_pkce_authorization_url(state=state),
+    }
+
+
+@admin_suite_router.get("/api/v1/reports/pdf-signer/status")
+def get_x509_pdf_signer_status():
+    """Informasi sertifikat X.509 / BSrE-Compatible RSA-2048 untuk tanda tangan digital PDF BAHV."""
+    return {"status": "success", **get_pdf_signer_status()}
+
+
+@admin_suite_router.get("/api/v1/reports/bahv/{claim_id}/signed-pdf")
+def download_signed_bahv_pdf(claim_id: str):
+    """Menghasilkan dan mengunduh dokumen PDF BAHV yang ditandatangani kriptografis X.509 (pyHanko)."""
+    from app.main import SYNTHETIC_CLAIMS_DATABASE
+
+    claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    if not claim:
+        raise HTTPException(status_code=404, detail=f"Klaim '{claim_id}' tidak ditemukan.")
+    raw_pdf = build_bahv_pdf_bytes(claim.model_dump(mode="json"))
+    signed_pdf = sign_pdf_bytes(raw_pdf)
+    return Response(
+        content=signed_pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="BAHV_{claim_id}_Signed_X509.pdf"',
+            "X-ClaimTrace-Signature": "pyHanko-X509-SHA256",
+        },
+    )
+
+
+@admin_suite_router.post("/api/v1/reports/bahv/{claim_id}/sign-and-verify")
+def sign_and_verify_bahv_pdf(claim_id: str):
+    """Menandatangani BAHV PDF dengan X.509 pyHanko, menyimpan ke MinIO S3, dan memverifikasi tanda tangan."""
+    from app.main import SYNTHETIC_CLAIMS_DATABASE
+
+    claim = SYNTHETIC_CLAIMS_DATABASE.get(claim_id)
+    if not claim:
+        raise HTTPException(status_code=404, detail=f"Klaim '{claim_id}' tidak ditemukan.")
+    raw_pdf = build_bahv_pdf_bytes(claim.model_dump(mode="json"))
+    signed_pdf = sign_pdf_bytes(raw_pdf)
+    verification = verify_signed_pdf_bytes(signed_pdf)
+    stored = upload_object_bytes(
+        BUCKET_DOCUMENTS,
+        f"bahv_signed/BAHV_{claim_id}_Signed_X509.pdf",
+        signed_pdf,
+        content_type="application/pdf",
+    )
+    return {
+        "status": "success",
+        "claim_id": claim_id,
+        "verification": verification,
+        "stored_object": stored,
+        "certificate": get_pdf_signer_status(),
+    }
+
+
+def _get_alembic_revision() -> Dict[str, Any]:
+    try:
+        from sqlalchemy import text
+
+        engine = get_postgres_engine()
+        if engine is not None:
+            with engine.connect() as conn:
+                rev = conn.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar()
+                return {"configured": True, "current_revision": rev or "uninitialized"}
+    except Exception:
+        pass
+    return {"configured": True, "current_revision": "20261118_0001 (offline)"}
+
+
 @admin_suite_router.get("/api/v1/system/enterprise-stack/status")
 def get_enterprise_stack_status():
     """Ringkasan status aktif seluruh stack Enterprise ClaimTrace."""
@@ -243,6 +357,11 @@ def get_enterprise_stack_status():
         "status": "success",
         "sqladmin": {"mounted": _SQLADMIN_MOUNTED, "url": "/sqladmin"},
         "fastapi_admin_portal": {"enabled": True, "url": "/admin-portal", "engine": "fastapi + jinja2"},
+        "alembic": _get_alembic_revision(),
+        "observability": get_observability_snapshot(limit=10),
+        "object_storage": get_object_storage_status(),
+        "keycloak_oidc": get_keycloak_status(),
+        "pdf_signer": get_pdf_signer_status(),
         "casbin": list_casbin_policies(),
         "slowapi": get_slowapi_status(),
         "scheduler": get_scheduler_status(),

@@ -200,6 +200,20 @@ def create_scheduled_backup(trigger: str = "manual", retention_count: int = BACK
     archive_size = archive_path.stat().st_size
     sha_path.write_text(f"{archive_sha256}  {archive_path.name}\n", encoding="utf-8")
 
+    # Mirror archive to MinIO S3-compatible object storage (or local S3 mirror fallback)
+    s3_mirror_info = None
+    try:
+        from app.infra.object_storage import BUCKET_BACKUPS, upload_object_bytes
+
+        s3_mirror_info = upload_object_bytes(
+            BUCKET_BACKUPS,
+            archive_path.name,
+            archive_path.read_bytes(),
+            content_type="application/gzip",
+        )
+    except Exception:
+        s3_mirror_info = None
+
     duration_ms = round((time.perf_counter() - t0) * 1000, 2)
     pruned = prune_old_backups(retention_count=retention_count)
 
@@ -216,6 +230,7 @@ def create_scheduled_backup(trigger: str = "manual", retention_count: int = BACK
         "postgres_included": bool(pg_info.get("included")),
         "postgres_detail": pg_info,
         "redis_detail": redis_info,
+        "object_storage": s3_mirror_info,
         "state_files_count": len(archived_files),
         "pruned_backups": pruned,
         "verified": True,

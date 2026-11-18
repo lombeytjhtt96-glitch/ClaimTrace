@@ -332,6 +332,7 @@ STRICT_AUTH_EXEMPT_PATHS = {
     "/api/v1/auth/verify-otp",
     "/api/v1/auth/authorize-session",
     "/api/v1/auth/trust-device",
+    "/api/v1/auth/oidc/config",
     "/api/v1/webhooks/sendcorex",
 }
 
@@ -486,25 +487,40 @@ class StrictSessionGateMiddleware(BaseHTTPMiddleware):
 
 
 import time as _time
+import uuid as _uuid
+from app.infra.observability import configure_observability, get_structured_logger
+
+_STRUCTLOG_HTTP = get_structured_logger("claimtrace.http")
 
 
 class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
-    """Records HTTP throughput & latency RED metrics into the ClaimTrace Prometheus registry."""
+    """Records HTTP throughput & latency RED metrics into Prometheus + emits structlog JSON events."""
 
     async def dispatch(self, request: Request, call_next):
         t0 = _time.perf_counter()
+        req_id = request.headers.get("x-request-id") or f"ct-{_uuid.uuid4().hex[:12]}"
         status_code = 500
         try:
             response = await call_next(request)
             status_code = response.status_code
+            response.headers.setdefault("X-Request-ID", req_id)
             return response
         finally:
+            dur_sec = _time.perf_counter() - t0
             if request.url.path != "/metrics":
                 telemetry_engine.record_http_request(
                     method=request.method,
                     path=request.url.path,
                     status_code=status_code,
-                    duration_seconds=_time.perf_counter() - t0,
+                    duration_seconds=dur_sec,
+                )
+                _STRUCTLOG_HTTP.info(
+                    "http_request",
+                    request_id=req_id,
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=status_code,
+                    duration_ms=round(dur_sec * 1000, 2),
                 )
 
 
@@ -586,6 +602,7 @@ app.include_router(async_jobs_router)
 app.include_router(infra_router)
 app.include_router(admin_suite_router)
 mount_sqladmin(app)
+configure_observability(app)
 
 
 @app.on_event("startup")
