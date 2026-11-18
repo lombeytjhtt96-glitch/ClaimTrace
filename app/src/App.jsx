@@ -500,16 +500,23 @@ export default function App() {
     };
   }, [dashboardTab, authView, selectedCase, viewMode]);
 
-  // Live Sidebar Badges synchronized with Claim Queue & Operations Store
+  // Live Sidebar Badges synchronized with Claim Queue & Operations Store (persisted in sessionStorage so counts never flicker across tabs)
   const badgesUrl = `${API_BASE_URL}/api/v1/system/sidebar-badges`;
-  const [sidebarBadges, setSidebarBadges] = useState(() => (
-    getCachedJsonSync(badgesUrl) || {
+  const [sidebarBadges, setSidebarBadges] = useState(() => {
+    const mem = getCachedJsonSync(badgesUrl);
+    if (mem) return mem;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('claimtrace_sidebar_badges_v1') || 'null');
+      if (saved && typeof saved === 'object') return saved;
+    } catch {}
+    return {
+      total_claims: null,
       queue_count: null,
       pending_cases: null,
       flagged_count: null,
       audit_chain_length: null,
-    }
-  ));
+    };
+  });
 
   useEffect(() => {
     if (authView !== 'dashboard' || !authStatusVerified) return;
@@ -519,6 +526,7 @@ export default function App() {
         const data = await cachedAuthGetJson(badgesUrl);
         if (data && active) {
           setSidebarBadges(data);
+          try { sessionStorage.setItem('claimtrace_sidebar_badges_v1', JSON.stringify(data)); } catch {}
         }
       } catch {
         // Keep previous badge counts if temporarily offline
@@ -527,10 +535,20 @@ export default function App() {
     refreshBadges();
     prefetchDashboardHotEndpoints();
     const handleOpsUpdated = () => refreshBadges();
+    const handleSettingsUpdated = (evt) => {
+      const mins = Number(evt?.detail?.session_timeout_minutes);
+      if (Number.isFinite(mins) && mins >= 5 && mins <= 120) {
+        setSessionIdleSeconds(mins * 60);
+      }
+    };
     window.addEventListener('claimtrace:operations-updated', handleOpsUpdated);
+    window.addEventListener('claimtrace:ops-updated', handleOpsUpdated);
+    window.addEventListener('claimtrace:settings-updated', handleSettingsUpdated);
     return () => {
       active = false;
       window.removeEventListener('claimtrace:operations-updated', handleOpsUpdated);
+      window.removeEventListener('claimtrace:ops-updated', handleOpsUpdated);
+      window.removeEventListener('claimtrace:settings-updated', handleSettingsUpdated);
     };
   }, [authView, authStatusVerified, badgesUrl]);
 
@@ -884,28 +902,13 @@ export default function App() {
   });
   const [headerSearch, setHeaderSearch] = useState('');
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
-  const [headerAlerts, setHeaderAlerts] = useState([
-    {
-      id: 'ALT-01',
-      severity: 'critical',
-      type: 'ANOMALI JALUR MERAH',
-      title: 'Berkas Prioritas Tinggi (CLM-2026-8801)',
-      message: 'Memerlukan telaah 4-Lapis pra-bayar & konfirmasi SDMK/Mobile JKN.',
-      time: 'Live',
-      is_seen: false,
-      targetTab: 'investigation'
-    },
-    {
-      id: 'ALT-02',
-      severity: 'high',
-      type: 'PERINGATAN SLA 10 HK',
-      title: 'Kepatuhan Batas Waktu Verifikasi Klaim',
-      message: 'Pantau antrean klaim Jalur Kuning/Merah sebelum batas Perpres 82/2018.',
-      time: 'Aktif',
-      is_seen: false,
-      targetTab: 'decision'
-    },
-  ]);
+  const [headerAlerts, setHeaderAlerts] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('claimtrace_header_alerts_v1') || 'null');
+      if (Array.isArray(saved) && saved.length > 0) return saved;
+    } catch {}
+    return [];
+  });
 
   useEffect(() => {
     if (authView !== 'dashboard' || !authStatusVerified) return;
@@ -949,7 +952,14 @@ export default function App() {
         });
       if (priorityItems.length > 0) {
         setHeaderAlerts(priorityItems);
+        try { sessionStorage.setItem('claimtrace_header_alerts_v1', JSON.stringify(priorityItems)); } catch {}
       }
+      setSidebarBadges((prev) => {
+        if (prev?.total_claims != null) return prev;
+        const next = { ...prev, total_claims: rawList.length };
+        try { sessionStorage.setItem('claimtrace_sidebar_badges_v1', JSON.stringify(next)); } catch {}
+        return next;
+      });
     }).catch(() => {});
     return () => { active = false; };
   }, [authView, authStatusVerified]);
@@ -1445,20 +1455,20 @@ export default function App() {
                       setDashboardTab('queue');
                     }
                   }}
-                  className={`hidden xl:flex items-center border rounded-xl px-3 py-1.5 w-48 2xl:w-64 relative ml-2 transition-colors focus-within:ring-2 ${
+                  className={`hidden lg:flex items-center gap-1.5 border rounded-xl px-3 py-1.5 w-64 xl:w-72 2xl:w-80 ml-2 transition-colors focus-within:ring-2 ${
                     isLight
                       ? 'bg-slate-50 border-slate-200 text-slate-900 focus-within:bg-white focus-within:border-emerald-500/60 focus-within:ring-emerald-500/20'
                       : 'bg-white/10 border-white/15 text-white focus-within:border-emerald-400/60 focus-within:ring-emerald-400/20'
                   }`}
                 >
-                  <Search className={`w-3.5 h-3.5 mr-2 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/50'}`} />
+                  <Search className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-500' : 'text-white/50'}`} />
                   <input
                     type="text"
                     aria-label="Cari modul, No. SEP, atau faskes"
                     placeholder="Cari SEP / Faskes..."
                     value={headerSearch}
                     onChange={(e) => setHeaderSearch(e.target.value)}
-                    className={`bg-transparent border-none outline-none text-xs w-full pr-20 pl-0.5 focus:ring-0 ${
+                    className={`bg-transparent border-none outline-none text-xs flex-1 min-w-0 pl-0.5 focus:ring-0 ${
                       isLight ? 'text-slate-900 placeholder-slate-500' : 'text-white placeholder-white/50'
                     }`}
                   />
@@ -1469,7 +1479,7 @@ export default function App() {
                       setCommandPaletteOpen(true);
                     }}
                     title="Buka Navigasi Cepat Portal (Ctrl+K)"
-                    className={`absolute right-12 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-mono border transition cursor-pointer ${
+                    className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-mono border transition cursor-pointer ${
                       isLight
                         ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                         : 'bg-white/5 text-white/70 border-white/15 hover:bg-white/10'
@@ -1479,7 +1489,7 @@ export default function App() {
                   </button>
                   <button
                     type="submit"
-                    className={`absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md px-2 py-0.5 text-[11px] font-medium border transition-colors cursor-pointer ${
+                    className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium border transition-colors cursor-pointer ${
                       isLight 
                         ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200/90' 
                         : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
@@ -1722,7 +1732,7 @@ export default function App() {
                         {currentUser?.avatar && currentUser.avatar !== 'dS' ? currentUser.avatar : getInitials(currentUser?.name || 'VR')}
                       </span>
                     </div>
-                    <span className={`hidden md:inline-block ml-2 text-xs font-semibold max-w-[140px] 2xl:max-w-[200px] truncate ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
+                    <span className={`hidden md:inline-block ml-2 text-xs font-semibold whitespace-nowrap ${isLight ? 'text-slate-900' : 'text-white/90'}`}>
                       {sanitizeOfficialField(currentUser?.name, 'Verifikator Terotentikasi')}
                     </span>
                     <ChevronDown

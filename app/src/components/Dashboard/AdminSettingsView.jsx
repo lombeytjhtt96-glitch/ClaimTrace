@@ -337,9 +337,9 @@ export const INITIAL_SETTINGS_CATEGORIES = [
         key: 'session_timeout_minutes',
         label: 'Batas Waktu Sesi Tidak Aktif (Idle Session Timeout - Menit)',
         help_text:
-          'Kunci otomatis konsol verifikator apabila tidak ada aktivitas kursor/keyboard dalam kurun waktu ini.',
+          'Kunci otomatis konsol verifikator apabila tidak ada aktivitas kursor/keyboard dalam kurun waktu ini (sinkron dengan timer sesi topbar).',
         type: 'number',
-        value: 15,
+        value: 30,
         editable: true,
       },
       {
@@ -869,9 +869,7 @@ function SettingItemRow({ setting, value, onChange, isChanged, isLight }) {
   );
 }
 
-function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, currentTheme }) {
-  const [editedValues, setEditedValues] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
+function SettingsCategoryCard({ category, editedValues, onValueChange, currentTheme }) {
   const isLight = currentTheme === 'light';
 
   const editableSettings = category.settings.filter((s) => s.editable && s.type !== 'masked');
@@ -880,34 +878,6 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
   const hasChanges = editableSettings.some(
     (s) => s.key in editedValues && editedValues[s.key] !== s.value
   );
-
-  const handleValueChange = (key, val) => {
-    setEditedValues((prev) => ({ ...prev, [key]: val }));
-    // Jika perubahan adalah tema, terapkan langsung untuk preview instan
-    if (key === 'ui_theme_mode' && onThemeChangeLive) {
-      onThemeChangeLive(val);
-    }
-  };
-
-  const handleReset = () => {
-    // Kembalikan tema jika ada
-    if ('ui_theme_mode' in editedValues && onThemeChangeLive) {
-      const originalTheme = category.settings.find((s) => s.key === 'ui_theme_mode')?.value || 'dark';
-      onThemeChangeLive(originalTheme);
-    }
-    setEditedValues({});
-  };
-
-  const handleSave = async () => {
-    if (!hasChanges) return;
-    setIsSaving(true);
-    try {
-      await onSaveCategory(category.id, editedValues, category.title);
-      setEditedValues({});
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <section 
@@ -945,7 +915,7 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
         </div>
 
         {hasChanges && (
-          <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-full shrink-0 animate-pulse font-bold">
+          <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-full shrink-0 font-bold">
             Ada Perubahan
           </span>
         )}
@@ -963,7 +933,7 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
                 key={setting.key}
                 setting={setting}
                 value={currentValue}
-                onChange={(val) => handleValueChange(setting.key, val)}
+                onChange={(val) => onValueChange(category.id, setting.key, val)}
                 isChanged={isChanged}
                 isLight={isLight}
               />
@@ -990,39 +960,6 @@ function SettingsCategoryCard({ category, onSaveCategory, onThemeChangeLive, cur
               isLight={isLight}
             />
           ))}
-        </div>
-      )}
-
-      {editableSettings.length > 0 && (
-        <div className={`mt-6 flex items-center justify-end gap-3 border-t pt-5 ${
-          isLight ? 'border-slate-200' : 'border-white/10'
-        }`}>
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={!hasChanges || isSaving}
-            className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer ${
-              isLight 
-                ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200' 
-                : 'border-white/10 bg-white/5 text-white hover:bg-white/10'
-            }`}
-          >
-            <X className="h-4 w-4" />
-            Batalkan
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer shadow-md ${
-              isLight
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-            }`}
-          >
-            {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Simpan Perubahan
-          </button>
         </div>
       )}
     </section>
@@ -1177,6 +1114,54 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
     loadServerSettings();
     return () => { active = false; };
   }, []);
+
+  const [pendingEdits, setPendingEdits] = useState({});
+  const [isSavingAll, setIsSavingAll] = useState(false);
+
+  const handleDraftChange = (_catId, key, val) => {
+    setPendingEdits((prev) => ({ ...prev, [key]: val }));
+    if (key === 'ui_theme_mode' && onThemeChange) {
+      onThemeChange(val);
+    }
+  };
+
+  const dirtyEntries = categories.flatMap((cat) =>
+    cat.settings
+      .filter((s) => s.editable && s.type !== 'masked' && s.key in pendingEdits && pendingEdits[s.key] !== s.value)
+      .map((s) => ({ catId: cat.id, catTitle: cat.title, key: s.key, value: pendingEdits[s.key] }))
+  );
+
+  const handleResetAll = () => {
+    if ('ui_theme_mode' in pendingEdits && onThemeChange) {
+      const origTheme = categories
+        .flatMap((c) => c.settings)
+        .find((s) => s.key === 'ui_theme_mode')?.value || 'light';
+      onThemeChange(origTheme);
+    }
+    setPendingEdits({});
+  };
+
+  const handleSaveAll = async () => {
+    if (dirtyEntries.length === 0 || isSavingAll) return;
+    setIsSavingAll(true);
+    const byCategory = new Map();
+    for (const item of dirtyEntries) {
+      if (!byCategory.has(item.catId)) {
+        byCategory.set(item.catId, { title: item.catTitle, updates: {} });
+      }
+      byCategory.get(item.catId).updates[item.key] = item.value;
+    }
+    const allUpdates = Object.fromEntries(dirtyEntries.map((d) => [d.key, d.value]));
+    try {
+      for (const [catId, grp] of byCategory.entries()) {
+        await handleSaveCategory(catId, grp.updates, grp.title);
+      }
+      setPendingEdits({});
+      window.dispatchEvent(new CustomEvent('claimtrace:settings-updated', { detail: allUpdates }));
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
 
   const handleSaveCategory = async (catId, editedValues, catTitle) => {
     const prevSnapshot = categories;
@@ -1462,11 +1447,55 @@ export default function AdminSettingsView({ onBackToDashboard, currentTheme = 'd
             key={category.id}
             category={category}
             currentTheme={effectiveTheme}
-            onSaveCategory={handleSaveCategory}
-            onThemeChangeLive={onThemeChange}
+            editedValues={pendingEdits}
+            onValueChange={handleDraftChange}
           />
         ))}
       </div>
+
+      {/* Bilah Aksi Tetap (Sticky Action Bar) — Menggantikan 7 Pasang Tombol Berulang */}
+      {dirtyEntries.length > 0 && (
+        <div className={`sticky bottom-4 z-30 rounded-2xl border px-5 py-3.5 shadow-2xl backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 ${
+          isLight
+            ? 'bg-white/95 border-emerald-300 text-slate-900 shadow-slate-300/60'
+            : 'bg-[#00153A]/95 border-[#FFCA40]/40 text-white shadow-black/60'
+        }`}>
+          <div className="flex items-center gap-2.5 text-xs">
+            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-mono font-bold ${
+              isLight ? 'bg-emerald-100 text-emerald-800' : 'bg-[#FFCA40]/20 text-[#FFCA40]'
+            }`}>
+              {dirtyEntries.length}
+            </span>
+            <span className="font-semibold">
+              {dirtyEntries.length} konfigurasi belum disimpan ke server &amp; segel audit SHA-256.
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleResetAll}
+              disabled={isSavingAll}
+              className={`flex items-center gap-1.5 rounded-lg border px-4 py-2 text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer ${
+                isLight
+                  ? 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'border-white/15 bg-white/5 text-white hover:bg-white/10'
+              }`}
+            >
+              <X className="h-3.5 w-3.5" />
+              Batalkan Semua
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              disabled={isSavingAll}
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-xs font-bold transition-colors disabled:opacity-40 cursor-pointer shadow-md"
+            >
+              {isSavingAll ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              Simpan Perubahan ({dirtyEntries.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* TATA KELOLA PERAN, OTORITAS VERIFIKATOR & MATRIKS RBAC C03.04 */}
       {(activeFilter === 'all' || activeFilter === 'rbac_governance') && (

@@ -121,7 +121,7 @@ export default function MobileTelemetry({
   });
 
   const handleExportLogs = () => {
-    const headers = ['ID Telemetri', 'No. Klaim', 'Peserta', 'NIK Hash', 'Faskes', 'Prosedur', 'Waktu Kirim', 'Waktu Respon', 'Status Respon', 'Bukti Kriptografis ZK-Proof'];
+    const headers = ['ID Telemetri', 'No. Klaim', 'Peserta', 'NIK Hash (SHA-256)', 'Faskes', 'Prosedur', 'Waktu Kirim', 'Waktu Respon', 'Status Respon', 'Bukti Device Attestation'];
     const rows = filteredLogs.map(l => [
       l.id,
       l.claimId,
@@ -286,12 +286,12 @@ export default function MobileTelemetry({
               <span className={`text-base font-semibold tabular-nums mt-0.5 block ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                100% ZK-Proof
+                Device Attestation
               </span>
               <span className={`text-[9.5px] font-medium ${
                 isLight ? 'text-slate-500' : 'text-white/50'
               }`}>
-                Hash SHA-256 Terdesentralisasi
+                Hash SHA-256 &amp; Tanda Tangan Perangkat
               </span>
             </div>
           </div>
@@ -508,7 +508,7 @@ export default function MobileTelemetry({
               <h3 className={`text-xs font-bold uppercase tracking-wider ${
                 isLight ? 'text-slate-900' : 'text-white'
               }`}>
-                Protokol Privasi & Zero-Knowledge Proof (UU PDP No. 27/2022)
+                Protokol Privasi &amp; Cryptographic Device Attestation (UU PDP No. 27/2022)
               </h3>
             </div>
 
@@ -517,10 +517,10 @@ export default function MobileTelemetry({
                 isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
                 <span className={`text-[11px] font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Pseudonimitas Data Medis
+                  Pseudonimitas Data Medis (One-Way Hashing)
                 </span>
                 <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                  Nama pasien dan diagnosis sensitif dienkripsi satu arah menggunakan algoritma SHA-256 bersalting sebelum diproses oleh penapisan anomali.
+                  Identitas peserta dan pengenal sensitif di-hash satu arah menggunakan fungsi cryptographic hashing SHA-256 bersalting (tidak dapat didekripsi kembali) sebelum diproses oleh penapisan anomali.
                 </p>
               </div>
 
@@ -528,10 +528,10 @@ export default function MobileTelemetry({
                 isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-white/5 border-white/10'
               }`}>
                 <span className={`text-[11px] font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                  Zero-Knowledge Presence
+                  Cryptographic Device Attestation
                 </span>
                 <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
-                  Tidak melacak koordinat GPS kontinu peserta. Hanya memvalidasi tanda tangan kriptografis dari perangkat ponsel yang terotentikasi saat verifikasi.
+                  Tidak melacak koordinat GPS kontinu peserta. Hanya memvalidasi tanda tangan digital (ECDSA-SHA256) dari perangkat Mobile JKN yang terotentikasi saat peserta menekan konfirmasi.
                 </p>
               </div>
 
@@ -685,7 +685,7 @@ export default function MobileTelemetry({
                 <th scope="col" className="py-3 px-3.5">Faskes / Prosedur</th>
                 <th scope="col" className="py-3 px-3.5">Waktu Kirim / Respon</th>
                 <th scope="col" className="py-3 px-3.5 text-center">Status Respon</th>
-                <th scope="col" className="py-3 px-3.5">ZK-Proof / Hash</th>
+                <th scope="col" className="py-3 px-3.5">Device Attestation / Hash</th>
               </tr>
             </thead>
             <tbody className={`divide-y font-mono ${
@@ -736,7 +736,7 @@ export default function MobileTelemetry({
                   </td>
                   <td className="py-3 px-3.5 font-sans">
                     <span className={`font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                      {log.participantName}
+                      {String(log.participantName || '').replace(/AES256_/g, 'SHA256_')}
                     </span>
                     <span className={`text-[10px] font-mono block truncate max-w-[140px] ${
                       isLight ? 'text-slate-400' : 'text-white/50'

@@ -152,6 +152,28 @@ export default function OfficialReportsView({
   });
   const effectiveSourceClaims = hospitalFilteredClaims.length > 0 ? hospitalFilteredClaims : claimsList;
 
+  const inferServiceLevel = (c) => {
+    const explicit = String(c?.jenis_pelayanan || '').toUpperCase();
+    if (explicit === 'RJTL' || explicit === 'RITL') return explicit;
+    const cbg = String(c?.ina_cbg_code || c?.fkl30_kode_cbg || '').toUpperCase().trim();
+    const parts = cbg.split('-');
+    // Permenkes INA-CBG: group digit 2/3/5 or severity 0 (e.g. Z-3-12-0, Q-5-44-0) = RJTL; group 1/4 with I/II/III = RITL
+    if (parts.length >= 4 && (parts[1] === '2' || parts[1] === '3' || parts[1] === '5' || parts[3] === '0')) {
+      return 'RJTL';
+    }
+    return 'RITL';
+  };
+
+  const serviceLevelsInScope = new Set(
+    effectiveSourceClaims.map((item) => inferServiceLevel(item?.claim || item))
+  );
+  const jenisPelayananLabel =
+    serviceLevelsInScope.size === 1 && serviceLevelsInScope.has('RJTL')
+      ? 'RJTL (Rawat Jalan Tingkat Lanjutan)'
+      : serviceLevelsInScope.size === 1 && serviceLevelsInScope.has('RITL')
+      ? 'RITL (Rawat Inap Tingkat Lanjutan)'
+      : 'Campuran (RJTL & RITL)';
+
   const activeClaims = effectiveSourceClaims.length > 0 ? effectiveSourceClaims.slice(0, 15).map((item, i) => {
     const c = item?.claim || item;
     const triage = item?.triage || null;
@@ -493,7 +515,7 @@ export default function OfficialReportsView({
               <div>
                 <p><span className="text-slate-500 w-32 inline-block">Nama Faskes / RS:</span> <strong>{selectedHospitalMeta?.id || selectedHospital}</strong></p>
                 <p><span className="text-slate-500 w-32 inline-block">Kode PPK Faskes:</span> <span className="font-mono font-bold">{selectedHospitalMeta?.code || 'FSK-RSX-01'}</span></p>
-                <p><span className="text-slate-500 w-32 inline-block">Jenis Pelayanan:</span> RITL (Rawat Inap Tingkat Lanjutan)</p>
+                <p><span className="text-slate-500 w-32 inline-block">Jenis Pelayanan:</span> {jenisPelayananLabel}</p>
               </div>
               <div>
                 <p><span className="text-slate-500 w-32 inline-block">Periode Pelayanan:</span> {batches.find((b) => b.id === selectedBatch)?.label || (selectedBatch || 'Semua Batch Aktif')}</p>

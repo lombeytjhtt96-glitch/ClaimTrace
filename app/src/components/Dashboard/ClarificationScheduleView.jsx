@@ -93,12 +93,12 @@ export default function ClarificationScheduleView({ onNavigateTab, onSelectCase,
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('upcoming'); 
+  const [dateFilter, setDateFilter] = useState('all'); 
   const [selectedDateFrom, setSelectedDateFrom] = useState('');
   const [selectedDateTo, setSelectedDateTo] = useState('');
 
   // View state
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   useEscapeKey(Boolean(selectedAppointment), () => setSelectedAppointment(null));

@@ -117,13 +117,21 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
     };
   }, [plans]);
 
-  // Risk Distribution
+  // Risk Distribution (normalize HIGH -> SEVERE so sum always equals total plans)
+  const normalizeRisk = (lvl) => {
+    const u = String(lvl || '').toUpperCase();
+    if (u === 'CRITICAL') return 'CRITICAL';
+    if (u === 'SEVERE' || u === 'HIGH') return 'SEVERE';
+    if (u === 'MODERATE' || u === 'MEDIUM') return 'MODERATE';
+    return 'LOW';
+  };
+
   const riskDistribution = useMemo(() => {
     return {
-      Critical: plans.filter((p) => p.risk_level === 'CRITICAL').length,
-      Severe: plans.filter((p) => p.risk_level === 'SEVERE').length,
-      Moderate: plans.filter((p) => p.risk_level === 'MODERATE').length,
-      Low: plans.filter((p) => p.risk_level === 'LOW').length,
+      Critical: plans.filter((p) => normalizeRisk(p.risk_level) === 'CRITICAL').length,
+      Severe: plans.filter((p) => normalizeRisk(p.risk_level) === 'SEVERE').length,
+      Moderate: plans.filter((p) => normalizeRisk(p.risk_level) === 'MODERATE').length,
+      Low: plans.filter((p) => normalizeRisk(p.risk_level) === 'LOW').length,
     };
   }, [plans]);
 
@@ -136,7 +144,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
         p.faskes_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.claim_id.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchRisk = riskFilter === 'ALL' || p.risk_level === riskFilter;
+      const matchRisk = riskFilter === 'ALL' || normalizeRisk(p.risk_level) === riskFilter;
       const matchStatus = statusFilter === 'ALL' || p.status === statusFilter;
 
       return matchSearch && matchRisk && matchStatus;
@@ -371,8 +379,8 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
           </p>
         </div>
 
-        {/* 4 Tabs Bar: Dashboard, Review Queue, All Plans, User Progress */}
-        <div className={`flex flex-wrap sm:flex-nowrap items-center p-1 rounded-xl border shadow-sm shrink-0 ${
+        {/* Compact 2-Mode View Toggle (Menghilangkan Over-Nested Level-2 Tabs) */}
+        <div className={`flex items-center p-1 rounded-xl border shadow-sm shrink-0 ${
           isLight
             ? 'bg-slate-100 border-slate-300/80'
             : 'bg-[#00134A]/80 border-white/10 shadow-inner'
@@ -380,7 +388,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
           <button type="button"
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === 'dashboard'
+              activeTab !== 'users'
                 ? isLight
                   ? 'bg-emerald-700 text-white shadow-md'
                   : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
@@ -389,53 +397,21 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                   : 'text-white/60 hover:text-white'
             }`}
           >
-            <BarChart2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Dasbor Intervensi</span>
-          </button>
-
-          <button type="button"
-            onClick={() => setActiveTab('queue')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === 'queue'
-                ? isLight
-                  ? 'bg-emerald-700 text-white shadow-md'
-                  : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
-                : isLight
-                  ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
-                  : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 shrink-0" />
-            <span>Antrean Telaah (HITL)</span>
+            <ClipboardList className="w-3.5 h-3.5 shrink-0" />
+            <span>Rencana Intervensi ({plans.length})</span>
             {queuePlans.length > 0 && (
               <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                activeTab === 'queue'
+                activeTab !== 'users'
                   ? isLight
-                    ? 'bg-sky-800 text-white'
+                    ? 'bg-emerald-900 text-white'
                     : 'bg-[#000c24] text-[#FFCA40]'
                   : isLight
-                    ? 'bg-slate-200 text-slate-800'
-                    : 'bg-white/10 text-white'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-amber-500/20 text-amber-300'
               }`}>
-                {queuePlans.length}
+                {queuePlans.length} HITL
               </span>
             )}
-          </button>
-
-          <button type="button"
-            onClick={() => setActiveTab('plans')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              activeTab === 'plans'
-                ? isLight
-                  ? 'bg-emerald-700 text-white shadow-md'
-                  : 'bg-[#FFCA40] text-[#00134A] shadow-md shadow-[#FFCA40]/20'
-                : isLight
-                  ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
-                  : 'text-white/60 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 shrink-0" />
-            <span>Semua Rencana</span>
           </button>
 
           <button type="button"
@@ -451,424 +427,159 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
             }`}
           >
             <Building2 className="w-3.5 h-3.5 shrink-0" />
-            <span>Progres FKRTL</span>
+            <span>Progres per FKRTL</span>
           </button>
         </div>
       </div>
 
       {/* =================================================================== */}
-      {/* TAB 1: DASHBOARD (8 Metric Cards + Risk Level Distribution + 30D)  */}
+      {/* UNIFIED MAIN VIEW: Compact KPI + Exact Risk Distribution + Plans    */}
       {/* =================================================================== */}
-      {activeTab === 'dashboard' && (
-        <div className="space-y-6">
-          {/* 8 Metric Cards with Subtle Watermarks */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: TOTAL PLANS */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
+      {activeTab !== 'users' && (
+        <div className="space-y-4">
+          {/* Compact 4-Card Primary KPI Strip (Definisi Jelas & Tidak Ambigu) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className={`rounded-2xl p-4 border transition-all ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-sky-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-[#FFCA40]/40'
+                ? 'bg-white border-slate-200/90 shadow-xs'
+                : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
             }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white/10 border-white/15 text-white/90'
-                }`}>
-                  <ClipboardList className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>TOTAL RENCANA INTERVENSI</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-white/60'
+                }`}>TOTAL RENCANA</span>
+                <ClipboardList className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-cyan-400'}`} />
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <div className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {metrics.totalPlans}
               </div>
-            </div>
-
-            {/* Card 2: ACTIVE PLANS */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
-              isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-emerald-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-emerald-400/40'
-            }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <Activity className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>RENCANA AKTIF BERJALAN</span>
-              </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                {metrics.activePlans}
+              <div className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <strong>{metrics.activePlans}</strong> aktif · <strong>{queuePlans.length}</strong> tunggu HITL
               </div>
             </div>
 
-            {/* Card 3: COMPLETED */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
+            <div className={`rounded-2xl p-4 border transition-all ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-blue-500/60 hover:shadow-blue-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-blue-400/40'
+                ? 'bg-white border-slate-200/90 shadow-xs'
+                : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
             }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-blue-500/20 border-blue-500/30 text-blue-400'
-                }`}>
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>SELESAI DIREKONSILIASI</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-white/60'
+                }`}>RENCANA TUNTAS</span>
+                <CheckCircle2 className={`w-4 h-4 ${isLight ? 'text-blue-700' : 'text-blue-400'}`} />
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-blue-700' : 'text-blue-400'}`}>
-                {metrics.completedPlans}
+              <div className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-blue-700' : 'text-blue-400'}`}>
+                {metrics.completedPlans} <span className="text-sm font-semibold opacity-70">/ {metrics.totalPlans}</span>
               </div>
-              <div className={`text-xs mt-1 relative z-10 ${isLight ? 'text-slate-600 font-semibold' : 'text-white/60'}`}>
-                {metrics.completionRate}% tingkat tuntas
+              <div className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                <strong>{metrics.completionRate}%</strong> selesai direkonsiliasi penuh
               </div>
             </div>
 
-            {/* Card 4: AVG COMPLETION */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
+            <div className={`rounded-2xl p-4 border transition-all ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-500/60 hover:shadow-sky-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-[#FFCA40]/40'
+                ? 'bg-white border-slate-200/90 shadow-xs'
+                : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
             }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-[#FFCA40]/20 border-[#FFCA40]/30 text-[#FFCA40]'
-                }`}>
-                  <BarChart2 className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>RATA-RATA PENYELESAIAN</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-white/60'
+                }`}>PROGRES CHECKLIST</span>
+                <BarChart2 className={`w-4 h-4 ${isLight ? 'text-amber-700' : 'text-[#FFCA40]'}`} />
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
+              <div className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-emerald-800' : 'text-[#FFCA40]'}`}>
                 {metrics.avgCompletion}%
               </div>
-            </div>
-
-            {/* Card 5: VIEWED (24H) */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
-              isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-600/60 hover:shadow-emerald-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-emerald-400/40'
-            }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
-                }`}>
-                  <Eye className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>DITINJAU (24 JAM)</span>
-              </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`}>
-                {metrics.viewed24h}
+              <div className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                Rata-rata tahapan langkah diselesaikan
               </div>
             </div>
 
-            {/* Card 6: STALE (7D) */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
+            <div className={`rounded-2xl p-4 border transition-all ${
               isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-rose-500/60 hover:shadow-rose-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-rose-400/40'
+                ? 'bg-white border-slate-200/90 shadow-xs'
+                : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
             }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-rose-500/20 border-rose-500/30 text-rose-400'
-                }`}>
-                  <Clock className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>TERTUNDA (&gt;7 HARI)</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                  isLight ? 'text-slate-600' : 'text-white/60'
+                }`}>SLA &amp; KEPATUHAN</span>
+                <Timer className={`w-4 h-4 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
               </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-rose-700' : 'text-rose-400'}`}>
-                {metrics.stale7d}
+              <div className={`text-2xl font-bold font-mono tabular-nums ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                {metrics.avgDaysToComplete} <span className="text-sm font-semibold">hari</span>
               </div>
-              <div className={`text-xs mt-1 relative z-10 ${isLight ? 'text-slate-600 font-semibold' : 'text-white/60'}`}>
-                belum ditinjau
-              </div>
-            </div>
-
-            {/* Card 7: AVG DAYS TO COMPLETE */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
-              isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-emerald-600/60 hover:shadow-emerald-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-cyan-400/40'
-            }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/20 border-emerald-500/30 text-cyan-400'
-                }`}>
-                  <Timer className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>RATA-RATA WAKTU TUNTAS</span>
-              </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-emerald-600' : 'text-cyan-400'}`}>
-                {metrics.avgDaysToComplete} hari
-              </div>
-            </div>
-
-            {/* Card 8: ABANDONMENT RATE */}
-            <div className={`rounded-2xl p-5 shadow-xl transition-all relative overflow-hidden group ${
-              isLight
-                ? 'bg-white border border-slate-200/90 shadow-slate-200/50 hover:border-slate-400/60 hover:shadow-slate-100/40'
-                : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl hover:border-slate-300/40'
-            }`}>
-              <div className="flex items-center justify-between mb-2 relative z-10">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                  isLight ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-white/10 border-white/15 text-white/80'
-                }`}>
-                  <TrendingDown className="w-4 h-4" />
-                </div>
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-600' : 'text-white/50'
-                }`}>TINGKAT KETERLAMBATAN</span>
-              </div>
-              <div className={`text-3xl font-bold relative z-10 ${isLight ? 'text-slate-800' : 'text-white/80'}`}>
-                {metrics.abandonmentRate}%
+              <div className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                Tertunda &gt;7h: <strong>{metrics.stale7d}</strong> · Ditinjau 24j: <strong>{metrics.viewed24h}</strong>
               </div>
             </div>
           </div>
 
-          {/* Risk Level Distribution */}
-          <div className={`rounded-2xl p-6 shadow-xl space-y-4 ${
+          {/* Inline Risk Distribution Strip (Dijamin Sum === Total Plans) */}
+          <div className={`rounded-2xl px-4 py-3 border flex flex-wrap items-center justify-between gap-3 ${
             isLight
-              ? 'bg-white border border-slate-200 shadow-slate-200/50'
-              : 'bg-[#00153A]/85 border border-white/10 shadow-[#00081c]/50 backdrop-blur-xl'
+              ? 'bg-white border-slate-200/90 shadow-xs'
+              : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
           }`}>
-            <h2 className={`text-sm font-bold uppercase tracking-wider ${
-              isLight ? 'text-slate-900' : 'text-white'
-            }`}>Distribusi Tingkat Risiko Klaim</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded-xl border ${
-                isLight ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-500/10 border-rose-500/20'
-              }`}>
-                <p className={`text-xs font-bold uppercase ${isLight ? 'text-rose-800' : 'text-rose-400'}`}>
-                  Critical (Kritis)
-                </p>
-                <p className={`text-2xl font-bold mt-1 ${isLight ? 'text-rose-900' : 'text-rose-300'}`}>
-                  {riskDistribution.Critical}
-                </p>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-rose-700 font-medium' : 'text-rose-400/80'}`}>
-                  Indikasi Phantom &amp; SIP Expired
-                </p>
-              </div>
-              <div className={`p-4 rounded-xl border ${
-                isLight ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-amber-500/10 border-amber-500/20'
-              }`}>
-                <p className={`text-xs font-bold uppercase ${isLight ? 'text-amber-800' : 'text-amber-400'}`}>
-                  Severe (Berat)
-                </p>
-                <p className={`text-2xl font-bold mt-1 ${isLight ? 'text-amber-900' : 'text-amber-300'}`}>
-                  {riskDistribution.Severe}
-                </p>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-amber-700 font-medium' : 'text-amber-400/80'}`}>
-                  Unbundling &amp; Sepsis Upcoding
-                </p>
-              </div>
-              <div className={`p-4 rounded-xl border ${
-                isLight ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-blue-500/10 border-blue-500/20'
-              }`}>
-                <p className={`text-xs font-bold uppercase ${isLight ? 'text-blue-800' : 'text-blue-400'}`}>
-                  Moderate (Sedang)
-                </p>
-                <p className={`text-2xl font-bold mt-1 ${isLight ? 'text-blue-900' : 'text-blue-300'}`}>
-                  {riskDistribution.Moderate}
-                </p>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-blue-700 font-medium' : 'text-blue-400/80'}`}>
-                  Restriksi Obat Fornas
-                </p>
-              </div>
-              <div className={`p-4 rounded-xl border ${
-                isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-500/10 border-emerald-500/20'
-              }`}>
-                <p className={`text-xs font-bold uppercase ${isLight ? 'text-emerald-800' : 'text-emerald-400'}`}>
-                  Low (Rendah)
-                </p>
-                <p className={`text-2xl font-bold mt-1 ${isLight ? 'text-emerald-900' : 'text-emerald-300'}`}>
-                  {riskDistribution.Low}
-                </p>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-emerald-700 font-medium' : 'text-emerald-400/80'}`}>
-                  Kelengkapan Administrasi
-                </p>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                Distribusi Risiko (Semua {plans.length} Rencana):
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {[
+                { key: 'ALL', label: `Semua (${plans.length})`, cls: isLight ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-white/10 text-white border-white/15' },
+                { key: 'CRITICAL', label: `Kritis: ${riskDistribution.Critical}`, cls: isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+                { key: 'SEVERE', label: `Berat/Tinggi: ${riskDistribution.Severe}`, cls: isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+                { key: 'MODERATE', label: `Sedang: ${riskDistribution.Moderate}`, cls: isLight ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+                { key: 'LOW', label: `Rendah: ${riskDistribution.Low}`, cls: isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+              ].map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={() => setRiskFilter(chip.key)}
+                  className={`px-2.5 py-1 rounded-lg border font-bold text-[11px] transition cursor-pointer ${chip.cls} ${
+                    riskFilter === chip.key ? 'ring-2 ring-emerald-500/60 shadow-xs' : 'opacity-85 hover:opacity-100'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Summary for Last 30 Days */}
-          <div className={`rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs ${
-            isLight
-              ? 'bg-slate-50 border border-slate-200 text-slate-800'
-              : 'bg-white/5 border border-white/10 text-white backdrop-blur-md'
-          }`}>
-            <div>
-              <h3 className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Ringkasan Kepatuhan 30 Hari Terakhir
-              </h3>
-              <div className={`flex flex-wrap items-center gap-4 mt-1 ${
-                isLight ? 'text-slate-600' : 'text-white/70'
-              }`}>
-                <span>Tingkat Penyelesaian: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{metrics.completionRate}%</strong></span>
-                <span>•</span>
-                <span>Rencana Aktif: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{metrics.activePlans} / {metrics.totalPlans}</strong></span>
-              </div>
-            </div>
-            <div className={`font-mono text-[11px] ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-              Dihasilkan: <strong className={isLight ? 'text-slate-700' : 'text-white/70'}>{new Date().toLocaleDateString('id-ID')}, {new Date().toLocaleTimeString('id-ID')} WIB</strong>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* TAB 2: REVIEW QUEUE (Pending Human Verification by Verifier Medis) */}
-      {/* =================================================================== */}
-      {activeTab === 'queue' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-              Antrean Peninjauan Intervensi Faskes (HITL)
-            </h2>
-            <span className={`text-xs ${isLight ? 'text-slate-600 font-medium' : 'text-white/50'}`}>
-              Menampilkan {queuePlans.length} rencana intervensi yang menunggu otorisasi Verifikator Medis
-            </span>
-          </div>
-
-          {queuePlans.length === 0 ? (
-            <div className={`p-12 text-center rounded-2xl border shadow-xl ${
-              isLight
-                ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50'
-                : 'bg-[#00153A]/85 border-white/10 text-white shadow-[#00081c]/50 backdrop-blur-xl'
+          {/* Pending HITL Quick Callout */}
+          {queuePlans.length > 0 && statusFilter !== 'completed' && (
+            <div className={`rounded-2xl px-4 py-3 border flex flex-wrap items-center justify-between gap-3 ${
+              isLight ? 'bg-amber-50/80 border-amber-200 text-amber-950' : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
             }`}>
-              <CheckCircle className={`w-10 h-10 mx-auto mb-2 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-              <p className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white/90'}`}>Tidak ada rencana intervensi pending review.</p>
-              <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>Semua usulan sub-agen TCA telah diverifikasi.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {queuePlans.map((plan) => {
-                const isCritical = plan.risk_level === 'CRITICAL';
-                return (
-                  <div
-                    key={plan.id}
-                    className={`rounded-2xl border p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-                      isCritical
-                        ? isLight
-                          ? 'border-rose-300/90 bg-white text-slate-900 shadow-slate-200/50 hover:border-rose-400'
-                          : 'border-rose-500/40 bg-[#00153A]/85 text-white shadow-[#00081c]/50 backdrop-blur-xl hover:border-rose-400/60'
-                        : isLight
-                          ? 'border-amber-300/90 bg-white text-slate-900 shadow-slate-200/50 hover:border-amber-400'
-                          : 'border-amber-500/40 bg-[#00153A]/85 text-white shadow-[#00081c]/50 backdrop-blur-xl hover:border-amber-400/60'
-                    }`}
-                  >
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`font-mono text-xs font-bold ${isLight ? 'text-emerald-800' : 'text-cyan-400'}`}>
-                        #{plan.id}
-                      </span>
-                      <span className={isLight ? 'text-slate-300' : 'text-white/30'}>•</span>
-                      <span className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{plan.plan_title}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          plan.risk_level === 'CRITICAL'
-                            ? isLight
-                              ? 'bg-rose-50 text-rose-800 border-rose-300'
-                              : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                            : isLight
-                              ? 'bg-amber-50 text-amber-800 border-amber-300'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        }`}
-                      >
-                        {plan.risk_level === 'CRITICAL' ? 'KRITIS' : plan.risk_level === 'SEVERE' ? 'BERAT' : plan.risk_level === 'MODERATE' ? 'SEDANG' : 'RENDAH'} ({plan.risk_score})
-                      </span>
-                    </div>
-                    <div className={`text-xs flex flex-wrap items-center gap-3 ${
-                      isLight ? 'text-slate-600' : 'text-white/70'
-                    }`}>
-                      <span>Faskes: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{plan.faskes_name} ({plan.faskes_code})</strong></span>
-                      <span>•</span>
-                      <span>Klaim Terkait: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{plan.claim_id}</strong></span>
-                      <span>•</span>
-                      <span>PIC: <strong className={isLight ? 'text-slate-800' : 'text-white/90'}>{plan.pic_name}</strong></span>
-                    </div>
-                    <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                      Langkah Intervensi: {plan.completed_steps} dari {plan.total_steps} selesai disepakati
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    {onSelectCase && (
-                      <button type="button"
-                        onClick={() => onSelectCase(getPlanCaseDossier(plan))}
-                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer flex items-center gap-1.5 ${
-                          isLight
-                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                            : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-                        }`}
-                        title="Telaah berkas rekam medis dan bukti telemetri klaim ini"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Lihat Berkas</span>
-                      </button>
-                    )}
-                    <button type="button"
-                      onClick={() =>
-                        setReviewNoteModal({
-                          isOpen: true,
-                          planId: plan.id,
-                          type: 'approve',
-                          note: '',
-                        })
-                      }
-                      className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Setujui Intervensi</span>
-                    </button>
-                    <button type="button"
-                      onClick={() =>
-                        setReviewNoteModal({
-                          isOpen: true,
-                          planId: plan.id,
-                          type: 'reject',
-                          note: '',
-                        })
-                      }
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                        isLight
-                          ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300'
-                          : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30'
-                      }`}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Tolak</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+              <div className="flex items-center gap-2 text-xs">
+                <Clock className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>
+                  <strong>{queuePlans.length} rencana intervensi</strong> menunggu persetujuan Verifikator Medis (HITL):{' '}
+                  <span className="font-semibold">{queuePlans.map((q) => `${q.faskes_name} (${q.claim_id})`).join(', ')}</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatusFilter(statusFilter === 'pending_review' ? 'ALL' : 'pending_review')}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                  statusFilter === 'pending_review'
+                    ? 'bg-amber-600 text-white border-amber-600'
+                    : isLight ? 'bg-white border-amber-300 text-amber-900 hover:bg-amber-100' : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
+                }`}
+              >
+                {statusFilter === 'pending_review' ? 'Tampilkan Semua Status' : `Filter Antrean HITL (${queuePlans.length})`}
+              </button>
             </div>
           )}
-        </div>
-      )}
 
-      {/* =================================================================== */}
-      {/* TAB 3: ALL PLANS (Detailed Table & Accordion Steps)               */}
-      {/* =================================================================== */}
-      {activeTab === 'plans' && (
-        <div className="space-y-4">
-          <div className={`flex flex-col sm:flex-row gap-3 items-center justify-between p-4 rounded-2xl border shadow-xl ${
+          {/* Direct Plans Filter + Actual Intervention Plans List on Main Viewport */}
+          <div className={`flex flex-col sm:flex-row gap-3 items-center justify-between p-3.5 rounded-2xl border ${
             isLight
-              ? 'bg-white border-slate-200/90 shadow-slate-200/50'
-              : 'bg-[#00153A]/85 border-white/10 shadow-[#00081c]/50 backdrop-blur-xl'
+              ? 'bg-white border-slate-200/90 shadow-xs'
+              : 'bg-[#00153A]/85 border-white/10 backdrop-blur-xl'
           }`}>
             <div className="relative flex-1 w-full">
               <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${isLight ? 'text-slate-400' : 'text-white/40'}`} />
@@ -902,8 +613,9 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
               >
                 <option value="ALL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Semua Tingkat Risiko</option>
                 <option value="CRITICAL" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Kritis (Critical)</option>
-                <option value="SEVERE" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Berat (Severe)</option>
+                <option value="SEVERE" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Berat / Tinggi (Severe)</option>
                 <option value="MODERATE" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Sedang (Moderate)</option>
+                <option value="LOW" className={isLight ? 'bg-white text-slate-900' : 'bg-[#00134A] text-white'}>Rendah (Low)</option>
               </select>
 
               <select
@@ -929,19 +641,20 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
           <div className="space-y-3">
             {filteredPlans.map((plan) => {
               const isExpanded = expandedPlanId === plan.id;
+              const normRisk = normalizeRisk(plan.risk_level);
 
               return (
                 <div
                   key={plan.id}
-                  className={`rounded-2xl border shadow-xl overflow-hidden transition-all ${
+                  className={`rounded-2xl border overflow-hidden transition-all ${
                     isLight
-                      ? 'bg-white border-slate-200/90 shadow-slate-200/50 hover:border-emerald-400'
-                      : 'border-white/10 bg-[#00153A]/85 shadow-[#00081c]/50 backdrop-blur-xl hover:border-white/20'
+                      ? 'bg-white border-slate-200/90 shadow-xs hover:border-emerald-400'
+                      : 'border-white/10 bg-[#00153A]/85 backdrop-blur-xl hover:border-white/20'
                   }`}
                 >
                   <div
                     onClick={() => setExpandedPlanId(isExpanded ? null : plan.id)}
-                    className={`p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${
+                    className={`p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 cursor-pointer transition-colors ${
                       isLight ? 'hover:bg-slate-50/80' : 'hover:bg-white/5'
                     }`}
                   >
@@ -954,7 +667,7 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                         <h3 className={`font-bold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{plan.plan_title}</h3>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                            plan.risk_level === 'CRITICAL'
+                            normRisk === 'CRITICAL'
                               ? isLight
                                 ? 'bg-rose-50 text-rose-800 border-rose-300'
                                 : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
@@ -963,15 +676,55 @@ export default function InterventionsView({ onSelectCase, isLight: propIsLight }
                                 : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                           }`}
                         >
-                          {plan.risk_level === 'CRITICAL' ? 'KRITIS' : plan.risk_level === 'SEVERE' ? 'BERAT' : plan.risk_level === 'MODERATE' ? 'SEDANG' : 'RENDAH'} ({plan.risk_score})
+                          {normRisk === 'CRITICAL' ? 'KRITIS' : normRisk === 'SEVERE' ? 'BERAT' : normRisk === 'MODERATE' ? 'SEDANG' : 'RENDAH'} ({plan.risk_score})
                         </span>
                       </div>
                       <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
-                        {plan.faskes_name} ({plan.faskes_code}) · Berkas Klaim: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{plan.claim_id}</strong> · PIC: {plan.pic_name}
+                        {plan.faskes_name} ({plan.faskes_code}) · Berkas Klaim: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{plan.claim_id}</strong> · PIC: {plan.pic_name} · Tenggat SLA: <strong className={isLight ? 'text-slate-800' : 'text-white/90'}>10 HK</strong>
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {plan.status === 'pending_review' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReviewNoteModal({ isOpen: true, planId: plan.id, type: 'approve', note: '' });
+                            }}
+                            className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold transition cursor-pointer"
+                          >
+                            Setujui HITL
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReviewNoteModal({ isOpen: true, planId: plan.id, type: 'reject', note: '' });
+                            }}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition cursor-pointer ${
+                              isLight ? 'bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100' : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                            }`}
+                          >
+                            Tolak
+                          </button>
+                        </>
+                      )}
+                      {onSelectCase && plan.claim_id && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectCase(getPlanCaseDossier(plan));
+                          }}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition cursor-pointer ${
+                            isLight ? 'bg-slate-50 border-slate-300 text-slate-800 hover:bg-emerald-50 hover:border-emerald-400' : 'bg-white/5 border-white/15 text-white hover:bg-white/10'
+                          }`}
+                        >
+                          Telaah Berkas
+                        </button>
+                      )}
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
                           plan.status === 'completed'

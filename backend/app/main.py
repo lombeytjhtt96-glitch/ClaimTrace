@@ -3994,12 +3994,40 @@ def ingest_and_screen_claim(req: ClaimIngestSimulateRequest):
 def get_audit_chain():
     """
     Returns the complete SHA-256 hash chain and its cryptographic integrity verification status.
+    Also ensures Layer-3 Mobile JKN participant attestation logs are synchronized into the ledger.
     """
+    has_mobile_events = any(
+        "MOBILE" in str(b.get("event_type", "")).upper()
+        for b in audit_logger.chain
+    )
+    if not has_mobile_events:
+        for cid, claim in list(SYNTHETIC_CLAIMS_DATABASE.items())[:6]:
+            mm = getattr(claim, "mobile_meta", None)
+            if not mm:
+                continue
+            status_lbl = (
+                "SANGKALAN_PESERTA" if mm.respon_tidak_hadir > mm.respon_hadir
+                else ("MENUNGGU_RESPON" if mm.status_konfirmasi == "PENDING_UNCONFIRMED" else "HADIR_TERKONFIRMASI")
+            )
+            audit_logger.record_event(
+                event_type="MOBILE_JKN_CONFIRMATION",
+                claim_id=cid,
+                actor="Mobile JKN Telemetry Bridge (Device Attestation)",
+                payload={
+                    "faskes": claim.nama_faskes,
+                    "nominal": claim.nilai_klaim_rp,
+                    "status_konfirmasi": status_lbl,
+                    "respon_hadir": mm.respon_hadir,
+                    "respon_tidak_hadir": mm.respon_tidak_hadir,
+                    "attestation": "ECDSA-SHA256 Device Attestation (UU PDP No. 27/2022)",
+                },
+            )
     valid, broken_idx = audit_logger.verify_integrity()
     return {
         "integrity_verified": valid,
         "chain_length": len(audit_logger.chain),
         "broken_at_index": broken_idx if not valid else None,
+        "verified_at": datetime.now(timezone.utc).isoformat(),
         "chain": list(reversed(audit_logger.chain))  # Newest first for UI inspection
     }
 

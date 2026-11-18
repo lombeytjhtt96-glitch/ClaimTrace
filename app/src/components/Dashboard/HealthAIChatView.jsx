@@ -70,8 +70,8 @@ const SUGGESTED_PROMPTS = [
   {
     id: 'fisioterapi',
     title: 'Audit Klaster Fisioterapi RS Mitra Husada',
-    subtitle: 'Lonjakan 85 klaim baksos dalam 48 jam & skor risiko 94%',
-    prompt: 'Analisis temuan anomali klaster 85 klaim fisioterapi di RS Khusus Mitra Husada. Mengapa skor risikonya mencapai 94% dan apa rekomendasi tindakan verifikator?',
+    subtitle: 'Lonjakan 85 klaim baksos dalam 48 jam & skor risiko 87.0/100',
+    prompt: 'Analisis temuan anomali klaster 85 klaim fisioterapi di RS Khusus Mitra Husada (CLM-2026-8801). Mengapa skor risiko kompositnya mencapai 87.0/100 dan apa rekomendasi tindakan verifikator?',
     icon: Building2,
     badge: 'Kritis',
     badgeColorLight: 'bg-rose-50 text-rose-800 border-rose-300',
@@ -144,7 +144,7 @@ export default function HealthAIChatView({ onNavigateTab, currentUser, isLight: 
 Saya adalah asisten cerdas berarsitektur **LangGraph Multi-Agent** yang terhubung langsung ke basis data **ClaimTrace DSS BPJS Kesehatan**, memadukan 5 sub-agen spesialis:
 1. **Lapis 1 (Audit Klinis)**: Validasi kaidah koding ICD-10/ICD-9-CM & dekomposisi INA-CBG.
 2. **Lapis 2 (Regulasi DPJP)**: Pengecekan SIP SATUSEHAT Kemenkes & audit geovelocity OSRM.
-3. **Lapis 3 (Telemetri Mobile JKN)**: Konfirmasi kehadiran faktual peserta (*Zero-Knowledge Presence*).
+3. **Lapis 3 (Telemetri Mobile JKN)**: Konfirmasi kehadiran faktual peserta (*Cryptographic Device Attestation*).
 4. **CMA (Claims Management Agent)**: Pemantauan batas waktu SLA 10 hari kerja (Perpres 82/2018).
 5. **IA (Intervention Agent)**: Formulasi rekomendasi koreksi & Berita Acara Klarifikasi Bersama (BAKB).
 

@@ -60,11 +60,22 @@ export default function AuditLedger({ isLight: propIsLight }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [isVerifying, setIsVerifying] = useState(false);
+  const formatWibTimestamp = (isoOrDate) => {
+    try {
+      const d = isoOrDate ? new Date(isoOrDate) : new Date();
+      if (Number.isNaN(d.getTime())) return new Date().toLocaleString('id-ID') + ' WIB';
+      return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) +
+        ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\./g, ':') + ' WIB';
+    } catch {
+      return new Date().toLocaleString('id-ID') + ' WIB';
+    }
+  };
+
   const [verificationResult, setVerificationResult] = useState({
     verified: true,
     checkedBlocks: 8,
     integrityRate: 100,
-    timestamp: '24 Oktober 2026, 14:30:11 WIB'
+    timestamp: formatWibTimestamp()
   });
 
   // Baseline cryptographically verified ledger blocks conforming to backend app/security/audit_log.py
@@ -360,50 +371,46 @@ export default function AuditLedger({ isLight: propIsLight }) {
         if (!active || !data) return;
         const rawChain = data?.chain || (Array.isArray(data) ? data : []);
         if (rawChain.length > 0) {
-          // Deduplicate repeated AUTO_TRIAGE_SCORING events for the same claim_id (keep the most recent evaluation)
-          const seenAutoTriageClaims = new Set();
-          const dedupedRaw = [];
-          for (let i = rawChain.length - 1; i >= 0; i--) {
-            const item = rawChain[i];
-            const evType = item.event_type || item.action || 'AUTO_TRIAGE_SCORING';
-            const cId = item.claim_id || item.claimId || 'CLM-BPJS';
-            if (evType === 'AUTO_TRIAGE_SCORING') {
-              if (seenAutoTriageClaims.has(cId)) continue;
-              seenAutoTriageClaims.add(cId);
-            }
-            dedupedRaw.unshift(item);
-          }
-
-          const mapped = dedupedRaw.map((b, idx) => {
+          // Preserve true cryptographic chain order & indices from backend (Block #1 Genesis -> Block #N newest)
+          // Never re-index reversed arrays or drop linked blocks so prevHash ALWAYS matches predecessor's currentHash
+          const mapped = rawChain.map((b, idx) => {
             const cId = b.claim_id || b.claimId || 'CLM-BPJS';
             const meta = CLAIM_METADATA_MAP[cId] || {};
-            // Keep blockchain sequence continuous from block 1085 upwards without gaps
-            const blockIndex = 1085 + idx;
+            const authenticIndex = typeof b.index === 'number' ? b.index : (rawChain.length - idx);
+            const rawDetails = b.payload || b.details || {};
+            const dedupedIndicators = Array.isArray(rawDetails.indicators)
+              ? Array.from(new Set(rawDetails.indicators))
+              : rawDetails.indicators;
             return {
-              index: blockIndex,
+              index: authenticIndex,
               timestamp: b.timestamp,
               action: b.event_type || b.action || 'AUTO_TRIAGE_SCORING',
               actor: b.actor === 'CLAIMTRACE_CORE_ENGINE_V1' || b.actor === 'CLAIMTRACE_CORE_ENGINE' || !b.actor ? 'Mesin Utama ClaimTrace (L1-3)' : b.actor,
               actorNip: b.actor_nip || 'SYSTEM-DSS-01',
-              actorRole: b.actor_role || meta.actorRole || (b.actor?.includes('WASRIK') ? 'Pemeriksa Wasrik' : 'Mesin Penapisan Lapis 1-3'),
+              actorRole: b.actor_role || meta.actorRole || (b.actor?.includes('WASRIK') ? 'Pemeriksa Wasrik' : b.actor?.includes('Mobile') ? 'Jembatan Telemetri Mobile JKN' : 'Mesin Penapisan Lapis 1-3'),
               claimId: cId,
-              faskes: b.payload?.faskes || b.faskes || meta.faskes || 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
-              nominal: b.payload?.nominal || b.nominal || meta.nominal || 0,
-              prevHash: b.prev_hash || b.prevHash || '00000000000000000000000000000000',
-              currentHash: b.current_hash || b.currentHash || 'abcdef1234567890',
+              faskes: rawDetails?.faskes || b.faskes || meta.faskes || 'RSUPN Dr. Cipto Mangunkusumo Jakarta',
+              nominal: rawDetails?.nominal || b.nominal || meta.nominal || 0,
+              prevHash: b.prev_hash || b.previous_hash || b.prevHash || '0'.repeat(64),
+              currentHash: b.current_hash || b.block_hash || b.currentHash || 'abcdef1234567890',
               signature: b.signature || 'SIG-BPJS-SHA256-VALID',
-              details: b.payload || b.details || {}
+              details: dedupedIndicators !== undefined ? { ...rawDetails, indicators: dedupedIndicators } : rawDetails
             };
           });
 
-          // Merge and strictly sort in DESCENDING chronological order (newest block at the top)
-          const merged = [...mapped, ...initialBlocks.filter(p => !mapped.some(m => m.claimId === p.claimId))];
-          merged.sort((a, b) => b.index - a.index);
-          setBlocks(merged);
+          // Sort strictly descending by authentic backend block index (newest block #N at top, Genesis #1 at bottom)
+          const sortedChain = mapped.toSorted((a, b) => b.index - a.index);
+          setBlocks(sortedChain);
+          setVerificationResult({
+            verified: data?.integrity_verified !== false,
+            checkedBlocks: Number(data?.chain_length || sortedChain.length),
+            integrityRate: data?.integrity_verified === false ? 0 : 100,
+            timestamp: formatWibTimestamp(data?.verified_at || sortedChain[0]?.timestamp)
+          });
           setSelectedBlock(prev => {
-            if (!prev) return merged[0];
-            const updatedMatch = merged.find(m => m.index === prev.index || m.claimId === prev.claimId);
-            return updatedMatch || merged[0];
+            if (!prev) return sortedChain[0];
+            const updatedMatch = sortedChain.find(m => m.index === prev.index);
+            return updatedMatch || sortedChain[0];
           });
         }
       })

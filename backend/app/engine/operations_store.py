@@ -277,7 +277,7 @@ def _default_operations_state(claims_db: Dict[str, Any]) -> Dict[str, Any]:
             "pic_email": "jkn@assyifa.simulasi.test",
             "plan_title": "Rekonsiliasi Episode Berulang K-4-17-I (CLM-2026-8802)",
             "claim_id": "CLM-2026-8802",
-            "risk_level": "HIGH",
+            "risk_level": "SEVERE",
             "risk_score": 62,
             "status": "in_progress",
             "total_steps": 3,
@@ -1096,29 +1096,45 @@ class OperationsStore:
         with self._lock:
             self._ensure_init(claims_db)
             logs = []
-            for cid, claim in claims_db.items():
+            for idx, (cid, claim) in enumerate(claims_db.items()):
                 mm = claim.mobile_meta
                 token = claim.peserta_token_aes
                 nik_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+                hash_label = f"SHA256_{nik_hash[:12]}"
                 status = (
                     "DENIED" if mm.respon_tidak_hadir > mm.respon_hadir
                     else ("PENDING" if mm.status_konfirmasi == "PENDING_UNCONFIRMED" else "CONFIRMED")
                 )
+                # Deterministic yet varied realistic operational dispatch times & response latencies (WIB)
+                seed_int = int(nik_hash[:8], 16) + idx * 37
+                dispatch_hour = 8 + (seed_int % 10)          # 08:xx - 17:xx WIB
+                dispatch_min = (seed_int // 10) % 60         # 00 - 59
+                latency_min = (3 + ((seed_int // 600) % 29)) if status != "PENDING" else 0  # 3 - 31 menit
+                resp_total_min = dispatch_hour * 60 + dispatch_min + latency_min
+                resp_hour = (resp_total_min // 60) % 24
+                resp_min = resp_total_min % 60
+                dispatched_str = f"{claim.tanggal_layanan} {dispatch_hour:02d}:{dispatch_min:02d} WIB"
+                responded_str = (
+                    f"{claim.tanggal_layanan} {resp_hour:02d}:{resp_min:02d} WIB"
+                    if status != "PENDING"
+                    else "Menunggu Respon"
+                )
                 logs.append({
                     "id": f"TEL-{cid[-4:]}",
                     "claimId": cid,
-                    "participantName": f"Peserta Terproteksi ({token[:15]})",
+                    "participantName": f"Peserta Terproteksi ({hash_label})",
                     "nikHash": nik_hash,
                     "faskes": claim.nama_faskes,
                     "procedure": claim.deskripsi_cbg,
-                    "dispatchedAt": f"{claim.tanggal_layanan} 10:00 WIB",
-                    "respondedAt": f"{claim.tanggal_layanan} 10:14 WIB" if status != "PENDING" else "Menunggu Respon",
-                    "latencyMin": 14 if status != "PENDING" else 0,
+                    "dispatchedAt": dispatched_str,
+                    "respondedAt": responded_str,
+                    "latencyMin": latency_min,
                     "status": status,
                     "confirmedCount": mm.respon_hadir,
                     "deniedCount": mm.respon_tidak_hadir,
-                    "channel": "Mobile JKN Push (FCM-Encrypted)",
-                    "zkProof": f"0x{nik_hash[:8]}...{nik_hash[-4:]} (Zero-PHI Attestation)"
+                    "channel": "Mobile JKN Push (TLS/FCM)",
+                    "zkProof": f"0x{nik_hash[:8]}...{nik_hash[-4:]} (Device Attestation)",
+                    "deviceAttestation": f"ECDSA-SHA256:{nik_hash[:10]}...{nik_hash[-4:]}"
                 })
             # Prepend newly triggered live push events
             extra = copy.deepcopy(self.state.get("mobile_push_logs", []))
@@ -1147,7 +1163,7 @@ class OperationsStore:
             entry = {
                 "id": f"TEL-LIVE-{int(now.timestamp()) % 10000}",
                 "claimId": claim_id,
-                "participantName": f"Peserta Terproteksi ({token[:15]})",
+                "participantName": f"Peserta Terproteksi (SHA256_{nik_hash[:12]})",
                 "nikHash": nik_hash,
                 "faskes": claim.nama_faskes if claim else "FKRTL Terpantau",
                 "procedure": claim.deskripsi_cbg if claim else "Verifikasi Presensi Tindakan Medis",
@@ -1155,8 +1171,9 @@ class OperationsStore:
                 "respondedAt": "Terkirim (Menunggu Respon Biner)",
                 "latencyMin": 0,
                 "status": "PENDING",
-                "channel": "Mobile JKN Push (FCM-Encrypted)",
-                "zkProof": f"0x{nik_hash[:8]}...{nik_hash[-4:]} (FCM Queued)"
+                "channel": "Mobile JKN Push (TLS/FCM)",
+                "zkProof": f"0x{nik_hash[:8]}...{nik_hash[-4:]} (Attestation Queued)",
+                "deviceAttestation": f"ECDSA-SHA256:{nik_hash[:10]}...{nik_hash[-4:]}"
             }
             push_logs = self.state.setdefault("mobile_push_logs", [])
             push_logs.insert(0, entry)

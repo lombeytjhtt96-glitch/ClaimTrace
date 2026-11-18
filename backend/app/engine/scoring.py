@@ -417,31 +417,8 @@ def evaluate_claim_triage(claim: ClaimInput) -> TriageResult:
         )
 
     # 7. AI Automatic Anomaly Detection (Isolation Forest + ChromaDB Semantic Vector + Graph Sequence)
-    ai_prediction = None
-    ai_category_labels = {
-        "PHANTOM_BILLING": "Klaim Fiktif (Phantom Billing)",
-        "REPEAT_BILLING": "Penagihan Berulang (Repeat Billing)",
-        "IMPOSSIBLE_TRAVEL": "Tabrakan Spatiotemporal DPJP (Impossible Travel)",
-        "UPCODING_SEVERITY": "Upcoding Tingkat Keparahan INA-CBG",
-        "ADMINISTRATIVE_HARD_TRIGGER": "Pelanggaran Izin Praktik DPJP",
-        "ADMINISTRATIVE_UNCERTAINTY": "Ketidakpastian Sinkronisasi Administratif",
-        "NORMAL_CLAIM": "Klaim Normal Terverifikasi",
-    }
-    try:
-        from app.engine.ai_anomaly_detector import ai_anomaly_engine
-        ai_prediction = ai_anomaly_engine.detect_anomaly(claim)
-        if ai_prediction and ai_prediction.is_anomaly:
-            readable_ai_cat = ai_category_labels.get(
-                ai_prediction.primary_anomaly_category,
-                ai_prediction.primary_anomaly_category.replace("_", " ").title()
-            )
-            indikator.append(
-                f"IND-AI-ANOMALY: Deteksi Otomatis Mesin AI ClaimTrace "
-                f"mengidentifikasi anomali {readable_ai_cat} "
-                f"(Skor Anomali AI: {ai_prediction.anomaly_score}%, Keyakinan: {ai_prediction.confidence_score}%)"
-            )
-    except Exception:
-        pass
+    # 7. AI anomaly prediction already computed in Step 4 above (deduplicate indicators)
+    indikator = list(dict.fromkeys(indikator))
 
     # 8. Generate Cluster Graph
     graph_data = generate_cluster_graph(claim)
