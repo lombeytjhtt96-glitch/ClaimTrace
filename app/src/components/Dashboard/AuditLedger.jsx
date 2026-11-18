@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, cachedAuthGetJson } from '../../services/apiConfig';
+import { useAuditLogsQuery } from '../../lib/queryClient';
 import { useCockpitTheme } from '../../hooks/useCockpitTheme';
 import { motion, AnimatePresence } from 'motion/react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
@@ -289,14 +290,13 @@ export default function AuditLedger({ isLight: propIsLight }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showReceiptsModal]);
 
-  // Fetch live logs from backend if available & chain seamlessly
+  // Fetch live logs via TanStack Query v5 & chain seamlessly
+  const { data: auditLogsData } = useAuditLogsQuery(true);
   useEffect(() => {
-    let active = true;
-    cachedAuthGetJson(`${API_BASE_URL}/api/v1/audit-logs`)
-      .then((data) => {
-        if (!active || !data) return;
-        const rawChain = data?.chain || (Array.isArray(data) ? data : []);
-        if (rawChain.length > 0) {
+    const data = auditLogsData;
+    if (!data) return;
+    const rawChain = data?.chain || (Array.isArray(data) ? data : []);
+    if (rawChain.length > 0) {
           // Preserve true cryptographic chain order & indices from backend (Block #1 Genesis -> Block #N newest)
           // Never re-index reversed arrays or drop linked blocks so prevHash ALWAYS matches predecessor's currentHash
           const mapped = rawChain.map((b, idx) => {
@@ -396,15 +396,8 @@ export default function AuditLedger({ isLight: propIsLight }) {
             const updatedMatch = sortedChain.find(m => m.index === prev.index);
             return updatedMatch || sortedChain[0];
           });
-        }
-      })
-      .catch(() => {
-        // Fallback to secure offline audit trail cache silently
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    }
+  }, [auditLogsData]);
 
   const handleVerifyLedger = async () => {
     setIsVerifying(true);

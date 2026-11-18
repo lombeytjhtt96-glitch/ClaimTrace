@@ -529,6 +529,11 @@ app.include_router(fhir_router)
 from app.routers.pillar_upgrade_router import pillar_router
 app.include_router(pillar_router)
 
+# ClaimTrace Redis Cache & ARQ Async Background Worker Router
+from app.routers.async_jobs_router import async_jobs_router
+from app.infra.redis_client import cache_get_json, cache_set_json, get_redis_status
+app.include_router(async_jobs_router)
+
 import uuid
 import logging
 _security_logger = logging.getLogger("claimtrace.security")
@@ -608,11 +613,15 @@ def root():
 @app.head("/api/v1/health", include_in_schema=False)
 def health_check():
     valid, broken_idx = audit_logger.verify_integrity()
+    redis_diag = get_redis_status()
     return {
         "status": "healthy",
         "audit_chain_length": len(audit_logger.chain),
         "audit_integrity_valid": valid,
         "active_claims_count": len(SYNTHETIC_CLAIMS_DATABASE),
+        "redis_connected": redis_diag.get("redis_connected", False),
+        "async_worker_active": redis_diag.get("worker_active", False),
+        "async_queue": redis_diag.get("queue_name", "claimtrace:arq"),
         "framework": "FastAPI (Python 3.14)",
         "security_compliance": "UU PDP No. 27/2022 & Perpres 82/2018",
         "ai_engine": "Local On-Premise (Zero-Cloud Exfiltration)",
@@ -6833,19 +6842,24 @@ def get_ba_pending_dispute_printable(
 
 @app.get("/api/v1/system/sidebar-badges")
 def get_dynamic_sidebar_badges():
-    """Mengembalikan jumlah dinamis berkas aktif dan sesi ditandai untuk badge navigasi."""
+    """Mengembalikan jumlah dinamis berkas aktif dan sesi ditandai (dengan akselerasi cache Redis 10 detik)."""
+    cached = cache_get_json("sidebar_badges")
+    if isinstance(cached, dict) and cached.get("audit_chain_length") == len(audit_logger.chain):
+        return cached
     cases = operations_store.list_cases(SYNTHETIC_CLAIMS_DATABASE)
     flags = operations_store.list_flags(SYNTHETIC_CLAIMS_DATABASE)
     open_flags = sum(1 for f in flags if f.get("status") != "resolved")
     total_cluster_claims = sum(c.episode_meta.jumlah_klaim_klaster for c in SYNTHETIC_CLAIMS_DATABASE.values())
     pending_cases = sum(1 for c in cases if c.get("status") != "resolved")
-    return {
+    payload = {
         "queue_count": total_cluster_claims,
         "total_claims": len(SYNTHETIC_CLAIMS_DATABASE),
         "pending_cases": pending_cases,
         "flagged_count": open_flags,
-        "audit_chain_length": len(audit_logger.chain)
+        "audit_chain_length": len(audit_logger.chain),
     }
+    cache_set_json("sidebar_badges", payload, ttl_seconds=10)
+    return payload
 
 
 @app.get("/api/v1/operations/cases")

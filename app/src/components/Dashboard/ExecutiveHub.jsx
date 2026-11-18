@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { API_BASE_URL, authFetch, getCachedJsonSync, cachedAuthGetJson } from '../../services/apiConfig';
+import { useClaimsQuery } from '../../lib/queryClient';
 import { exportCsvFile } from '../../utils/exportCsv';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1862,51 +1863,47 @@ function RecentClaimsBentoCard({ isLight, onInspectCase, onNavigateToQueue }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('score');
 
+  const { data: claimsPayload } = useClaimsQuery(15, true);
   useEffect(() => {
-    let active = true;
-    cachedAuthGetJson(`${API_BASE_URL}/api/v1/claims?limit=15`)
-      .then((payload) => {
-        if (!active || !payload) return;
-        const list = Array.isArray(payload) ? payload : (payload.claims || payload.data || []);
-        if (!Array.isArray(list) || list.length === 0) return;
-        const mapped = list.slice(0, 12).map((item) => {
-          const c = item?.claim || item;
-          const t = item?.triage || item;
-          const rawLane = String(t.triage_lane || c.triage_lane || item.lane || 'GREEN').toUpperCase();
-          const lane = rawLane.includes('RED') || rawLane.includes('MERAH') ? 'red' : rawLane.includes('YELLOW') || rawLane.includes('KUNING') ? 'yellow' : 'green';
-          const claimId = c.claim_id || item.id;
-          const cbgCode = c.ina_cbg_code || c.code || 'J-4-10-II';
-          const explicitType = String(c.jenis_pelayanan || '').toUpperCase();
-          const serviceType =
-            explicitType === 'RJTL' || explicitType === 'RITL'
-              ? explicitType
-              : (String(cbgCode).endsWith('-0') || String(c.fkl10_tingkat_layanan || '').toLowerCase().includes('rawat jalan'))
-              ? 'RJTL'
-              : 'RITL';
-          const isRepeatBilling = Boolean(c.episode_meta?.indikasi_repeat_billing) || claimId === 'CLM-2026-8802';
-          const singleEpisodeIds = new Set(['CLM-2026-8805', 'CLM-2026-8806', 'CLM-2026-FPK8908', 'CLM-2026-FPK8911']);
-          const rawCluster = Number(c.sep_count ?? c.episode_meta?.jumlah_klaim_klaster ?? item.clusterCount ?? 1);
-          const sepCount = singleEpisodeIds.has(claimId) ? 1 : rawCluster;
-          return {
-            id: claimId,
-            hospital: c.nama_faskes || c.faskes_name || item.hospital || 'RS Mitra JKN',
-            dpjp: c.dpjp_meta?.nama_dpjp_alias || c.nama_dpjp || item.dpjp || 'DPJP Terdaftar',
-            code: cbgCode,
-            serviceType,
-            isRepeatBilling,
-            tariffRp: Number(c.fkl47_biaya_tagih ?? c.nilai_klaim_rp ?? c.claimed_tariff_rp ?? 0),
-            clusterCount: sepCount,
-            score: Number(t.final_priority_score ?? item.score ?? 0),
-            lane,
-            slaDays: Number(t.sla_deadline_days ?? c.sla_deadline_days ?? item.slaDays ?? 5),
-            source: c.episode_meta?.cluster_id ? 'Klaster Anomali' : (c.jenis_pengajuan || 'Reguler FPK'),
-          };
-        });
-        if (mapped.length > 0) setRows(mapped);
-      })
-      .catch(() => {});
-    return () => { active = false; };
-  }, []);
+    const payload = claimsPayload;
+    if (!payload) return;
+    const list = Array.isArray(payload) ? payload : (payload.claims || payload.data || []);
+    if (!Array.isArray(list) || list.length === 0) return;
+    const mapped = list.slice(0, 12).map((item) => {
+      const c = item?.claim || item;
+      const t = item?.triage || item;
+      const rawLane = String(t.triage_lane || c.triage_lane || item.lane || 'GREEN').toUpperCase();
+      const lane = rawLane.includes('RED') || rawLane.includes('MERAH') ? 'red' : rawLane.includes('YELLOW') || rawLane.includes('KUNING') ? 'yellow' : 'green';
+      const claimId = c.claim_id || item.id;
+      const cbgCode = c.ina_cbg_code || c.code || 'J-4-10-II';
+      const explicitType = String(c.jenis_pelayanan || '').toUpperCase();
+      const serviceType =
+        explicitType === 'RJTL' || explicitType === 'RITL'
+          ? explicitType
+          : (String(cbgCode).endsWith('-0') || String(c.fkl10_tingkat_layanan || '').toLowerCase().includes('rawat jalan'))
+          ? 'RJTL'
+          : 'RITL';
+      const isRepeatBilling = Boolean(c.episode_meta?.indikasi_repeat_billing) || claimId === 'CLM-2026-8802';
+      const singleEpisodeIds = new Set(['CLM-2026-8805', 'CLM-2026-8806', 'CLM-2026-FPK8908', 'CLM-2026-FPK8911']);
+      const rawCluster = Number(c.sep_count ?? c.episode_meta?.jumlah_klaim_klaster ?? item.clusterCount ?? 1);
+      const sepCount = singleEpisodeIds.has(claimId) ? 1 : rawCluster;
+      return {
+        id: claimId,
+        hospital: c.nama_faskes || c.faskes_name || item.hospital || 'RS Mitra JKN',
+        dpjp: c.dpjp_meta?.nama_dpjp_alias || c.nama_dpjp || item.dpjp || 'DPJP Terdaftar',
+        code: cbgCode,
+        serviceType,
+        isRepeatBilling,
+        tariffRp: Number(c.fkl47_biaya_tagih ?? c.nilai_klaim_rp ?? c.claimed_tariff_rp ?? 0),
+        clusterCount: sepCount,
+        score: Number(t.final_priority_score ?? item.score ?? 0),
+        lane,
+        slaDays: Number(t.sla_deadline_days ?? c.sla_deadline_days ?? item.slaDays ?? 5),
+        source: c.episode_meta?.cluster_id ? 'Klaster Anomali' : (c.jenis_pengajuan || 'Reguler FPK'),
+      };
+    });
+    if (mapped.length > 0) setRows(mapped);
+  }, [claimsPayload]);
 
   const visibleRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: claimtrace-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - claimtrace_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -13,8 +28,28 @@ services:
       - APP_ENV=production
       - CLAIMTRACE_LLM_ENDPOINT=${CLAIMTRACE_LLM_ENDPOINT:-}
       - CLAIMTRACE_LLM_API_KEY=${CLAIMTRACE_LLM_API_KEY:-}
+      - REDIS_URL=redis://redis:6379/0
       - HOST=0.0.0.0
       - PORT=8000
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/data:/app/data
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: claimtrace-async-worker
+    restart: unless-stopped
+    command: ["python3", "-m", "arq", "app.workers.async_worker.WorkerSettings"]
+    environment:
+      - APP_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend/data:/app/data
 
@@ -28,3 +63,6 @@ services:
       - "3000:80"
     depends_on:
       - backend
+
+volumes:
+  claimtrace_redis_data:

@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { claimtraceQueryKeys, useSidebarBadgesQuery } from './lib/queryClient';
 import { StatsigProvider, useClientAsyncInit } from '@statsig/react-bindings';
 import { StatsigAutoCapturePlugin } from '@statsig/web-analytics';
 import { StatsigSessionReplayPlugin } from '@statsig/session-replay';
@@ -273,44 +276,71 @@ export default function App() {
     }
   }, [client]);
 
-  // Fail-closed initial router: NEVER opens landing or unauthenticated dashboard
-  const getInitialResetToken = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('token') || '';
+  const routerLocation = useLocation();
+  const routerNavigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const parseRouterLocation = React.useCallback((loc) => {
+    const pathname = (loc?.pathname || '/').replace(/\/+$/, '') || '/';
+    const params = new URLSearchParams(loc?.search || '');
+    const hashView = (loc?.hash || '').replace('#', '');
+    const segments = pathname.split('/').filter(Boolean);
+
+    let view = params.get('view') || hashView || '';
+    let pathTab = null;
+    let pathSub = null;
+
+    if (segments[0] === 'reset-password') {
+      view = 'reset_password';
+    } else if (segments[0] === 'logout') {
+      view = 'logout';
+    } else if (segments[0] === 'login') {
+      view = 'login';
+    } else if (segments[0] === 'dashboard') {
+      view = 'dashboard';
+      if (segments[1]) pathTab = segments[1];
+      if (segments[2]) pathSub = segments[2];
     }
-    return '';
-  };
+
+    const rawTab = pathTab || params.get('tab');
+    const explicitSub = pathSub || params.get('sub') || undefined;
+    let tab = 'executive';
+    let sub = undefined;
+    if (view === 'health_ai') {
+      tab = 'health_ai_chat';
+    } else if (rawTab && LEGACY_TAB_MAP[rawTab]) {
+      const mapped = LEGACY_TAB_MAP[rawTab];
+      tab = mapped.tab;
+      sub = explicitSub || mapped.sub;
+    }
+
+    const modeParam = params.get('mode');
+    const mode = ['dashboard', 'split', 'mobile'].includes(modeParam) ? modeParam : 'dashboard';
+    const token = params.get('token') || '';
+
+    return { view, tab, sub, mode, token };
+  }, []);
+
+  // Fail-closed initial router powered by React Router location (supports both /dashboard/:tab/:sub and ?tab=&sub=)
+  const initialParsed = parseRouterLocation(routerLocation);
+  const getInitialResetToken = () => initialParsed.token;
 
   const getInitialView = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const v = params.get('view') || window.location.hash.replace('#', '');
-      if (v === 'reset_password') return 'reset_password';
-      if (v === 'logout') return 'logout';
-      if (hasValidSessionStorage()) {
-        if (v === 'dashboard' || v === 'health_ai' || !v || v === 'login' || v === 'landing' || v === 'mfa') {
-          return v === 'login' ? 'login' : 'dashboard';
-        }
+    const v = initialParsed.view;
+    if (v === 'reset_password') return 'reset_password';
+    if (v === 'logout') return 'logout';
+    if (hasValidSessionStorage()) {
+      if (v === 'dashboard' || v === 'health_ai' || !v || v === 'login' || v === 'landing' || v === 'mfa') {
+        return v === 'login' ? 'login' : 'dashboard';
       }
     }
     return 'login';
   };
 
-  const resolveInitialRoute = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const v = params.get('view');
-      if (v === 'health_ai') return { tab: 'health_ai_chat', sub: undefined };
-      const rawTab = params.get('tab');
-      const mapped = LEGACY_TAB_MAP[rawTab];
-      const explicitSub = params.get('sub') || undefined;
-      if (mapped) {
-        return { tab: mapped.tab, sub: explicitSub || mapped.sub };
-      }
-    }
-    return { tab: 'executive', sub: undefined };
-  };
+  const resolveInitialRoute = () => ({
+    tab: initialParsed.tab,
+    sub: initialParsed.sub,
+  });
 
   // Global View Router: strictly 'login' | 'reset_password' | 'logout' | 'dashboard'
   const [resetToken, setResetToken] = useState(getInitialResetToken);
@@ -321,15 +351,7 @@ export default function App() {
   const [sessionIdleSeconds, setSessionIdleSeconds] = useState(null);
 
   // Mode tampilan dalam Cockpit: 'dashboard' (Full Cockpit) | 'split' (Dual View HP & Cockpit) | 'mobile' (Only Phone)
-  const getInitialViewMode = () => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const m = params.get('mode');
-      if (['dashboard', 'split', 'mobile'].includes(m)) return m;
-    }
-    return 'dashboard';
-  };
-  const [viewMode, setViewMode] = useState(getInitialViewMode);
+  const [viewMode, setViewMode] = useState(() => initialParsed.mode);
 
   // Consolidated 10-Module Dashboard Router + Per-Hub Sub-Tab State
   const initialRoute = resolveInitialRoute();
@@ -372,7 +394,7 @@ export default function App() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Sync state to URL while enforcing fail-closed login/dashboard boundaries
+  // Sync state to URL via React Router while enforcing fail-closed login/dashboard boundaries
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.dataset.authView = authView;
@@ -382,94 +404,78 @@ export default function App() {
         el.style.visibility = shouldHideBadge ? 'hidden' : '';
       });
     }
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      const canShowDashboardUrl =
-        authView === 'dashboard' &&
-        (authStatusVerified || hasValidSessionStorage());
-      const safeUrlView = canShowDashboardUrl
-        ? 'dashboard'
-        : authView === 'reset_password'
-          ? 'reset_password'
-          : authView === 'logout'
-            ? 'logout'
-            : 'login';
-      if (safeUrlView === 'login') {
-        url.searchParams.delete('view');
-        url.searchParams.delete('tab');
-        url.searchParams.delete('sub');
-        url.searchParams.delete('mode');
-        url.searchParams.delete('token');
-        if (url.hash === '#login') {
-          url.hash = '';
-        }
-      } else {
-        url.searchParams.set('view', safeUrlView);
-        if (safeUrlView === 'dashboard') {
-          url.searchParams.set('tab', dashboardTab);
-          const activeSub = HUB_SUB_DEFAULTS[dashboardTab] ? hubSubTabs[dashboardTab] : null;
-          if (activeSub && activeSub !== HUB_SUB_DEFAULTS[dashboardTab]) {
-            url.searchParams.set('sub', activeSub);
-          } else {
-            url.searchParams.delete('sub');
-          }
-          if (viewMode !== 'dashboard') {
-            url.searchParams.set('mode', viewMode);
-          } else {
-            url.searchParams.delete('mode');
-          }
-        } else {
-          url.searchParams.delete('tab');
-          url.searchParams.delete('sub');
-          url.searchParams.delete('mode');
-        }
-        if (safeUrlView === 'reset_password' && resetToken) {
-          url.searchParams.set('token', resetToken);
-        } else {
-          url.searchParams.delete('token');
-        }
+
+    const canShowDashboardUrl =
+      authView === 'dashboard' &&
+      (authStatusVerified || hasValidSessionStorage());
+    const safeUrlView = canShowDashboardUrl
+      ? 'dashboard'
+      : authView === 'reset_password'
+        ? 'reset_password'
+        : authView === 'logout'
+          ? 'logout'
+          : 'login';
+
+    let nextPathname = '/login';
+    const nextParams = new URLSearchParams();
+
+    if (safeUrlView === 'login') {
+      nextPathname = '/login';
+    } else if (safeUrlView === 'logout') {
+      nextPathname = '/logout';
+    } else if (safeUrlView === 'reset_password') {
+      nextPathname = '/reset-password';
+      if (resetToken) nextParams.set('token', resetToken);
+    } else {
+      const activeSub = HUB_SUB_DEFAULTS[dashboardTab] ? hubSubTabs[dashboardTab] : null;
+      const hasCustomSub = Boolean(activeSub && activeSub !== HUB_SUB_DEFAULTS[dashboardTab]);
+      nextPathname = hasCustomSub
+        ? `/dashboard/${dashboardTab}/${activeSub}`
+        : `/dashboard/${dashboardTab}`;
+      if (viewMode !== 'dashboard') {
+        nextParams.set('mode', viewMode);
       }
-      window.history.replaceState(null, '', url.toString());
     }
-  }, [authView, dashboardTab, hubSubTabs, viewMode, authStatusVerified, resetToken]);
 
-  // Handle browser Back & Forward navigation buttons (fail-closed popstate synchronization)
+    const nextSearch = nextParams.toString() ? `?${nextParams.toString()}` : '';
+    const currentFull = `${routerLocation.pathname}${routerLocation.search}`;
+    const nextFull = `${nextPathname}${nextSearch}`;
+    if (currentFull !== nextFull) {
+      routerNavigate(nextFull, { replace: true });
+    }
+  }, [authView, dashboardTab, hubSubTabs, viewMode, authStatusVerified, resetToken, routerLocation.pathname, routerLocation.search, routerNavigate]);
+
+  // Synchronize React Router location changes (Browser Back/Forward & deep path links)
   useEffect(() => {
-    const handlePopState = () => {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const v = params.get('view') || window.location.hash.replace('#', '') || 'login';
-        if (v === 'dashboard') {
-          if (hasValidSessionStorage()) {
-            setAuthView('dashboard');
-          } else {
-            setAuthStatusVerified(false);
-            setSessionNotice('Akses dasbor ditolak: sesi verifikator belum terautentikasi.');
-            setAuthView('login');
-            return;
-          }
-        } else if (v === 'reset_password') {
-          setResetToken(params.get('token') || '');
-          setAuthView('reset_password');
-        } else if (v === 'logout') {
-          setAuthView('logout');
-        } else {
-          setAuthView('login');
-        }
-        const rawTab = params.get('tab');
-        if (rawTab && LEGACY_TAB_MAP[rawTab]) {
-          setDashboardTab(rawTab, params.get('sub') || undefined);
-        }
-        const m = params.get('mode');
-        if (m && ['dashboard', 'split', 'mobile'].includes(m)) {
-          setViewMode(m);
-        }
+    const parsed = parseRouterLocation(routerLocation);
+    if (parsed.view === 'dashboard') {
+      if (hasValidSessionStorage() || authStatusVerified) {
+        if (authView !== 'dashboard') setAuthView('dashboard');
+      } else {
+        setAuthStatusVerified(false);
+        setSessionNotice('Akses dasbor ditolak: sesi verifikator belum terautentikasi.');
+        if (authView !== 'login') setAuthView('login');
+        return;
       }
-    };
+    } else if (parsed.view === 'reset_password') {
+      if (parsed.token !== resetToken) setResetToken(parsed.token);
+      if (authView !== 'reset_password') setAuthView('reset_password');
+    } else if (parsed.view === 'logout') {
+      if (authView !== 'logout') setAuthView('logout');
+    }
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+    if (parsed.view === 'dashboard' || parsed.view === 'health_ai') {
+      if (parsed.tab && parsed.tab !== dashboardTab) {
+        setRawDashboardTab(parsed.tab);
+      }
+      if (parsed.sub && HUB_SUB_DEFAULTS[parsed.tab] && hubSubTabs[parsed.tab] !== parsed.sub) {
+        setHubSubTabs((prev) => ({ ...prev, [parsed.tab]: parsed.sub }));
+      }
+      if (parsed.mode !== viewMode) {
+        setViewMode(parsed.mode);
+      }
+    }
+  }, [routerLocation.pathname, routerLocation.search, parseRouterLocation]);
 
   // Ref container scroll utama workspace dashboard
   const mainContentRef = useRef(null);
@@ -500,41 +506,24 @@ export default function App() {
     };
   }, [dashboardTab, authView, selectedCase, viewMode]);
 
-  // Live Sidebar Badges synchronized with Claim Queue & Operations Store (persisted in sessionStorage so counts never flicker across tabs)
-  const badgesUrl = `${API_BASE_URL}/api/v1/system/sidebar-badges`;
-  const [sidebarBadges, setSidebarBadges] = useState(() => {
-    const mem = getCachedJsonSync(badgesUrl);
-    if (mem) return mem;
-    try {
-      const saved = JSON.parse(sessionStorage.getItem('claimtrace_sidebar_badges_v1') || 'null');
-      if (saved && typeof saved === 'object') return saved;
-    } catch {}
-    return {
-      total_claims: null,
-      queue_count: null,
-      pending_cases: null,
-      flagged_count: null,
-      audit_chain_length: null,
-    };
-  });
+  // Live Sidebar Badges powered by TanStack Query v5 + Redis backend cache
+  const { data: liveSidebarBadges } = useSidebarBadgesQuery(authView === 'dashboard' && authStatusVerified);
+  const sidebarBadges = liveSidebarBadges || {
+    total_claims: null,
+    queue_count: null,
+    pending_cases: null,
+    flagged_count: null,
+    audit_chain_length: null,
+  };
 
   useEffect(() => {
     if (authView !== 'dashboard' || !authStatusVerified) return;
-    let active = true;
-    const refreshBadges = async () => {
-      try {
-        const data = await cachedAuthGetJson(badgesUrl);
-        if (data && active) {
-          setSidebarBadges(data);
-          try { sessionStorage.setItem('claimtrace_sidebar_badges_v1', JSON.stringify(data)); } catch {}
-        }
-      } catch {
-        // Keep previous badge counts if temporarily offline
-      }
-    };
-    refreshBadges();
     prefetchDashboardHotEndpoints();
-    const handleOpsUpdated = () => refreshBadges();
+    const handleOpsUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: claimtraceQueryKeys.sidebarBadges });
+      queryClient.invalidateQueries({ queryKey: claimtraceQueryKeys.auditLogs });
+      queryClient.invalidateQueries({ queryKey: ['claims'] });
+    };
     const handleSettingsUpdated = (evt) => {
       const mins = Number(evt?.detail?.session_timeout_minutes);
       if (Number.isFinite(mins) && mins >= 5 && mins <= 120) {
@@ -547,12 +536,11 @@ export default function App() {
     window.addEventListener('claimtrace:ops-updated', handleOpsUpdated);
     window.addEventListener('claimtrace:settings-updated', handleSettingsUpdated);
     return () => {
-      active = false;
       window.removeEventListener('claimtrace:operations-updated', handleOpsUpdated);
       window.removeEventListener('claimtrace:ops-updated', handleOpsUpdated);
       window.removeEventListener('claimtrace:settings-updated', handleSettingsUpdated);
     };
-  }, [authView, authStatusVerified, badgesUrl]);
+  }, [authView, authStatusVerified, queryClient]);
 
   // Navigasi Sidebar Verifikator Terfokus (10 Hub Kerja dalam 3 Kelompok)
   const sidebarNavGroups = [
@@ -715,6 +703,7 @@ export default function App() {
       // Tetap cabut sesi lokal meskipun koneksi backend terputus (fail-closed)
     }
     clearSessionStorage({ broadcast: true });
+    queryClient.clear();
     setLastLoggedOutUser(userSnapshot);
     setCurrentUser(null);
     setAuthStatusVerified(false);

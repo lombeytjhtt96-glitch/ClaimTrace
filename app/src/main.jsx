@@ -1,8 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'motion/react'
 import { injectSpeedInsights } from '@vercel/speed-insights'
 import App from './App.jsx'
+import { queryClient } from './lib/queryClient.js'
 import './index.css'
 import './styles/clinical-precision.css'
 
@@ -41,8 +44,12 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <MotionConfig reducedMotion="user">
-      <App />
-    </MotionConfig>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <MotionConfig reducedMotion="user">
+          <App />
+        </MotionConfig>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>,
 )
