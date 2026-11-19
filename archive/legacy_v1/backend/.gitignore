@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.local
+*.log
+/data/bpjs_sample_2025/
+/data/*.duckdb*
+*.duckdb*
+chroma_db/
