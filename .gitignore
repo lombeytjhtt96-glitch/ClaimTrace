@@ -124,3 +124,6 @@ archive/legacy_v1/**/.pytest_cache/
 archive/legacy_v1/**/bpjs_sample_2025/
 archive/legacy_v1/**/claimtrace_warehouse.duckdb*
 archive/legacy_v1/**/chroma_db/
+
+!archive/data_sampel_scripts/**
+!archive/misc_scripts/**
