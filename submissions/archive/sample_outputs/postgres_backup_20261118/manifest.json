@@ -1,0 +1,54 @@
+{
+  "backup_id": "claimtrace-backup-20261118-105606",
+  "created_at": "2026-11-18T10:56:06.021957+00:00",
+  "trigger": "api_manual_trigger",
+  "postgres": {
+    "included": true,
+    "database": "claimtrace_db",
+    "size_bytes": 101132,
+    "tables": {
+      "claims": 11,
+      "audit_ledger_blocks": 28,
+      "async_job_runs": 23,
+      "operations_snapshots": 5
+    }
+  },
+  "redis": {
+    "included": true,
+    "redis_connected": true,
+    "bgsave_triggered": true,
+    "keyspace_keys": 58
+  },
+  "state_files": [
+    {
+      "name": "audit_ledger_chain.jsonl",
+      "size_bytes": 25387,
+      "sha256": "a9e50a39a592000a80713e676304d734e8007f05f270a1b8c81145b817b1298c"
+    },
+    {
+      "name": "claims_state.json",
+      "size_bytes": 33904,
+      "sha256": "e036f75f1965d5adca66d18de079b53e5bd5b31b265a8e490b8ac67b8fed6e91"
+    },
+    {
+      "name": "operations_state.json",
+      "size_bytes": 21590,
+      "sha256": "6045e099afdd71b661507b2e4459ea767e586f978b47c0e5721c9aef70efc977"
+    },
+    {
+      "name": "appeals_records.json",
+      "size_bytes": 4156,
+      "sha256": "bba6694130b8fa5543d21aa9f9944638859fb8527e19d2c542a42a969f1aace3"
+    },
+    {
+      "name": "wbs_reports.json",
+      "size_bytes": 23917,
+      "sha256": "e252a8721559e9cd86e5d1325b200289fbdc7f154e36fe6d4036228135177385"
+    },
+    {
+      "name": "submitted_document_bundles.json",
+      "size_bytes": 3133,
+      "sha256": "361d47c470ba883c9adf56521130d06d6f32fc3716020586387812c20bdf6564"
+    }
+  ]
+}

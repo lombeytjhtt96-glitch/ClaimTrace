@@ -1,0 +1,26 @@
+{
+  "captured_at": "2026-11-18T10:56:06.192247+00:00",
+  "bgsave_triggered": true,
+  "status": {
+    "redis_connected": true,
+    "mode": "redis_live",
+    "redis_url_sanitized": "redis://127.0.0.1:6379/0",
+    "redis_version": "8.0.5",
+    "latency_ms": 0.91,
+    "used_memory_human": "1.49M",
+    "connected_clients": 7,
+    "keyspace_keys": 58,
+    "queue_name": "claimtrace:arq",
+    "queued_jobs": 0,
+    "worker_active": true,
+    "worker_heartbeat": {
+      "worker_id": "claimtrace-arq-DESKTOP-KB48VLA-19152",
+      "status": "online",
+      "queue": "claimtrace:arq",
+      "heartbeat_at": "2026-11-18T10:56:00.498537+00:00",
+      "pid": 19152,
+      "mode": "arq_worker_process"
+    },
+    "recent_jobs_count": 36
+  }
+}
