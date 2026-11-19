@@ -17,20 +17,8 @@ backend/.pytest_cache/
 .env.local
 backend/.env
 backend/.env.local
-!.env.example
-!app/.env.example
-!backend/.env.example
 backend/data/*
 !backend/data/indonesia_regions.json
-!backend/data/master_icd_x.json
-!backend/data/hkeval_scores.csv
-!backend/data/hkeval_truth.csv
-!backend/data/claims_state.json
-!backend/data/operations_state.json
-!backend/data/audit_ledger_chain.jsonl
-!backend/data/appeals_records.json
-!backend/data/wbs_reports.json
-!backend/data/submitted_document_bundles.json
 *.duckdb*
 chroma_db/
 
@@ -45,34 +33,94 @@ chroma_db/
 .agents/
 .claude/
 .codex/
-.cursor/
+# .cursor/ un-ignored below for ClaimTrace guidelines
 .ua/
 .vscode/
 .idea/
 design-skills/
 
 # Internal documentation and generator scripts
-!AGENTS.md
+AGENTS.md
 !DESIGN.md
-.impeccable/
+# .impeccable/ un-ignored below for ClaimTrace typography config
+*/AGENTS.md
+*/DESIGN.md
+start_all.bat
+start_all.sh
+*.bat
+!start_all.bat
+*.sh
+!start_all.sh
+!scripts/backup_claimtrace.sh
+backend/backups/
+!scripts/record_full_demo.mjs
+!scripts/test_record.mjs
+app/scripts/record_*.js
+
+# Restore 9810892 config, docs, & synthetic dataset un-ignores
+!.env.example
+!app/.env.example
+!backend/.env.example
+!AGENTS.md
 !app/AGENTS.md
 !app/DESIGN.md
 !docs/DESIGN.md
-!start_all.bat
-!start_all.sh
-!scripts/backup_claimtrace.sh
-!scripts/record_full_demo.mjs
-!scripts/test_record.mjs
-backend/backups/
+!backend/data/master_icd_x.json
+!backend/data/hkeval_scores.csv
+!backend/data/hkeval_truth.csv
+!backend/data/claims_state.json
+!backend/data/operations_state.json
+!backend/data/audit_ledger_chain.jsonl
+!backend/data/appeals_records.json
+!backend/data/wbs_reports.json
+!backend/data/submitted_document_bundles.json
 
-# Large Media (Keep official submission decks & proposal zip tracked)
+# Strict Secret, Credential, & Heavy Runtime Exclusions (Public GitHub Safety)
+backend/.env
+backend/.env.*
+!backend/.env.example
+app/.env
+app/.env.*
+!app/.env.example
+backend/data/.x509_certs/
+backend/data/.session_secret
+backend/data/.auth_credentials.json
+backend/data/.directory_accounts.json
+backend/data/otp_challenges.json
+backend/data/.session_security_state.json
+backend/data/bpjs_sample_2025
+*.duckdb*
+chroma_db/
+
+# Large Submission Binaries & Media (Ignore top-level/misc, allow curated archive & demo_video)
+*.pptx
+*.pdf
+*.zip
 *.webm
 *.mp4
 *.mkv
-submissions/**/*.mp4
-submissions/**/*.webm
-submissions/**/*.mkv
 !submissions/healthkathon/deck/*.pdf
 !submissions/healthkathon/deck/*.pptx
 !submissions/healthkathon/proposal/*.zip
-app/scripts/record_*.js
+!submissions/healthkathon/demo_video/**
+!submissions/healthkathon/demo_video/**/*
+!submissions/archive/**
+!submissions/archive/**/*
+!archive/legacy_v1/**
+!archive/legacy_v1/**/*
+!.cursor/**
+!.impeccable/**
+
+# Legacy v1 Exclusions (Do NOT track build caches, dependencies, env secrets, or raw BPJS sample data)
+archive/legacy_v1/**/node_modules/
+archive/legacy_v1/**/.next/
+archive/legacy_v1/**/.git/
+archive/legacy_v1/**/.env
+archive/legacy_v1/**/.env.*
+archive/legacy_v1/**/tsconfig.tsbuildinfo
+archive/legacy_v1/**/test-results/
+archive/legacy_v1/**/__pycache__/
+archive/legacy_v1/**/.pytest_cache/
+archive/legacy_v1/**/bpjs_sample_2025/
+archive/legacy_v1/**/claimtrace_warehouse.duckdb*
+archive/legacy_v1/**/chroma_db/
