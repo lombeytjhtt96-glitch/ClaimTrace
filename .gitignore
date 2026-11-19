@@ -17,8 +17,20 @@ backend/.pytest_cache/
 .env.local
 backend/.env
 backend/.env.local
+!.env.example
+!app/.env.example
+!backend/.env.example
 backend/data/*
 !backend/data/indonesia_regions.json
+!backend/data/master_icd_x.json
+!backend/data/hkeval_scores.csv
+!backend/data/hkeval_truth.csv
+!backend/data/claims_state.json
+!backend/data/operations_state.json
+!backend/data/audit_ledger_chain.jsonl
+!backend/data/appeals_records.json
+!backend/data/wbs_reports.json
+!backend/data/submitted_document_bundles.json
 *.duckdb*
 chroma_db/
 
@@ -40,31 +52,27 @@ chroma_db/
 design-skills/
 
 # Internal documentation and generator scripts
-AGENTS.md
+!AGENTS.md
 !DESIGN.md
 .impeccable/
-*/AGENTS.md
-*/DESIGN.md
-start_all.bat
-start_all.sh
-*.bat
-*.sh
+!app/AGENTS.md
+!app/DESIGN.md
+!docs/DESIGN.md
+!start_all.bat
+!start_all.sh
 !scripts/backup_claimtrace.sh
+!scripts/record_full_demo.mjs
+!scripts/test_record.mjs
 backend/backups/
-scripts/record_*.mjs
-scripts/test_record.mjs
 
-# Large Submission Binaries & Media (Private - Do NOT track in Git)
-*.pptx
-*.pdf
-*.zip
+# Large Media (Keep official submission decks & proposal zip tracked)
 *.webm
 *.mp4
 *.mkv
-submissions/**/*.pptx
-submissions/**/*.pdf
-submissions/**/*.zip
 submissions/**/*.mp4
 submissions/**/*.webm
 submissions/**/*.mkv
+!submissions/healthkathon/deck/*.pdf
+!submissions/healthkathon/deck/*.pptx
+!submissions/healthkathon/proposal/*.zip
 app/scripts/record_*.js

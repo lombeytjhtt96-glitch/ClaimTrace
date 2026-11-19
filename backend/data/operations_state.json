@@ -1,0 +1,550 @@
+{
+  "case_overrides": {
+    "CLM-2026-8801": {
+      "assigned_to": "dr. Siti Rahma, Sp.PK",
+      "workflow_status": "resolved",
+      "minutes_until_breach": 95,
+      "sla_status": "safe",
+      "updated_at": "2026-11-18T09:41:41.575012+00:00",
+      "triage_notes": "Kelayakan administrasi 7 berkas klinis disetujui untuk diteruskan ke tahap pembayaran."
+    },
+    "CLM-2026-8802": {
+      "assigned_to": "Budi Santoso, S.Kom, M.TI",
+      "workflow_status": "in_progress",
+      "minutes_until_breach": 240,
+      "sla_status": "warning",
+      "updated_at": "2026-11-18T09:12:54.808483+00:00"
+    },
+    "CLM-2026-8803": {
+      "assigned_to": "dr. Ahmad Faisal, MARS",
+      "workflow_status": "resolved",
+      "minutes_until_breach": 1800,
+      "sla_status": "safe",
+      "updated_at": "2026-11-18T09:12:54.808483+00:00"
+    },
+    "CLM-2026-8804": {
+      "assigned_to": "dr. Siti Rahma, Sp.PK",
+      "workflow_status": "resolved",
+      "minutes_until_breach": 2400,
+      "sla_status": "safe",
+      "updated_at": "2026-11-18T09:12:54.808483+00:00"
+    },
+    "CLM-2026-8805": {
+      "assigned_to": null,
+      "workflow_status": "new",
+      "minutes_until_breach": 65,
+      "sla_status": "critical",
+      "updated_at": "2026-11-18T09:12:54.808483+00:00"
+    },
+    "CLM-2026-8806": {
+      "assigned_to": null,
+      "workflow_status": "new",
+      "minutes_until_breach": 110,
+      "sla_status": "critical",
+      "updated_at": "2026-11-18T09:12:54.808483+00:00"
+    }
+  },
+  "case_checklists": {},
+  "claim_pending_reasons": {},
+  "flags": [
+    {
+      "id": 501,
+      "session_id": "SEP-0132R0011026V000085 · Klaster #CLS-PHANTOM-85",
+      "claim_id": "CLM-2026-8801",
+      "participant_token": "AES256_9f8a7b6c5d4e",
+      "fkrtl": "RS Khusus Mitra Husada",
+      "ina_cbg": "Z-3-12-0 (Rehabilitasi Medik / Fisioterapi)",
+      "tarif_selisih": "Rp 15.300.000",
+      "reason": "Lonjakan klaster 8,5x baseline faskes tanpa izin resmi baksos; SIP DPJP tidak aktif dan 8/10 peserta menyangkal hadir via Mobile JKN.",
+      "status": "open",
+      "flagged_by_name": "ClaimTrace Tri-Layer AI Engine",
+      "created_at": "2026-11-18T08:30:54.808483+00:00",
+      "updated_at": "2026-11-18T08:57:54.808483+00:00",
+      "tags": [
+        "fraud_indicator",
+        "presence_denial",
+        "phantom-billing-alert"
+      ],
+      "notes": "Prioritas investigasi pra-bayar Jalur Merah sesuai Pasal 76 Perpres No. 82/2018."
+    },
+    {
+      "id": 502,
+      "session_id": "SEP-0132R0021026V000341 · Sesi #CLS-REPEAT-11",
+      "claim_id": "CLM-2026-8802",
+      "participant_token": "AES256_1a2b3c4d5e6f",
+      "fkrtl": "RS Swasta As-Syifa (Kelas C)",
+      "ina_cbg": "K-4-17-I (Nyeri Abdomen & Gastroenteritis)",
+      "tarif_selisih": "Rp 1.950.000",
+      "reason": "Terdeteksi pengajuan klaim berulang dalam 3 hari pada episode klinis serupa yang telah dibayarkan (CLM-2026-8100).",
+      "status": "reviewed",
+      "flagged_by_name": "Budi Santoso, S.Kom, M.TI (Analis Forensik)",
+      "created_at": "2026-11-18T06:12:54.808483+00:00",
+      "updated_at": "2026-11-18T08:12:54.808483+00:00",
+      "tags": [
+        "repeated_upcoding",
+        "resume_discrepancy"
+      ],
+      "notes": "Menunggu sinkronisasi pembaruan SIP SATUSEHAT SDMK dan konfirmasi lanjutan Mobile JKN."
+    },
+    {
+      "id": 503,
+      "session_id": "SEP-0114R0011026V008805 · Geovelocity SDMK Alert",
+      "claim_id": "CLM-2026-8805",
+      "participant_token": "AES256_4d5e6f7a8b9c",
+      "fkrtl": "RS Daerah Kartini (Kelas B)",
+      "ina_cbg": "B-1-10-II (Prosedur Hepatobilier & Pankreas)",
+      "tarif_selisih": "Rp 24.800.000",
+      "reason": "Anomali Geovelocity DPJP: Tindakan bedah simultan di Semarang dan Solo dalam jeda < 45 menit (kecepatan fisika mustahil).",
+      "status": "open",
+      "flagged_by_name": "OSRM Geovelocity Engine Lapis 2",
+      "created_at": "2026-11-18T04:12:54.808483+00:00",
+      "updated_at": "2026-11-18T07:12:54.808483+00:00",
+      "tags": [
+        "security_alert",
+        "fraud_indicator",
+        "impossible-travel"
+      ],
+      "notes": "Tunda penerbitan BAKB sampai ada klarifikasi resmi log operasi SIMRS dan bukti hadir DPJP."
+    },
+    {
+      "id": 504,
+      "session_id": "SEP-0114R0011026V008806 · Upcoding LIS/PACS Alert",
+      "claim_id": "CLM-2026-8806",
+      "participant_token": "AES256_c0d1e2f3a4b5",
+      "fkrtl": "RS Medika Prima (Kelas B)",
+      "ina_cbg": "K-1-10-III (Perdarahan Saluran Cerna Berat)",
+      "tarif_selisih": "Rp 38.750.000",
+      "reason": "Diskrepansi kode INA-CBG Severity Level III tanpa bukti objektif endoskopi atau transfusi darah di LIS/PACS faskes.",
+      "status": "open",
+      "flagged_by_name": "dr. Siti Rahma, Sp.PK (Verifikator Utama)",
+      "created_at": "2026-11-18T01:12:54.808483+00:00",
+      "updated_at": "2026-11-18T07:12:54.808483+00:00",
+      "tags": [
+        "repeated_upcoding",
+        "resume_discrepancy"
+      ],
+      "notes": "Telah diterbitkan SPP klarifikasi rekam medis lengkap ke Tim Casemix RS Medika Prima."
+    }
+  ],
+  "schedules": [
+    {
+      "id": 801,
+      "claim_id": "CLM-2026-8801",
+      "appointment_datetime": "2026-11-19T09:00:00+07:00",
+      "notes": "Klarifikasi klaster 85 berkas fisioterapi Z-3-12-0 dan validasi status SIP DPJP pasca masa berlaku berakhir.",
+      "status": "scheduled",
+      "created_at": "2026-11-17T09:12:54.808483+00:00",
+      "updated_at": "2026-11-18T07:12:54.808483+00:00",
+      "faskes_pic": {
+        "name": "RS Khusus Mitra Husada · Tim Casemix",
+        "email": "casemix@mitrahusada.simulasi.test",
+        "registry_code": "FSK-RSX-01 · CLM-2026-8801"
+      },
+      "verificator": {
+        "name": "dr. Siti Rahma, Sp.PK (Verifikator Medis Utama)",
+        "specialization": "Audit Klaim Rehabilitasi Medik & Validasi SDMK"
+      },
+      "session_type": {
+        "name": "Klarifikasi Klaster & Presensi Lapis 3",
+        "duration_minutes": 45,
+        "description": "Konfirmasi silang logbook tindakan fisioterapi dengan konfirmasi biometrik Mobile JKN peserta."
+      }
+    },
+    {
+      "id": 802,
+      "claim_id": "CLM-2026-8805",
+      "appointment_datetime": "2026-11-20T13:30:00+07:00",
+      "notes": "Gelar perkara dugaan Impossible Travel DPJP spesialis bedah antara dua rumah sakit berbeda dalam jeda 45 menit.",
+      "status": "scheduled",
+      "created_at": "2026-11-17T15:12:54.808483+00:00",
+      "updated_at": "2026-11-18T08:12:54.808483+00:00",
+      "faskes_pic": {
+        "name": "RS Daerah Kartini (Kelas B) · Komite Medik",
+        "email": "komite.medik@rsdkartini.simulasi.test",
+        "registry_code": "FSK-RSDK-05 · CLM-2026-8805"
+      },
+      "verificator": {
+        "name": "Budi Santoso, S.Kom, M.TI (Analis Forensik Wasrik)",
+        "specialization": "Investigasi Anomali Spatiotemporal & Geovelocity OSRM"
+      },
+      "session_type": {
+        "name": "Audit Forensik Geovelocity SDMK",
+        "duration_minutes": 60,
+        "description": "Pemeriksaan log kamar operasi SIMRS, verifikasi absensi dokter, dan jejak SEP."
+      }
+    },
+    {
+      "id": 803,
+      "claim_id": "CLM-2026-8806",
+      "appointment_datetime": "2026-11-16T10:00:00+07:00",
+      "notes": "Konfirmasi resume medis dan hasil penunjang laboratorium/endoskopi untuk pengajuan INA-CBG Level III K-1-10-III.",
+      "status": "completed",
+      "created_at": "2026-11-14T09:12:54.808483+00:00",
+      "updated_at": "2026-11-16T11:00:00+07:00",
+      "faskes_pic": {
+        "name": "RS Medika Prima (Kelas B) · Koder INA-CBG",
+        "email": "koder.jkn@medikaprima.simulasi.test",
+        "registry_code": "FSK-RSMP-06 · CLM-2026-8806"
+      },
+      "verificator": {
+        "name": "dr. Siti Rahma, Sp.PK (Verifikator Medis Utama)",
+        "specialization": "Validasi Koding Klinis PNPK & LIS/PACS"
+      },
+      "session_type": {
+        "name": "Rekonsiliasi Koding & Penunjang Medis",
+        "duration_minutes": 45,
+        "description": "Evaluasi kelayakan bukti objektif LIS/PACS sebelum persetujuan pembayaran klaim."
+      }
+    }
+  ],
+  "interventions": [
+    {
+      "id": 1,
+      "faskes_code": "FSK-RSX-01",
+      "faskes_name": "RS Khusus Mitra Husada",
+      "pic_name": "Koordinator Casemix Mitra Husada",
+      "pic_email": "casemix@mitrahusada.simulasi.test",
+      "plan_title": "Intervensi & Rekonsiliasi Klaster Fisioterapi (CLM-2026-8801)",
+      "claim_id": "CLM-2026-8801",
+      "risk_level": "CRITICAL",
+      "risk_score": 87.0,
+      "status": "in_progress",
+      "total_steps": 4,
+      "completed_steps": 1,
+      "viewed_in_24h": true,
+      "stale_days": 0,
+      "created_at": "2026-11-18T03:12:54.808483+00:00",
+      "updated_at": "2026-11-18T08:42:54.808483+00:00",
+      "plan_steps": [
+        {
+          "title": "Penundaan Penandatanganan BAKB (Jalur Merah)",
+          "description": "Tunda berita acara pembayaran klaim sesuai Perpres No. 82/2018 Pasal 76.",
+          "completed": true
+        },
+        {
+          "title": "Validasi Pembaruan SIP DPJP di SATUSEHAT SDMK",
+          "description": "Faskes wajib mengunggah bukti perpanjangan SIP DPJP Sp.KFR aktif sebelum layanan.",
+          "completed": false
+        },
+        {
+          "title": "Klarifikasi Sangkalan Presensi Mobile JKN Lapis 3",
+          "description": "Faskes menyerahkan bukti rekam medis dan daftar hadir fisik tervalidasi biometrik FRISTA.",
+          "completed": false
+        },
+        {
+          "title": "Sidang Rekonsiliasi Tim PK-JKN Pusat",
+          "description": "Penetapan keputusan akhir disetujui/koreksi/ditolak oleh komite verifikasi.",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "faskes_code": "FSK-RSMP-06",
+      "faskes_name": "RS Medika Prima (Kelas B)",
+      "pic_name": "Ketua Komite Medik RS Medika Prima",
+      "pic_email": "casemix@medikaprima.simulasi.test",
+      "plan_title": "Klarifikasi Bukti Penunjang K-1-10-III (CLM-2026-8806)",
+      "claim_id": "CLM-2026-8806",
+      "risk_level": "CRITICAL",
+      "risk_score": 75.5,
+      "status": "pending_review",
+      "total_steps": 3,
+      "completed_steps": 1,
+      "viewed_in_24h": true,
+      "stale_days": 0,
+      "created_at": "2026-11-17T21:12:54.808483+00:00",
+      "updated_at": "2026-11-18T07:12:54.808483+00:00",
+      "plan_steps": [
+        {
+          "title": "Penerbitan Surat Permintaan Penjelasan (SPP)",
+          "description": "Meminta hasil laboratorium hemoglobin serial dan laporan tindakan endoskopi.",
+          "completed": true
+        },
+        {
+          "title": "Verifikasi Kesesuaian Grouping INA-CBG",
+          "description": "Evaluasi koreksi tarif apabila bukti penunjang Severity Level III tidak terpenuhi.",
+          "completed": false
+        },
+        {
+          "title": "Penerbitan BAKB Final & Penguncian Ledger SHA-256",
+          "description": "Dokumentasi sah berita acara verifikasi dalam audit trail permanen.",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "faskes_code": "FSK-RSY-02",
+      "faskes_name": "RS Swasta As-Syifa (Kelas C)",
+      "pic_name": "PIC JKN RS As-Syifa",
+      "pic_email": "jkn@assyifa.simulasi.test",
+      "plan_title": "Rekonsiliasi Episode Berulang K-4-17-I (CLM-2026-8802)",
+      "claim_id": "CLM-2026-8802",
+      "risk_level": "SEVERE",
+      "risk_score": 62,
+      "status": "completed",
+      "total_steps": 3,
+      "completed_steps": 3,
+      "viewed_in_24h": true,
+      "stale_days": 0,
+      "created_at": "2026-11-17T09:12:54.808483+00:00",
+      "updated_at": "2026-11-18T07:12:54.808483+00:00",
+      "plan_steps": [
+        {
+          "title": "Identifikasi Klaim Terbayar Sebelumnya (CLM-2026-8100)",
+          "description": "Cocokkan riwayat admisi peserta dalam jendela 72 jam terakhir.",
+          "completed": true
+        },
+        {
+          "title": "Sinkronisasi Status SIP DPJP SATUSEHAT SDMK",
+          "description": "Verifikasi masa tunggu sinkronisasi registrasi dokter penanggung jawab.",
+          "completed": true
+        },
+        {
+          "title": "Finalisasi Status Pembayaran atau Pengembalian Berkas",
+          "description": "Keputusan penggabungan episode atau penolakan tagihan ganda telah direkonsiliasi penuh.",
+          "completed": true
+        }
+      ]
+    }
+  ],
+  "directory": [
+    {
+      "id": 1,
+      "name": "dr. Siti Rahma, Sp.PK",
+      "email": "siti.rahma@bpjs-kesehatan.go.id",
+      "phone_masked": "0800****0199",
+      "faskes": "Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik",
+      "faskes_code": "KP-WASRIK-01",
+      "role": "VERIFICATOR_MEDIS",
+      "role_label": "Verifikator Medis Utama (Simulasi)",
+      "is_active": true,
+      "screening_risk": "LOW",
+      "screening_score": 12,
+      "screening_finding": "Otorisasi aktif penuh: Adjudikasi Jalur Merah & Tanda Tangan BAKB Digital",
+      "streak_days": 45,
+      "sentiment_pct": 98,
+      "sla_compliance": 100,
+      "last_activity": "Aktif (Live)",
+      "total_claims_handled": 1420,
+      "avatar_color": "bg-emerald-600",
+      "avatar_initials": "SR"
+    },
+    {
+      "id": 2,
+      "name": "Budi Santoso, S.Kom, M.TI",
+      "email": "budi.santoso@bpjs-kesehatan.go.id",
+      "phone_masked": "0800****0710",
+      "faskes": "Kantor Pusat BPJS Kesehatan · Forensik Digital Anti-Fraud",
+      "faskes_code": "KP-FORENSIK-02",
+      "role": "ANALYST",
+      "role_label": "Analis Forensik Wasrik (Simulasi)",
+      "is_active": true,
+      "screening_risk": "LOW",
+      "screening_score": 15,
+      "screening_finding": "Spesialis Basis Data OLAP, Spatiotemporal Geovelocity, dan Audit Ledger SHA-256",
+      "streak_days": 38,
+      "sentiment_pct": 96,
+      "sla_compliance": 99,
+      "last_activity": "10 menit yang lalu",
+      "total_claims_handled": 980,
+      "avatar_color": "bg-blue-600",
+      "avatar_initials": "BS"
+    },
+    {
+      "id": 3,
+      "name": "dr. Hendra, Sp.KFR (PIC Klaster)",
+      "email": "dpjp.kfr@mitrahusada.simulasi.test",
+      "phone_masked": "0800****0829",
+      "faskes": "RS Khusus Mitra Husada",
+      "faskes_code": "FSK-RSX-01",
+      "role": "DPJP_SPESIALIS",
+      "role_label": "DPJP FKRTL Terpantau (Fiktif)",
+      "is_active": true,
+      "screening_risk": "CRITICAL",
+      "screening_score": 87,
+      "screening_finding": "Hard Trigger: SIP kadaluwarsa pada klaster 85 klaim fisioterapi CLM-2026-8801",
+      "streak_days": 0,
+      "sentiment_pct": 18,
+      "sla_compliance": 60,
+      "last_activity": "Menunggu Klarifikasi BAKB",
+      "total_claims_handled": 85,
+      "avatar_color": "bg-rose-600",
+      "avatar_initials": "HK"
+    },
+    {
+      "id": 4,
+      "name": "dr. Anton Wijanarko, Sp.B",
+      "email": "anton.spb@rsdkartini.simulasi.test",
+      "phone_masked": "0800****0512",
+      "faskes": "RS Daerah Kartini (Kelas B)",
+      "faskes_code": "FSK-RSDK-05",
+      "role": "DPJP_SPESIALIS",
+      "role_label": "DPJP Spesialis Bedah",
+      "is_active": true,
+      "screening_risk": "CRITICAL",
+      "screening_score": 86,
+      "screening_finding": "Peringatan Geovelocity Impossible Travel pada SEP bedah (CLM-2026-8805)",
+      "streak_days": 0,
+      "sentiment_pct": 25,
+      "sla_compliance": 72,
+      "last_activity": "Jadwal Klarifikasi Terdaftar",
+      "total_claims_handled": 194,
+      "avatar_color": "bg-amber-600",
+      "avatar_initials": "AW"
+    }
+  ],
+  "conversations": [
+    {
+      "userHash": "usr_verif_19870420",
+      "userName": "dr. Siti Rahma, Sp.PK",
+      "userRole": "VERIFICATOR",
+      "userEmail": "siti.rahma@bpjs-kesehatan.go.id",
+      "faskesName": "Kantor Pusat BPJS Kesehatan · Kedeputian Wasrik",
+      "totalMessages": 4,
+      "lastActivityIso": "2026-11-18T09:12:54.808483+00:00",
+      "openFlagCount": 1,
+      "sessions": [
+        {
+          "session_id": "SES-JKN-8801",
+          "title": "Audit Fusi 3 Lapis: Klaster Fisioterapi RS Khusus Mitra Husada",
+          "claim_id": "CLM-2026-8801",
+          "first_time": "2026-11-18T08:47:54.808483+00:00",
+          "last_time": "2026-11-18T09:02:54.808483+00:00",
+          "message_count": 4,
+          "model_used": "ClaimTrace ReAct Orchestrator",
+          "tokens_total": 1840,
+          "risk_level": "CRITICAL",
+          "risk_score": 87,
+          "status": "awaiting_approval",
+          "messages": [
+            {
+              "role": "user",
+              "sender_name": "Verifikator Medis",
+              "text": "Evaluasi klaster klaim fisioterapi CLM-2026-8801 di RS Khusus Mitra Husada melalui fusi 3 lapis.",
+              "timestamp": "08:47"
+            },
+            {
+              "role": "assistant",
+              "sender_name": "CLAIMTRACE_AI (Orchestrator)",
+              "model": "ClaimTrace ReAct Engine",
+              "text": "Skor prioritas telaah mencapai 87,0/100 (Jalur Merah Pra-Bayar). Lapis 1 mendeteksi lonjakan klaster 8,5x baseline (85 klaim); Lapis 2 menemukan SIP DPJP tidak aktif pada 10 Okt 2026; Lapis 3 mencatat 8/10 peserta menyangkal kehadiran melalui Mobile JKN.",
+              "tokens": 620,
+              "latency_ms": 210,
+              "citations": [
+                "Perpres No. 82/2018 Pasal 76",
+                "SATUSEHAT SDMK",
+                "Telemetri Mobile JKN"
+              ],
+              "timestamp": "08:48"
+            },
+            {
+              "role": "user",
+              "sender_name": "Verifikator Medis",
+              "text": "Berapa nominal klaim yang wajib ditunda pencairannya sambil menunggu BAKB?",
+              "timestamp": "08:57"
+            },
+            {
+              "role": "assistant",
+              "sender_name": "TCA (Audit Ekonomi JKN)",
+              "model": "ClaimTrace Analytical SQL OLAP",
+              "text": "Total tagihan klaster bernilai Rp 15.300.000. Penundaan BAKB mengamankan dana DJS pra-pembayaran dan tetap memenuhi koridor waktu klarifikasi SLA 10 hari kerja.",
+              "tokens": 520,
+              "latency_ms": 140,
+              "citations": [
+                "Permenkes No. 26/2021",
+                "Audit Ledger SHA-256"
+              ],
+              "timestamp": "08:58"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "userHash": "usr_analis_19920815",
+      "userName": "Budi Santoso, S.Kom, M.TI",
+      "userRole": "WASRIK",
+      "userEmail": "budi.santoso@bpjs-kesehatan.go.id",
+      "faskesName": "Kantor Pusat BPJS Kesehatan · Forensik Digital",
+      "totalMessages": 2,
+      "lastActivityIso": "2026-11-18T08:12:54.808483+00:00",
+      "openFlagCount": 1,
+      "sessions": [
+        {
+          "session_id": "SES-JKN-8806",
+          "title": "Verifikasi LIS/PACS K-1-10-III RS Medika Prima (CLM-2026-8806)",
+          "claim_id": "CLM-2026-8806",
+          "first_time": "2026-11-18T07:57:54.808483+00:00",
+          "last_time": "2026-11-18T08:12:54.808483+00:00",
+          "message_count": 2,
+          "model_used": "ClaimTrace ReAct Orchestrator",
+          "tokens_total": 980,
+          "risk_level": "CRITICAL",
+          "risk_score": 75.5,
+          "status": "anomaly_flagged",
+          "messages": [
+            {
+              "role": "user",
+              "sender_name": "Analis Forensik",
+              "text": "Periksa keabsahan kode keparahan III pada CLM-2026-8806 senilai Rp 38.750.000.",
+              "timestamp": "07:57"
+            },
+            {
+              "role": "assistant",
+              "sender_name": "CLAIMTRACE_AI (Orchestrator)",
+              "model": "ClaimTrace Semantic & Rules",
+              "text": "Tidak ditemukan lampiran hasil endoskopi ataupun bukti transfusi darah pada integrasi penunjang faskes. Klaim dikategorikan berisiko upcoding tingkat keparahan INA-CBG dengan skor 75,5/100.",
+              "tokens": 490,
+              "latency_ms": 185,
+              "citations": [
+                "PNPK Perdarahan Saluran Cerna",
+                "Permenkes No. 26/2021"
+              ],
+              "timestamp": "07:58"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "mobile_push_logs": [],
+  "settings": {
+    "ui_theme_mode": "light",
+    "ui_density": "standard",
+    "ui_accent_color": "emerald",
+    "ui_glassmorphism": true,
+    "ui_motion_effects": true,
+    "ui_language": "id",
+    "auto_flag_critical": true,
+    "red_lane_threshold": 75,
+    "yellow_lane_threshold": 50,
+    "geovelocity_speed_limit": 120,
+    "split_claim_threshold": 3,
+    "semantic_plagiarism_threshold": 90,
+    "min_claim_value_audit": 500000,
+    "ai_temperature": 0.1,
+    "satusehat_sync_interval_hours": 12,
+    "sla_deadline_days": 10,
+    "require_mfa_adjudicate": true,
+    "zero_phi_strict": true,
+    "k_anonymity_min": 5,
+    "default_verifier_daily_capacity": 5,
+    "hard_negative_protection_enabled": true,
+    "s06_inmonica_prepay_hold": true
+  },
+  "profile": {
+    "name": "dr. Siti Rahma, Sp.PK",
+    "email": "siti.rahma@bpjs-kesehatan.go.id",
+    "nip": "198704202011012001",
+    "role": "Verifikator Medis Utama · Kantor Pusat",
+    "unit": "Kedeputian Bidang Pengawasan & Pemeriksaan (WASRIK)",
+    "branch": "Kantor Pusat BPJS Kesehatan Jakarta",
+    "phone": "0800-0000-0199 (Simulasi Fiktif)",
+    "location": "DKI Jakarta, Indonesia",
+    "is_synthetic": true,
+    "pdp_notice": "Profil kedinasan simulasi sintetis fiktif untuk evaluasi sistem UU PDP No. 27/2022",
+    "bio": "Pejabat Fungsional Verifikator Medis Senior (Profil Simulasi Sintetis) dengan spesialisasi audit klaim FKRTL tingkat lanjut dan deteksi dini anomali koding INA-CBG berbasis bukti klinis tiga lapis."
+  }
+}

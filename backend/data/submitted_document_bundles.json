@@ -1,0 +1,105 @@
+{
+  "CLM-2026-8801": {
+    "claim_id": "CLM-2026-8801",
+    "submitted_by": "198801012026011001",
+    "submitted_at": "2026-11-18T09:41:55.166118+00:00",
+    "ina_cbg_code": "I-4-10-II",
+    "primary_icd10": "R50.9",
+    "secondary_icd10s": [
+      "A41.9",
+      "N18.5"
+    ],
+    "procedure_icd9cm": "39.95",
+    "claimed_tariff_rp": 18500000.0,
+    "documents": [
+      {
+        "doc_id": null,
+        "doc_type": "SEP",
+        "doc_title": null,
+        "file_name": null,
+        "file_size_kb": 240,
+        "faskes_code": "0114R001",
+        "dpjp_name": "dr. Hendra Wijaya, Sp.PD",
+        "dpjp_sip": "SIP-3372-2026-001",
+        "patient_id_token": "PST-ANON-JKN",
+        "is_signed_electronically": true,
+        "is_stamp_valid": true,
+        "ocr_confidence_pct": 96.5,
+        "extracted_text_snippet": "",
+        "extracted_fields": {
+          "tgl_sep": "2026-10-02"
+        }
+      },
+      {
+        "doc_id": null,
+        "doc_type": "RESUME_MEDIS",
+        "doc_title": null,
+        "file_name": null,
+        "file_size_kb": 240,
+        "faskes_code": "0114R001",
+        "dpjp_name": "dr. Hendra Wijaya, Sp.PD",
+        "dpjp_sip": "SIP-3372-2026-001",
+        "patient_id_token": "PST-ANON-JKN",
+        "is_signed_electronically": true,
+        "is_stamp_valid": true,
+        "ocr_confidence_pct": 96.5,
+        "extracted_text_snippet": "",
+        "extracted_fields": {
+          "tgl_masuk": "2026-10-02",
+          "tgl_keluar": "2026-10-06",
+          "dpjp_name": "Administrator ClaimTrace"
+        }
+      },
+      {
+        "doc_id": null,
+        "doc_type": "PENUNJANG_LAB",
+        "doc_title": null,
+        "file_name": null,
+        "file_size_kb": 240,
+        "faskes_code": "0114R001",
+        "dpjp_name": "dr. Hendra Wijaya, Sp.PD",
+        "dpjp_sip": "SIP-3372-2026-001",
+        "patient_id_token": "PST-ANON-JKN",
+        "is_signed_electronically": true,
+        "is_stamp_valid": true,
+        "ocr_confidence_pct": 96.5,
+        "extracted_text_snippet": "",
+        "extracted_fields": {}
+      },
+      {
+        "doc_id": null,
+        "doc_type": "BILLING_RS",
+        "doc_title": null,
+        "file_name": null,
+        "file_size_kb": 240,
+        "faskes_code": "0114R001",
+        "dpjp_name": "dr. Hendra Wijaya, Sp.PD",
+        "dpjp_sip": "SIP-3372-2026-001",
+        "patient_id_token": "PST-ANON-JKN",
+        "is_signed_electronically": true,
+        "is_stamp_valid": true,
+        "ocr_confidence_pct": 96.5,
+        "extracted_text_snippet": "",
+        "extracted_fields": {}
+      },
+      {
+        "doc_id": null,
+        "doc_type": "LAPORAN_OPERASI",
+        "doc_title": null,
+        "file_name": null,
+        "file_size_kb": 240,
+        "faskes_code": "0114R001",
+        "dpjp_name": "dr. Hendra Wijaya, Sp.PD",
+        "dpjp_sip": "SIP-3372-2026-001",
+        "patient_id_token": "PST-ANON-JKN",
+        "is_signed_electronically": true,
+        "is_stamp_valid": true,
+        "ocr_confidence_pct": 96.5,
+        "extracted_text_snippet": "",
+        "extracted_fields": {
+          "procedure_code": "39.95"
+        }
+      }
+    ]
+  }
+}

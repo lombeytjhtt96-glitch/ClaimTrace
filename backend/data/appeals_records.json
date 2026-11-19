@@ -1,0 +1,94 @@
+[
+  {
+    "appeal_id": "APL-2026-001",
+    "claim_id": "CLM-2026-8801",
+    "bakb_number": "BAKB/2026/CLM-2026-8801",
+    "faskes_name": "RS Medika Prima",
+    "appeal_category": "READMISSION_CLINICAL",
+    "disputed_amount_rp": 18500000.0,
+    "recovered_amount_rp": 13875000.0,
+    "clinical_argument": "Pasien dipulangkan dalam kondisi hemodinamik stabil pada episode pertama. Admisi kedua disebabkan komplikasi pasca-tindakan akut yang tidak dapat diprediksi saat pulang.",
+    "supporting_documents": [
+      "CPPT IGD Episode 2",
+      "Resume Pulang Episode 1 bertanda tangan DPJP"
+    ],
+    "proposed_icd10": "I21.4",
+    "status": "DITERIMA_SEBAGIAN",
+    "submitted_at": "2026-11-03T09:15:00+00:00",
+    "submitted_date": "2026-11-03",
+    "submitted_by": "Tim JKN RS Medika Prima",
+    "resolution_note": "Disetujui sebagian setelah verifikasi bukti penunjang klinis dan CPPT DPJP.",
+    "resolved_at": "2026-11-17T10:16:34.536429+00:00",
+    "resolved_by": "Administrator ClaimTrace",
+    "audit_hash": "33a8f12516ecd7d937a7f2d844ff3417183991961013d2b6356faea8b66679a4"
+  },
+  {
+    "appeal_id": "APL-2026-002",
+    "claim_id": "CLM-2026-8803",
+    "bakb_number": "BAKB/2026/CLM-2026-8803",
+    "faskes_name": "RS Sentosa Nusantara",
+    "appeal_category": "FORNAS_RESTRICTION",
+    "disputed_amount_rp": 6400000.0,
+    "recovered_amount_rp": 6400000.0,
+    "clinical_argument": "Faskes melampirkan hasil laboratorium serum albumin 2.1 g/dL serta protokol asites masif yang memenuhi kriteria restriksi Formularium Nasional.",
+    "supporting_documents": [
+      "Hasil Lab Albumin 2.1 g/dL",
+      "Lembar Protokol KFT"
+    ],
+    "proposed_icd10": "K74.6",
+    "status": "DITERIMA_PENUH",
+    "submitted_at": "2026-10-28T10:30:00+00:00",
+    "submitted_date": "2026-10-28",
+    "submitted_by": "Komite Medik RS Sentosa Nusantara",
+    "resolution_note": "Bukti laboratorium objektif (< 2.5 g/dL) terverifikasi. Klaim disetujui bayar penuh.",
+    "resolved_at": "2026-11-11T14:20:00+00:00",
+    "resolved_by": "Verifikator Senior BPJS (KC Jakarta Pusat)",
+    "audit_hash": "1fcb1da1c3aaa18ddef30bcc92380d4ecedb2c94219f1b32fa55d83b40737adc"
+  },
+  {
+    "appeal_id": "APL-2026-3C7178",
+    "claim_id": "CLM-2026-8802",
+    "bakb_number": "BAKB/20261117/CLM-2026-8802",
+    "faskes_name": "RS Medika Prima",
+    "appeal_category": "KODING_RULE_MB",
+    "disputed_amount_rp": 12500000.0,
+    "recovered_amount_rp": 9375000.0,
+    "clinical_argument": "Faskes melampirkan RME bertanda tangan elektronik DPJP, CPPT harian, serta hasil laboratorium objektif sebagai dasar pemenuhan kriteria medis INA-CBG.",
+    "supporting_documents": [
+      "Resume Medis Elektronik",
+      "Hasil Laboratorium Terverifikasi"
+    ],
+    "proposed_icd10": null,
+    "status": "DITERIMA_SEBAGIAN",
+    "submitted_at": "2026-11-17T01:39:03.792978+00:00",
+    "submitted_date": "2026-11-17",
+    "submitted_by": "Administrator ClaimTrace",
+    "resolution_note": "Disetujui sebagian setelah verifikasi bukti penunjang klinis dan CPPT DPJP.",
+    "resolved_at": "2026-11-17T01:39:07.324407+00:00",
+    "resolved_by": "Administrator ClaimTrace",
+    "audit_hash": "5a251c3d77b0213c0e2472a1a0040eb2dfd8586cdb6068c075f32735cba46826"
+  },
+  {
+    "appeal_id": "APL-2026-326720",
+    "claim_id": "FKL-KOR-01631",
+    "bakb_number": "BAKB/20261117/FKL-KOR-01631",
+    "faskes_name": "RS Medika Prima",
+    "appeal_category": "KODING_RULE_MB",
+    "disputed_amount_rp": 12500000.0,
+    "recovered_amount_rp": 0.0,
+    "clinical_argument": "Faskes melampirkan RME bertanda tangan elektronik DPJP, CPPT harian, serta hasil laboratorium objektif sebagai dasar pemenuhan kriteria medis INA-CBG.",
+    "supporting_documents": [
+      "Resume Medis Elektronik",
+      "Hasil Laboratorium Terverifikasi"
+    ],
+    "proposed_icd10": null,
+    "status": "DIAJUKAN_FASKES",
+    "submitted_at": "2026-11-17T10:16:36.113498+00:00",
+    "submitted_date": "2026-11-17",
+    "submitted_by": "Administrator ClaimTrace",
+    "resolution_note": null,
+    "resolved_at": null,
+    "resolved_by": null,
+    "audit_hash": "9e64a85017cc92f9dc6888be2013f54f53e66f1001dc27a06f16d1b6dba5351a"
+  }
+]
